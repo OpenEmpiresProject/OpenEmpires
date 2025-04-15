@@ -1,0 +1,22 @@
+# Build directories
+build/
+bin/
+lib/
+CMakeFiles/
+CMakeCache.txt
+*.vcxproj*
+*.tlog/
+*.dir/
+*.obj
+*.pdb
+*.log
+*.sln
+*.user
+*.opensdf
+*.VC.db
+
+# GoogleTest fetched
+_deps/
+
+#Misc
+default_log.txt
