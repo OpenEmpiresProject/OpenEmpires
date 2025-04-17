@@ -20,6 +20,32 @@ openEmpires is a cross-platform clone of Age of Empires 2, designed to provide a
 - A C++ compiler (GCC, Clang, or MSVC) - Tested against MSVC 19
 - Python 3.x
 - Make
+- vcpkg (for C++ package management)
+
+> Note: If required clone and setup vcpkg manually to get the latest package list.
+
+#### Dependencies
+- SDL3
+- SDL3-image
+- GTest
+
+#### Setting env variables
+- Add path to CMake to the PATH variable
+- Add path to C++ compiler to the PATH variable
+- Add path to vcpkg to the PATH variable
+- Define VCPKG_ROOT env variable which points to the vcpkg path
+
+An example env setup in Windows might look like this;
+```
+$vsBase = "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools"
+$vcpkgPath = "E:\Projects\openEmpires\vcpkg\vcpkg"
+
+$env:Path += ";$vsBase\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin"
+$env:Path += ";$vsBase\VC\Tools\MSVC\14.43.34808\bin\Hostx86\x64"
+$env:Path += ";$vcpkgPath"
+$env:VCPKG_ROOT = $vcpkgPath
+
+```
 
 ### Building the Project
 
@@ -30,19 +56,13 @@ openEmpires is a cross-platform clone of Age of Empires 2, designed to provide a
    cd openEmpires
    ```
 
-2. Create a build directory:
-
-   ```
-   mkdir build
-   ```
-
-3. Configure the project using CMake:
+2. Configure the project using CMake:
 
    ```
    make configure
    ```
 
-4. Build the project:
+3. Build the project:
 
    ```
    make

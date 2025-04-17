@@ -17,7 +17,7 @@ void GameEngine::start() {
 }
 
 void GameEngine::update() {
-    std::cout<< "Updating game state..." << std::endl;
+    // std::cout<< "Updating game state..." << std::endl;
     // Update game state
 }
 

@@ -20,3 +20,6 @@ _deps/
 
 #Misc
 default_log.txt
+vcpkg_installed
+.vs
+.vscode

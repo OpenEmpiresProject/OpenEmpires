@@ -14,13 +14,19 @@ default: build
 # Configure the project using CMake (out-of-source build)
 configure:
 	@echo "Configuring project..."
-	cmake -B $(BUILD_DIR) -S . -DCMAKE_BUILD_TYPE=Debug
+# 	Following requires --preset=vcpkg, otherwise it will fail to identify package configuration files
+#   Following requires -G "Visual Studio 17 2022", otherwise ninja will fail to locate standard include files
+	cmake --preset=vcpkg -G "Visual Studio 17 2022" -A x64 -B $(BUILD_DIR) -S . -DCMAKE_BUILD_TYPE=Debug
 
 # Build the project
 build:
 	@echo "Building project..."
 	cmake --build $(BUILD_DIR)
 
+build-verbose:
+	@echo "Building project..."
+	cmake --build $(BUILD_DIR) --verbose
+	
 # Run the tests (directly execute the test binary)
 test: build
 	@echo "Running tests..."
