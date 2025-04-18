@@ -12,6 +12,7 @@ add_library(aion STATIC ${SOURCES})
 target_include_directories(aion PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(aion PUBLIC 
     utils
+    spice
     SDL3::SDL3
     $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image-shared>,SDL3_image::SDL3_image-shared,SDL3_image::SDL3_image-static>
 )

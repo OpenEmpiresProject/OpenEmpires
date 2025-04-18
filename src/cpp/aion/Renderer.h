@@ -6,17 +6,17 @@
 #include <thread>
 #include <string>
 #include <atomic>
-#include "Component.h"
+#include "SubSystem.h"
 
 namespace aion
 {
-    class Renderer : public Component
+    class Renderer : public SubSystem
     {
     public:
         Renderer(int width, int height, const std::string& title);
         ~Renderer();
     
-        // Component methods
+        // SubSystem methods
         void init() override;
         void shutdown() override;
     

@@ -5,12 +5,12 @@
 #include <list>
 #include "EventLoopListener.h"
 #include "Event.h"
-#include "Component.h"
+#include "SubSystem.h"
 #include <thread>
 
 namespace aion
 {
-    class EventLoop : public Component {
+    class EventLoop : public SubSystem {
     public:
         EventLoop();
         ~EventLoop();
@@ -22,7 +22,7 @@ namespace aion
         
 
     private:
-        // Component methods
+        // SubSystem methods
         void init() override;
         void run();
         void shutdown() override;

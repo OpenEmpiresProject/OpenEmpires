@@ -1,12 +1,12 @@
-#ifndef COMPONENT_H
-#define COMPONENT_H
+#ifndef SUBSYSTEM_H
+#define SUBSYSTEM_H
 
 namespace aion
 {
-    class Component
+    class SubSystem
     {
     public:
-        virtual ~Component() = default;
+        virtual ~SubSystem() = default;
         virtual void init() = 0;
         virtual void shutdown() = 0;
     };

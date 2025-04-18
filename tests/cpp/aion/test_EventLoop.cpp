@@ -28,7 +28,7 @@ TEST(EventLoopTest, RegisterAndDeregisterListener) {
 }
 
 TEST(EventLoopTest, TickEventIsTriggered) {
-    Component* eventLoop = new EventLoop();
+    SubSystem* eventLoop = new EventLoop();
     auto mockListener = std::make_unique<MockEventLoopListener>();
     auto mockListernerRawPtr = mockListener.get(); // Good enough for a test
 
@@ -42,7 +42,7 @@ TEST(EventLoopTest, TickEventIsTriggered) {
 
 // TODO: Fix this. can't shutdown the eventloop
 // TEST(EventLoopTest, ShutdownStopsThread) {
-//     Component* eventLoop = new EventLoop();
+//     SubSystem* eventLoop = new EventLoop();
 //     eventLoop->init();
 
 //     ASSERT_TRUE(eventLoop->isRunning());
