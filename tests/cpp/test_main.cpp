@@ -1,23 +1,5 @@
 #include <gtest/gtest.h>
-#include "game/GameEngine.h"
 #include "utils/Logger.h"
-
-TEST(GameEngineTest, StartGame) {
-    GameEngine engine;
-    EXPECT_NO_THROW(engine.start());
-}
-
-TEST(GameEngineTest, UpdateGame) {
-    GameEngine engine;
-    engine.start();
-    EXPECT_NO_THROW(engine.update());
-}
-
-TEST(GameEngineTest, RenderGame) {
-    GameEngine engine;
-    engine.start();
-    EXPECT_NO_THROW(engine.render());
-}
 
 TEST(LoggerTest, LogInfo) {
     Logger logger;

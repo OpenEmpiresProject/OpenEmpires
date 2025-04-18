@@ -2,6 +2,7 @@
   "dependencies": [
     "gtest",
     "sdl3",
-    "sdl3-image"
+    "sdl3-image",
+    "entt"
   ]
 }
