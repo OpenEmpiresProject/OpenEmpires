@@ -7,26 +7,36 @@
 #include <string>
 #include <atomic>
 #include "SubSystem.h"
+#include "GameSettings.h"
+#include "GraphicsRegistry.h"
+#include <condition_variable>
 
 namespace aion
 {
     class Renderer : public SubSystem
     {
     public:
-        Renderer(int width, int height, const std::string& title);
+        Renderer(const GameSettings& settings, aion::GraphicsRegistry& graphicsRegistry);
         ~Renderer();
     
         // SubSystem methods
         void init() override;
         void shutdown() override;
-    
+
         // TODO: Do we need this?
         bool loadTexture(const std::string& imagePath);
-    
+
+        SDL_Renderer* getSDLRenderer() 
+        { 
+            std::unique_lock<std::mutex> lock(sdlInitMutex_);
+            sdlInitCV_.wait(lock, [this] { return sdlInitialized_; });
+            return renderer_; 
+        }
+
     private:
+        void initSDL();
         void threadEntry();
         void renderingLoop();
-        void initSDL();
         void cleanup();
     
         SDL_Window* window_ = nullptr;
@@ -35,9 +45,12 @@ namespace aion
     
         std::thread renderThread_;
         std::atomic<bool> running_ = false;
-        int width_;
-        int height_;
-        std::string title;
+        const GameSettings& settings;
+        aion::GraphicsRegistry& graphicsRegistry;
+
+        std::condition_variable sdlInitCV_;
+        std::mutex sdlInitMutex_;
+        bool sdlInitialized_ = false;
     };
 }
 

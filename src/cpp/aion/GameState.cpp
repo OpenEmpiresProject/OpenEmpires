@@ -17,7 +17,7 @@ entt::entity GameState::createEntity()
 
 void GameState::destroyEntity(entt::entity entity)
 {
-    GameState::registry.destroy(entity);
+    registry.destroy(entity);
 }
 
 bool GameState::isEntityValid(entt::entity entity) const
