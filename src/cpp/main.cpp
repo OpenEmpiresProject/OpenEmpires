@@ -5,11 +5,16 @@
 #include "aion/GameState.h"
 #include "game/ResourceLoader.h"
 #include "aion/GraphicsRegistry.h"
+#include "utils/Logger.h"
 
 using namespace aion;
 using namespace game;
 
 int main() {
+    utils::initLogger("build/logs/game.log");
+    spdlog::info("Game started");
+    spdlog::info("Initializing subsystems...");
+    
     GameSettings settings;
     GraphicsRegistry graphicsRegistry;
     settings.setWindowDimensions(1024, 720);

@@ -5,7 +5,7 @@
 #include <thread>
 #include "GameState.h"
 #include "components/GraphicsComponent.h"
-// #include <SDL3/SDL_main.h>
+#include "Logger.h"
 
 using namespace aion;
 
@@ -13,10 +13,6 @@ Renderer::Renderer(const GameSettings& settings, aion::GraphicsRegistry& graphic
     : settings(settings), graphicsRegistry(graphicsRegistry)
 {
     running_ = false;
-
-    // if (IMG_Init(IMG_INIT_PNG) == 0) {
-    //     throw std::runtime_error("IMG_Init failed");
-    // }   
 }
 
 Renderer::~Renderer() {
@@ -27,8 +23,6 @@ Renderer::~Renderer() {
 
 void Renderer::init()
 {
-    std::cout<< "renderer init" << std::endl;
-
     if (!running_) {
         running_ = true;
         renderThread_ = std::thread(&Renderer::threadEntry, this);
@@ -50,29 +44,18 @@ void Renderer::cleanup() {
     if (window_) SDL_DestroyWindow(window_);
 }
 
-// bool Renderer::loadTexture(const std::string& imagePath) {
-//     SDL_Surface* surface = IMG_Load(imagePath.c_str());
-//     if (!surface) {
-//         // std::cerr << "Failed to load image: " << IMG_GetError() << "\n";
-//         return false;
-//     }
-
-//     texture_ = SDL_CreateTextureFromSurface(renderer_, surface);
-//     SDL_DestroySurface(surface);
-
-//     return texture_ != nullptr;
-// }
-
 void Renderer::threadEntry() {
-    std::cout<< "thead entry" << std::endl;
     initSDL();
     renderingLoop();
 }
 
 void Renderer::initSDL()
 {
+    spdlog::info("Initializing SDL...");
+
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
+        spdlog::error("SDL_Init failed: {}", SDL_GetError());
         throw std::runtime_error("SDL_Init failed");
     }
 
@@ -83,25 +66,27 @@ void Renderer::initSDL()
         0);
     if (!window_)
     {
+        spdlog::error("SDL_CreateWindow failed: {}", SDL_GetError());
         throw std::runtime_error("SDL_CreateWindow failed");
     }
 
     renderer_ = SDL_CreateRenderer(window_, nullptr);
     if (!renderer_)
     {
+        spdlog::error("SDL_CreateRenderer failed: {}", SDL_GetError());
         throw std::runtime_error("SDL_CreateRenderer failed");
     }
-    std::cout<< "SDL initialized" << std::endl;
     {
         std::lock_guard<std::mutex> lock(sdlInitMutex_);
         sdlInitialized_ = true;
     }
     sdlInitCV_.notify_all();
-    std::cout<< "Notified that SDL is initialized" << std::endl;
+    spdlog::info("SDL initialized successfully");
 }
 
 void aion::Renderer::renderingLoop()
 {
+    spdlog::info("Starting rendering loop...");
     bool running = true;
     // while (!stopToken.stop_requested()) {
     while (running)

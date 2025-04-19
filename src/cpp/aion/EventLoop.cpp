@@ -1,5 +1,6 @@
 #include <chrono>
 #include "EventLoop.h"
+#include "Logger.h"
 
 using namespace aion;
 using namespace std::chrono;
@@ -19,6 +20,8 @@ void aion::EventLoop::init()
 
 void aion::EventLoop::run()
 {
+    spdlog::info("Starting event loop...");
+    
     auto lastTick = steady_clock::now();
     // TODO: Make this configurable
     const auto tickRate = milliseconds(16); // ~60 ticks per second
