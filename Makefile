@@ -26,6 +26,11 @@ build:
 build-verbose:
 	@echo "Building project..."
 	cmake --build $(BUILD_DIR) --verbose
+
+# Format the source code using clang-format
+format:
+	@echo "Formatting sources..."
+	cmake --build $(BUILD_DIR) --target format
 	
 # Run the tests (directly execute the test binary)
 test: build

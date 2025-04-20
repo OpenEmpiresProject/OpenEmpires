@@ -21,6 +21,7 @@ openEmpires is a cross-platform clone of Age of Empires 2, designed to provide a
 - Python 3.x
 - Make
 - vcpkg (for C++ package management)
+- clang-format
 
 > Note: If required clone and setup vcpkg manually to get the latest package list.
 
@@ -28,6 +29,8 @@ openEmpires is a cross-platform clone of Age of Empires 2, designed to provide a
 - SDL3
 - SDL3-image
 - GTest
+- EnTT (for entity-component-system)
+- spdlog (for logging)
 
 #### Setting env variables
 - Add path to CMake to the PATH variable

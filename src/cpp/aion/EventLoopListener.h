@@ -5,12 +5,13 @@
 
 namespace aion
 {
-    class EventLoopListener {
-        public:
-            virtual void onInit() = 0;
-            virtual void onExit() = 0;
-            virtual void onEvent(const Event& e) = 0;
-    }; 
-}
+class EventLoopListener
+{
+  public:
+    virtual void onInit() = 0;
+    virtual void onExit() = 0;
+    virtual void onEvent(const Event &e) = 0;
+};
+} // namespace aion
 
 #endif

@@ -1,0 +1,12 @@
+# .clang-format
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 100
+AllowShortIfStatementsOnASingleLine: false
+BreakBeforeBraces: Allman
+IncludeBlocks: Regroup
+SortIncludes: true
+SpaceAfterCStyleCast: true
+SpacesInAngles: false

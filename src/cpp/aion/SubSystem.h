@@ -3,13 +3,13 @@
 
 namespace aion
 {
-    class SubSystem
-    {
-    public:
-        virtual ~SubSystem() = default;
-        virtual void init() = 0;
-        virtual void shutdown() = 0;
-    };
-}
+class SubSystem
+{
+  public:
+    virtual ~SubSystem() = default;
+    virtual void init() = 0;
+    virtual void shutdown() = 0;
+};
+} // namespace aion
 
 #endif

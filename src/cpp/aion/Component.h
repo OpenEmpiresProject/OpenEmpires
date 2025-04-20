@@ -3,22 +3,21 @@
 
 namespace aion
 {
-    class ComponentBase 
-    {
-    protected:
-        inline static int counter_ = 0;
-    };
+class ComponentBase
+{
+  protected:
+    inline static int counter_ = 0;
+};
 
-    template<typename Derived>
-    class Component : public ComponentBase 
+template <typename Derived> class Component : public ComponentBase
+{
+  public:
+    static int type()
     {
-    public:
-        static int type() 
-        {
-            static int type = counter_++;
-            return type;
-        }
-    };
-}
+        static int type = counter_++;
+        return type;
+    }
+};
+} // namespace aion
 
 #endif

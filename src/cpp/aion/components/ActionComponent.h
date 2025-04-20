@@ -5,14 +5,14 @@
 
 namespace aion
 {
-    class ActionComponent : public aion::Component<ActionComponent>
-    {
-    public:
-        // TODO: Temp
-        int action = 0;
+class ActionComponent : public aion::Component<ActionComponent>
+{
+  public:
+    // TODO: Temp
+    int action = 0;
 
-        ActionComponent(int action) : action(action) {}
-    };
-}
+    ActionComponent(int action) : action(action) {}
+};
+} // namespace aion
 
 #endif

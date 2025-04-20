@@ -1,21 +1,24 @@
 #include "Renderer.h"
+
+#include "GameState.h"
+#include "Logger.h"
+#include "components/GraphicsComponent.h"
+
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h> // Ensure SDL_image is included
 #include <iostream>
 #include <thread>
-#include "GameState.h"
-#include "components/GraphicsComponent.h"
-#include "Logger.h"
 
 using namespace aion;
 
-Renderer::Renderer(const GameSettings& settings, aion::GraphicsRegistry& graphicsRegistry)
+Renderer::Renderer(const GameSettings &settings, aion::GraphicsRegistry &graphicsRegistry)
     : settings(settings), graphicsRegistry(graphicsRegistry)
 {
     running_ = false;
 }
 
-Renderer::~Renderer() {
+Renderer::~Renderer()
+{
     cleanup();
     // IMG_Quit();
     SDL_Quit();
@@ -23,7 +26,8 @@ Renderer::~Renderer() {
 
 void Renderer::init()
 {
-    if (!running_) {
+    if (!running_)
+    {
         running_ = true;
         renderThread_ = std::thread(&Renderer::threadEntry, this);
     }
@@ -32,19 +36,24 @@ void Renderer::init()
 void Renderer::shutdown()
 {
     running_ = false;
-    if (renderThread_.joinable()) {
+    if (renderThread_.joinable())
+    {
         // renderThread_.request_stop();
         renderThread_.join();
     }
 }
 
-void Renderer::cleanup() {
+void Renderer::cleanup()
+{
     // if (texture_) SDL_DestroyTexture(texture_);
-    if (renderer_) SDL_DestroyRenderer(renderer_);
-    if (window_) SDL_DestroyWindow(window_);
+    if (renderer_)
+        SDL_DestroyRenderer(renderer_);
+    if (window_)
+        SDL_DestroyWindow(window_);
 }
 
-void Renderer::threadEntry() {
+void Renderer::threadEntry()
+{
     initSDL();
     renderingLoop();
 }
@@ -59,11 +68,8 @@ void Renderer::initSDL()
         throw std::runtime_error("SDL_Init failed");
     }
 
-    window_ = SDL_CreateWindow(
-        settings.getTitle().c_str(), 
-        settings.getWindowDimensions().width, 
-        settings.getWindowDimensions().height, 
-        0);
+    window_ = SDL_CreateWindow(settings.getTitle().c_str(), settings.getWindowDimensions().width,
+                               settings.getWindowDimensions().height, 0);
     if (!window_)
     {
         spdlog::error("SDL_CreateWindow failed: {}", SDL_GetError());
@@ -105,15 +111,17 @@ void aion::Renderer::renderingLoop()
         SDL_SetRenderDrawColor(renderer_, 30, 30, 30, 255);
         SDL_RenderClear(renderer_);
 
-        aion::GameState::getInstance().getEntities<aion::GraphicsComponent>().each([this](entt::entity entity, aion::GraphicsComponent& graphics) {
-            auto& graphicID = graphics.graphicID;
-            auto& entry = graphicsRegistry.getGraphic(graphicID);
-            if (entry.image != nullptr)
+        aion::GameState::getInstance().getEntities<aion::GraphicsComponent>().each(
+            [this](entt::entity entity, aion::GraphicsComponent &graphics)
             {
-                SDL_FRect dstRect = {100, 100, 100, 100}; // Example destination rect
-                SDL_RenderTexture(renderer_, entry.image, nullptr, &dstRect);
-            }
-        });
+                auto &graphicID = graphics.graphicID;
+                auto &entry = graphicsRegistry.getGraphic(graphicID);
+                if (entry.image != nullptr)
+                {
+                    SDL_FRect dstRect = {100, 100, 100, 100}; // Example destination rect
+                    SDL_RenderTexture(renderer_, entry.image, nullptr, &dstRect);
+                }
+            });
 
         // if (texture_)
         // {

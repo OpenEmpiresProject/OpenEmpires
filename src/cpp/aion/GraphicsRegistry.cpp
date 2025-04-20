@@ -1,9 +1,11 @@
 #include "GraphicsRegistry.h"
+
 #include <stdexcept>
 
 using namespace aion;
 
-void aion::GraphicsRegistry::registerGraphic(const GraphicsID &graphicID, const GraphicsEntry& entry)
+void aion::GraphicsRegistry::registerGraphic(const GraphicsID &graphicID,
+                                             const GraphicsEntry &entry)
 {
     auto it = graphicsMap.find(graphicID.hash());
     if (it != graphicsMap.end())
@@ -16,7 +18,7 @@ void aion::GraphicsRegistry::registerGraphic(const GraphicsID &graphicID, const 
     }
 }
 
-const GraphicsEntry& aion::GraphicsRegistry::getGraphic(const GraphicsID &graphicID) const
+const GraphicsEntry &aion::GraphicsRegistry::getGraphic(const GraphicsID &graphicID) const
 {
     // Check if the graphicID exists in the map
     auto it = graphicsMap.find(graphicID.hash());

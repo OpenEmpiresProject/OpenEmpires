@@ -1,27 +1,22 @@
-#include <chrono>
 #include "EventLoop.h"
+
 #include "Logger.h"
+
+#include <chrono>
 
 using namespace aion;
 using namespace std::chrono;
 
-EventLoop::EventLoop()
-{
-}
+EventLoop::EventLoop() {}
 
-EventLoop::~EventLoop()
-{
-}
+EventLoop::~EventLoop() {}
 
-void aion::EventLoop::init()
-{
-    eventLoopThread = std::thread(&EventLoop::run, this);
-}
+void aion::EventLoop::init() { eventLoopThread = std::thread(&EventLoop::run, this); }
 
 void aion::EventLoop::run()
 {
     spdlog::info("Starting event loop...");
-    
+
     auto lastTick = steady_clock::now();
     // TODO: Make this configurable
     const auto tickRate = milliseconds(16); // ~60 ticks per second
@@ -56,12 +51,13 @@ void aion::EventLoop::shutdown()
     }
 }
 
-void EventLoop::registerListener(std::unique_ptr<EventLoopListener> listener) {
+void EventLoop::registerListener(std::unique_ptr<EventLoopListener> listener)
+{
     listeners.push_back(std::move(listener));
 }
 
-void EventLoop::deregisterListener(EventLoopListener* listener) {
-    listeners.remove_if([listener](const std::unique_ptr<EventLoopListener>& ptr) {
-    return ptr.get() == listener;
-    });
+void EventLoop::deregisterListener(EventLoopListener *listener)
+{
+    listeners.remove_if([listener](const std::unique_ptr<EventLoopListener> &ptr)
+                        { return ptr.get() == listener; });
 }
