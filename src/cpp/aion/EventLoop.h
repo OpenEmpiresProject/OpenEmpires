@@ -14,7 +14,7 @@ namespace aion
 class EventLoop : public SubSystem
 {
   public:
-    EventLoop();
+    EventLoop(std::stop_token *stopToken);
     ~EventLoop();
 
     void registerListener(std::unique_ptr<EventListener> listener);

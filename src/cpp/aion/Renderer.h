@@ -15,17 +15,16 @@
 #include <thread>
 #include <vector>
 
-class FPSCounter;
-
 namespace aion
 {
+class FPSCounter;
 using ThreadQueue = moodycamel::ReaderWriterQueue<std::vector<GraphicInstruction>>;
 
 class Renderer : public SubSystem
 {
   public:
-    Renderer(const GameSettings &settings, aion::GraphicsRegistry &graphicsRegistry,
-             ThreadQueue &simulatorQueue);
+    Renderer(std::stop_source *stopSource, const GameSettings &settings,
+             aion::GraphicsRegistry &graphicsRegistry, ThreadQueue &simulatorQueue);
     ~Renderer();
 
     // SubSystem methods

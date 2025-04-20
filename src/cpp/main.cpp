@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <readerwriterqueue.h>
+#include <stop_token>
 #include <vector>
 
 using namespace aion;
@@ -25,14 +26,19 @@ int main()
     GraphicsRegistry graphicsRegistry;
     settings.setWindowDimensions(1024, 720);
 
+    std::stop_source stopSource;
+    std::stop_token stopToken = stopSource.get_token();
+
     moodycamel::ReaderWriterQueue<std::vector<GraphicInstruction>> threadQueue;
 
-    auto renderer = std::make_unique<Renderer>(settings, graphicsRegistry, threadQueue);
-    auto eventLoop = std::make_unique<EventLoop>();
+    auto eventLoop = std::make_unique<EventLoop>(&stopToken);
     auto simulator = std::make_unique<Simulator>(threadQueue);
+    auto renderer =
+        std::make_unique<Renderer>(&stopSource, settings, graphicsRegistry, threadQueue);
+
     eventLoop->registerListener(std::move(simulator));
     auto resourceLoader =
-        std::make_unique<ResourceLoader>(settings, graphicsRegistry, *(renderer.get()));
+        std::make_unique<ResourceLoader>(&stopToken, settings, graphicsRegistry, *(renderer.get()));
 
     SubSystemRegistry::getInstance().registerSubSystem("EventLoop", std::move(eventLoop));
     SubSystemRegistry::getInstance().registerSubSystem("Renderer", std::move(renderer));

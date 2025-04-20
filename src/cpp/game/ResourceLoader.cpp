@@ -15,9 +15,10 @@
 using namespace game;
 using namespace aion;
 
-ResourceLoader::ResourceLoader(const aion::GameSettings &settings,
+ResourceLoader::ResourceLoader(std::stop_token *stopToken, const aion::GameSettings &settings,
                                aion::GraphicsRegistry &graphicsRegistry, aion::Renderer &renderer)
-    : _settings(settings), graphicsRegistry(graphicsRegistry), renderer(renderer)
+    : SubSystem(stopToken), _settings(settings), graphicsRegistry(graphicsRegistry),
+      renderer(renderer)
 {
 }
 

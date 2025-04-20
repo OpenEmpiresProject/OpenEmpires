@@ -16,9 +16,10 @@
 
 using namespace aion;
 
-Renderer::Renderer(const GameSettings &settings, aion::GraphicsRegistry &graphicsRegistry,
-                   ThreadQueue &simulatorQueue)
-    : settings(settings), graphicsRegistry(graphicsRegistry), threadQueue_(simulatorQueue)
+Renderer::Renderer(std::stop_source *stopSource, const GameSettings &settings,
+                   aion::GraphicsRegistry &graphicsRegistry, ThreadQueue &simulatorQueue)
+    : SubSystem(stopSource), settings(settings), graphicsRegistry(graphicsRegistry),
+      threadQueue_(simulatorQueue)
 {
     running_ = false;
 }
@@ -119,6 +120,10 @@ void aion::Renderer::renderingLoop()
 
     SDL_DestroyWindow(window_);
     SDL_Quit();
+    stopSource_->request_stop();
+
+    spdlog::shutdown();
+    spdlog::drop_all();
 }
 
 bool aion::Renderer::handleEvents()
@@ -127,7 +132,7 @@ bool aion::Renderer::handleEvents()
     bool running = true;
     while (SDL_PollEvent(&event))
     {
-        if (event.type == SDL_EVENT_QUIT)
+        if (event.type == SDL_EVENT_QUIT || event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
         {
             running = false;
             break;

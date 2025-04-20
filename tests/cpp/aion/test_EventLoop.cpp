@@ -4,6 +4,7 @@
 
 using namespace aion;
 using namespace testing;
+using namespace std;
 
 class MockEventLoopListener : public EventListener {
 public:
@@ -16,7 +17,7 @@ public:
 };
 
 TEST(EventLoopTest, RegisterAndDeregisterListener) {
-    EventLoop eventLoop;
+    EventLoop eventLoop(nullptr);
     auto mockListener = std::make_unique<MockEventLoopListener>();
     auto rawListenerPtr = mockListener.get();
 
@@ -28,7 +29,7 @@ TEST(EventLoopTest, RegisterAndDeregisterListener) {
 }
 
 TEST(EventLoopTest, TickEventIsTriggered) {
-    SubSystem* eventLoop = new EventLoop();
+    SubSystem* eventLoop = new EventLoop(nullptr);
     auto mockListener = std::make_unique<MockEventLoopListener>();
     auto mockListernerRawPtr = mockListener.get(); // Good enough for a test
 

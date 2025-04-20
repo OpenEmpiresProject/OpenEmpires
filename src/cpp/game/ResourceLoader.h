@@ -12,8 +12,8 @@ namespace game
 class ResourceLoader : public aion::SubSystem
 {
   public:
-    ResourceLoader(const aion::GameSettings &settings, aion::GraphicsRegistry &graphicsRegistry,
-                   aion::Renderer &renderer);
+    ResourceLoader(std::stop_token *stopToken, const aion::GameSettings &settings,
+                   aion::GraphicsRegistry &graphicsRegistry, aion::Renderer &renderer);
     ~ResourceLoader() = default;
 
     void loadTextures();

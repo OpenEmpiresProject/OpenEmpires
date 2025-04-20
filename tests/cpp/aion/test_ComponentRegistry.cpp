@@ -7,6 +7,7 @@ using namespace aion;
 class MockComponent : public SubSystem {
 public:
     // Override SubSystem's methods with mock implementations
+    MockComponent() : SubSystem((std::stop_token*)nullptr) {}
     void init() {initCount++;}
     void shutdown() {shutdownCount++;}
 

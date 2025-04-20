@@ -7,7 +7,7 @@
 using namespace aion;
 using namespace std::chrono;
 
-EventLoop::EventLoop() {}
+EventLoop::EventLoop(std::stop_token *stopToken) : SubSystem(stopToken) {}
 
 EventLoop::~EventLoop() {}
 
@@ -21,7 +21,7 @@ void aion::EventLoop::run()
     // TODO: Make this configurable
     const auto tickRate = milliseconds(16); // ~60 ticks per second
 
-    while (true)
+    while (stopToken_->stop_requested() == false)
     {
         auto now = steady_clock::now();
         if (now - lastTick >= tickRate)

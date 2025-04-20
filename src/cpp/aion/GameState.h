@@ -7,7 +7,7 @@
 
 namespace aion
 {
-class GameState : public SubSystem
+class GameState
 {
   public:
     static GameState &getInstance()
@@ -54,10 +54,6 @@ class GameState : public SubSystem
   private:
     GameState();
     ~GameState();
-
-    // SubSystem methods
-    void init() override;
-    void shutdown() override;
 
     entt::registry registry;
 };
