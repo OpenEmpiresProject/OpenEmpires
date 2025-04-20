@@ -2,6 +2,7 @@
 #define RENDERER_H
 
 #include "GameSettings.h"
+#include "GraphicInstruction.h"
 #include "GraphicsRegistry.h"
 #include "SubSystem.h"
 
@@ -9,15 +10,22 @@
 #include <atomic>
 #include <condition_variable>
 #include <memory>
+#include <readerwriterqueue.h>
 #include <string>
 #include <thread>
+#include <vector>
+
+class FPSCounter;
 
 namespace aion
 {
+using ThreadQueue = moodycamel::ReaderWriterQueue<std::vector<GraphicInstruction>>;
+
 class Renderer : public SubSystem
 {
   public:
-    Renderer(const GameSettings &settings, aion::GraphicsRegistry &graphicsRegistry);
+    Renderer(const GameSettings &settings, aion::GraphicsRegistry &graphicsRegistry,
+             ThreadQueue &simulatorQueue);
     ~Renderer();
 
     // SubSystem methods
@@ -40,6 +48,16 @@ class Renderer : public SubSystem
     void renderingLoop();
     void cleanup();
 
+    bool handleEvents();
+    void handleGraphicInstructions();
+    void renderDebugInfo(FPSCounter &counter);
+    void renderGameEntities();
+    void renderBackground();
+
+    void addDebugText(const std::string &text) { debugTexts.push_back(text); }
+
+    void clearDebugTexts() { debugTexts.clear(); }
+
     SDL_Window *window_ = nullptr;
     SDL_Renderer *renderer_ = nullptr;
     SDL_Texture *texture_ = nullptr;
@@ -52,6 +70,12 @@ class Renderer : public SubSystem
     std::condition_variable sdlInitCV_;
     std::mutex sdlInitMutex_;
     bool sdlInitialized_ = false;
+
+    ThreadQueue &threadQueue_;
+    int queueSize_ = 0;
+    int maxQueueSize_ = 0;
+
+    std::vector<std::string> debugTexts;
 };
 } // namespace aion
 

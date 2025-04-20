@@ -5,7 +5,7 @@
 using namespace aion;
 using namespace testing;
 
-class MockEventLoopListener : public EventLoopListener {
+class MockEventLoopListener : public EventListener {
 public:
     void onEvent(const Event& e) override {
         callCount++;

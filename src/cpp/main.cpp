@@ -1,3 +1,5 @@
+#include "GraphicInstruction.h"
+#include "Simulator.h"
 #include "aion/EventLoop.h"
 #include "aion/GameState.h"
 #include "aion/GraphicsRegistry.h"
@@ -7,6 +9,8 @@
 #include "utils/Logger.h"
 
 #include <iostream>
+#include <readerwriterqueue.h>
+#include <vector>
 
 using namespace aion;
 using namespace game;
@@ -20,8 +24,13 @@ int main()
     GameSettings settings;
     GraphicsRegistry graphicsRegistry;
     settings.setWindowDimensions(1024, 720);
-    auto renderer = std::make_unique<Renderer>(settings, graphicsRegistry);
+
+    moodycamel::ReaderWriterQueue<std::vector<GraphicInstruction>> threadQueue;
+
+    auto renderer = std::make_unique<Renderer>(settings, graphicsRegistry, threadQueue);
     auto eventLoop = std::make_unique<EventLoop>();
+    auto simulator = std::make_unique<Simulator>(threadQueue);
+    eventLoop->registerListener(std::move(simulator));
     auto resourceLoader =
         std::make_unique<ResourceLoader>(settings, graphicsRegistry, *(renderer.get()));
 

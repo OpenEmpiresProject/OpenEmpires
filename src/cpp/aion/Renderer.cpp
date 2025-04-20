@@ -1,8 +1,13 @@
 #include "Renderer.h"
 
+#include "FPSCounter.h"
 #include "GameState.h"
 #include "Logger.h"
+#include "Renderer.h"
+#include "components/ActionComponent.h"
+#include "components/EntityInfoComponent.h"
 #include "components/GraphicsComponent.h"
+#include "components/TransformComponent.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h> // Ensure SDL_image is included
@@ -11,8 +16,9 @@
 
 using namespace aion;
 
-Renderer::Renderer(const GameSettings &settings, aion::GraphicsRegistry &graphicsRegistry)
-    : settings(settings), graphicsRegistry(graphicsRegistry)
+Renderer::Renderer(const GameSettings &settings, aion::GraphicsRegistry &graphicsRegistry,
+                   ThreadQueue &simulatorQueue)
+    : settings(settings), graphicsRegistry(graphicsRegistry), threadQueue_(simulatorQueue)
 {
     running_ = false;
 }
@@ -94,45 +100,112 @@ void aion::Renderer::renderingLoop()
 {
     spdlog::info("Starting rendering loop...");
     bool running = true;
-    // while (!stopToken.stop_requested()) {
+    FPSCounter fpsCounter;
+
     while (running)
     {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            if (event.type == SDL_EVENT_QUIT)
-            {
-                // stop();
-                running = false;
-                break;
-            }
-        }
+        fpsCounter.frame();
+        running = handleEvents();
 
-        SDL_SetRenderDrawColor(renderer_, 30, 30, 30, 255);
-        SDL_RenderClear(renderer_);
+        handleGraphicInstructions();
 
-        aion::GameState::getInstance().getEntities<aion::GraphicsComponent>().each(
-            [this](entt::entity entity, aion::GraphicsComponent &graphics)
-            {
-                auto &graphicID = graphics.graphicID;
-                auto &entry = graphicsRegistry.getGraphic(graphicID);
-                if (entry.image != nullptr)
-                {
-                    SDL_FRect dstRect = {100, 100, 100, 100}; // Example destination rect
-                    SDL_RenderTexture(renderer_, entry.image, nullptr, &dstRect);
-                }
-            });
-
-        // if (texture_)
-        // {
-        //     SDL_FRect dstRect = {100, 100, 100, 100}; // Example draw position
-        //     SDL_RenderTexture(renderer_, texture_, nullptr, &dstRect);
-        // }
+        renderBackground();
+        renderGameEntities();
+        renderDebugInfo(fpsCounter);
 
         SDL_RenderPresent(renderer_);
-        SDL_Delay(16); // ~60 FPS
+        // SDL_Delay(16); // ~60 FPS
     }
 
     SDL_DestroyWindow(window_);
     SDL_Quit();
+}
+
+bool aion::Renderer::handleEvents()
+{
+    SDL_Event event;
+    bool running = true;
+    while (SDL_PollEvent(&event))
+    {
+        if (event.type == SDL_EVENT_QUIT)
+        {
+            running = false;
+            break;
+        }
+    }
+    return running;
+}
+
+void aion::Renderer::handleGraphicInstructions()
+{
+    // spdlog::debug("Handling graphic instructions...");
+    maxQueueSize_ = std::max(maxQueueSize_, queueSize_);
+    queueSize_ = 0;
+
+    std::vector<GraphicInstruction> instructionList;
+
+    while (threadQueue_.try_dequeue(instructionList))
+    {
+        queueSize_++;
+        for (const auto &instruction : instructionList)
+        {
+            if (instruction.type == GraphicInstruction::Type::ADD)
+            {
+                auto &entry = graphicsRegistry.getGraphic(instruction.graphicsID);
+                if (entry.image != nullptr)
+                {
+                    auto &gc = aion::GameState::getInstance().getComponent<aion::GraphicsComponent>(
+                        instruction.entity);
+                    gc.graphicsID = instruction.graphicsID;
+                    gc.worldPosition = instruction.worldPosition;
+                    gc.texture = entry.image;
+                }
+                else
+                {
+                    spdlog::error("Texture not found for entity: {}",
+                                  instruction.graphicsID.toString());
+                }
+            }
+        }
+    }
+}
+
+void aion::Renderer::renderDebugInfo(FPSCounter &counter)
+{
+    // spdlog::debug("Rendering debug info...");
+
+    addDebugText("Average FPS: " + std::to_string(counter.getAverageFPS()));
+    addDebugText("Queue depth: " + std::to_string(queueSize_));
+    addDebugText("Max Queue depth: " + std::to_string(maxQueueSize_));
+
+    SDL_SetRenderDrawColor(renderer_, 255, 255, 255, SDL_ALPHA_OPAQUE); /* white, full alpha */
+
+    int y = 10;
+    for (const auto &line : debugTexts)
+    {
+        SDL_RenderDebugText(renderer_, 10, y, line.c_str());
+        y += 20;
+    }
+
+    clearDebugTexts();
+}
+
+void aion::Renderer::renderGameEntities()
+{
+    // spdlog::debug("Rendering game entities...");
+
+    aion::GameState::getInstance().getEntities<aion::GraphicsComponent>().each(
+        [this](aion::GraphicsComponent &gc)
+        {
+            SDL_FRect dstRect = {gc.worldPosition.x, gc.worldPosition.y, 100, 100};
+            SDL_RenderTexture(renderer_, gc.texture, nullptr, &dstRect);
+        });
+}
+
+void aion::Renderer::renderBackground()
+{
+    // spdlog::debug("Rendering background...");
+
+    SDL_SetRenderDrawColor(renderer_, 30, 30, 30, 255);
+    SDL_RenderClear(renderer_);
 }

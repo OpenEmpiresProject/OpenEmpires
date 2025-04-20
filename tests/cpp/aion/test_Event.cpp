@@ -7,13 +7,13 @@
 // Test the default constructor
 TEST(EventTest, DefaultConstructor) {
     aion::Event event;
-    EXPECT_EQ(event.geType(), aion::Event::Type::NONE);
+    EXPECT_EQ(event.getType(), aion::Event::Type::NONE);
 }
 
 // Test the parameterized constructor
 TEST(EventTest, ParameterizedConstructor) {
     aion::Event event(aion::Event::Type::TICK);
-    EXPECT_EQ(event.geType(), aion::Event::Type::TICK);
+    EXPECT_EQ(event.getType(), aion::Event::Type::TICK);
 }
 
 #endif

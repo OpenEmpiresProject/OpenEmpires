@@ -4,6 +4,7 @@
     "sdl3",
     "sdl3-image",
     "entt",
-    "spdlog"
+    "spdlog",
+    "readerwriterqueue"
   ]
 }

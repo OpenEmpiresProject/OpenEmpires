@@ -2,7 +2,7 @@
 #define EVENTLOOP_H
 
 #include "Event.h"
-#include "EventLoopListener.h"
+#include "EventListener.h"
 #include "SubSystem.h"
 
 #include <list>
@@ -17,9 +17,9 @@ class EventLoop : public SubSystem
     EventLoop();
     ~EventLoop();
 
-    void registerListener(std::unique_ptr<EventLoopListener> listener);
+    void registerListener(std::unique_ptr<EventListener> listener);
     // TODO: Might need to refactor this to use a shared_ptr or weak_ptr
-    void deregisterListener(EventLoopListener *listener);
+    void deregisterListener(EventListener *listener);
     int getListenersCount() const { return listeners.size(); }
 
   private:
@@ -28,7 +28,7 @@ class EventLoop : public SubSystem
     void run();
     void shutdown() override;
 
-    std::list<std::unique_ptr<EventLoopListener>> listeners;
+    std::list<std::unique_ptr<EventListener>> listeners;
     std::thread eventLoopThread;
 };
 

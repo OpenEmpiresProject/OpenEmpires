@@ -13,7 +13,7 @@ class Event
     };
 
     Event(Event::Type type = Event::Type::NONE);
-    Type geType() const;
+    Type getType() const;
 
   private:
     const Event::Type type;

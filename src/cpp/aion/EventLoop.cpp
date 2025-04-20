@@ -51,13 +51,13 @@ void aion::EventLoop::shutdown()
     }
 }
 
-void EventLoop::registerListener(std::unique_ptr<EventLoopListener> listener)
+void EventLoop::registerListener(std::unique_ptr<EventListener> listener)
 {
     listeners.push_back(std::move(listener));
 }
 
-void EventLoop::deregisterListener(EventLoopListener *listener)
+void EventLoop::deregisterListener(EventListener *listener)
 {
-    listeners.remove_if([listener](const std::unique_ptr<EventLoopListener> &ptr)
+    listeners.remove_if([listener](const std::unique_ptr<EventListener> &ptr)
                         { return ptr.get() == listener; });
 }

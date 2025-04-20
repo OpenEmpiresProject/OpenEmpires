@@ -5,6 +5,7 @@
 #include "Renderer.h"
 #include "SubSystemRegistry.h"
 #include "components/ActionComponent.h"
+#include "components/EntityInfoComponent.h"
 #include "components/GraphicsComponent.h"
 #include "components/TransformComponent.h"
 
@@ -56,16 +57,11 @@ void ResourceLoader::loadTextures()
 void game::ResourceLoader::loadEntities()
 {
     spdlog::info("Loading entities...");
-    aion::GraphicsID id;
-    id.entitytType = 1;                     // Example entity type
-    id.actionType = 1;                      // Example action type
-    id.frame = 0;                           // Example frame
-    id.direction = utils::Direction::NORTH; // Example direction
-
     auto testEntity = GameState::getInstance().createEntity();
     GameState::getInstance().addComponent(testEntity, TransformComponent(100, 100));
-    GameState::getInstance().addComponent(testEntity, GraphicsComponent(id, 0));
-    GameState::getInstance().addComponent(testEntity, ActionComponent(0));
+    GameState::getInstance().addComponent(testEntity, GraphicsComponent());
+    GameState::getInstance().addComponent(testEntity, ActionComponent(1));
+    GameState::getInstance().addComponent(testEntity, EntityInfoComponent(1));
 
     spdlog::info("Entity loaded successfully.");
 }

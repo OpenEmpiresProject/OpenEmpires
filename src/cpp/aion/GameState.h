@@ -46,8 +46,8 @@ class GameState : public SubSystem
         return registry.get<T...>(entity);
     }
 
-    // write a function to get all entities with a specific component
-    template <typename T> auto getEntities() { return registry.view<T>(); }
+    // write a function get all entities with all given components
+    template <typename... T> auto getEntities() { return registry.view<T...>(); }
 
     void clearAll();
 

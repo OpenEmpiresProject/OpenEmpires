@@ -1,11 +1,11 @@
-#ifndef EVENTLOOPLISTENER_H
-#define EVENTLOOPLISTENER_H
+#ifndef EVENTLISTENER_H
+#define EVENTLISTENER_H
 
 #include "Event.h"
 
 namespace aion
 {
-class EventLoopListener
+class EventListener
 {
   public:
     virtual void onInit() = 0;
