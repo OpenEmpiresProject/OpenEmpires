@@ -8,7 +8,7 @@
 
 namespace aion
 {
-class Viewport : public EventHandler
+class Viewport // : public EventHandler
 {
   public:
     Viewport(const GameSettings& settings);
@@ -20,20 +20,20 @@ class Viewport : public EventHandler
     Vec2d screenUnitsToFeet(const Vec2d& screenUnits) const;
     Vec2d feetToScreenUnits(const Vec2d& feet) const;
 
-    const Vec2d& getViewportPositionInPixels() const;
+    Vec2d getViewportPositionInPixels() const;
     void setViewportPositionInPixels(const Vec2d& pixels);
-    bool isPositionChangeRequested() const;
-    void syncPosition();
-    void requestPositionChange(const Vec2d& delta);
+    // bool isPositionChangeRequested() const;
+    // void syncPosition();
+    // void requestPositionChange(const Vec2d& delta);
 
   private:
-    void onInit(EventLoop* eventLoop) override
-    {
-    }
-    void onExit() override
-    {
-    }
-    void onEvent(const Event& e) override;
+    // void onInit(EventLoop* eventLoop)
+    // {
+    // }
+    // void onExit() override
+    // {
+    // }
+    // void onEvent(const Event& e);
 
     Vec2d viewportPositionInPixels;
     const GameSettings& settings;

@@ -123,7 +123,7 @@ class GameSettings
     float soundVolume = 1.0f;
     float musicVolume = 1.0f;
     std::string title = "openEmipires";
-    int viewportMovingSpeed = 100;
+    int viewportMovingSpeed = 50;
 };
 } // namespace aion
 

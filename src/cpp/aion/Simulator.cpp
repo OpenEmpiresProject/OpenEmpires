@@ -12,7 +12,6 @@ using namespace utils;
 
 void Simulator::onInit(EventLoop* eventLoop)
 {
-
 }
 
 void Simulator::onExit()
@@ -33,29 +32,28 @@ void Simulator::onEvent(const Event& e)
 
 void Simulator::onTick()
 {
-    simulatePhysics();
-    sendGraphicsInstructions();
+    // simulatePhysics();
+    // sendGraphicsInstructions();
 }
 
 void Simulator::sendGraphicsInstructions()
 {
-    //spdlog::debug("Sending graphics instructions...");
+    // spdlog::debug("Sending graphics instructions...");
 
-
-    //aion::GameState::getInstance()
-    //    .getEntities<aion::ActionComponent, aion::TransformComponent, aion::EntityInfoComponent>()
-    //    .each(
-    //        [this, &message](entt::entity entityID, aion::ActionComponent& action,
-    //                                 aion::TransformComponent& transform,
-    //                                 aion::EntityInfoComponent& entityInfo)
-    //        {
-    //            GraphicsID graphicsID(entityInfo.entityType, action.action,
-    //                                  0, // TODO: FIX this
-    //                                  transform.getDirection());
+    // aion::GameState::getInstance()
+    //     .getEntities<aion::ActionComponent, aion::TransformComponent,
+    //     aion::EntityInfoComponent>() .each(
+    //         [this, &message](entt::entity entityID, aion::ActionComponent& action,
+    //                                  aion::TransformComponent& transform,
+    //                                  aion::EntityInfoComponent& entityInfo)
+    //         {
+    //             GraphicsID graphicsID(entityInfo.entityType, action.action,
+    //                                   0, // TODO: FIX this
+    //                                   transform.getDirection());
 
     //            auto graphicInstruction = ObjectPool<GraphicInstruction>::acquire(
-    //                GraphicInstruction::Type::ADD, 
-    //                entityID, 
+    //                GraphicInstruction::Type::ADD,
+    //                entityID,
     //                graphicsID,
     //                transform.position);
 
@@ -97,9 +95,9 @@ void Simulator::sendGraphicsInstructions()
 
 void Simulator::simulatePhysics()
 {
-    //aion::GameState::getInstance().getEntities<aion::TransformComponent>().each(
-    //    [this](aion::TransformComponent& transform)
-    //    {
-    //        transform.position.x += 1; // Example physics simulation: move right
-    //    });
+    // aion::GameState::getInstance().getEntities<aion::TransformComponent>().each(
+    //     [this](aion::TransformComponent& transform)
+    //     {
+    //         transform.position.x += 1; // Example physics simulation: move right
+    //     });
 }

@@ -8,7 +8,7 @@
 using namespace aion;
 using namespace std::chrono;
 
-EventLoop::EventLoop(std::stop_token* stopToken) : SubSystem(stopToken)
+EventLoop::EventLoop() //: SubSystem(stopToken)
 {
 }
 
@@ -22,9 +22,16 @@ void aion::EventLoop::submitEvents(const Event& event)
     eventQueue.push(event);
 }
 
+void aion::EventLoop::handleEvents()
+{
+    handleTickEvent(lastTick);
+    // handleInputEvents();
+}
+
 void aion::EventLoop::init()
 {
-    eventLoopThread = std::thread(&EventLoop::run, this);
+    // eventLoopThread = std::thread(&EventLoop::run, this);
+    run();
 }
 
 void aion::EventLoop::run()
@@ -41,27 +48,27 @@ void aion::EventLoop::run()
         listener->onInit(this);
     }
 
-    auto lastTick = steady_clock::now();
+    // auto lastTick = steady_clock::now();
 
-    while (stopToken_->stop_requested() == false)
-    {
-        handleTickEvent(lastTick);
-        handleInputEvents();
+    // while (stopToken_->stop_requested() == false)
+    // {
+    //     handleTickEvent(lastTick);
+    //     handleInputEvents();
 
-        // Sleep for a short duration to avoid busy-waiting
-        std::this_thread::sleep_for(milliseconds(1));
-    }
+    //     // Sleep for a short duration to avoid busy-waiting
+    //     std::this_thread::sleep_for(milliseconds(1));
+    // }
 
-    spdlog::info("Shutting down event loop...");
+    // spdlog::info("Shutting down event loop...");
 }
 
 void aion::EventLoop::shutdown()
 {
     // TODO: Terminate the thread first, otherwise it won't exit from the loop
-    if (eventLoopThread.joinable())
-    {
-        eventLoopThread.join();
-    }
+    // if (eventLoopThread.joinable())
+    // {
+    //     eventLoopThread.join();
+    // }
 }
 
 void aion::EventLoop::handleTickEvent(std::chrono::steady_clock::time_point& lastTime)
@@ -88,23 +95,23 @@ void aion::EventLoop::handleTickEvent(std::chrono::steady_clock::time_point& las
     }
 }
 
-void aion::EventLoop::handleInputEvents()
-{
-    while (!eventQueue.empty())
-    {
-        auto event = eventQueue.front();
-        eventQueue.pop();
-        for (auto& listener : listeners)
-        {
-            listener->onEvent(event);
-        }
+// void aion::EventLoop::handleInputEvents()
+// {
+//     while (!eventQueue.empty())
+//     {
+//         auto event = eventQueue.front();
+//         eventQueue.pop();
+//         for (auto& listener : listeners)
+//         {
+//             listener->onEvent(event);
+//         }
 
-        for (auto& listener : listenersRawPtrs)
-        {
-            listener->onEvent(event);
-        }
-    }
-}
+//         for (auto& listener : listenersRawPtrs)
+//         {
+//             listener->onEvent(event);
+//         }
+//     }
+// }
 
 void aion::EventLoop::registerListenerRawPtr(EventHandler* listener)
 {

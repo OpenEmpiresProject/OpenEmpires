@@ -2,14 +2,19 @@
 #define INPUTLISTENER_H
 
 #include "EventHandler.h"
+#include "GameSettings.h"
 #include "ThreadQueue.h"
+#include "Viewport.h"
 
 namespace aion
 {
 class InputListener : public EventHandler
 {
   public:
-    InputListener(ThreadQueue& eventQueue) : eventQueue(eventQueue) {};
+    InputListener(Viewport& viewport, const GameSettings& settings)
+        : viewport(viewport), settings(settings)
+    {
+    }
     virtual ~InputListener() = default;
 
   private:
@@ -19,8 +24,9 @@ class InputListener : public EventHandler
     void onEvent(const Event& e) override;
     void handleInputEvents();
 
-    ThreadQueue& eventQueue;
     EventLoop* eventLoop = nullptr;
+    Viewport& viewport;
+    const GameSettings& settings;
 };
 } // namespace aion
 

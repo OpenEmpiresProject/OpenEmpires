@@ -154,14 +154,14 @@ TEST_F(ViewportTest, ScreenUnitsToPixelsConversion) {
     EXPECT_EQ(viewport.screenUnitsToPixels(screenUnits), Vec2d(100, 100));
 }
 
-TEST_F(ViewportTest, HandleKeyDownEvent) {
-    SDL_Event sdlEvent;
-    sdlEvent.key.key = SDLK_A; // Simulate 'A' key press
-    Event event(Event::Type::KEY_DOWN, &sdlEvent);
+// TEST_F(ViewportTest, HandleKeyDownEvent) {
+//     SDL_Event sdlEvent;
+//     sdlEvent.key.key = SDLK_A; // Simulate 'A' key press
+//     Event event(Event::Type::KEY_DOWN, &sdlEvent);
 
-    EventHandler* eventHandler = &viewport;
+//     EventHandler* eventHandler = &viewport;
 
-    eventHandler->onEvent(event);
-    viewport.syncPosition();
-    EXPECT_EQ(viewport.getViewportPositionInPixels(), Vec2d(-settings.getViewportMovingSpeed(), 0));
-}
+//     eventHandler->onEvent(event);
+//     viewport.syncPosition();
+//     EXPECT_EQ(viewport.getViewportPositionInPixels(), Vec2d(-settings.getViewportMovingSpeed(), 0));
+// }

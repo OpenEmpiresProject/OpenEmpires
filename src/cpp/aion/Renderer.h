@@ -1,6 +1,7 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+#include "EventLoop.h"
 #include "GameSettings.h"
 #include "GraphicInstruction.h"
 #include "GraphicsRegistry.h"
@@ -27,9 +28,8 @@ class Renderer : public SubSystem
     Renderer(std::stop_source* stopSource,
              const GameSettings& settings,
              aion::GraphicsRegistry& graphicsRegistry,
-             ThreadQueue& renderQueue,
-             ThreadQueue& eventLoopQueue,
-             Viewport& viewport);
+             Viewport& viewport,
+             EventLoop& eventLoop);
     ~Renderer();
 
     // SubSystem methods
@@ -53,7 +53,7 @@ class Renderer : public SubSystem
     void cleanup();
 
     bool handleEvents();
-    void handleGraphicInstructions();
+    // void handleGraphicInstructions();
     void renderDebugInfo(FPSCounter& counter);
     void renderGameEntities();
     void renderBackground();
@@ -81,8 +81,6 @@ class Renderer : public SubSystem
     std::mutex sdlInitMutex_;
     bool sdlInitialized_ = false;
 
-    ThreadQueue& simulatorQueue;
-    ThreadQueue& eventLoopQueue_;
     int queueSize_ = 0;
     int maxQueueSize_ = 0;
 
@@ -91,6 +89,8 @@ class Renderer : public SubSystem
     Viewport& viewport;
 
     Vec2d anchorTilePixelsPos;
+
+    EventLoop& eventLoop;
 };
 } // namespace aion
 

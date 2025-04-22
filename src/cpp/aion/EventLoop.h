@@ -12,10 +12,10 @@
 namespace aion
 {
 class EventHandler;
-class EventLoop : public SubSystem
+class EventLoop
 {
   public:
-    EventLoop(std::stop_token* stopToken);
+    EventLoop();
     ~EventLoop();
 
     void registerListenerRawPtr(EventHandler* listener);
@@ -29,18 +29,22 @@ class EventLoop : public SubSystem
 
     void submitEvents(const Event& event);
 
+    void handleEvents();
+
   private:
     // SubSystem methods
-    void init() override;
+    void init();
     void run();
-    void shutdown() override;
+    void shutdown();
     void handleTickEvent(std::chrono::steady_clock::time_point& lastTime);
-    void handleInputEvents();
+    // void handleInputEvents();
 
     std::list<std::unique_ptr<EventHandler>> listeners;
     std::list<EventHandler*> listenersRawPtrs;
     std::thread eventLoopThread;
     std::queue<Event> eventQueue;
+
+    std::chrono::steady_clock::time_point lastTick;
 };
 
 } // namespace aion
