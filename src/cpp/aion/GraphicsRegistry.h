@@ -22,7 +22,9 @@ class GraphicsID
     int custom3 = 0;                                      // 4bits: 0-15
 
     GraphicsID() = default;
-    GraphicsID(int entityType, int actionType) : entitytType(entityType), actionType(actionType) {}
+    GraphicsID(int entityType, int actionType) : entitytType(entityType), actionType(actionType)
+    {
+    }
     GraphicsID(int entityType, int actionType, int frame)
         : entitytType(entityType), actionType(actionType), frame(frame)
     {
@@ -32,7 +34,7 @@ class GraphicsID
     {
     }
 
-    bool operator==(const GraphicsID &other) const
+    bool operator==(const GraphicsID& other) const
     {
         return entitytType == other.entitytType && actionType == other.actionType &&
                direction == other.direction && frame == other.frame && custom1 == other.custom1 &&
@@ -72,7 +74,7 @@ class GraphicsID
 
 struct GraphicsEntry
 {
-    SDL_Texture *image = nullptr;
+    SDL_Texture* image = nullptr;
     Vec2d anchor{0, 0};
 };
 
@@ -82,8 +84,8 @@ class GraphicsRegistry
     GraphicsRegistry() = default;
     ~GraphicsRegistry() = default;
 
-    void registerGraphic(const GraphicsID &graphicID, const GraphicsEntry &entry);
-    const GraphicsEntry &getGraphic(const GraphicsID &graphicID) const;
+    void registerGraphic(const GraphicsID& graphicID, const GraphicsEntry& entry);
+    const GraphicsEntry& getGraphic(const GraphicsID& graphicID) const;
 
   private:
     std::unordered_map<int64_t, GraphicsEntry> graphicsMap;

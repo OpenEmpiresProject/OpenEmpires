@@ -9,7 +9,7 @@
 
 namespace utils
 {
-static void initLogger(const std::string &filename)
+static void initLogger(const std::string& filename)
 {
     std::string pattern = "[%T][%l] %t: %v";
     auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_st>();

@@ -10,7 +10,9 @@ class EntityInfoComponent : public aion::Component<EntityInfoComponent>
   public:
     int entityType = 0;
 
-    EntityInfoComponent(int entityType) : entityType(entityType) {}
+    EntityInfoComponent(int entityType) : entityType(entityType)
+    {
+    }
 };
 } // namespace aion
 

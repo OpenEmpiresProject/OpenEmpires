@@ -18,31 +18,65 @@ class GameSettings
         resolution.width = width;
         resolution.height = height;
     }
-    void setFullscreen(bool fullscreen) { _isFullscreen = fullscreen; }
-    void setVSync(bool vsync) { _isVSync = vsync; }
-    void setVolume(float volume) { soundVolume = volume; }
-    void setMusicVolume(float volume) { musicVolume = volume; }
+    void setFullscreen(bool fullscreen)
+    {
+        _isFullscreen = fullscreen;
+    }
+    void setVSync(bool vsync)
+    {
+        _isVSync = vsync;
+    }
+    void setVolume(float volume)
+    {
+        soundVolume = volume;
+    }
+    void setMusicVolume(float volume)
+    {
+        musicVolume = volume;
+    }
     void setWindowDimensions(int width, int height)
     {
         windowDimensions.width = width;
         windowDimensions.height = height;
     }
-    void setWorldSizeType(utils::WorldSizeType size) { worldSizeType = size; }
-    void setTitle(std::string title) { this->title = title; }
+    void setWorldSizeType(utils::WorldSizeType size)
+    {
+        worldSizeType = size;
+    }
+    void setTitle(const std::string& title)
+    {
+        this->title = title;
+    }
 
-    utils::WidthHeight getResolution() const { return resolution; }
-    utils::WidthHeight getWindowDimensions() const { return windowDimensions; }
-    utils::WorldSizeType getWorldSizeType() const { return worldSizeType; }
-    utils::WidthHeight getWorldSize() const
+    void setViewportMovingSpeed(int speed)
+    {
+        viewportMovingSpeed = speed;
+    }
+
+    const utils::WidthHeight& getResolution() const
+    {
+        return resolution;
+    }
+    const utils::WidthHeight& getWindowDimensions() const
+    {
+        return windowDimensions;
+    }
+    utils::WorldSizeType getWorldSizeType() const
+    {
+        return worldSizeType;
+    }
+    const utils::WidthHeight& getWorldSize() const
     {
         switch (worldSizeType)
         {
+        case utils::WorldSizeType::DEMO:
+            return {50 * utils::Constants::FEET_PER_TILE, 50 * utils::Constants::FEET_PER_TILE};
         case utils::WorldSizeType::TINY:
-            return {120 * utils::Constants::TILE_SIZE, 120 * utils::Constants::TILE_SIZE};
+            return {120 * utils::Constants::FEET_PER_TILE, 120 * utils::Constants::FEET_PER_TILE};
         case utils::WorldSizeType::MEDIUM:
-            return {180 * utils::Constants::TILE_SIZE, 180 * utils::Constants::TILE_SIZE};
+            return {180 * utils::Constants::FEET_PER_TILE, 180 * utils::Constants::FEET_PER_TILE};
         case utils::WorldSizeType::GIANT:
-            return {240 * utils::Constants::TILE_SIZE, 240 * utils::Constants::TILE_SIZE};
+            return {240 * utils::Constants::FEET_PER_TILE, 240 * utils::Constants::FEET_PER_TILE};
         default:
             // TODO: Handle error case
             return {-1, -1};
@@ -51,24 +85,45 @@ class GameSettings
     utils::WidthHeight getWorldSizeInTiles() const
     {
         auto worldSize = getWorldSize();
-        return {worldSize.width / utils::Constants::TILE_SIZE,
-                worldSize.height / utils::Constants::TILE_SIZE};
+        return {worldSize.width / utils::Constants::FEET_PER_TILE,
+                worldSize.height / utils::Constants::FEET_PER_TILE};
     }
-    bool isFullscreen() const { return _isFullscreen; }
-    bool isVSync() const { return _isVSync; }
-    float getVolume() const { return soundVolume; }
-    float getMusicVolume() const { return musicVolume; }
-    std::string getTitle() const { return title; }
+    bool isFullscreen() const
+    {
+        return _isFullscreen;
+    }
+    bool isVSync() const
+    {
+        return _isVSync;
+    }
+    float getVolume() const
+    {
+        return soundVolume;
+    }
+    float getMusicVolume() const
+    {
+        return musicVolume;
+    }
+    std::string getTitle() const
+    {
+        return title;
+    }
+
+    int getViewportMovingSpeed() const
+    {
+        return viewportMovingSpeed;
+    }
 
   private:
     utils::WidthHeight resolution{800, 600};
     utils::WidthHeight windowDimensions{800, 600};
-    utils::WorldSizeType worldSizeType = utils::WorldSizeType::TINY;
+    utils::WorldSizeType worldSizeType = utils::WorldSizeType::DEMO;
     bool _isFullscreen = false;
     bool _isVSync = true;
     float soundVolume = 1.0f;
     float musicVolume = 1.0f;
     std::string title = "openEmipires";
+    int viewportMovingSpeed = 100;
 };
 } // namespace aion
 

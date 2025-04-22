@@ -3,6 +3,7 @@
 
 #include <compare>
 #include <cstddef>
+#include <format>
 #include <functional>
 #include <iostream>
 #include <utility>
@@ -16,55 +17,70 @@ class Vec2d
     int y;
 
     // Constructors
-    constexpr Vec2d() noexcept : x(0), y(0) {}
-    constexpr Vec2d(int x, int y) noexcept : x(x), y(y) {}
+    constexpr Vec2d() noexcept : x(0), y(0)
+    {
+    }
+    constexpr Vec2d(int x, int y) noexcept : x(x), y(y)
+    {
+    }
 
     // Copy / move
-    constexpr Vec2d(const Vec2d &) noexcept = default;
-    constexpr Vec2d(Vec2d &&) noexcept = default;
-    constexpr Vec2d &operator=(const Vec2d &) noexcept = default;
-    constexpr Vec2d &operator=(Vec2d &&) noexcept = default;
+    constexpr Vec2d(const Vec2d&) noexcept = default;
+    constexpr Vec2d(Vec2d&&) noexcept = default;
+    constexpr Vec2d& operator=(const Vec2d&) noexcept = default;
+    constexpr Vec2d& operator=(Vec2d&&) noexcept = default;
 
     // Comparison operators
-    constexpr auto operator<=>(const Vec2d &) const = default;
+    constexpr auto operator<=>(const Vec2d&) const = default;
+
+    bool operator==(const Vec2d& other) const
+    {
+        return x == other.x && y == other.y;
+    }
 
     // Arithmetic operators
-    constexpr Vec2d operator+(const Vec2d &other) const noexcept
+    constexpr Vec2d operator+(const Vec2d& other) const noexcept
     {
         return {x + other.x, y + other.y};
     }
 
-    constexpr Vec2d operator-(const Vec2d &other) const noexcept
+    constexpr Vec2d operator-(const Vec2d& other) const noexcept
     {
-        return {x - other.x, y - other.y};
+        return Vec2d(x - other.x, y - other.y);
     }
 
-    constexpr Vec2d operator*(int scalar) const noexcept { return {x * scalar, y * scalar}; }
+    constexpr Vec2d operator*(int scalar) const noexcept
+    {
+        return {x * scalar, y * scalar};
+    }
 
-    constexpr Vec2d operator/(int scalar) const noexcept { return {x / scalar, y / scalar}; }
+    constexpr Vec2d operator/(int scalar) const noexcept
+    {
+        return {x / scalar, y / scalar};
+    }
 
-    constexpr Vec2d &operator+=(const Vec2d &other) noexcept
+    constexpr Vec2d& operator+=(const Vec2d& other) noexcept
     {
         x += other.x;
         y += other.y;
         return *this;
     }
 
-    constexpr Vec2d &operator-=(const Vec2d &other) noexcept
+    constexpr Vec2d& operator-=(const Vec2d& other) noexcept
     {
         x -= other.x;
         y -= other.y;
         return *this;
     }
 
-    constexpr Vec2d &operator*=(int scalar) noexcept
+    constexpr Vec2d& operator*=(int scalar) noexcept
     {
         x *= scalar;
         y *= scalar;
         return *this;
     }
 
-    constexpr Vec2d &operator/=(int scalar) noexcept
+    constexpr Vec2d& operator/=(int scalar) noexcept
     {
         x /= scalar;
         y /= scalar;
@@ -72,19 +88,33 @@ class Vec2d
     }
 
     // Negation
-    constexpr Vec2d operator-() const noexcept { return {-x, -y}; }
+    constexpr Vec2d operator-() const noexcept
+    {
+        return {-x, -y};
+    }
 
     // Magnitude squared
-    constexpr int lengthSquared() const noexcept { return x * x + y * y; }
+    constexpr int lengthSquared() const noexcept
+    {
+        return x * x + y * y;
+    }
 
     // Dot product
-    constexpr int dot(const Vec2d &other) const noexcept { return x * other.x + y * other.y; }
+    constexpr int dot(const Vec2d& other) const noexcept
+    {
+        return x * other.x + y * other.y;
+    }
+
+    std::string toString() const
+    {
+        return std::format("({}, {})", x, y);
+    }
 };
 
 } // namespace aion
 
 // Stream output
-inline std::ostream &operator<<(std::ostream &os, const aion::Vec2d &v)
+inline std::ostream& operator<<(std::ostream& os, const aion::Vec2d& v)
 {
     return os << '(' << v.x << ", " << v.y << ')';
 }
@@ -94,7 +124,7 @@ namespace std
 {
 template <> struct hash<aion::Vec2d>
 {
-    std::size_t operator()(const aion::Vec2d &v) const noexcept
+    std::size_t operator()(const aion::Vec2d& v) const noexcept
     {
         std::size_t h1 = std::hash<int>{}(v.x);
         std::size_t h2 = std::hash<int>{}(v.y);
@@ -106,7 +136,7 @@ template <> struct hash<aion::Vec2d>
 // Structured bindings support
 namespace aion
 {
-template <std::size_t I> constexpr int get(const Vec2d &v) noexcept
+template <std::size_t I> constexpr int get(const Vec2d& v) noexcept
 {
     if constexpr (I == 0)
         return v.x;

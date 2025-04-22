@@ -11,7 +11,9 @@ class ActionComponent : public aion::Component<ActionComponent>
     // TODO: Temp
     int action = 0;
 
-    ActionComponent(int action) : action(action) {}
+    ActionComponent(int action) : action(action)
+    {
+    }
 };
 } // namespace aion
 

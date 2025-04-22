@@ -5,6 +5,8 @@
 #include "GraphicInstruction.h"
 #include "GraphicsRegistry.h"
 #include "SubSystem.h"
+#include "ThreadQueue.h"
+#include "Viewport.h"
 
 #include <SDL3/SDL.h>
 #include <atomic>
@@ -18,13 +20,16 @@
 namespace aion
 {
 class FPSCounter;
-using ThreadQueue = moodycamel::ReaderWriterQueue<std::vector<GraphicInstruction>>;
 
 class Renderer : public SubSystem
 {
   public:
-    Renderer(std::stop_source *stopSource, const GameSettings &settings,
-             aion::GraphicsRegistry &graphicsRegistry, ThreadQueue &simulatorQueue);
+    Renderer(std::stop_source* stopSource,
+             const GameSettings& settings,
+             aion::GraphicsRegistry& graphicsRegistry,
+             ThreadQueue& renderQueue,
+             ThreadQueue& eventLoopQueue,
+             Viewport& viewport);
     ~Renderer();
 
     // SubSystem methods
@@ -32,9 +37,9 @@ class Renderer : public SubSystem
     void shutdown() override;
 
     // TODO: Do we need this?
-    bool loadTexture(const std::string &imagePath);
+    bool loadTexture(const std::string& imagePath);
 
-    SDL_Renderer *getSDLRenderer()
+    SDL_Renderer* getSDLRenderer()
     {
         std::unique_lock<std::mutex> lock(sdlInitMutex_);
         sdlInitCV_.wait(lock, [this] { return sdlInitialized_; });
@@ -49,32 +54,43 @@ class Renderer : public SubSystem
 
     bool handleEvents();
     void handleGraphicInstructions();
-    void renderDebugInfo(FPSCounter &counter);
+    void renderDebugInfo(FPSCounter& counter);
     void renderGameEntities();
     void renderBackground();
 
-    void addDebugText(const std::string &text) { debugTexts.push_back(text); }
+    void addDebugText(const std::string& text)
+    {
+        debugTexts.push_back(text);
+    }
 
-    void clearDebugTexts() { debugTexts.clear(); }
+    void clearDebugTexts()
+    {
+        debugTexts.clear();
+    }
 
-    SDL_Window *window_ = nullptr;
-    SDL_Renderer *renderer_ = nullptr;
-    SDL_Texture *texture_ = nullptr;
+    SDL_Window* window_ = nullptr;
+    SDL_Renderer* renderer_ = nullptr;
+    SDL_Texture* texture_ = nullptr;
 
     std::thread renderThread_;
     std::atomic<bool> running_ = false;
-    const GameSettings &settings;
-    aion::GraphicsRegistry &graphicsRegistry;
+    const GameSettings& settings;
+    aion::GraphicsRegistry& graphicsRegistry;
 
     std::condition_variable sdlInitCV_;
     std::mutex sdlInitMutex_;
     bool sdlInitialized_ = false;
 
-    ThreadQueue &threadQueue_;
+    ThreadQueue& simulatorQueue;
+    ThreadQueue& eventLoopQueue_;
     int queueSize_ = 0;
     int maxQueueSize_ = 0;
 
     std::vector<std::string> debugTexts;
+
+    Viewport& viewport;
+
+    Vec2d anchorTilePixelsPos;
 };
 } // namespace aion
 

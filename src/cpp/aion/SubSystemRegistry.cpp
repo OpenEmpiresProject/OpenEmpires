@@ -5,19 +5,19 @@
 
 using namespace aion;
 
-SubSystemRegistry &SubSystemRegistry::getInstance()
+SubSystemRegistry& SubSystemRegistry::getInstance()
 {
     static SubSystemRegistry instance;
     return instance;
 }
 
-void SubSystemRegistry::registerSubSystem(const std::string &name,
+void SubSystemRegistry::registerSubSystem(const std::string& name,
                                           std::unique_ptr<SubSystem> component)
 {
     subSystems[name] = std::move(component);
 }
 
-SubSystem *SubSystemRegistry::getSubSystem(const std::string &name)
+SubSystem* SubSystemRegistry::getSubSystem(const std::string& name)
 {
     auto it = subSystems.find(name);
     if (it != subSystems.end())
@@ -29,7 +29,7 @@ SubSystem *SubSystemRegistry::getSubSystem(const std::string &name)
 
 void SubSystemRegistry::initAll()
 {
-    for (auto &[name, subSystem] : subSystems)
+    for (auto& [name, subSystem] : subSystems)
     {
         subSystem->init();
     }
@@ -37,7 +37,7 @@ void SubSystemRegistry::initAll()
 
 void SubSystemRegistry::shutdownAll()
 {
-    for (auto &[name, subSystem] : subSystems)
+    for (auto& [name, subSystem] : subSystems)
     {
         subSystem->shutdown();
     }

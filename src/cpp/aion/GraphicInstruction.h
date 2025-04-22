@@ -25,8 +25,10 @@ class GraphicInstruction
     const Vec2d worldPosition = {0,
                                  0}; // World logical position (to be converted to screen position)
 
-    GraphicInstruction(GraphicInstruction::Type type, entt::entity entity,
-                       const GraphicsID &graphicsID, Vec2d worldPosition)
+    GraphicInstruction(GraphicInstruction::Type type,
+                       entt::entity entity,
+                       const GraphicsID& graphicsID,
+                       Vec2d worldPosition)
         : entity(entity), graphicsID(graphicsID), worldPosition(worldPosition), type(type)
     {
     }

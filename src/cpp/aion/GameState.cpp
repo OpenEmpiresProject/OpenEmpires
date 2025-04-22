@@ -2,14 +2,30 @@
 
 using namespace aion;
 
-GameState::GameState(/* args */) {}
+GameState::GameState(/* args */)
+{
+}
 
-GameState::~GameState() {}
+GameState::~GameState()
+{
+}
 
-entt::entity GameState::createEntity() { return registry.create(); }
+entt::entity GameState::createEntity()
+{
+    return registry.create();
+}
 
-void GameState::destroyEntity(entt::entity entity) { registry.destroy(entity); }
+void GameState::destroyEntity(entt::entity entity)
+{
+    registry.destroy(entity);
+}
 
-bool GameState::isEntityValid(entt::entity entity) const { return registry.valid(entity); }
+bool GameState::isEntityValid(entt::entity entity) const
+{
+    return registry.valid(entity);
+}
 
-void GameState::clearAll() { registry.clear(); }
+void GameState::clearAll()
+{
+    registry.clear();
+}

@@ -10,6 +10,7 @@ namespace utils
 using Signature = std::bitset<utils::Constants::MAX_COMPONENTS>;
 enum class WorldSizeType
 {
+    DEMO,
     TINY,
     MEDIUM,
     GIANT

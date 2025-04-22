@@ -10,54 +10,83 @@ namespace utils
 template <typename T> class ObjectPool
 {
   public:
-    using Ptr = T *;
+    using Ptr = T*;
 
-    ObjectPool() = default;
+    ObjectPool() = delete;
 
     // Preallocate a fixed number of objects
-    void reserve(size_t count)
+    static void reserve(size_t count)
     {
+        auto& storage = getThreadLocalStorage();
         for (size_t i = 0; i < count; ++i)
         {
-            pool.push(static_cast<Ptr>(::operator new(sizeof(T))));
+            storage.pool.push(static_cast<Ptr>(::operator new(sizeof(T))));
         }
-        poolSize += count;
     }
 
-    // Create or reuse an object
-    Ptr acquire()
+    // Create or reuse an object with constructor arguments
+    template <typename... Args> static Ptr acquire(Args&&... args)
     {
-        if (!pool.empty())
+        auto& storage = getThreadLocalStorage();
+
+        if (!storage.pool.empty())
         {
-            Ptr obj = pool.top();
-            pool.pop();
+            Ptr obj = storage.pool.top();
+            storage.pool.pop();
+            new (obj) T(std::forward<Args>(args)...); // Placement new with constructor arguments
             return obj;
         }
-
-        return static_cast<Ptr>(::operator new(sizeof(T)));
+        return new T(std::forward<Args>(args)...); // Allocate and construct directly
     }
 
     // Return the object to the pool
-    void release(Ptr obj) { pool.push(obj); }
-
-    // Total number of objects ever created
-    size_t getPoolSize() const { return poolSize; }
-
-    // Number of currently available objects
-    size_t getFreeSize() const { return pool.size(); }
-
-    // Free all objects in the pool
-    ~ObjectPool()
+    static void release(Ptr obj)
     {
-        while (!pool.empty())
+        if (obj != nullptr)
         {
-            pool.pop();
+            auto& storage = getThreadLocalStorage();
+            storage.pool.push(obj);
         }
     }
 
+    static size_t getSize()
+    {
+        auto& storage = getThreadLocalStorage();
+        return storage.pool.size();
+    }
+
+    // // Free all objects in the pool
+    // ~ObjectPool()
+    // {
+    //     while (!pool.empty())
+    //     {
+    //         pool.pop();
+    //     }
+    // }
+
   private:
-    std::stack<Ptr> pool;
-    size_t poolSize = 0;
+    struct WarmUpInitializer
+    {
+        WarmUpInitializer()
+        {
+            spdlog::info("Warming up ObjectPool for type: {}", typeid(T).name());
+            auto& storage = getThreadLocalStorage();
+            storage.pool.reserve(100);
+        }
+    };
+
+    struct Storage
+    {
+        std::stack<Ptr> pool;
+    };
+
+    static Storage& getThreadLocalStorage()
+    {
+        static thread_local Storage storage;
+        return storage;
+    }
+
+    static thread_local WarmUpInitializer warmUpInitializer; // Ensure the pool is warmed up
 };
 
 } // namespace utils

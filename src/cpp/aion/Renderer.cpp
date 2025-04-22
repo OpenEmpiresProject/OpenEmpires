@@ -3,6 +3,7 @@
 #include "FPSCounter.h"
 #include "GameState.h"
 #include "Logger.h"
+#include "ObjectPool.h"
 #include "Renderer.h"
 #include "components/ActionComponent.h"
 #include "components/EntityInfoComponent.h"
@@ -10,16 +11,22 @@
 #include "components/TransformComponent.h"
 
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_video.h>
 #include <SDL3_image/SDL_image.h> // Ensure SDL_image is included
 #include <iostream>
 #include <thread>
 
 using namespace aion;
+using namespace utils;
 
-Renderer::Renderer(std::stop_source *stopSource, const GameSettings &settings,
-                   aion::GraphicsRegistry &graphicsRegistry, ThreadQueue &simulatorQueue)
+Renderer::Renderer(std::stop_source* stopSource,
+                   const GameSettings& settings,
+                   aion::GraphicsRegistry& graphicsRegistry,
+                   ThreadQueue& simulatorQueue,
+                   ThreadQueue& eventLoopQueue,
+                   Viewport& viewport)
     : SubSystem(stopSource), settings(settings), graphicsRegistry(graphicsRegistry),
-      threadQueue_(simulatorQueue)
+      simulatorQueue(simulatorQueue), eventLoopQueue_(eventLoopQueue), viewport(viewport)
 {
     running_ = false;
 }
@@ -76,12 +83,14 @@ void Renderer::initSDL()
     }
 
     window_ = SDL_CreateWindow(settings.getTitle().c_str(), settings.getWindowDimensions().width,
-                               settings.getWindowDimensions().height, 0);
+                               settings.getWindowDimensions().height, SDL_WINDOW_OPENGL);
     if (!window_)
     {
         spdlog::error("SDL_CreateWindow failed: {}", SDL_GetError());
         throw std::runtime_error("SDL_CreateWindow failed");
     }
+
+    // SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d");
 
     renderer_ = SDL_CreateRenderer(window_, nullptr);
     if (!renderer_)
@@ -102,11 +111,16 @@ void aion::Renderer::renderingLoop()
     spdlog::info("Starting rendering loop...");
     bool running = true;
     FPSCounter fpsCounter;
+    int counter = 0;
 
     while (running)
     {
+        // std::cout << "Rendering loop..." << counter++ << std::endl;
         fpsCounter.frame();
         running = handleEvents();
+
+        // Event loop might have requested a viewport movement, apply the requested change
+        viewport.syncPosition();
 
         handleGraphicInstructions();
 
@@ -118,18 +132,19 @@ void aion::Renderer::renderingLoop()
         // SDL_Delay(16); // ~60 FPS
     }
 
+    spdlog::info("Shutting down renderer...");
+
     SDL_DestroyWindow(window_);
     SDL_Quit();
     stopSource_->request_stop();
-
-    spdlog::shutdown();
-    spdlog::drop_all();
 }
 
 bool aion::Renderer::handleEvents()
 {
     SDL_Event event;
     bool running = true;
+    auto message = ObjectPool<ThreadMessage>::acquire(ThreadMessage::Type::INPUT);
+
     while (SDL_PollEvent(&event))
     {
         if (event.type == SDL_EVENT_QUIT || event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
@@ -137,7 +152,20 @@ bool aion::Renderer::handleEvents()
             running = false;
             break;
         }
+        else
+        {
+            // spdlog::debug("Sending event: {}", event.type);
+
+            auto eventPtr = ObjectPool<SDL_Event>::acquire();
+            *eventPtr = event;
+            message->commandBuffer.push_back(static_cast<void*>(eventPtr));
+        }
     }
+    // TODO: Can optimize this to avoid getting a object from the pool at all
+    if (message->commandBuffer.empty())
+        ObjectPool<ThreadMessage>::release(message);
+    else
+        eventLoopQueue_.enqueue(message);
     return running;
 }
 
@@ -147,46 +175,60 @@ void aion::Renderer::handleGraphicInstructions()
     maxQueueSize_ = std::max(maxQueueSize_, queueSize_);
     queueSize_ = 0;
 
-    std::vector<GraphicInstruction> instructionList;
+    ThreadMessage* message = nullptr;
 
-    while (threadQueue_.try_dequeue(instructionList))
+    while (simulatorQueue.try_dequeue(message))
     {
-        queueSize_++;
-        for (const auto &instruction : instructionList)
+        spdlog::debug("Handling graphic instructions...");
+
+        if (message->type != ThreadMessage::Type::RENDER)
         {
-            if (instruction.type == GraphicInstruction::Type::ADD)
+            spdlog::error("Invalid message type for Renderer: {}", static_cast<int>(message->type));
+            throw std::runtime_error("Invalid message type for Renderer.");
+        }
+
+        queueSize_++;
+        for (const auto& cmdPtr : message->commandBuffer)
+        {
+            auto instruction = static_cast<GraphicInstruction*>(cmdPtr);
+
+            if (instruction->type == GraphicInstruction::Type::ADD)
             {
-                auto &entry = graphicsRegistry.getGraphic(instruction.graphicsID);
+                auto& entry = graphicsRegistry.getGraphic(instruction->graphicsID);
                 if (entry.image != nullptr)
                 {
-                    auto &gc = aion::GameState::getInstance().getComponent<aion::GraphicsComponent>(
-                        instruction.entity);
-                    gc.graphicsID = instruction.graphicsID;
-                    gc.worldPosition = instruction.worldPosition;
+                    auto& gc = aion::GameState::getInstance().getComponent<aion::GraphicsComponent>(
+                        instruction->entity);
+                    gc.graphicsID = instruction->graphicsID;
+                    gc.worldPosition = instruction->worldPosition;
                     gc.texture = entry.image;
                 }
                 else
                 {
                     spdlog::error("Texture not found for entity: {}",
-                                  instruction.graphicsID.toString());
+                                  instruction->graphicsID.toString());
                 }
+                ObjectPool<GraphicInstruction>::release(instruction);
             }
         }
     }
+    ObjectPool<ThreadMessage>::release(message);
 }
 
-void aion::Renderer::renderDebugInfo(FPSCounter &counter)
+void aion::Renderer::renderDebugInfo(FPSCounter& counter)
 {
     // spdlog::debug("Rendering debug info...");
 
     addDebugText("Average FPS: " + std::to_string(counter.getAverageFPS()));
     addDebugText("Queue depth: " + std::to_string(queueSize_));
     addDebugText("Max Queue depth: " + std::to_string(maxQueueSize_));
+    addDebugText("Viewport: " + viewport.getViewportPositionInPixels().toString());
+    addDebugText("Anchor Tile: " + anchorTilePixelsPos.toString());
 
     SDL_SetRenderDrawColor(renderer_, 255, 255, 255, SDL_ALPHA_OPAQUE); /* white, full alpha */
 
     int y = 10;
-    for (const auto &line : debugTexts)
+    for (const auto& line : debugTexts)
     {
         SDL_RenderDebugText(renderer_, 10, y, line.c_str());
         y += 20;
@@ -199,10 +241,22 @@ void aion::Renderer::renderGameEntities()
 {
     // spdlog::debug("Rendering game entities...");
 
+    bool isFirst = true;
+    SDL_FRect dstRect = {0, 0, 97, 49};
+
     aion::GameState::getInstance().getEntities<aion::GraphicsComponent>().each(
-        [this](aion::GraphicsComponent &gc)
+        [this, &isFirst, &dstRect](aion::GraphicsComponent& gc)
         {
-            SDL_FRect dstRect = {gc.worldPosition.x, gc.worldPosition.y, 100, 100};
+            auto screenPos = viewport.feetToScreenUnits(gc.worldPosition);
+
+            if (isFirst)
+            {
+                anchorTilePixelsPos = viewport.feetToPixels(gc.worldPosition);
+                isFirst = false;
+            }
+
+            dstRect.x = screenPos.x;
+            dstRect.y = screenPos.y;
             SDL_RenderTexture(renderer_, gc.texture, nullptr, &dstRect);
         });
 }

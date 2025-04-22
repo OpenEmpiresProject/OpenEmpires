@@ -1,32 +1,31 @@
 #ifndef SIMULATOR_H
 #define SIMULATOR_H
 
-#include "EventListener.h"
+#include "EventHandler.h"
 #include "GraphicInstruction.h"
+#include "ThreadQueue.h"
 
 #include <readerwriterqueue.h>
 #include <vector>
 
 namespace aion
 {
-using ThreadQueue = moodycamel::ReaderWriterQueue<std::vector<GraphicInstruction>>;
-
-class Simulator : public EventListener
+class Simulator : public EventHandler
 {
   public:
-    Simulator(ThreadQueue &rendererQueue) : rendererQueue(rendererQueue) {};
+    Simulator(ThreadQueue& rendererQueue) : rendererQueue(rendererQueue) {};
     ~Simulator() = default;
 
   private:
-    void onInit();
+    void onInit(EventLoop* eventLoop);
     void onExit();
-    void onEvent(const Event &e);
+    void onEvent(const Event& e);
 
     void onTick();
     void sendGraphicsInstructions();
     void simulatePhysics();
 
-    ThreadQueue &rendererQueue;
+    ThreadQueue& rendererQueue;
 };
 } // namespace aion
 

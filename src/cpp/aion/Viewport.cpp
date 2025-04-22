@@ -1,0 +1,118 @@
+#include "Viewport.h"
+
+#include <SDL3/SDL_events.h>
+
+using namespace aion;
+
+// Invoked from the Event loop thread
+void Viewport::onEvent(const Event& e)
+{
+    if (e.getType() == Event::Type::KEY_DOWN)
+    {
+        auto event = e.getData<SDL_Event*>();
+        if (event->key.key == SDLK_A)
+        {
+            requestPositionChange(Vec2d(-settings.getViewportMovingSpeed(), 0));
+        }
+        else if (event->key.key == SDLK_D)
+        {
+            requestPositionChange(Vec2d(settings.getViewportMovingSpeed(), 0));
+        }
+        else if (event->key.key == SDLK_W)
+        {
+            requestPositionChange(Vec2d(0, -settings.getViewportMovingSpeed()));
+        }
+        else if (event->key.key == SDLK_S)
+        {
+            requestPositionChange(Vec2d(0, settings.getViewportMovingSpeed()));
+        }
+        // spdlog::debug("Viewport position: ({}, {})", viewportPositionInPixels.x,
+        // viewportPositionInPixels.y);
+    }
+}
+
+Viewport::Viewport(const GameSettings& settings) : settings(settings)
+{
+}
+
+Vec2d Viewport::feetToPixels(const Vec2d& feet) const
+{
+    int pixelsX = ((feet.x - feet.y) * utils::Constants::TILE_PIXEL_WIDTH) /
+                  (2 * utils::Constants::FEET_PER_TILE);
+    int pixelsY = ((feet.x + feet.y) * utils::Constants::TILE_PIXEL_HEIGHT) /
+                  (2 * utils::Constants::FEET_PER_TILE);
+    int pixelsMapCenterOffsetX =
+        settings.getWorldSizeInTiles().width * utils::Constants::TILE_PIXEL_WIDTH / 2;
+    pixelsX += pixelsMapCenterOffsetX;
+
+    return Vec2d(pixelsX, pixelsY);
+}
+
+Vec2d Viewport::feetToScreenUnits(const Vec2d& feet) const
+{
+    return pixelsToScreenUnits(feetToPixels(feet));
+}
+
+Vec2d Viewport::pixelsToFeet(const Vec2d& pixels) const
+{
+    int pixelsMapCenterOffsetX =
+        settings.getWorldSizeInTiles().width * utils::Constants::TILE_PIXEL_WIDTH / 2;
+    int pixelsX = pixels.x - pixelsMapCenterOffsetX;
+    int feetX =
+        (((pixelsX * utils::Constants::FEET_PER_TILE) / (utils::Constants::TILE_PIXEL_WIDTH)) +
+         ((pixels.y * utils::Constants::FEET_PER_TILE) / (utils::Constants::TILE_PIXEL_HEIGHT)));
+    int feetY =
+        (((pixels.y * utils::Constants::FEET_PER_TILE) / (utils::Constants::TILE_PIXEL_HEIGHT)) -
+         ((pixelsX * utils::Constants::FEET_PER_TILE) / (utils::Constants::TILE_PIXEL_WIDTH)));
+
+    return Vec2d(feetX, feetY);
+}
+
+Vec2d Viewport::pixelsToScreenUnits(const Vec2d& pixels) const
+{
+    return pixels - viewportPositionInPixels;
+}
+
+Vec2d Viewport::screenUnitsToPixels(const Vec2d& screenUnits) const
+{
+    return screenUnits + viewportPositionInPixels;
+}
+
+Vec2d Viewport::screenUnitsToFeet(const Vec2d& screenUnits) const
+{
+    return pixelsToFeet(screenUnitsToPixels(screenUnits));
+}
+
+const Vec2d& Viewport::getViewportPositionInPixels() const
+{
+    return viewportPositionInPixels;
+}
+void Viewport::setViewportPositionInPixels(const Vec2d& pixels)
+{
+    viewportPositionInPixels = pixels;
+}
+
+bool Viewport::isPositionChangeRequested() const
+{
+    return positionChangeRequested;
+}
+
+void Viewport::syncPosition()
+{
+    if (positionChangeRequested)
+    {
+        std::lock_guard<std::mutex> lock(positionMutex);
+        if (positionChangeRequested)
+        {
+            viewportPositionInPixels += requestedChange;
+            positionChangeRequested = false;
+        }
+    }
+}
+
+void Viewport::requestPositionChange(const Vec2d& delta)
+{
+    std::lock_guard<std::mutex> lock(positionMutex);
+    requestedChange = delta;
+    positionChangeRequested = true;
+}

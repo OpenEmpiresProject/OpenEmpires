@@ -1,23 +1,26 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <stop_token>
 #include "EventLoop.h"
+#include "EventHandler.h"
 
 using namespace aion;
 using namespace testing;
 using namespace std;
 
-class MockEventLoopListener : public EventListener {
+class MockEventLoopListener : public EventHandler {
 public:
     void onEvent(const Event& e) override {
         callCount++;
     }
-    void onInit() {};
+    void onInit(EventLoop* eventLoop) {};
     void onExit() {};
     int callCount = 0;
 };
 
 TEST(EventLoopTest, RegisterAndDeregisterListener) {
-    EventLoop eventLoop(nullptr);
+    stop_token token;
+    EventLoop eventLoop(&token);
     auto mockListener = std::make_unique<MockEventLoopListener>();
     auto rawListenerPtr = mockListener.get();
 
@@ -29,7 +32,10 @@ TEST(EventLoopTest, RegisterAndDeregisterListener) {
 }
 
 TEST(EventLoopTest, TickEventIsTriggered) {
-    SubSystem* eventLoop = new EventLoop(nullptr);
+    std::stop_source stopSource;
+    std::stop_token stopToken = stopSource.get_token();
+
+    SubSystem* eventLoop = new EventLoop(&stopToken);
     auto mockListener = std::make_unique<MockEventLoopListener>();
     auto mockListernerRawPtr = mockListener.get(); // Good enough for a test
 
@@ -38,6 +44,8 @@ TEST(EventLoopTest, TickEventIsTriggered) {
 
     // Let the event loop run for a short time
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    stopSource.request_stop(); // Stop the event loop
+    eventLoop->shutdown();
     ASSERT_GT(mockListernerRawPtr->callCount, 2);
 }
 

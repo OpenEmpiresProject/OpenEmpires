@@ -14,10 +14,10 @@ namespace aion
 class SubSystemRegistry
 {
   public:
-    static SubSystemRegistry &getInstance();
+    static SubSystemRegistry& getInstance();
 
-    void registerSubSystem(const std::string &name, std::unique_ptr<SubSystem> subSystem);
-    SubSystem *getSubSystem(const std::string &name);
+    void registerSubSystem(const std::string& name, std::unique_ptr<SubSystem> subSystem);
+    SubSystem* getSubSystem(const std::string& name);
     void initAll();
     void shutdownAll();
     void waitForAll();
@@ -26,10 +26,10 @@ class SubSystemRegistry
     SubSystemRegistry() = default;
     ~SubSystemRegistry() = default;
 
-    SubSystemRegistry(const SubSystemRegistry &) = delete;
-    SubSystemRegistry &operator=(const SubSystemRegistry &) = delete;
-    SubSystemRegistry(SubSystemRegistry &&) = delete;
-    SubSystemRegistry &operator=(SubSystemRegistry &&) = delete;
+    SubSystemRegistry(const SubSystemRegistry&) = delete;
+    SubSystemRegistry& operator=(const SubSystemRegistry&) = delete;
+    SubSystemRegistry(SubSystemRegistry&&) = delete;
+    SubSystemRegistry& operator=(SubSystemRegistry&&) = delete;
 
     std::unordered_map<std::string, std::unique_ptr<SubSystem>> subSystems;
 };

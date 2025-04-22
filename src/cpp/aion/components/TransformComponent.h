@@ -16,12 +16,16 @@ class TransformComponent : public aion::Component<TransformComponent>
     int rotation = 0;           // Rotation in degrees from North (0 degrees is up)
 
     TransformComponent() = default;
-    TransformComponent(int x, int y) : position(x, y) {}
-    TransformComponent(const aion::Vec2d &pos) : position(pos) {}
-    TransformComponent(const TransformComponent &) = default;
-    TransformComponent &operator=(const TransformComponent &) = default;
+    TransformComponent(int x, int y) : position(x, y)
+    {
+    }
+    TransformComponent(const aion::Vec2d& pos) : position(pos)
+    {
+    }
+    TransformComponent(const TransformComponent&) = default;
+    TransformComponent& operator=(const TransformComponent&) = default;
 
-    void face(const aion::Vec2d &target)
+    void face(const aion::Vec2d& target)
     {
         // Calculate the angle to face the target position
         int deltaX = target.x - position.x;
@@ -29,7 +33,10 @@ class TransformComponent : public aion::Component<TransformComponent>
         rotation = static_cast<int>(std::atan2(deltaY, deltaX) * 180 / std::numbers::pi);
     }
 
-    void face(utils::Direction direction) { rotation = 45 * static_cast<int>(direction); }
+    void face(utils::Direction direction)
+    {
+        rotation = 45 * static_cast<int>(direction);
+    }
 
     utils::Direction getDirection() const
     {
