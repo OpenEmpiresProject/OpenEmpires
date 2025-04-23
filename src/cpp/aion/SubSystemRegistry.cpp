@@ -42,13 +42,3 @@ void SubSystemRegistry::shutdownAll()
         subSystem->shutdown();
     }
 }
-
-void aion::SubSystemRegistry::waitForAll()
-{
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lock(mtx);
-    std::condition_variable cv;
-
-    // Wait forever
-    cv.wait(lock, [] { return false; });
-}

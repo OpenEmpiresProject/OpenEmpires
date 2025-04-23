@@ -20,7 +20,6 @@ class SubSystemRegistry
     SubSystem* getSubSystem(const std::string& name);
     void initAll();
     void shutdownAll();
-    void waitForAll();
 
   private:
     SubSystemRegistry() = default;

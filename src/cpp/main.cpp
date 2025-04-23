@@ -56,7 +56,7 @@ int runGame()
     SubSystemRegistry::getInstance().registerSubSystem("EventLoop", std::move(eventLoop));
 
     SubSystemRegistry::getInstance().initAll();
-    SubSystemRegistry::getInstance().waitForAll();
+    SubSystemRegistry::getInstance().shutdownAll();
 
     spdlog::shutdown();
     spdlog::drop_all();
