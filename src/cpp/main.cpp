@@ -36,20 +36,18 @@ int runGame()
     std::stop_source stopSource;
     std::stop_token stopToken = stopSource.get_token();
 
-    ThreadQueue eventQueue;
     ThreadQueue renderQueue;
 
     Viewport viewport(settings);
 
     auto eventLoop = std::make_unique<EventLoop>(&stopToken);
     auto simulator = std::make_unique<Simulator>(renderQueue);
-    auto inputHandler = std::make_unique<InputListener>(eventQueue);
-    auto renderer = std::make_unique<Renderer>(&stopSource, settings, graphicsRegistry, renderQueue,
-                                               eventQueue, viewport);
+    auto inputHandler = std::make_unique<InputListener>();
+    auto renderer =
+        std::make_unique<Renderer>(&stopSource, settings, graphicsRegistry, renderQueue, viewport);
 
     eventLoop->registerListener(std::move(simulator));
     eventLoop->registerListener(std::move(inputHandler));
-    eventLoop->registerListenerRawPtr(&viewport);
     auto resourceLoader =
         std::make_unique<ResourceLoader>(&stopToken, settings, graphicsRegistry, *(renderer.get()));
 

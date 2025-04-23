@@ -10,6 +10,7 @@
 
 #include <SDL3/SDL.h>
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <memory>
 #include <readerwriterqueue.h>
@@ -28,7 +29,6 @@ class Renderer : public SubSystem
              const GameSettings& settings,
              aion::GraphicsRegistry& graphicsRegistry,
              ThreadQueue& renderQueue,
-             ThreadQueue& eventLoopQueue,
              Viewport& viewport);
     ~Renderer();
 
@@ -68,6 +68,10 @@ class Renderer : public SubSystem
         debugTexts.clear();
     }
 
+    void generateTicks();
+    void onTick();
+    void handleViewportMovement();
+
     SDL_Window* window_ = nullptr;
     SDL_Renderer* renderer_ = nullptr;
     SDL_Texture* texture_ = nullptr;
@@ -82,7 +86,6 @@ class Renderer : public SubSystem
     bool sdlInitialized_ = false;
 
     ThreadQueue& simulatorQueue;
-    ThreadQueue& eventLoopQueue_;
     int queueSize_ = 0;
     int maxQueueSize_ = 0;
 
@@ -91,6 +94,8 @@ class Renderer : public SubSystem
     Viewport& viewport;
 
     Vec2d anchorTilePixelsPos;
+
+    std::chrono::steady_clock::time_point lastTickTime;
 };
 } // namespace aion
 

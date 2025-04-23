@@ -36,17 +36,17 @@ TEST_F(ViewportTest, InitialViewportPosition) {
     EXPECT_EQ(viewport.getViewportPositionInPixels(), Vec2d(0, 0));
 }
 
-TEST_F(ViewportTest, RequestPositionChange) {
-    viewport.requestPositionChange(Vec2d(10, 20));
-    EXPECT_TRUE(viewport.isPositionChangeRequested());
-}
+// TEST_F(ViewportTest, RequestPositionChange) {
+//     viewport.requestPositionChange(Vec2d(10, 20));
+//     EXPECT_TRUE(viewport.isPositionChangeRequested());
+// }
 
-TEST_F(ViewportTest, SyncPosition) {
-    viewport.requestPositionChange(Vec2d(10, 20));
-    viewport.syncPosition();
-    EXPECT_EQ(viewport.getViewportPositionInPixels(), Vec2d(10, 20));
-    EXPECT_FALSE(viewport.isPositionChangeRequested());
-}
+// TEST_F(ViewportTest, SyncPosition) {
+//     viewport.requestPositionChange(Vec2d(10, 20));
+//     viewport.syncPosition();
+//     EXPECT_EQ(viewport.getViewportPositionInPixels(), Vec2d(10, 20));
+//     EXPECT_FALSE(viewport.isPositionChangeRequested());
+// }
 
 TEST_F(ViewportTest, FeetToPixelsConversion_TopCorner) {
     Vec2d feet(0, 0);
@@ -154,14 +154,14 @@ TEST_F(ViewportTest, ScreenUnitsToPixelsConversion) {
     EXPECT_EQ(viewport.screenUnitsToPixels(screenUnits), Vec2d(100, 100));
 }
 
-TEST_F(ViewportTest, HandleKeyDownEvent) {
-    SDL_Event sdlEvent;
-    sdlEvent.key.key = SDLK_A; // Simulate 'A' key press
-    Event event(Event::Type::KEY_DOWN, &sdlEvent);
+// TEST_F(ViewportTest, HandleKeyDownEvent) {
+//     SDL_Event sdlEvent;
+//     sdlEvent.key.key = SDLK_A; // Simulate 'A' key press
+//     Event event(Event::Type::KEY_DOWN, &sdlEvent);
 
-    EventHandler* eventHandler = &viewport;
+//     EventHandler* eventHandler = &viewport;
 
-    eventHandler->onEvent(event);
-    viewport.syncPosition();
-    EXPECT_EQ(viewport.getViewportPositionInPixels(), Vec2d(-settings.getViewportMovingSpeed(), 0));
-}
+//     eventHandler->onEvent(event);
+//     viewport.syncPosition();
+//     EXPECT_EQ(viewport.getViewportPositionInPixels(), Vec2d(-settings.getViewportMovingSpeed(), 0));
+// }

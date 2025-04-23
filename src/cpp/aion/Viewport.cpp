@@ -4,33 +4,6 @@
 
 using namespace aion;
 
-// Invoked from the Event loop thread
-void Viewport::onEvent(const Event& e)
-{
-    if (e.getType() == Event::Type::KEY_DOWN)
-    {
-        auto event = e.getData<SDL_Event*>();
-        if (event->key.key == SDLK_A)
-        {
-            requestPositionChange(Vec2d(-settings.getViewportMovingSpeed(), 0));
-        }
-        else if (event->key.key == SDLK_D)
-        {
-            requestPositionChange(Vec2d(settings.getViewportMovingSpeed(), 0));
-        }
-        else if (event->key.key == SDLK_W)
-        {
-            requestPositionChange(Vec2d(0, -settings.getViewportMovingSpeed()));
-        }
-        else if (event->key.key == SDLK_S)
-        {
-            requestPositionChange(Vec2d(0, settings.getViewportMovingSpeed()));
-        }
-        // spdlog::debug("Viewport position: ({}, {})", viewportPositionInPixels.x,
-        // viewportPositionInPixels.y);
-    }
-}
-
 Viewport::Viewport(const GameSettings& settings) : settings(settings)
 {
 }
@@ -90,29 +63,4 @@ const Vec2d& Viewport::getViewportPositionInPixels() const
 void Viewport::setViewportPositionInPixels(const Vec2d& pixels)
 {
     viewportPositionInPixels = pixels;
-}
-
-bool Viewport::isPositionChangeRequested() const
-{
-    return positionChangeRequested;
-}
-
-void Viewport::syncPosition()
-{
-    if (positionChangeRequested)
-    {
-        std::lock_guard<std::mutex> lock(positionMutex);
-        if (positionChangeRequested)
-        {
-            viewportPositionInPixels += requestedChange;
-            positionChangeRequested = false;
-        }
-    }
-}
-
-void Viewport::requestPositionChange(const Vec2d& delta)
-{
-    std::lock_guard<std::mutex> lock(positionMutex);
-    requestedChange = delta;
-    positionChangeRequested = true;
 }

@@ -53,6 +53,11 @@ class GameSettings
         viewportMovingSpeed = speed;
     }
 
+    void setTicksPerSecond(int tps)
+    {
+        ticksPerSecond = tps;
+    }
+
     const utils::WidthHeight& getResolution() const
     {
         return resolution;
@@ -114,6 +119,11 @@ class GameSettings
         return viewportMovingSpeed;
     }
 
+    int getTicksPerSecond() const
+    {
+        return ticksPerSecond;
+    }
+
   private:
     utils::WidthHeight resolution{800, 600};
     utils::WidthHeight windowDimensions{800, 600};
@@ -124,6 +134,7 @@ class GameSettings
     float musicVolume = 1.0f;
     std::string title = "openEmipires";
     int viewportMovingSpeed = 100;
+    int ticksPerSecond = 60;
 };
 } // namespace aion
 

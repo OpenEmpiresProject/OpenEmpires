@@ -2,13 +2,12 @@
 #define VIEWPORT_H
 
 #include "Constants.h"
-#include "EventHandler.h"
 #include "GameSettings.h"
 #include "Vec2d.h"
 
 namespace aion
 {
-class Viewport : public EventHandler
+class Viewport
 {
   public:
     Viewport(const GameSettings& settings);
@@ -22,22 +21,10 @@ class Viewport : public EventHandler
 
     const Vec2d& getViewportPositionInPixels() const;
     void setViewportPositionInPixels(const Vec2d& pixels);
-    bool isPositionChangeRequested() const;
-    void syncPosition();
-    void requestPositionChange(const Vec2d& delta);
 
   private:
-    void onInit(EventLoop* eventLoop) override
-    {
-    }
-    void onExit() override
-    {
-    }
-    void onEvent(const Event& e) override;
-
     Vec2d viewportPositionInPixels;
     const GameSettings& settings;
-    std::mutex positionMutex;
 
     bool positionChangeRequested = false;
     Vec2d requestedChange;

@@ -18,17 +18,18 @@
 
 using namespace aion;
 using namespace utils;
+using namespace std::chrono;
 
 Renderer::Renderer(std::stop_source* stopSource,
                    const GameSettings& settings,
                    aion::GraphicsRegistry& graphicsRegistry,
                    ThreadQueue& simulatorQueue,
-                   ThreadQueue& eventLoopQueue,
                    Viewport& viewport)
     : SubSystem(stopSource), settings(settings), graphicsRegistry(graphicsRegistry),
-      simulatorQueue(simulatorQueue), eventLoopQueue_(eventLoopQueue), viewport(viewport)
+      simulatorQueue(simulatorQueue), viewport(viewport)
 {
     running_ = false;
+    lastTickTime = steady_clock::now();
 }
 
 Renderer::~Renderer()
@@ -115,21 +116,16 @@ void aion::Renderer::renderingLoop()
 
     while (running)
     {
-        // std::cout << "Rendering loop..." << counter++ << std::endl;
         fpsCounter.frame();
         running = handleEvents();
-
-        // Event loop might have requested a viewport movement, apply the requested change
-        viewport.syncPosition();
+        generateTicks();
 
         handleGraphicInstructions();
-
         renderBackground();
         renderGameEntities();
         renderDebugInfo(fpsCounter);
 
         SDL_RenderPresent(renderer_);
-        // SDL_Delay(16); // ~60 FPS
     }
 
     spdlog::info("Shutting down renderer...");
@@ -142,31 +138,15 @@ void aion::Renderer::renderingLoop()
 bool aion::Renderer::handleEvents()
 {
     SDL_Event event;
-    bool running = true;
-    auto message = ObjectPool<ThreadMessage>::acquire(ThreadMessage::Type::INPUT);
 
     while (SDL_PollEvent(&event))
     {
         if (event.type == SDL_EVENT_QUIT || event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
         {
-            running = false;
-            break;
-        }
-        else
-        {
-            // spdlog::debug("Sending event: {}", event.type);
-
-            auto eventPtr = ObjectPool<SDL_Event>::acquire();
-            *eventPtr = event;
-            message->commandBuffer.push_back(static_cast<void*>(eventPtr));
+            return false;
         }
     }
-    // TODO: Can optimize this to avoid getting a object from the pool at all
-    if (message->commandBuffer.empty())
-        ObjectPool<ThreadMessage>::release(message);
-    else
-        eventLoopQueue_.enqueue(message);
-    return running;
+    return true;
 }
 
 void aion::Renderer::handleGraphicInstructions()
@@ -261,10 +241,51 @@ void aion::Renderer::renderGameEntities()
         });
 }
 
-void aion::Renderer::renderBackground()
+void Renderer::renderBackground()
 {
     // spdlog::debug("Rendering background...");
 
     SDL_SetRenderDrawColor(renderer_, 30, 30, 30, 255);
     SDL_RenderClear(renderer_);
+}
+
+void Renderer::generateTicks()
+{
+    const auto tickDelay = milliseconds(1000 / settings.getTicksPerSecond());
+    auto now = steady_clock::now();
+    if (now - lastTickTime >= tickDelay)
+    {
+        lastTickTime = now;
+        onTick();
+    }
+}
+
+void Renderer::onTick()
+{
+    handleViewportMovement();
+}
+
+void aion::Renderer::handleViewportMovement()
+{
+    auto keyStates = SDL_GetKeyboardState(nullptr);
+    if (keyStates[SDL_SCANCODE_W])
+    {
+        viewport.setViewportPositionInPixels(viewport.getViewportPositionInPixels() -
+                                             Vec2d(0, settings.getViewportMovingSpeed()));
+    }
+    if (keyStates[SDL_SCANCODE_A])
+    {
+        viewport.setViewportPositionInPixels(viewport.getViewportPositionInPixels() -
+                                             Vec2d(settings.getViewportMovingSpeed(), 0));
+    }
+    if (keyStates[SDL_SCANCODE_S])
+    {
+        viewport.setViewportPositionInPixels(viewport.getViewportPositionInPixels() +
+                                             Vec2d(0, settings.getViewportMovingSpeed()));
+    }
+    if (keyStates[SDL_SCANCODE_D])
+    {
+        viewport.setViewportPositionInPixels(viewport.getViewportPositionInPixels() +
+                                             Vec2d(settings.getViewportMovingSpeed(), 0));
+    }
 }

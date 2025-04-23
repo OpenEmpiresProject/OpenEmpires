@@ -9,17 +9,14 @@ namespace aion
 class InputListener : public EventHandler
 {
   public:
-    InputListener(ThreadQueue& eventQueue) : eventQueue(eventQueue) {};
+    InputListener() {};
     virtual ~InputListener() = default;
 
   private:
     void onInit(EventLoop* eventLoop) override;
     void onExit() override;
-
     void onEvent(const Event& e) override;
-    void handleInputEvents();
 
-    ThreadQueue& eventQueue;
     EventLoop* eventLoop = nullptr;
 };
 } // namespace aion
