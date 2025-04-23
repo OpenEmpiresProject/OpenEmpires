@@ -18,7 +18,6 @@ class ResourceLoader : public aion::SubSystem
                    aion::Renderer& renderer);
     ~ResourceLoader() = default;
 
-    void loadTextures();
     void loadEntities();
 
   private:

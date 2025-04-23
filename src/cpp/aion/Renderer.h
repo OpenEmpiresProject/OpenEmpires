@@ -36,8 +36,6 @@ class Renderer : public SubSystem
     void init() override;
     void shutdown() override;
 
-    // TODO: Do we need this?
-    bool loadTexture(const std::string& imagePath);
 
     SDL_Renderer* getSDLRenderer()
     {

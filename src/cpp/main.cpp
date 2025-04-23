@@ -31,7 +31,7 @@ int runGame()
 
     GameSettings settings;
     GraphicsRegistry graphicsRegistry;
-    settings.setWindowDimensions(1900, 1024);
+    settings.setWindowDimensions(1366, 768);
 
     std::stop_source stopSource;
     std::stop_token stopToken = stopSource.get_token();

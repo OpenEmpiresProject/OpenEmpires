@@ -2,6 +2,7 @@
 
 #include "FPSCounter.h"
 #include "GameState.h"
+#include "GraphicsLoader.h"
 #include "Logger.h"
 #include "ObjectPool.h"
 #include "Renderer.h"
@@ -13,9 +14,11 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_video.h>
 #include <SDL3_image/SDL_image.h> // Ensure SDL_image is included
+#include <algorithm>
+#include <filesystem>
 #include <iostream>
 #include <thread>
-
+namespace fs = std::filesystem;
 using namespace aion;
 using namespace utils;
 using namespace std::chrono;
@@ -60,7 +63,6 @@ void Renderer::shutdown()
 
 void Renderer::cleanup()
 {
-    // if (texture_) SDL_DestroyTexture(texture_);
     if (renderer_)
         SDL_DestroyRenderer(renderer_);
     if (window_)
@@ -70,6 +72,7 @@ void Renderer::cleanup()
 void Renderer::threadEntry()
 {
     initSDL();
+    GraphicsLoader(renderer_, graphicsRegistry).loadAllGraphics();
     renderingLoop();
 }
 
@@ -90,8 +93,6 @@ void Renderer::initSDL()
         spdlog::error("SDL_CreateWindow failed: {}", SDL_GetError());
         throw std::runtime_error("SDL_CreateWindow failed");
     }
-
-    // SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d");
 
     renderer_ = SDL_CreateRenderer(window_, nullptr);
     if (!renderer_)
@@ -116,6 +117,7 @@ void aion::Renderer::renderingLoop()
 
     while (running)
     {
+        auto start = SDL_GetTicks();
         fpsCounter.frame();
         running = handleEvents();
         generateTicks();
@@ -126,6 +128,14 @@ void aion::Renderer::renderingLoop()
         renderDebugInfo(fpsCounter);
 
         SDL_RenderPresent(renderer_);
+
+        int delay = (1000 / settings.getTargetFPS()) - (SDL_GetTicks() - start);
+        delay = std::max(1, delay);
+
+        SDL_Delay(delay);
+
+        fpsCounter.sleptFor(delay);
+        fpsCounter.getTotalSleep();
     }
 
     spdlog::info("Shutting down renderer...");
@@ -199,11 +209,12 @@ void aion::Renderer::renderDebugInfo(FPSCounter& counter)
 {
     // spdlog::debug("Rendering debug info...");
 
-    addDebugText("Average FPS: " + std::to_string(counter.getAverageFPS()));
-    addDebugText("Queue depth: " + std::to_string(queueSize_));
+    addDebugText("Average FPS    : " + std::to_string(counter.getAverageFPS()));
+    addDebugText("Avg Sleep/frame: " + std::to_string(counter.getAverageSleepMs()));
+    addDebugText("Queue depth    : " + std::to_string(queueSize_));
     addDebugText("Max Queue depth: " + std::to_string(maxQueueSize_));
-    addDebugText("Viewport: " + viewport.getViewportPositionInPixels().toString());
-    addDebugText("Anchor Tile: " + anchorTilePixelsPos.toString());
+    addDebugText("Viewport       : " + viewport.getViewportPositionInPixels().toString());
+    addDebugText("Anchor Tile    : " + anchorTilePixelsPos.toString());
 
     SDL_SetRenderDrawColor(renderer_, 255, 255, 255, SDL_ALPHA_OPAQUE); /* white, full alpha */
 

@@ -58,6 +58,11 @@ class GameSettings
         ticksPerSecond = tps;
     }
 
+    void setTargetFPS(int fps)
+    {
+        targetFPS = fps;
+    }
+
     const utils::WidthHeight& getResolution() const
     {
         return resolution;
@@ -124,6 +129,11 @@ class GameSettings
         return ticksPerSecond;
     }
 
+    int getTargetFPS() const
+    {
+        return targetFPS;
+    }
+
   private:
     utils::WidthHeight resolution{800, 600};
     utils::WidthHeight windowDimensions{800, 600};
@@ -135,6 +145,7 @@ class GameSettings
     std::string title = "openEmipires";
     int viewportMovingSpeed = 100;
     int ticksPerSecond = 60;
+    int targetFPS = 60;
 };
 } // namespace aion
 
