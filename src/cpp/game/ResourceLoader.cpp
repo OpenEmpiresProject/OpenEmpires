@@ -30,7 +30,7 @@ void ResourceLoader::loadTextures()
     spdlog::info("Loading textures...");
 
     SDL_Surface* surface =
-        SDL_LoadBMP("E:/Projects/openEmpires/OpenEmpires/asserts/images/terrain/tile_test.bmp");
+        SDL_LoadBMP("assets/images/terrain/tile_test.bmp");
     if (!surface)
     {
         spdlog::error("Failed to load the bitmap: {}", SDL_GetError());
