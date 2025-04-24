@@ -4,6 +4,10 @@ add_subdirectory(aion)
 
 add_executable(openEmpires main.cpp)
 
+set_target_properties(openEmpires PROPERTIES
+    VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
+)
+
 target_link_libraries(openEmpires
     PRIVATE
         game
