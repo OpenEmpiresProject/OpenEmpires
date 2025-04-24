@@ -13,7 +13,7 @@ class FPSCounter
   public:
     FPSCounter(size_t averagingWindowFrames = 100)
         : averagingWindowFrames_(averagingWindowFrames), frameTimeAccumulator_(0.0f),
-          frameSleepAccumulator_(0.0f), frameCount_(0), averageFPS_(0.0f),
+          frameSleepAccumulator_(0.0f), frameCount_(0), averageFPS_(0.0f), averageSleep_(0.0f),
           lastTime_(std::chrono::steady_clock::now()),
           lastTotalSleepReturnedTime(std::chrono::steady_clock::now()), stableFPS_(0.0f),
           lastStableUpdate_(lastTime_)

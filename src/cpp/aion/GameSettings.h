@@ -75,7 +75,7 @@ class GameSettings
     {
         return worldSizeType;
     }
-    const utils::WidthHeight& getWorldSize() const
+    utils::WidthHeight getWorldSize() const
     {
         switch (worldSizeType)
         {

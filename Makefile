@@ -31,6 +31,11 @@ build-verbose:
 format:
 	@echo "Formatting sources..."
 	cmake --build $(BUILD_DIR) --target format
+
+# Analyze the source code using cppcheck
+cppcheck:
+	@echo "Cppchecking sources..."
+	cmake --build $(BUILD_DIR) --target cppcheck
 	
 # Run the tests (directly execute the test binary)
 test: build
