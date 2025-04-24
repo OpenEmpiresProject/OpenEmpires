@@ -4,6 +4,7 @@
 #include "Constants.h"
 #include "GameSettings.h"
 #include "Vec2d.h"
+#include "Utilities.h"
 
 namespace aion
 {
@@ -21,6 +22,10 @@ class Viewport
 
     const Vec2d& getViewportPositionInPixels() const;
     void setViewportPositionInPixels(const Vec2d& pixels);
+    void setViewportPositionInPixelsWithBounryChecking(const Vec2d& pixels);
+    Vec2d getViewportCenterInPixels() const;
+    bool isInsideMap(const Vec2d& pixelPos) const;
+    bool isViewportCenterInsideMap() const;
 
   private:
     Vec2d viewportPositionInPixels;

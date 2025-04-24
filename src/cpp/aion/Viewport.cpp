@@ -2,6 +2,8 @@
 
 #include <SDL3/SDL_events.h>
 
+#include "Logger.h"
+
 using namespace aion;
 
 Viewport::Viewport(const GameSettings& settings) : settings(settings)
@@ -63,4 +65,35 @@ const Vec2d& Viewport::getViewportPositionInPixels() const
 void Viewport::setViewportPositionInPixels(const Vec2d& pixels)
 {
     viewportPositionInPixels = pixels;
+}
+
+void aion::Viewport::setViewportPositionInPixelsWithBounryChecking(const Vec2d& pixels)
+{
+    auto originalPos = viewportPositionInPixels;
+    setViewportPositionInPixels(pixels);
+
+    if (!isViewportCenterInsideMap())
+    {
+        setViewportPositionInPixels(originalPos);
+    }
+}
+
+Vec2d Viewport::getViewportCenterInPixels() const
+{
+    return viewportPositionInPixels + Vec2d(settings.getWindowDimensions().width / 2,
+                                            settings.getWindowDimensions().height / 2);
+}
+
+bool Viewport::isInsideMap(const Vec2d& pixelPos) const
+{
+    auto gameWorldSize = settings.getWorldSize();
+    auto feetPos = pixelsToFeet(pixelPos);
+
+    return feetPos.x >= 0 && feetPos.x < gameWorldSize.width &&
+            feetPos.y >= 0 && feetPos.y < gameWorldSize.height;
+}
+
+bool Viewport::isViewportCenterInsideMap() const
+{
+    return isInsideMap(getViewportCenterInPixels());
 }

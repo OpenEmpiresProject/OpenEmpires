@@ -281,22 +281,22 @@ void aion::Renderer::handleViewportMovement()
     auto keyStates = SDL_GetKeyboardState(nullptr);
     if (keyStates[SDL_SCANCODE_W])
     {
-        viewport.setViewportPositionInPixels(viewport.getViewportPositionInPixels() -
+        viewport.setViewportPositionInPixelsWithBounryChecking(viewport.getViewportPositionInPixels() -
                                              Vec2d(0, settings.getViewportMovingSpeed()));
     }
     if (keyStates[SDL_SCANCODE_A])
     {
-        viewport.setViewportPositionInPixels(viewport.getViewportPositionInPixels() -
+        viewport.setViewportPositionInPixelsWithBounryChecking(viewport.getViewportPositionInPixels() -
                                              Vec2d(settings.getViewportMovingSpeed(), 0));
     }
     if (keyStates[SDL_SCANCODE_S])
     {
-        viewport.setViewportPositionInPixels(viewport.getViewportPositionInPixels() +
+        viewport.setViewportPositionInPixelsWithBounryChecking(viewport.getViewportPositionInPixels() +
                                              Vec2d(0, settings.getViewportMovingSpeed()));
     }
     if (keyStates[SDL_SCANCODE_D])
     {
-        viewport.setViewportPositionInPixels(viewport.getViewportPositionInPixels() +
+        viewport.setViewportPositionInPixelsWithBounryChecking(viewport.getViewportPositionInPixels() +
                                              Vec2d(settings.getViewportMovingSpeed(), 0));
     }
 }
