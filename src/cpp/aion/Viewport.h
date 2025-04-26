@@ -19,6 +19,9 @@ class Viewport
     Vec2d screenUnitsToPixels(const Vec2d& screenUnits) const;
     Vec2d screenUnitsToFeet(const Vec2d& screenUnits) const;
     Vec2d feetToScreenUnits(const Vec2d& feet) const;
+    Vec2d feetToTiles(const Vec2d& feet) const;
+    int getZOrder(const Vec2d& feet) const;
+    int getMaxZOrder() const;
 
     const Vec2d& getViewportPositionInPixels() const;
     void setViewportPositionInPixels(const Vec2d& pixels);

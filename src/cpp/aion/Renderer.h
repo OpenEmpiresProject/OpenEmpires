@@ -21,6 +21,7 @@
 namespace aion
 {
 class FPSCounter;
+class GraphicsComponent;
 
 class Renderer : public SubSystem
 {
@@ -51,7 +52,7 @@ class Renderer : public SubSystem
     void cleanup();
 
     bool handleEvents();
-    void handleGraphicInstructions();
+    void updateGraphicComponents();
     void renderDebugInfo(FPSCounter& counter);
     void renderGameEntities();
     void renderBackground();
@@ -69,6 +70,7 @@ class Renderer : public SubSystem
     void generateTicks();
     void onTick();
     void handleViewportMovement();
+    void handleAnimations();
 
     SDL_Window* window_ = nullptr;
     SDL_Renderer* renderer_ = nullptr;
@@ -94,6 +96,22 @@ class Renderer : public SubSystem
     Vec2d anchorTilePixelsPos;
 
     std::chrono::steady_clock::time_point lastTickTime;
+
+    Vec2d lastMouseClickPosInFeet;
+    Vec2d lastMouseClickPosInTiles;
+
+    struct ZBucketVersion
+    {
+        int64_t version = 0;
+        std::vector<aion::GraphicsComponent*> graphicsComponents;
+    };
+
+    std::vector<ZBucketVersion> zBuckets;
+    const size_t zBucketsSize = 0;
+    int64_t zBucketVersion = 0;
+
+    int64_t tickCount = 0;
+
 };
 } // namespace aion
 

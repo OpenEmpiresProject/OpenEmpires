@@ -15,10 +15,12 @@ class GraphicsLoader
     ~GraphicsLoader() = default;
 
     void loadAllGraphics();
-    void loadGraphics(const std::filesystem::path& path);
+    void loadTexture(const std::filesystem::path& path);
     void unloadGraphics(const std::string& graphicsPath);
+    void loadAnimations();
 
   private:
+    void loadTextures();
     SDL_Renderer* renderer_;
     int variation = 0;
     GraphicsRegistry& graphicsRegistry;

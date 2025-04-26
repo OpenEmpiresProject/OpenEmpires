@@ -4,6 +4,8 @@ add_subdirectory(aion)
 
 add_executable(openEmpires main.cpp)
 
+# Without setting this property, the working directory will be build/src/cpp
+# and the assets folder will not be found. But this has to be build/bin
 set_target_properties(openEmpires PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
 )

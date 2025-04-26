@@ -28,6 +28,24 @@ Vec2d Viewport::feetToScreenUnits(const Vec2d& feet) const
     return pixelsToScreenUnits(feetToPixels(feet));
 }
 
+Vec2d aion::Viewport::feetToTiles(const Vec2d& feet) const
+{
+    return feet / utils::Constants::FEET_PER_TILE;
+}
+
+int aion::Viewport::getZOrder(const Vec2d& feet) const
+{
+    auto pixelPos = feetToPixels(feet);
+    return pixelPos.y + pixelPos.x;
+}
+
+int aion::Viewport::getMaxZOrder() const
+{
+    auto worldSize = settings.getWorldSize();
+    // Bottom corner of the map should has the highest Z-order
+    return getZOrder(Vec2d(worldSize.width, worldSize.height));
+}
+
 Vec2d Viewport::pixelsToFeet(const Vec2d& pixels) const
 {
     int pixelsMapCenterOffsetX =

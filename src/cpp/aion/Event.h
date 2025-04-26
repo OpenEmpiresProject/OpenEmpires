@@ -1,11 +1,25 @@
 #ifndef EVENT_H
 #define EVENT_H
 
+#include <variant>
+#include "Vec2d.h"
+
 namespace aion
 {
-class Event
+struct MouseClickData
 {
-  public:
+    enum class Button
+    {
+        LEFT = 0,
+        RIGHT,
+        MIDDLE
+    };
+    Button button;
+    Vec2d feetPosition;
+};
+
+struct Event
+{
     enum class Type
     {
         NONE = 0,
@@ -13,22 +27,22 @@ class Event
         KEY_UP,
         KEY_DOWN,
         MOUSE_MOVE,
-        MOUSE_BTN_DOWN,
         MOUSE_BTN_UP,
         MAX_TYPE_MARKER
     };
 
-    Event(Event::Type type = Event::Type::NONE);
-    Event(Event::Type type, void* data);
-    Type getType() const;
+    using Data = std::variant<std::monostate, MouseClickData>;
+
+    const Type type = Type::NONE;
+    const Data data = std::monostate{};
+    
     template <typename T> T getData() const
     {
-        return static_cast<T>(data);
+        return std::get<T>(data);
     }
 
-  private:
-    const Event::Type type;
-    void* data;
+    Event(Type type, Data data = {}) : type(type), data(std::move(data)) {}
+    Event() = delete;
 };
 } // namespace aion
 

@@ -20,7 +20,7 @@ void Simulator::onExit()
 
 void Simulator::onEvent(const Event& e)
 {
-    switch (e.getType())
+    switch (e.type)
     {
     case Event::Type::TICK:
         onTick();
@@ -33,64 +33,55 @@ void Simulator::onEvent(const Event& e)
 void Simulator::onTick()
 {
     simulatePhysics();
+
+    if (!sentStaticInstructions)
+    {
+        sendStaticInstructions();
+        sentStaticInstructions = true;
+    }
     sendGraphicsInstructions();
 }
 
 void Simulator::sendGraphicsInstructions()
 {
-    // spdlog::debug("Sending graphics instructions...");
+   
+}
 
-    // aion::GameState::getInstance()
-    //     .getEntities<aion::ActionComponent, aion::TransformComponent,
-    //     aion::EntityInfoComponent>() .each(
-    //         [this, &message](entt::entity entityID, aion::ActionComponent& action,
-    //                                  aion::TransformComponent& transform,
-    //                                  aion::EntityInfoComponent& entityInfo)
-    //         {
-    //             GraphicsID graphicsID(entityInfo.entityType, action.action,
-    //                                   0, // TODO: FIX this
-    //                                   transform.getDirection());
+void aion::Simulator::sendStaticInstructions()
+{
+    auto message = ObjectPool<ThreadMessage>::acquire(ThreadMessage::Type::RENDER);
 
-    //            auto graphicInstruction = ObjectPool<GraphicInstruction>::acquire(
-    //                GraphicInstruction::Type::ADD,
-    //                entityID,
-    //                graphicsID,
-    //                transform.position);
+    auto view = aion::GameState::getInstance()
+                    .getEntities<aion::TransformComponent, aion::EntityInfoComponent>();
 
-    //            message->commandBuffer.push_back(static_cast<void*>(graphicInstruction));
-    //        });
+    aion::GameState::getInstance()
+        .getEntities<aion::TransformComponent, aion::EntityInfoComponent>()
+        .each(
+            [this, &message](entt::entity entityID, aion::TransformComponent& transform,
+                                aion::EntityInfoComponent& entityInfo)
+            {
+                auto graphicInstruction = ObjectPool<GraphicInstruction>::acquire();
+                graphicInstruction->type = GraphicInstruction::Type::ADD;
+                graphicInstruction->entity = entityID;
+                graphicInstruction->positionInFeet = transform.position;
+                graphicInstruction->entityType = entityInfo.entityType;
+                // graphicInstruction->entitySubType = entityInfo.entitySubType;
 
-    static bool done = false;
-
-    if (!done)
-    {
-        auto message = ObjectPool<ThreadMessage>::acquire(ThreadMessage::Type::RENDER);
-
-        auto view = aion::GameState::getInstance()
-                        .getEntities<aion::TransformComponent, aion::EntityInfoComponent>();
-
-        aion::GameState::getInstance()
-            .getEntities<aion::TransformComponent, aion::EntityInfoComponent>()
-            .each(
-                [this, &message](entt::entity entityID, aion::TransformComponent& transform,
-                                 aion::EntityInfoComponent& entityInfo)
+                // TODO: Temporary hack to randomize grass tiles
+                if (entityInfo.entityType == 2)
                 {
-                    GraphicsID graphicsID(entityInfo.entityType, 0,
-                                          0, // TODO: FIX this
-                                          transform.getDirection());
+                    graphicInstruction->variation = rand() % 50 + 1;
+                }
 
-                    auto graphicInstruction = ObjectPool<GraphicInstruction>::acquire(
-                        GraphicInstruction::Type::ADD, entityID, graphicsID, transform.position);
+                message->commandBuffer.push_back(static_cast<void*>(graphicInstruction));
+            });
 
-                    message->commandBuffer.push_back(static_cast<void*>(graphicInstruction));
-                });
+    
 
-        if (message->commandBuffer.empty())
-            ObjectPool<ThreadMessage>::release(message);
-        else
-            rendererQueue.enqueue(message);
-        done = true;
-    }
+    if (message->commandBuffer.empty())
+        ObjectPool<ThreadMessage>::release(message);
+    else
+        rendererQueue.enqueue(message);
 }
 
 void Simulator::simulatePhysics()

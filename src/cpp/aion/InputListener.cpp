@@ -20,7 +20,7 @@ void InputListener::onExit()
 
 void InputListener::onEvent(const Event& e)
 {
-    if (e.getType() == Event::Type::TICK)
-    {
-    }
+    // if (e.getType() == Event::Type::TICK)
+    // {
+    // }
 }

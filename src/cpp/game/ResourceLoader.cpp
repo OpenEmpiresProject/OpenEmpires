@@ -8,6 +8,7 @@
 #include "components/EntityInfoComponent.h"
 #include "components/GraphicsComponent.h"
 #include "components/TransformComponent.h"
+#include "components/AnimationComponent.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_surface.h>
@@ -43,6 +44,23 @@ void game::ResourceLoader::loadEntities()
         }
     }
 
+{
+    auto villager = GameState::getInstance().createEntity();
+    GameState::getInstance().addComponent(villager, TransformComponent(25 * 256, 25 * 256));
+    GameState::getInstance().addComponent(villager, GraphicsComponent());
+    GameState::getInstance().addComponent(villager, EntityInfoComponent(3));
+    GameState::getInstance().addComponent(villager, ActionComponent(0));
+    GameState::getInstance().addComponent(villager, AnimationComponent());
+}
+
+{
+    auto villager = GameState::getInstance().createEntity();
+    GameState::getInstance().addComponent(villager, TransformComponent(10 * 256, 10 * 256));
+    GameState::getInstance().addComponent(villager, GraphicsComponent());
+    GameState::getInstance().addComponent(villager, EntityInfoComponent(3));
+    GameState::getInstance().addComponent(villager, ActionComponent(0));
+    GameState::getInstance().addComponent(villager, AnimationComponent());
+}
     spdlog::info("Entity loaded successfully.");
 }
 

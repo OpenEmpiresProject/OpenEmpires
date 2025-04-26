@@ -8,9 +8,8 @@
 
 namespace aion
 {
-class GraphicInstruction
+struct GraphicInstruction
 {
-  public:
     enum class Type
     {
         NONE = 0,
@@ -19,19 +18,14 @@ class GraphicInstruction
         UPDATE
     };
 
-    const GraphicInstruction::Type type;
-    const entt::entity entity = entt::null; // Entity to query GameState GraphicsComponent
-    const GraphicsID graphicsID; // GraphicsID to query GraphicsRegistry to get the textures
-    const Vec2d worldPosition = {0,
-                                 0}; // World logical position (to be converted to screen position)
-
-    GraphicInstruction(GraphicInstruction::Type type,
-                       entt::entity entity,
-                       const GraphicsID& graphicsID,
-                       Vec2d worldPosition)
-        : entity(entity), graphicsID(graphicsID), worldPosition(worldPosition), type(type)
-    {
-    }
+    GraphicInstruction::Type type;
+    entt::entity entity = entt::null;
+    Vec2d positionInFeet = {0,0};
+    int entityType = 0;
+    int entitySubType = 0;
+    int variation = 0;
+    int action = 0;
+    utils::Direction direction = utils::Direction::NORTH;
 };
 } // namespace aion
 

@@ -23,9 +23,11 @@ class Simulator : public EventHandler
 
     void onTick();
     void sendGraphicsInstructions();
+    void sendStaticInstructions(); // Static from ticks point of view, but not entire system
     void simulatePhysics();
 
     ThreadQueue& rendererQueue;
+    bool sentStaticInstructions = false;
 };
 } // namespace aion
 
