@@ -22,6 +22,7 @@ void GraphicsLoader::loadAllGraphics()
     loadTextures();
     adjustDirections();
     loadAnimations();
+    loadCursor(4);
 }
 
 void GraphicsLoader::loadTexture(const std::filesystem::path& path)
@@ -47,10 +48,10 @@ void GraphicsLoader::loadTexture(const std::filesystem::path& path)
 
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, surface);
     WidthHeight imageSize = {surface->w, surface->h};
-    SDL_DestroySurface(surface);
 
     if (!texture)
     {
+        SDL_DestroySurface(surface);
         spdlog::warn("Failed to convert surface to texture: {}, error: {}", pathStr,
                      SDL_GetError());
         return;
@@ -60,6 +61,7 @@ void GraphicsLoader::loadTexture(const std::filesystem::path& path)
     aion::GraphicsID id;
     id.frame = 0;
     id.entitySubType = 0;
+    Vec2d anchor = {imageSize.width / 2 + 1, imageSize.height};
 
     if (pathStr.find("terrain") != std::string::npos)
     {
@@ -67,6 +69,8 @@ void GraphicsLoader::loadTexture(const std::filesystem::path& path)
         id.entityType = 2;          // Tile
         id.variation = variation++; // Different grass tiles. TODO: This doesn't scale or work well.
         id.direction = utils::Direction::NORTHEAST;
+
+        SDL_DestroySurface(surface);
     }
     else if (pathStr.find("villager") != std::string::npos)
     {
@@ -104,10 +108,31 @@ void GraphicsLoader::loadTexture(const std::filesystem::path& path)
         {
             id.direction = utils::Direction::NORTH;
         }
+        SDL_DestroySurface(surface);
+
+    } else if (pathStr.find("cursor") != std::string::npos)
+    {
+        id.entityType = 1;
+        anchor = {0, 0};
+        // if the file name of cursors are like 51000_01.bmp extract last two digits and assign it to variation field
+
+        auto indexStr = pathStr.substr(pathStr.find_last_of('_') + 1, 2);
+        auto index = std::stoi(indexStr);
+        id.variation = index;
+
+        // TODO: temp hack
+        loadedSurfaces[id.hash()] = surface; // Store the surface for later use
+    }
+    else
+    {
+        SDL_DestroySurface(surface);
+
+        spdlog::warn("Unknown texture type: {}", pathStr);
+        return;
     }
 
     aion::Texture entry{texture,
-                        {imageSize.width / 2 + 1, imageSize.height},
+                        anchor,
                         imageSize}; // TODO: Load this anchor from configs
     graphicsRegistry.registerTexture(id, entry);
 }
@@ -210,4 +235,26 @@ utils::Direction aion::GraphicsLoader::getFlippedDirection(utils::Direction dire
     default:
         return direction; // No flipping needed
     }
+}
+
+void aion::GraphicsLoader::loadCursor(int variation)
+{
+    // use variation, look cursor in registry and set it as colored cursor in SDL
+
+    auto it = loadedSurfaces.find(GraphicsID(1, 0, 0, utils::Direction::NORTH, 0, variation, 0).hash());
+    if (it == loadedSurfaces.end())
+    {
+        spdlog::error("Cursor surface not found for variation: {}", variation);
+        return;
+    }
+    SDL_Surface* surface = it->second;
+    SDL_Cursor* cursor = SDL_CreateColorCursor(surface, 0, 0);
+
+    if (!cursor)
+    {
+        spdlog::error("Failed to create color cursor: {}", SDL_GetError());
+        return;
+    }
+
+    SDL_SetCursor(cursor);
 }

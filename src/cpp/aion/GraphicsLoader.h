@@ -25,9 +25,12 @@ class GraphicsLoader
     bool isTextureFlippingNeededEntity(int entityType) const;
     bool isTextureFlippingNeededDirection(utils::Direction direction) const;
     utils::Direction getFlippedDirection(utils::Direction direction) const;
+    void loadCursor(int variation);
     SDL_Renderer* renderer_;
     int variation = 0;
     GraphicsRegistry& graphicsRegistry;
+
+    std::unordered_map<int64_t, SDL_Surface*> loadedSurfaces;
 
 }; // namespace aion
 } // namespace aion
