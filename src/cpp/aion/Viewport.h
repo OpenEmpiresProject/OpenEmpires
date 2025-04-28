@@ -3,8 +3,8 @@
 
 #include "Constants.h"
 #include "GameSettings.h"
-#include "Vec2d.h"
 #include "Utilities.h"
+#include "Vec2d.h"
 
 namespace aion
 {

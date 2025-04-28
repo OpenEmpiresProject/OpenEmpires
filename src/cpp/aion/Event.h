@@ -1,8 +1,9 @@
 #ifndef EVENT_H
 #define EVENT_H
 
-#include <variant>
 #include "Vec2d.h"
+
+#include <variant>
 
 namespace aion
 {
@@ -35,13 +36,15 @@ struct Event
 
     const Type type = Type::NONE;
     const Data data = std::monostate{};
-    
+
     template <typename T> T getData() const
     {
         return std::get<T>(data);
     }
 
-    Event(Type type, Data data = {}) : type(type), data(std::move(data)) {}
+    Event(Type type, Data data = {}) : type(type), data(std::move(data))
+    {
+    }
     Event() = delete;
 };
 } // namespace aion

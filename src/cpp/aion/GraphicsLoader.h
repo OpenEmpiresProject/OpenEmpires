@@ -24,6 +24,7 @@ class GraphicsLoader
     void adjustDirections();
     bool isTextureFlippingNeededEntity(int entityType) const;
     bool isTextureFlippingNeededDirection(utils::Direction direction) const;
+    utils::Direction getFlippedDirection(utils::Direction direction) const;
     SDL_Renderer* renderer_;
     int variation = 0;
     GraphicsRegistry& graphicsRegistry;

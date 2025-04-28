@@ -12,7 +12,7 @@ namespace aion
 class AnimationComponent : public aion::Component<AnimationComponent>
 {
   public:
-    GraphicsID animationId;          // GraphicsID to query GraphicsRegistry to get the Animation
+    GraphicsID animationId; // GraphicsID to query GraphicsRegistry to get the Animation
 };
 } // namespace aion
 

@@ -5,10 +5,11 @@
 #include "Renderer.h"
 #include "SubSystemRegistry.h"
 #include "components/ActionComponent.h"
+#include "components/AnimationComponent.h"
+#include "components/DirtyComponent.h"
 #include "components/EntityInfoComponent.h"
 #include "components/GraphicsComponent.h"
 #include "components/TransformComponent.h"
-#include "components/AnimationComponent.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_surface.h>
@@ -44,27 +45,18 @@ void game::ResourceLoader::loadEntities()
         }
     }
 
-{
-    auto villager = GameState::getInstance().createEntity();
-    auto transform = TransformComponent(25 * 256, 25 * 256);
-    transform.face(utils::Direction::EAST);
-    GameState::getInstance().addComponent(villager, transform);
-    GameState::getInstance().addComponent(villager, GraphicsComponent());
-    GameState::getInstance().addComponent(villager, EntityInfoComponent(3));
-    GameState::getInstance().addComponent(villager, ActionComponent(0));
-    GameState::getInstance().addComponent(villager, AnimationComponent());
-}
+    {
+        auto villager = GameState::getInstance().createEntity();
+        auto transform = TransformComponent(20 * 256, 20 * 256);
+        transform.face(utils::Direction::SOUTH);
+        GameState::getInstance().addComponent(villager, transform);
+        GameState::getInstance().addComponent(villager, GraphicsComponent());
+        GameState::getInstance().addComponent(villager, EntityInfoComponent(3));
+        GameState::getInstance().addComponent(villager, ActionComponent(0));
+        GameState::getInstance().addComponent(villager, AnimationComponent());
+        GameState::getInstance().addComponent(villager, DirtyComponent());
+    }
 
-{
-    auto villager = GameState::getInstance().createEntity();
-    auto transform = TransformComponent(10 * 256, 10 * 256);
-    transform.face(utils::Direction::WEST);
-    GameState::getInstance().addComponent(villager, transform);
-    GameState::getInstance().addComponent(villager, GraphicsComponent());
-    GameState::getInstance().addComponent(villager, EntityInfoComponent(3));
-    GameState::getInstance().addComponent(villager, ActionComponent(0));
-    GameState::getInstance().addComponent(villager, AnimationComponent());
-}
     spdlog::info("Entity loaded successfully.");
 }
 

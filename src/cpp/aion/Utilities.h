@@ -7,8 +7,11 @@ namespace aion
 {
 class Utilities
 {
-public:
-    static bool isInsideRhombus(const Vec2d& point, const Vec2d& center, int halfWidth, int halfHeight)
+  public:
+    static bool isInsideRhombus(const Vec2d& point,
+                                const Vec2d& center,
+                                int halfWidth,
+                                int halfHeight)
     {
         double dx = std::abs(point.x - center.x);
         double dy = std::abs(point.y - center.y);
@@ -19,8 +22,6 @@ public:
     ~Utilities() = delete;
 };
 
-    
 } // namespace aion
-
 
 #endif

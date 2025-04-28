@@ -37,7 +37,6 @@ class Renderer : public SubSystem
     void init() override;
     void shutdown() override;
 
-
     SDL_Renderer* getSDLRenderer()
     {
         std::unique_lock<std::mutex> lock(sdlInitMutex_);
@@ -111,7 +110,6 @@ class Renderer : public SubSystem
     int64_t zBucketVersion = 0;
 
     int64_t tickCount = 0;
-
 };
 } // namespace aion
 

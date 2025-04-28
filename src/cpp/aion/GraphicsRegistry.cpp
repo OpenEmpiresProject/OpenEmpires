@@ -6,8 +6,7 @@
 
 using namespace aion;
 
-void aion::GraphicsRegistry::registerTexture(const GraphicsID& graphicID,
-                                             const Texture& entry)
+void aion::GraphicsRegistry::registerTexture(const GraphicsID& graphicID, const Texture& entry)
 {
     auto it = m_textureMap.find(graphicID.hash());
     if (it != m_textureMap.end())
@@ -40,7 +39,7 @@ void aion::GraphicsRegistry::registerAnimation(const GraphicsID& graphicID, cons
         throw std::runtime_error("Animation ID should not have a frame value:" +
                                  graphicID.toString());
     }
-    
+
     auto it = m_animationMap.find(graphicID.hash());
     if (it != m_animationMap.end())
     {
@@ -55,7 +54,7 @@ void aion::GraphicsRegistry::registerAnimation(const GraphicsID& graphicID, cons
 const Animation& aion::GraphicsRegistry::getAnimation(const GraphicsID& graphicID) const
 {
     int64_t hash = graphicID.hashWithClearingFrame();
-    
+
     // Check if the graphicID exists in the map
     auto it = m_animationMap.find(hash);
     if (it == m_animationMap.end())

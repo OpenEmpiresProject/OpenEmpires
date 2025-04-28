@@ -25,6 +25,8 @@ class Simulator : public EventHandler
     void sendGraphicsInstructions();
     void sendStaticInstructions(); // Static from ticks point of view, but not entire system
     void simulatePhysics();
+    void sendStaticTileInstructions();
+    void sendInitialUnitsInstructions();
 
     ThreadQueue& rendererQueue;
     bool sentStaticInstructions = false;

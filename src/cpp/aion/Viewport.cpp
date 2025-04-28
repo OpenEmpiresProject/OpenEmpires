@@ -1,8 +1,8 @@
 #include "Viewport.h"
 
-#include <SDL3/SDL_events.h>
-
 #include "Logger.h"
+
+#include <SDL3/SDL_events.h>
 
 using namespace aion;
 
@@ -107,8 +107,8 @@ bool Viewport::isInsideMap(const Vec2d& pixelPos) const
     auto gameWorldSize = settings.getWorldSize();
     auto feetPos = pixelsToFeet(pixelPos);
 
-    return feetPos.x >= 0 && feetPos.x < gameWorldSize.width &&
-            feetPos.y >= 0 && feetPos.y < gameWorldSize.height;
+    return feetPos.x >= 0 && feetPos.x < gameWorldSize.width && feetPos.y >= 0 &&
+           feetPos.y < gameWorldSize.height;
 }
 
 bool Viewport::isViewportCenterInsideMap() const

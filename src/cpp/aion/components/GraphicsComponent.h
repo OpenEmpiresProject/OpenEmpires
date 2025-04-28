@@ -12,10 +12,10 @@ namespace aion
 class GraphicsComponent : public aion::Component<GraphicsComponent>
 {
   public:
-    GraphicsID graphicsID;          // GraphicsID to query GraphicsRegistry to get the textures
-    Vec2d positionInFeet = {0, 0};   // World logical position (to be converted to screen position)
-    SDL_Texture* texture = nullptr; // Texture to be rendered
-    Vec2d anchor = {0, 0};         // Anchor position in pixels
+    GraphicsID graphicsID;            // GraphicsID to query GraphicsRegistry to get the textures
+    Vec2d positionInFeet = {0, 0};    // World logical position (to be converted to screen position)
+    SDL_Texture* texture = nullptr;   // Texture to be rendered
+    Vec2d anchor = {0, 0};            // Anchor position in pixels
     utils::WidthHeight size = {0, 0}; // Size of the texture in pixels
     SDL_FlipMode flip = SDL_FLIP_NONE; // Flip mode for the texture
 

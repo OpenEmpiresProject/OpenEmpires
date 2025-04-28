@@ -1,5 +1,6 @@
 #include "Renderer.h"
 
+#include "Event.h"
 #include "FPSCounter.h"
 #include "GameState.h"
 #include "GraphicsLoader.h"
@@ -7,11 +8,10 @@
 #include "ObjectPool.h"
 #include "Renderer.h"
 #include "components/ActionComponent.h"
+#include "components/AnimationComponent.h"
 #include "components/EntityInfoComponent.h"
 #include "components/GraphicsComponent.h"
 #include "components/TransformComponent.h"
-#include "components/AnimationComponent.h"
-#include "Event.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_video.h>
@@ -165,11 +165,13 @@ bool aion::Renderer::handleEvents()
         {
             if (event.button.button == SDL_BUTTON_LEFT)
             {
-                lastMouseClickPosInFeet = viewport.screenUnitsToFeet(Vec2d(event.button.x, event.button.y));
+                lastMouseClickPosInFeet =
+                    viewport.screenUnitsToFeet(Vec2d(event.button.x, event.button.y));
                 lastMouseClickPosInTiles = viewport.feetToTiles(lastMouseClickPosInFeet);
 
-                Event clickEvent(Event::Type::MOUSE_BTN_UP, MouseClickData{MouseClickData::Button::LEFT,
-                    lastMouseClickPosInFeet});
+                Event clickEvent(
+                    Event::Type::MOUSE_BTN_UP,
+                    MouseClickData{MouseClickData::Button::LEFT, lastMouseClickPosInFeet});
             }
         }
     }
@@ -178,12 +180,12 @@ bool aion::Renderer::handleEvents()
 
 /**
  * @brief Updates the graphic components by processing messages from the simulator.
- * 
+ *
  * This function handles graphic instructions by dequeuing messages from the simulator queue
  * and processing their command buffers. It updates the graphics components of entities
  * based on the instructions provided in the messages. If a texture is not found for an entity,
  * an error is logged. Invalid message types or other unexpected conditions will throw exceptions.
- * 
+ *
  * @throws std::runtime_error If a message with an invalid type is encountered.
  */
 void aion::Renderer::updateGraphicComponents()
@@ -196,7 +198,7 @@ void aion::Renderer::updateGraphicComponents()
 
     while (simulatorQueue.try_dequeue(message))
     {
-        spdlog::debug("Handling graphic instructions...");
+        // spdlog::debug("Handling graphic instructions...");
 
         if (message->type != ThreadMessage::Type::RENDER)
         {
@@ -222,7 +224,7 @@ void aion::Renderer::updateGraphicComponents()
                 gc.positionInFeet = instruction->positionInFeet;
 
                 gc.updateTextureDetails(graphicsRegistry);
-                
+
                 ObjectPool<GraphicInstruction>::release(instruction);
             }
         }
@@ -285,12 +287,15 @@ void aion::Renderer::renderGameEntities()
     bool isFirst = true;
     SDL_FRect dstRect = {0, 0, 0, 0};
 
-    for (int z = 0; z < zBucketsSize; ++z) {
-        if (zBuckets[z].version != zBucketVersion) {
+    for (int z = 0; z < zBucketsSize; ++z)
+    {
+        if (zBuckets[z].version != zBucketVersion)
+        {
             continue; // Skip if the version doesn't match
         }
-        
-        for (auto& gc : zBuckets[z].graphicsComponents) {
+
+        for (auto& gc : zBuckets[z].graphicsComponents)
+        {
             auto screenPos = viewport.feetToScreenUnits(gc->positionInFeet) - gc->anchor;
 
             // TODO: Remove this testing code
@@ -304,7 +309,8 @@ void aion::Renderer::renderGameEntities()
             dstRect.y = screenPos.y;
             dstRect.w = gc->size.width;
             dstRect.h = gc->size.height;
-            SDL_RenderTextureRotated(renderer_, gc->texture, nullptr, &dstRect, 0, nullptr, gc->flip);
+            SDL_RenderTextureRotated(renderer_, gc->texture, nullptr, &dstRect, 0, nullptr,
+                                     gc->flip);
         }
     }
 }
@@ -340,23 +346,23 @@ void aion::Renderer::handleViewportMovement()
     auto keyStates = SDL_GetKeyboardState(nullptr);
     if (keyStates[SDL_SCANCODE_W])
     {
-        viewport.setViewportPositionInPixelsWithBounryChecking(viewport.getViewportPositionInPixels() -
-                                             Vec2d(0, settings.getViewportMovingSpeed()));
+        viewport.setViewportPositionInPixelsWithBounryChecking(
+            viewport.getViewportPositionInPixels() - Vec2d(0, settings.getViewportMovingSpeed()));
     }
     if (keyStates[SDL_SCANCODE_A])
     {
-        viewport.setViewportPositionInPixelsWithBounryChecking(viewport.getViewportPositionInPixels() -
-                                             Vec2d(settings.getViewportMovingSpeed(), 0));
+        viewport.setViewportPositionInPixelsWithBounryChecking(
+            viewport.getViewportPositionInPixels() - Vec2d(settings.getViewportMovingSpeed(), 0));
     }
     if (keyStates[SDL_SCANCODE_S])
     {
-        viewport.setViewportPositionInPixelsWithBounryChecking(viewport.getViewportPositionInPixels() +
-                                             Vec2d(0, settings.getViewportMovingSpeed()));
+        viewport.setViewportPositionInPixelsWithBounryChecking(
+            viewport.getViewportPositionInPixels() + Vec2d(0, settings.getViewportMovingSpeed()));
     }
     if (keyStates[SDL_SCANCODE_D])
     {
-        viewport.setViewportPositionInPixelsWithBounryChecking(viewport.getViewportPositionInPixels() +
-                                             Vec2d(settings.getViewportMovingSpeed(), 0));
+        viewport.setViewportPositionInPixelsWithBounryChecking(
+            viewport.getViewportPositionInPixels() + Vec2d(settings.getViewportMovingSpeed(), 0));
     }
 }
 
@@ -369,7 +375,7 @@ void aion::Renderer::handleAnimations()
             {
                 return;
             }
-            
+
             auto& animation = graphicsRegistry.getAnimation(gc.graphicsID);
 
             auto tickGap = settings.getTicksPerSecond() / animation.speed;

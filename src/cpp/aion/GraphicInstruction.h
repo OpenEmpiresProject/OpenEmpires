@@ -20,7 +20,7 @@ struct GraphicInstruction
 
     GraphicInstruction::Type type;
     entt::entity entity = entt::null;
-    Vec2d positionInFeet = {0,0};
+    Vec2d positionInFeet = {0, 0};
     int entityType = 0;
     int entitySubType = 0;
     int variation = 0;

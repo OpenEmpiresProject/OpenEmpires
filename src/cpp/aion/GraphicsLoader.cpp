@@ -58,25 +58,32 @@ void GraphicsLoader::loadTexture(const std::filesystem::path& path)
 
     // Infer or assign graphics ID based on filename or a mapping file
     aion::GraphicsID id;
-    id.action = 0;
     id.frame = 0;
     id.entitySubType = 0;
 
     if (pathStr.find("terrain") != std::string::npos)
     {
-        id.entityType = 2; // Tile
+        id.action = 0;
+        id.entityType = 2;          // Tile
         id.variation = variation++; // Different grass tiles. TODO: This doesn't scale or work well.
-        id.direction = utils::Direction::NORTH;
+        id.direction = utils::Direction::NORTHEAST;
     }
     else if (pathStr.find("villager") != std::string::npos)
     {
         id.entityType = 3;
-        /* if the file name is 1388_01.bmp pattern last two digit represents the frame. each direction animation
-         contains 15 frames. 1-15 for south, 16-30 for southwest, 31-45 for west, 46-60 for northwest, and so on.
-         implement thie logic to manipulate frame number and direction of id (type of GraphicsID)*/
+
+        // Deduce action from the folder name (e.g., "0_idle" -> action = 0, "1_walk" -> action = 1)
+        auto actionFolder = path.parent_path().filename().string();
+        auto actionStr = actionFolder.substr(0, actionFolder.find('_'));
+        id.action = std::stoi(actionStr);
+
+        /* if the file name is 1388_01.bmp pattern last two digit represents the frame. each
+         direction animation contains 15 frames. 1-15 for south, 16-30 for southwest, 31-45 for
+         west, 46-60 for northwest, and so on. implement this logic to manipulate frame number and
+         direction of id (type of GraphicsID) */
         auto index = std::stoi(pathStr.substr(pathStr.find_last_of('_') + 1, 2)) - 1; // 0-14
         id.frame = index % 15;
-        auto direction = (int)(index / 15); // 0-3
+        auto direction = (int) (index / 15); // 0-3
         if (direction == 0)
         {
             id.direction = utils::Direction::SOUTH;
@@ -97,10 +104,11 @@ void GraphicsLoader::loadTexture(const std::filesystem::path& path)
         {
             id.direction = utils::Direction::NORTH;
         }
-
     }
-    
-    aion::Texture entry{texture, {imageSize.width / 2 + 1, imageSize.height}, imageSize}; // TODO: Load this anchor from configs
+
+    aion::Texture entry{texture,
+                        {imageSize.width / 2 + 1, imageSize.height},
+                        imageSize}; // TODO: Load this anchor from configs
     graphicsRegistry.registerTexture(id, entry);
 }
 
@@ -115,8 +123,7 @@ void aion::GraphicsLoader::loadAnimations()
         {
             auto otherIdFull = GraphicsID::fromHash(otherId);
             if (idFull.entityType == otherIdFull.entityType &&
-                idFull.action == otherIdFull.action &&
-                idFull.direction == otherIdFull.direction)
+                idFull.action == otherIdFull.action && idFull.direction == otherIdFull.direction)
             {
                 animationFrames.push_back(otherId);
             }
@@ -131,8 +138,10 @@ void aion::GraphicsLoader::loadAnimations()
             Animation animation{animationFrames, true, 10}; // 10 FPS
             graphicsRegistry.registerAnimation(animationID, animation);
 
-            spdlog::debug("Animation created for entityType: {}, action: {}, direction: {} with {} frames.",
-                         idFull.entityType, idFull.action, static_cast<int>(idFull.direction), animationFrames.size());
+            spdlog::debug(
+                "Animation created for entityType: {}, action: {}, direction: {} with {} frames.",
+                idFull.entityType, idFull.action, static_cast<int>(idFull.direction),
+                animationFrames.size());
         }
     }
 }
@@ -170,8 +179,8 @@ void aion::GraphicsLoader::adjustDirections()
     for (auto& [id, texture] : graphicsToFlip)
     {
         texture.flip = true; // Mark the texture for flipping
-        id.direction = static_cast<utils::Direction>(
-            (static_cast<int>(id.direction) - 4) % 8); // Flip the direction
+        id.direction =
+            static_cast<utils::Direction>(getFlippedDirection(id.direction)); // Flip the direction
 
         graphicsRegistry.registerTexture(id, texture);
     }
@@ -184,7 +193,21 @@ bool aion::GraphicsLoader::isTextureFlippingNeededEntity(int entityType) const
 
 bool aion::GraphicsLoader::isTextureFlippingNeededDirection(utils::Direction direction) const
 {
-    return direction == utils::Direction::SOUTHWEST ||
-           direction == utils::Direction::NORTHWEST ||
+    return direction == utils::Direction::SOUTHWEST || direction == utils::Direction::NORTHWEST ||
            direction == utils::Direction::WEST;
+}
+
+utils::Direction aion::GraphicsLoader::getFlippedDirection(utils::Direction direction) const
+{
+    switch (direction)
+    {
+    case utils::Direction::SOUTHWEST:
+        return utils::Direction::SOUTHEAST;
+    case utils::Direction::NORTHWEST:
+        return utils::Direction::NORTHEAST;
+    case utils::Direction::WEST:
+        return utils::Direction::EAST;
+    default:
+        return direction; // No flipping needed
+    }
 }
