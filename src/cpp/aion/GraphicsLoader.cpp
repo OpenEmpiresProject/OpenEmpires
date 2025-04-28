@@ -69,6 +69,7 @@ void GraphicsLoader::loadTexture(const std::filesystem::path& path)
         id.entityType = 2;          // Tile
         id.variation = variation++; // Different grass tiles. TODO: This doesn't scale or work well.
         id.direction = utils::Direction::NORTHEAST;
+        anchor = {imageSize.width / 2 + 1, 0};
 
         SDL_DestroySurface(surface);
     }
