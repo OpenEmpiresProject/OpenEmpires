@@ -220,7 +220,6 @@ void aion::Renderer::updateGraphicComponents()
                 // gc.graphicsID.frame = instruction->frame; // TODO: Animate
                 gc.graphicsID.variation = instruction->variation;
                 gc.positionInFeet = instruction->positionInFeet;
-                gc.hasAnimation = graphicsRegistry.hasAnimation(gc.graphicsID);
 
                 gc.updateTextureDetails(graphicsRegistry);
                 
@@ -305,7 +304,7 @@ void aion::Renderer::renderGameEntities()
             dstRect.y = screenPos.y;
             dstRect.w = gc->size.width;
             dstRect.h = gc->size.height;
-            SDL_RenderTexture(renderer_, gc->texture, nullptr, &dstRect);
+            SDL_RenderTextureRotated(renderer_, gc->texture, nullptr, &dstRect, 0, nullptr, gc->flip);
         }
     }
 }
@@ -363,14 +362,14 @@ void aion::Renderer::handleViewportMovement()
 
 void aion::Renderer::handleAnimations()
 {
-    auto entities = GameState::getInstance().getEntities<GraphicsComponent, AnimationComponent>();
     GameState::getInstance().getEntities<GraphicsComponent, AnimationComponent>().each(
         [this](aion::GraphicsComponent& gc, AnimationComponent& ac)
         {
-            if (!gc.hasAnimation)
+            if (!gc.graphicsID.isValid())
             {
                 return;
             }
+            
             auto& animation = graphicsRegistry.getAnimation(gc.graphicsID);
 
             auto tickGap = settings.getTicksPerSecond() / animation.speed;

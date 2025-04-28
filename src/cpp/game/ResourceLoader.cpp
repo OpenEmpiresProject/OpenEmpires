@@ -46,7 +46,9 @@ void game::ResourceLoader::loadEntities()
 
 {
     auto villager = GameState::getInstance().createEntity();
-    GameState::getInstance().addComponent(villager, TransformComponent(25 * 256, 25 * 256));
+    auto transform = TransformComponent(25 * 256, 25 * 256);
+    transform.face(utils::Direction::EAST);
+    GameState::getInstance().addComponent(villager, transform);
     GameState::getInstance().addComponent(villager, GraphicsComponent());
     GameState::getInstance().addComponent(villager, EntityInfoComponent(3));
     GameState::getInstance().addComponent(villager, ActionComponent(0));
@@ -55,7 +57,9 @@ void game::ResourceLoader::loadEntities()
 
 {
     auto villager = GameState::getInstance().createEntity();
-    GameState::getInstance().addComponent(villager, TransformComponent(10 * 256, 10 * 256));
+    auto transform = TransformComponent(10 * 256, 10 * 256);
+    transform.face(utils::Direction::WEST);
+    GameState::getInstance().addComponent(villager, transform);
     GameState::getInstance().addComponent(villager, GraphicsComponent());
     GameState::getInstance().addComponent(villager, EntityInfoComponent(3));
     GameState::getInstance().addComponent(villager, ActionComponent(0));

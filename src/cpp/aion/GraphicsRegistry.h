@@ -77,6 +77,7 @@ struct Texture
     SDL_Texture* image = nullptr;
     Vec2d anchor{0, 0};
     utils::WidthHeight size{0, 0};
+    bool flip = false;
 };
 
 struct Animation

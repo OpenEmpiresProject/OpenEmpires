@@ -65,6 +65,7 @@ void aion::Simulator::sendStaticInstructions()
                 graphicInstruction->entity = entityID;
                 graphicInstruction->positionInFeet = transform.position;
                 graphicInstruction->entityType = entityInfo.entityType;
+                graphicInstruction->direction = transform.getDirection();
                 // graphicInstruction->entitySubType = entityInfo.entitySubType;
 
                 // TODO: Temporary hack to randomize grass tiles

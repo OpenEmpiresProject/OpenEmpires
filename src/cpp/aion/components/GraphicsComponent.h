@@ -17,7 +17,7 @@ class GraphicsComponent : public aion::Component<GraphicsComponent>
     SDL_Texture* texture = nullptr; // Texture to be rendered
     Vec2d anchor = {0, 0};         // Anchor position in pixels
     utils::WidthHeight size = {0, 0}; // Size of the texture in pixels
-    bool hasAnimation = false; // Flag to indicate if the texture has animation
+    SDL_FlipMode flip = SDL_FLIP_NONE; // Flip mode for the texture
 
     GraphicsComponent() = default;
     GraphicsComponent(const GraphicsID& graphicsID) : graphicsID(graphicsID)
@@ -46,6 +46,10 @@ class GraphicsComponent : public aion::Component<GraphicsComponent>
             texture = entry.image;
             anchor = entry.anchor;
             size = entry.size;
+            if (entry.flip)
+            {
+                flip = SDL_FLIP_HORIZONTAL;
+            }
         }
         else
         {

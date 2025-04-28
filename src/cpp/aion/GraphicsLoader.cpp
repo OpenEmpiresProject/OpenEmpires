@@ -20,6 +20,7 @@ GraphicsLoader::GraphicsLoader(SDL_Renderer* renderer, GraphicsRegistry& graphic
 void GraphicsLoader::loadAllGraphics()
 {
     loadTextures();
+    adjustDirections();
     loadAnimations();
 }
 
@@ -97,7 +98,6 @@ void GraphicsLoader::loadTexture(const std::filesystem::path& path)
             id.direction = utils::Direction::NORTH;
         }
 
-        spdlog::debug("Village image size: {}x{}", imageSize.width, imageSize.height);
     }
     
     aion::Texture entry{texture, {imageSize.width / 2 + 1, imageSize.height}, imageSize}; // TODO: Load this anchor from configs
@@ -135,7 +135,6 @@ void aion::GraphicsLoader::loadAnimations()
                          idFull.entityType, idFull.action, static_cast<int>(idFull.direction), animationFrames.size());
         }
     }
-
 }
 
 void aion::GraphicsLoader::loadTextures()
@@ -153,4 +152,39 @@ void aion::GraphicsLoader::loadTextures()
         ++loadedCount;
     }
     spdlog::info("{} textures loaded.", loadedCount);
+}
+
+void aion::GraphicsLoader::adjustDirections()
+{
+    std::list<std::pair<GraphicsID, Texture>> graphicsToFlip;
+    for (const auto& [id, texture] : graphicsRegistry.getTextures())
+    {
+        GraphicsID idFull = GraphicsID::fromHash(id);
+        if (isTextureFlippingNeededEntity(idFull.entityType) &&
+            isTextureFlippingNeededDirection(idFull.direction))
+        {
+            graphicsToFlip.push_back(std::make_pair(idFull, texture));
+        }
+    }
+
+    for (auto& [id, texture] : graphicsToFlip)
+    {
+        texture.flip = true; // Mark the texture for flipping
+        id.direction = static_cast<utils::Direction>(
+            (static_cast<int>(id.direction) - 4) % 8); // Flip the direction
+
+        graphicsRegistry.registerTexture(id, texture);
+    }
+}
+
+bool aion::GraphicsLoader::isTextureFlippingNeededEntity(int entityType) const
+{
+    return entityType == 3;
+}
+
+bool aion::GraphicsLoader::isTextureFlippingNeededDirection(utils::Direction direction) const
+{
+    return direction == utils::Direction::SOUTHWEST ||
+           direction == utils::Direction::NORTHWEST ||
+           direction == utils::Direction::WEST;
 }
