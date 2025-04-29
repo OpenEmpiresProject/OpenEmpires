@@ -32,8 +32,8 @@ Renderer::Renderer(std::stop_source* stopSource,
                    Viewport& viewport)
     : SubSystem(stopSource), settings(settings), graphicsRegistry(graphicsRegistry),
       simulatorQueue(simulatorQueue), viewport(viewport),
-      zBucketsSize(settings.getWorldSizeInTiles().height * Constants::TILE_PIXEL_HEIGHT * 3),
-      zBuckets(settings.getWorldSizeInTiles().height * Constants::TILE_PIXEL_HEIGHT * 3)
+      zBucketsSize(settings.getWorldSizeInTiles().height * Constants::FEET_PER_TILE * 3),
+      zBuckets(settings.getWorldSizeInTiles().height * Constants::FEET_PER_TILE * 3)
 {
     running_ = false;
     lastTickTime = steady_clock::now();
@@ -263,12 +263,13 @@ void aion::Renderer::renderGameEntities()
     ++zBucketVersion; // it will take 4 trillion years to overflow this
 
     // TODO: Introduction of this z ordering cost around 60ms for 2500 entities.
+    static bool isFirst = true;
 
     aion::GameState::getInstance().getEntities<aion::GraphicsComponent>().each(
         [this](aion::GraphicsComponent& gc)
         {
-            auto pixelPos = viewport.feetToPixels(gc.positionInFeet) - gc.anchor;
-            int zOrder = pixelPos.y + pixelPos.x;
+            //auto pixelPos = viewport.feetToPixels(gc.positionInFeet) - gc.anchor;
+            int zOrder = gc.positionInFeet.y + gc.positionInFeet.x;
             if (zOrder < 0 || zOrder >= zBucketsSize)
             {
                 spdlog::error("Z-order out of bounds: {}", zOrder);
@@ -284,7 +285,6 @@ void aion::Renderer::renderGameEntities()
             zBuckets[zOrder].graphicsComponents.push_back(&gc);
         });
 
-    bool isFirst = true;
     SDL_FRect dstRect = {0, 0, 0, 0};
 
     for (int z = 0; z < zBucketsSize; ++z)
@@ -298,11 +298,17 @@ void aion::Renderer::renderGameEntities()
         {
             auto screenPos = viewport.feetToScreenUnits(gc->positionInFeet) - gc->anchor;
 
+            if (isFirst)
+            {
+                auto tilesPos = viewport.feetToTiles(gc->positionInFeet);
+                spdlog::debug("Z-order: {}, entity: {}. pos {},{}", z, gc->graphicsID.entityType, tilesPos.x,
+                    tilesPos.y);
+            }
+
             // TODO: Remove this testing code
             if (isFirst)
             {
                 anchorTilePixelsPos = viewport.feetToPixels(gc->positionInFeet);
-                isFirst = false;
             }
 
             dstRect.x = screenPos.x;
@@ -313,6 +319,7 @@ void aion::Renderer::renderGameEntities()
                                      gc->flip);
         }
     }
+    isFirst = false;
 }
 
 void Renderer::renderBackground()

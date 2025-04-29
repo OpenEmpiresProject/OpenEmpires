@@ -57,6 +57,36 @@ void game::ResourceLoader::loadEntities()
         GameState::getInstance().addComponent(villager, DirtyComponent());
     }
 
+    {
+        auto tree = GameState::getInstance().createEntity();
+        auto transform = TransformComponent(35 * 256, 35 * 256);
+        transform.face(utils::Direction::SOUTH);
+        GameState::getInstance().addComponent(tree, transform);
+        GameState::getInstance().addComponent(tree, GraphicsComponent());
+        GameState::getInstance().addComponent(tree, EntityInfoComponent(4));
+        GameState::getInstance().addComponent(tree, DirtyComponent());
+    }
+
+    GameState::getInstance().initializeStaticEntityMap(size.width, size.height);
+    GameState::getInstance().generateMap();
+    
+    // for staticEntityMap in GameState, create entities for each tree marked with 1 in the double array
+    for (size_t i = 0; i < size.width; i++)
+    {
+        for (size_t j = 0; j < size.height; j++)
+        {
+            if (GameState::getInstance().staticEntityMap.map[i][j] == 1)
+            {
+                auto entity = GameState::getInstance().createEntity();
+                auto transform = TransformComponent(i * 256, j * 256);
+                GameState::getInstance().addComponent(entity, transform);
+                GameState::getInstance().addComponent(entity, GraphicsComponent());
+                GameState::getInstance().addComponent(entity, EntityInfoComponent(4));
+                GameState::getInstance().addComponent(entity, DirtyComponent());
+            }
+        }
+    }
+
     spdlog::info("Entity loaded successfully.");
 }
 

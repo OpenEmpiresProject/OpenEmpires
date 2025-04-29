@@ -57,6 +57,18 @@ class GameState
 
     void clearAll();
 
+    struct StaticEntityMap
+    {
+        int width = 0;
+        int height = 0;
+        int** map = nullptr;
+    };
+
+    StaticEntityMap initializeStaticEntityMap(int width, int height);
+    StaticEntityMap generateMap();
+
+    StaticEntityMap staticEntityMap;
+
   private:
     GameState();
     ~GameState();

@@ -95,6 +95,11 @@ class GraphicsRegistry
 
     void registerTexture(const GraphicsID& graphicID, const Texture& entry);
     const Texture& getTexture(const GraphicsID& graphicID) const;
+    bool hasTexture(const GraphicsID& graphicID) const
+    {
+        return m_textureMap.find(graphicID.hash()) != m_textureMap.end();
+    }
+
     size_t getTextureCount() const
     {
         return m_textureMap.size();

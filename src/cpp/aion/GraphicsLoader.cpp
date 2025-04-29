@@ -65,8 +65,8 @@ void GraphicsLoader::loadTexture(const std::filesystem::path& path)
 
     if (pathStr.find("terrain") != std::string::npos)
     {
-        id.action = 0;
         id.entityType = 2;          // Tile
+        id.action = 0;
         id.variation = variation++; // Different grass tiles. TODO: This doesn't scale or work well.
         id.direction = utils::Direction::NORTHEAST;
         anchor = {imageSize.width / 2 + 1, 0};
@@ -123,6 +123,21 @@ void GraphicsLoader::loadTexture(const std::filesystem::path& path)
 
         // TODO: temp hack
         loadedSurfaces[id.hash()] = surface; // Store the surface for later use
+    }
+    else if (pathStr.find("trees") != std::string::npos)
+    {
+        id.entityType = 4;
+
+        for (size_t i = 0; i < 100; i++)
+        {
+            id.variation = i;
+            if (!graphicsRegistry.hasTexture(id))
+            {
+                break;
+            }
+        }
+        
+        SDL_DestroySurface(surface);
     }
     else
     {
