@@ -121,7 +121,8 @@ void aion::Simulator::sendStaticTileInstructions()
                     graphicInstruction->direction = transform.getIsometricDirection();
                     graphicInstruction->variation = rand() % 50 + 1;
                     message->commandBuffer.push_back(static_cast<void*>(graphicInstruction));
-                } else if (entityInfo.entityType == 4) // tree
+                }
+                else if (entityInfo.entityType == 4) // tree
                 {
                     auto graphicInstruction = ObjectPool<GraphicInstruction>::acquire();
                     graphicInstruction->type = GraphicInstruction::Type::ADD;
@@ -130,7 +131,7 @@ void aion::Simulator::sendStaticTileInstructions()
                     graphicInstruction->entityType = entityInfo.entityType;
                     graphicInstruction->variation = rand() % 10;
                     message->commandBuffer.push_back(static_cast<void*>(graphicInstruction));
-                } 
+                }
             });
 
     if (message->commandBuffer.empty())

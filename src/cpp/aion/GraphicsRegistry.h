@@ -52,9 +52,9 @@ class GraphicsID
 
     std::string toString() const
     {
-        return "GraphicsID(" + std::to_string(entityType) + ", " + std::to_string(action) + ", " +
-               std::to_string(frame) + ", " + std::to_string(static_cast<int>(direction)) + ", " +
-               std::to_string(entitySubType) + ", " + std::to_string(variation) + ", " +
+        return "GraphicsID(T" + std::to_string(entityType) + ", A" + std::to_string(action) +
+               ", F" + std::to_string(frame) + ", D" + std::to_string(static_cast<int>(direction)) +
+               ", S" + std::to_string(entitySubType) + ", V" + std::to_string(variation) + ", " +
                std::to_string(custom3) + ")";
     }
 
@@ -75,6 +75,7 @@ class GraphicsID
 struct Texture
 {
     SDL_Texture* image = nullptr;
+    SDL_FRect* srcRect = nullptr; // Source rectangle for the texture
     Vec2d anchor{0, 0};
     utils::WidthHeight size{0, 0};
     bool flip = false;

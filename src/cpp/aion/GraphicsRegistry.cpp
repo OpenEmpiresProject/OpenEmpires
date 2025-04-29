@@ -8,6 +8,8 @@ using namespace aion;
 
 void aion::GraphicsRegistry::registerTexture(const GraphicsID& graphicID, const Texture& entry)
 {
+    spdlog::debug("Registering texture with ID: {}", graphicID.toString());
+
     auto it = m_textureMap.find(graphicID.hash());
     if (it != m_textureMap.end())
     {

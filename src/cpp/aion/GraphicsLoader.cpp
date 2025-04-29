@@ -5,15 +5,22 @@
 #include "WidthHeight.h"
 
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_rect.h>
 #include <SDL3/SDL_surface.h>
 #include <SDL3_image/SDL_image.h>
+#include <filesystem>
+#include <map>
+#include <vector>
 
 using namespace aion;
 using namespace utils;
 namespace fs = std::filesystem;
+using namespace std;
 
-GraphicsLoader::GraphicsLoader(SDL_Renderer* renderer, GraphicsRegistry& graphicsRegistry)
-    : renderer_(renderer), graphicsRegistry(graphicsRegistry)
+GraphicsLoader::GraphicsLoader(SDL_Renderer* renderer,
+                               GraphicsRegistry& graphicsRegistry,
+                               AtlasGeneratorBase& atlasGenerator)
+    : renderer_(renderer), graphicsRegistry(graphicsRegistry), atlasGenerator(atlasGenerator)
 {
 }
 
@@ -22,135 +29,139 @@ void GraphicsLoader::loadAllGraphics()
     loadTextures();
     adjustDirections();
     loadAnimations();
-    loadCursor(4);
+    loadCursors();
+    setCursor(4);
 }
 
-void GraphicsLoader::loadTexture(const std::filesystem::path& path)
+void GraphicsLoader::loadTextures()
 {
-    std::string pathStr = path.string();
+    spdlog::info("Loading textures from assets/images...");
 
-    // Load surface (supporting BMP/PNG/JPG etc. via SDL_image)
-    SDL_Surface* surface = IMG_Load(pathStr.c_str());
-    if (!surface)
+    std::map<int, std::vector<std::filesystem::path>> entityTypeToPaths;
+    int loadedCount = 0;
+
+    // Group textures by entityType
+    for (const auto& entry : fs::recursive_directory_iterator("assets/images"))
     {
-        spdlog::warn("Failed to load image: {}, error: {}", pathStr, SDL_GetError());
+        if (!entry.is_regular_file())
+            continue;
+
+        const auto& path = entry.path();
+        int entityType = determineEntityType(path); // Implement a helper to determine entityType
+        if (entityType == 0)
+            continue; // Skip unknown entity types
+        entityTypeToPaths[entityType].push_back(path);
+    }
+
+    // Create atlas textures for each entityType
+    for (const auto& [entityType, paths] : entityTypeToPaths)
+    {
+        createAtlasForEntityType(entityType, paths);
+        loadedCount += paths.size();
+    }
+
+    spdlog::info("{} textures loaded into atlases.", loadedCount);
+}
+
+int GraphicsLoader::determineEntityType(const std::filesystem::path& path)
+{
+    if (path.string().find("terrain") != std::string::npos)
+        return 2; // Tile
+    if (path.string().find("villager") != std::string::npos)
+        return 3; // Villager
+    if (path.string().find("trees") != std::string::npos)
+        return 4; // Trees
+    return 0;     // Unknown
+}
+
+void GraphicsLoader::createAtlasForEntityType(int entityType,
+                                              const std::vector<std::filesystem::path>& paths)
+{
+
+    std::vector<SDL_Rect> srcRects;
+
+    auto atlasTexture = atlasGenerator.generateAtlas(renderer_, entityType, paths, srcRects);
+    if (!atlasTexture)
+    {
+        spdlog::error("Failed to create atlas texture for entity type {}.", entityType);
         return;
     }
 
-    // Optional: apply color keying if needed (e.g., for .bmp files)
-    if (path.extension() == ".bmp")
+    // Register textures in the graphics registry
+    for (size_t i = 0; i < paths.size(); ++i)
     {
-        auto formatDetails = SDL_GetPixelFormatDetails(surface->format);
-        auto palette = SDL_GetSurfacePalette(surface);
-        auto rgb = SDL_MapRGB(formatDetails, palette, 0xFF, 0, 0xFF); // magenta key
-        SDL_SetSurfaceColorKey(surface, true, rgb);
-    }
+        const auto& path = paths[i];
+        const auto& srcRect = srcRects[i];
+        WidthHeight imageSize = {srcRect.w, srcRect.h};
 
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, surface);
-    WidthHeight imageSize = {surface->w, surface->h};
+        aion::GraphicsID id;
+        id.entityType = entityType;
+        id.action = 0; // Deduce action if applicable
+        // id.variation = i; // Variation index
+        id.direction = utils::Direction::NORTH; // Default direction
 
-    if (!texture)
-    {
-        SDL_DestroySurface(surface);
-        spdlog::warn("Failed to convert surface to texture: {}, error: {}", pathStr,
-                     SDL_GetError());
-        return;
-    }
+        Vec2d anchor = {imageSize.width / 2 + 1, imageSize.height};
+        std::string pathStr = path.string();
 
-    // Infer or assign graphics ID based on filename or a mapping file
-    aion::GraphicsID id;
-    id.frame = 0;
-    id.entitySubType = 0;
-    Vec2d anchor = {imageSize.width / 2 + 1, imageSize.height};
-
-    if (pathStr.find("terrain") != std::string::npos)
-    {
-        id.entityType = 2;          // Tile
-        id.action = 0;
-        id.variation = variation++; // Different grass tiles. TODO: This doesn't scale or work well.
-        id.direction = utils::Direction::NORTHEAST;
-        anchor = {imageSize.width / 2 + 1, 0};
-
-        SDL_DestroySurface(surface);
-    }
-    else if (pathStr.find("villager") != std::string::npos)
-    {
-        id.entityType = 3;
-
-        // Deduce action from the folder name (e.g., "0_idle" -> action = 0, "1_walk" -> action = 1)
-        auto actionFolder = path.parent_path().filename().string();
-        auto actionStr = actionFolder.substr(0, actionFolder.find('_'));
-        id.action = std::stoi(actionStr);
-
-        /* if the file name is 1388_01.bmp pattern last two digit represents the frame. each
-         direction animation contains 15 frames. 1-15 for south, 16-30 for southwest, 31-45 for
-         west, 46-60 for northwest, and so on. implement this logic to manipulate frame number and
-         direction of id (type of GraphicsID) */
-        auto index = std::stoi(pathStr.substr(pathStr.find_last_of('_') + 1, 2)) - 1; // 0-14
-        id.frame = index % 15;
-        auto direction = (int) (index / 15); // 0-3
-        if (direction == 0)
+        if (entityType == 2)
         {
-            id.direction = utils::Direction::SOUTH;
+            id.variation =
+                variation++; // Different grass tiles. TODO: This doesn't scale or work well.
+            id.direction = utils::Direction::NORTHEAST;
+            anchor = {imageSize.width / 2 + 1, 0};
         }
-        else if (direction == 1)
+        else if (entityType == 3)
         {
-            id.direction = utils::Direction::SOUTHWEST;
-        }
-        else if (direction == 2)
-        {
-            id.direction = utils::Direction::WEST;
-        }
-        else if (direction == 3)
-        {
-            id.direction = utils::Direction::NORTHWEST;
-        }
-        else if (direction == 4)
-        {
-            id.direction = utils::Direction::NORTH;
-        }
-        SDL_DestroySurface(surface);
+            auto actionFolder = path.parent_path().filename().string();
+            auto actionStr = actionFolder.substr(0, actionFolder.find('_'));
+            id.action = std::stoi(actionStr);
 
-    } else if (pathStr.find("cursor") != std::string::npos)
-    {
-        id.entityType = 1;
-        anchor = {0, 0};
-        // if the file name of cursors are like 51000_01.bmp extract last two digits and assign it to variation field
-
-        auto indexStr = pathStr.substr(pathStr.find_last_of('_') + 1, 2);
-        auto index = std::stoi(indexStr);
-        id.variation = index;
-
-        // TODO: temp hack
-        loadedSurfaces[id.hash()] = surface; // Store the surface for later use
-    }
-    else if (pathStr.find("trees") != std::string::npos)
-    {
-        id.entityType = 4;
-
-        for (size_t i = 0; i < 100; i++)
-        {
-            id.variation = i;
-            if (!graphicsRegistry.hasTexture(id))
+            /* if the file name is 1388_01.bmp pattern last two digit represents the frame. each
+                direction animation contains 15 frames. 1-15 for south, 16-30 for southwest, 31-45
+               for west, 46-60 for northwest, and so on. implement this logic to manipulate frame
+               number and direction of id (type of GraphicsID) */
+            auto index = std::stoi(pathStr.substr(pathStr.find_last_of('_') + 1, 2)) - 1; // 0-14
+            id.frame = index % 15;
+            auto direction = (int) (index / 15); // 0-3
+            if (direction == 0)
             {
-                break;
+                id.direction = utils::Direction::SOUTH;
+            }
+            else if (direction == 1)
+            {
+                id.direction = utils::Direction::SOUTHWEST;
+            }
+            else if (direction == 2)
+            {
+                id.direction = utils::Direction::WEST;
+            }
+            else if (direction == 3)
+            {
+                id.direction = utils::Direction::NORTHWEST;
+            }
+            else if (direction == 4)
+            {
+                id.direction = utils::Direction::NORTH;
             }
         }
-        
-        SDL_DestroySurface(surface);
-    }
-    else
-    {
-        SDL_DestroySurface(surface);
+        else if (entityType == 4) // Trees
+        {
+            for (size_t i = 0; i < 100; i++)
+            {
+                id.variation = i;
+                if (!graphicsRegistry.hasTexture(id))
+                {
+                    break;
+                }
+            }
+        }
 
-        spdlog::warn("Unknown texture type: {}", pathStr);
-        return;
-    }
+        SDL_FRect* srcRectF = new SDL_FRect{(float) srcRect.x, (float) srcRect.y, (float) srcRect.w,
+                                            (float) srcRect.h};
 
-    aion::Texture entry{texture,
-                        anchor,
-                        imageSize}; // TODO: Load this anchor from configs
-    graphicsRegistry.registerTexture(id, entry);
+        aion::Texture entry{atlasTexture, srcRectF, anchor, imageSize, false};
+        graphicsRegistry.registerTexture(id, entry);
+    }
 }
 
 void aion::GraphicsLoader::loadAnimations()
@@ -187,21 +198,49 @@ void aion::GraphicsLoader::loadAnimations()
     }
 }
 
-void aion::GraphicsLoader::loadTextures()
+void aion::GraphicsLoader::loadCursors()
 {
-    spdlog::info("Loading textures from assets/images...");
-
-    int variation = 0;
-    int loadedCount = 0;
-
-    for (const auto& entry : fs::recursive_directory_iterator("assets/images"))
+    for (const auto& entry : fs::recursive_directory_iterator("assets/images/interfaces/cursors"))
     {
         if (!entry.is_regular_file())
             continue;
-        loadTexture(entry.path());
-        ++loadedCount;
+
+        const auto& path = entry.path();
+        string pathStr = path.string();
+
+        // Load surface (supporting BMP/PNG/JPG etc. via SDL_image)
+        SDL_Surface* surface = IMG_Load(pathStr.c_str());
+        if (!surface)
+        {
+            spdlog::warn("Failed to load image: {}, error: {}", pathStr, SDL_GetError());
+            return;
+        }
+
+        // apply color keying if needed (e.g., for .bmp files)
+        if (path.extension() == ".bmp")
+        {
+            auto formatDetails = SDL_GetPixelFormatDetails(surface->format);
+            auto palette = SDL_GetSurfacePalette(surface);
+            auto rgb = SDL_MapRGB(formatDetails, palette, 0xFF, 0, 0xFF); // magenta key
+            SDL_SetSurfaceColorKey(surface, true, rgb);
+        }
+
+        SDL_Cursor* cursor = SDL_CreateColorCursor(surface, 0, 0);
+
+        if (!cursor)
+        {
+            spdlog::error("Failed to create color cursor: {}", SDL_GetError());
+            return;
+        }
+        auto variationStr = pathStr.substr(pathStr.find_last_of('_') + 1, 2);
+        auto variation = std::stoi(variationStr);
+        cursors[variation] = cursor; // Store the cursor in the map
     }
-    spdlog::info("{} textures loaded.", loadedCount);
+}
+
+void aion::GraphicsLoader::setCursor(int variation)
+{
+    SDL_SetCursor(cursors[variation]);
 }
 
 void aion::GraphicsLoader::adjustDirections()
@@ -251,26 +290,4 @@ utils::Direction aion::GraphicsLoader::getFlippedDirection(utils::Direction dire
     default:
         return direction; // No flipping needed
     }
-}
-
-void aion::GraphicsLoader::loadCursor(int variation)
-{
-    // use variation, look cursor in registry and set it as colored cursor in SDL
-
-    auto it = loadedSurfaces.find(GraphicsID(1, 0, 0, utils::Direction::NORTH, 0, variation, 0).hash());
-    if (it == loadedSurfaces.end())
-    {
-        spdlog::error("Cursor surface not found for variation: {}", variation);
-        return;
-    }
-    SDL_Surface* surface = it->second;
-    SDL_Cursor* cursor = SDL_CreateColorCursor(surface, 0, 0);
-
-    if (!cursor)
-    {
-        spdlog::error("Failed to create color cursor: {}", SDL_GetError());
-        return;
-    }
-
-    SDL_SetCursor(cursor);
 }

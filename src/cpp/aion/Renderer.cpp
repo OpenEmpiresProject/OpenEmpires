@@ -1,5 +1,6 @@
 #include "Renderer.h"
 
+#include "AtlasGeneratorBasic.h"
 #include "Event.h"
 #include "FPSCounter.h"
 #include "GameState.h"
@@ -77,7 +78,8 @@ void Renderer::cleanup()
 void Renderer::threadEntry()
 {
     initSDL();
-    GraphicsLoader(renderer_, graphicsRegistry).loadAllGraphics();
+    AtlasGeneratorBasic atlasGenerator;
+    GraphicsLoader(renderer_, graphicsRegistry, atlasGenerator).loadAllGraphics();
     renderingLoop();
 }
 
@@ -268,7 +270,6 @@ void aion::Renderer::renderGameEntities()
     aion::GameState::getInstance().getEntities<aion::GraphicsComponent>().each(
         [this](aion::GraphicsComponent& gc)
         {
-            //auto pixelPos = viewport.feetToPixels(gc.positionInFeet) - gc.anchor;
             int zOrder = gc.positionInFeet.y + gc.positionInFeet.x;
             if (zOrder < 0 || zOrder >= zBucketsSize)
             {
@@ -298,12 +299,13 @@ void aion::Renderer::renderGameEntities()
         {
             auto screenPos = viewport.feetToScreenUnits(gc->positionInFeet) - gc->anchor;
 
-            if (isFirst)
-            {
-                auto tilesPos = viewport.feetToTiles(gc->positionInFeet);
-                spdlog::debug("Z-order: {}, entity: {}. pos {},{}", z, gc->graphicsID.entityType, tilesPos.x,
-                    tilesPos.y);
-            }
+            // if (isFirst)
+            // {
+            //     auto tilesPos = viewport.feetToTiles(gc->positionInFeet);
+            //     spdlog::debug("Z-order: {}, entity: {}. pos {},{}", z, gc->graphicsID.entityType,
+            //     tilesPos.x,
+            //         tilesPos.y);
+            // }
 
             // TODO: Remove this testing code
             if (isFirst)
@@ -315,7 +317,7 @@ void aion::Renderer::renderGameEntities()
             dstRect.y = screenPos.y;
             dstRect.w = gc->size.width;
             dstRect.h = gc->size.height;
-            SDL_RenderTextureRotated(renderer_, gc->texture, nullptr, &dstRect, 0, nullptr,
+            SDL_RenderTextureRotated(renderer_, gc->texture, gc->srcRect, &dstRect, 0, nullptr,
                                      gc->flip);
         }
     }

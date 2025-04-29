@@ -69,8 +69,9 @@ void game::ResourceLoader::loadEntities()
 
     GameState::getInstance().initializeStaticEntityMap(size.width, size.height);
     GameState::getInstance().generateMap();
-    
-    // for staticEntityMap in GameState, create entities for each tree marked with 1 in the double array
+
+    // for staticEntityMap in GameState, create entities for each tree marked with 1 in the double
+    // array
     for (size_t i = 0; i < size.width; i++)
     {
         for (size_t j = 0; j < size.height; j++)
