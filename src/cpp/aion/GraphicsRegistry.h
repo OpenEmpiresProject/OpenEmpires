@@ -14,7 +14,7 @@ namespace aion
 class GraphicsID
 {
   public:
-    int entityType = -1;                                  // 15bits: 0-32767
+    int entityType = 0;                                   // 15bits: 0-32767
     int action = 0;                                       // 15bits: 0-32767
     int frame = 0;                                        // 5bits: 0-31
     utils::Direction direction = utils::Direction::NORTH; // 3bits: 0-7
@@ -24,7 +24,7 @@ class GraphicsID
 
     bool isValid() const
     {
-        return entityType != -1 && action != -1 && frame != -1;
+        return entityType != 0 && action != 0 && frame != 0;
     }
 
     bool operator==(const GraphicsID& other) const

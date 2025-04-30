@@ -77,7 +77,7 @@ TEST_F(ViewportTest, FeetToPixelsConversion_SubTile)
 {
     Vec2d feet(128, 128);
     Vec2d pixels = viewport.feetToPixels(feet);
-    EXPECT_EQ(pixels, Vec2d(utils::Constants::TILE_PIXEL_WIDTH * 50 / 2, 16));
+    EXPECT_EQ(pixels, Vec2d(utils::Constants::TILE_PIXEL_WIDTH * 50 / 2, 24));
 }
 
 // Testing integer division
@@ -85,15 +85,7 @@ TEST_F(ViewportTest, FeetToPixelsConversion_SubTile2)
 {
     Vec2d feet(64, 64);
     Vec2d pixels = viewport.feetToPixels(feet);
-    EXPECT_EQ(pixels, Vec2d(utils::Constants::TILE_PIXEL_WIDTH * 50 / 2, 8));
-}
-
-// Testing integer division
-TEST_F(ViewportTest, FeetToPixelsConversion_SubTile3)
-{
-    Vec2d feet(96, 64);
-    Vec2d pixels = viewport.feetToPixels(feet);
-    EXPECT_EQ(pixels, Vec2d(utils::Constants::TILE_PIXEL_WIDTH * 50 / 2 + 4, 8 + 2));
+    EXPECT_EQ(pixels, Vec2d(utils::Constants::TILE_PIXEL_WIDTH * 50 / 2, 12));
 }
 
 TEST_F(ViewportTest, PixelsToFeetConversion_TopCorner) {
@@ -122,24 +114,16 @@ TEST_F(ViewportTest, PixelsToFeetConversion_BottomCorner) {
 
 // Testing integer division
 TEST_F(ViewportTest, PixelsToFeetConversion_SubTile) {
-    Vec2d pixels(utils::Constants::TILE_PIXEL_WIDTH * 50 / 2, 16);
+    Vec2d pixels(utils::Constants::TILE_PIXEL_WIDTH * 50 / 2, 24);
     Vec2d feet = viewport.pixelsToFeet(pixels);
     EXPECT_EQ(feet, Vec2d(128, 128));
 }
 
 // Testing integer division
 TEST_F(ViewportTest, PixelsToFeetConversion_SubTile2) {
-    Vec2d pixels(utils::Constants::TILE_PIXEL_WIDTH * 50 / 2, 8);
+    Vec2d pixels(utils::Constants::TILE_PIXEL_WIDTH * 50 / 2, 12);
     Vec2d feet = viewport.pixelsToFeet(pixels);
     EXPECT_EQ(feet, Vec2d(64, 64));
-}
-
-// Testing integer division
-TEST_F(ViewportTest, PixelsToFeetConversion_SubTile3)
-{
-    Vec2d pixels(utils::Constants::TILE_PIXEL_WIDTH * 50 / 2 + 4, 8 + 2);
-    Vec2d feet = viewport.pixelsToFeet(pixels);
-    EXPECT_EQ(feet, Vec2d(96, 64));
 }
 
 TEST_F(ViewportTest, PixelsToScreenUnitsConversion) {

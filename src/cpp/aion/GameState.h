@@ -1,6 +1,8 @@
 #ifndef GAMESTATE_H
 #define GAMESTATE_H
 
+#include "PathFinderBase.h"
+#include "StaticEntityMap.h"
 #include "SubSystem.h"
 
 #include <entt/entity/registry.hpp>
@@ -57,23 +59,22 @@ class GameState
 
     void clearAll();
 
-    struct StaticEntityMap
-    {
-        int width = 0;
-        int height = 0;
-        int** map = nullptr;
-    };
-
     StaticEntityMap initializeStaticEntityMap(int width, int height);
     StaticEntityMap generateMap();
 
     StaticEntityMap staticEntityMap;
+
+    PathFinderBase* getPathFinder() const
+    {
+        return pathFinder;
+    }
 
   private:
     GameState();
     ~GameState();
 
     entt::registry registry;
+    PathFinderBase* pathFinder = nullptr;
 };
 } // namespace aion
 

@@ -1,10 +1,13 @@
 #include "GameState.h"
 
+#include "PathFinderAStar.h"
+
 #include <random>
 using namespace aion;
 
 GameState::GameState(/* args */)
 {
+    pathFinder = new PathFinderAStar();
 }
 
 GameState::~GameState()
@@ -31,7 +34,7 @@ void GameState::clearAll()
     registry.clear();
 }
 
-GameState::StaticEntityMap GameState::initializeStaticEntityMap(int width, int height)
+StaticEntityMap GameState::initializeStaticEntityMap(int width, int height)
 {
     assert(staticEntityMap.map == nullptr, "Static entity map already initialized.");
 
@@ -50,7 +53,7 @@ GameState::StaticEntityMap GameState::initializeStaticEntityMap(int width, int h
     return staticEntityMap;
 }
 
-GameState::StaticEntityMap aion::GameState::generateMap()
+StaticEntityMap aion::GameState::generateMap()
 {
     assert(staticEntityMap.map != nullptr, "Static entity map is not initialized.");
 
@@ -60,7 +63,7 @@ GameState::StaticEntityMap aion::GameState::generateMap()
     std::uniform_int_distribution<int> posY(0, staticEntityMap.height - 1);
 
     int totalTiles = staticEntityMap.width * staticEntityMap.height;
-    int targetTreeTiles = totalTiles / 2; // 50% of map should have trees
+    int targetTreeTiles = totalTiles / 4; // 25% of map should have trees
     int treesPlaced = 0;
 
     // 1. Place tree clusters (forests)
