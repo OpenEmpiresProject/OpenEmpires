@@ -61,6 +61,7 @@ class GameState
 
     StaticEntityMap initializeStaticEntityMap(int width, int height);
     StaticEntityMap generateMap();
+    StaticEntityMap generateDebugMap();
 
     StaticEntityMap staticEntityMap;
 

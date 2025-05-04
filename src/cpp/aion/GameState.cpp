@@ -41,13 +41,17 @@ StaticEntityMap GameState::initializeStaticEntityMap(int width, int height)
     staticEntityMap.width = width;
     staticEntityMap.height = height;
     staticEntityMap.map = new int*[width];
+    staticEntityMap.entityMap = new entt::entity*[width];
 
     for (int i = 0; i < width; ++i)
     {
         staticEntityMap.map[i] = new int[height];
+        staticEntityMap.entityMap[i] = new entt::entity[height]; // Initialize entity map
+
         for (int j = 0; j < height; ++j)
         {
-            staticEntityMap.map[i][j] = 0; // Initialize with 0 to indicate no entity
+            staticEntityMap.map[i][j] = 0;                // Initialize with 0 to indicate no entity
+            staticEntityMap.entityMap[i][j] = entt::null; // Initialize with null entity
         }
     }
     return staticEntityMap;
@@ -63,13 +67,13 @@ StaticEntityMap aion::GameState::generateMap()
     std::uniform_int_distribution<int> posY(0, staticEntityMap.height - 1);
 
     int totalTiles = staticEntityMap.width * staticEntityMap.height;
-    int targetTreeTiles = totalTiles / 4; // 25% of map should have trees
+    int targetTreeTiles = totalTiles / 6; // 25% of map should have trees
     int treesPlaced = 0;
 
     // 1. Place tree clusters (forests)
-    while (treesPlaced < targetTreeTiles * 0.85) // Majority in forests
+    while (treesPlaced < targetTreeTiles * 0.95) // Majority in forests
     {
-        int clusterSize = 5 + rng() % 15; // Random cluster size: 5~20
+        int clusterSize = 5 + rng() % 20; // Random cluster size: 5~25
         int centerX = posX(rng);
         int centerY = posY(rng);
 
@@ -104,6 +108,20 @@ StaticEntityMap aion::GameState::generateMap()
             ++treesPlaced;
         }
     }
+
+    return staticEntityMap;
+}
+
+StaticEntityMap aion::GameState::generateDebugMap()
+{
+    for (size_t i = 0; i < 5; i++)
+    {
+        for (size_t j = 0; j < 1; j++)
+        {
+            staticEntityMap.map[i + 10][j + 10] = 1;
+        }
+    }
+    staticEntityMap.map[15][9] = 1;
 
     return staticEntityMap;
 }

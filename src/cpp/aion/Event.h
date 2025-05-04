@@ -7,6 +7,16 @@
 
 namespace aion
 {
+struct KeyboardData
+{
+    int keyCode = 0; // SDL_Scancode
+};
+
+struct MouseMoveData
+{
+    Vec2d screenPos;
+};
+
 struct MouseClickData
 {
     enum class Button
@@ -16,7 +26,7 @@ struct MouseClickData
         MIDDLE
     };
     Button button;
-    Vec2d feetPosition;
+    Vec2d screenPosition;
 };
 
 struct Event
@@ -28,11 +38,12 @@ struct Event
         KEY_UP,
         KEY_DOWN,
         MOUSE_MOVE,
+        MOUSE_BTN_DOWN,
         MOUSE_BTN_UP,
         MAX_TYPE_MARKER
     };
 
-    using Data = std::variant<std::monostate, MouseClickData>;
+    using Data = std::variant<std::monostate, MouseClickData, KeyboardData, MouseMoveData>;
 
     const Type type = Type::NONE;
     const Data data = std::monostate{};

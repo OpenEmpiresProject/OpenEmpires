@@ -8,11 +8,12 @@ using namespace aion;
 
 void aion::GraphicsRegistry::registerTexture(const GraphicsID& graphicID, const Texture& entry)
 {
-    spdlog::debug("Registering texture with ID: {}", graphicID.toString());
+    // spdlog::debug("Registering texture with ID: {}", graphicID.toString());
 
     auto it = m_textureMap.find(graphicID.hash());
     if (it != m_textureMap.end())
     {
+        spdlog::warn("Texture ID already exists, updating: {}", graphicID.toString());
         it->second = entry;
     }
     else
@@ -45,6 +46,7 @@ void aion::GraphicsRegistry::registerAnimation(const GraphicsID& graphicID, cons
     auto it = m_animationMap.find(graphicID.hash());
     if (it != m_animationMap.end())
     {
+        spdlog::warn("Animation ID already exists, updating: {}", graphicID.toString());
         it->second = entry;
     }
     else

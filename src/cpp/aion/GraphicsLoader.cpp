@@ -190,10 +190,10 @@ void aion::GraphicsLoader::loadAnimations()
             Animation animation{animationFrames, true, 10}; // 10 FPS
             graphicsRegistry.registerAnimation(animationID, animation);
 
-            spdlog::debug(
-                "Animation created for entityType: {}, action: {}, direction: {} with {} frames.",
-                idFull.entityType, idFull.action, static_cast<int>(idFull.direction),
-                animationFrames.size());
+            // spdlog::debug(
+            //     "Animation created for entityType: {}, action: {}, direction: {} with {}
+            //     frames.", idFull.entityType, idFull.action, static_cast<int>(idFull.direction),
+            //     animationFrames.size());
         }
     }
 }

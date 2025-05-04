@@ -4,6 +4,7 @@
 #include "EventHandler.h"
 #include "GraphicInstruction.h"
 #include "ThreadQueue.h"
+#include "Viewport.h"
 
 #include <readerwriterqueue.h>
 #include <vector>
@@ -13,7 +14,10 @@ namespace aion
 class Simulator : public EventHandler
 {
   public:
-    Simulator(ThreadQueue& rendererQueue) : rendererQueue(rendererQueue) {};
+    Simulator(ThreadQueue& rendererQueue, Viewport& viewport)
+        : rendererQueue(rendererQueue), viewport(viewport)
+    {
+    }
     ~Simulator() = default;
 
   private:
@@ -27,9 +31,16 @@ class Simulator : public EventHandler
     void simulatePhysics();
     void sendStaticTileInstructions();
     void sendInitialUnitsInstructions();
+    void sendGraphiInstruction(GraphicInstruction* instruction);
+    void testPathFinding(const Vec2d& start, const Vec2d& end);
 
     ThreadQueue& rendererQueue;
     bool sentStaticInstructions = false;
+
+    Vec2d startPosition{0, 0};
+    Viewport& viewport;
+
+    ThreadMessage* messageToRenderer = nullptr;
 };
 } // namespace aion
 

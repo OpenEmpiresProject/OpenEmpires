@@ -110,6 +110,9 @@ class Renderer : public SubSystem
     int64_t zBucketVersion = 0;
 
     int64_t tickCount = 0;
+
+    bool showStaticEntities = true;
+    bool showDebugInfo = false;
 };
 } // namespace aion
 

@@ -42,7 +42,7 @@ int runGame()
     viewport.setViewportPositionInPixels(viewport.feetToPixels(Vec2d(0, 0)));
 
     auto eventLoop = std::make_unique<EventLoop>(&stopToken);
-    auto simulator = std::make_unique<Simulator>(renderQueue);
+    auto simulator = std::make_unique<Simulator>(renderQueue, viewport);
     auto inputHandler = std::make_unique<InputListener>();
     auto renderer =
         std::make_unique<Renderer>(&stopSource, settings, graphicsRegistry, renderQueue, viewport);

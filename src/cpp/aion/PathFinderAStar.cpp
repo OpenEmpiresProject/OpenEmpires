@@ -1,5 +1,7 @@
 #include "PathFinderAStar.h"
 
+#include "Logger.h"
+
 #include <cmath>
 #include <limits>
 #include <queue>
@@ -15,10 +17,10 @@ Path PathFinderAStar::findPath(const StaticEntityMap& map, const Vec2d& start, c
     std::priority_queue<PQNode, std::vector<PQNode>, std::greater<>> open;
 
     std::unordered_map<Vec2d, Vec2d> cameFrom;
-    std::unordered_map<Vec2d, int> gScore;
+    std::unordered_map<Vec2d, double> gScore;
 
     open.emplace(0, start);
-    gScore[start] = 0;
+    gScore[start] = 0.0;
 
     while (!open.empty())
     {
@@ -30,16 +32,20 @@ Path PathFinderAStar::findPath(const StaticEntityMap& map, const Vec2d& start, c
 
         for (const Vec2d& neighbor : getNeighbors(current))
         {
-            if (!isWalkable(map, neighbor))
+            if (!isWalkable(map, current, neighbor))
+            {
+                // spdlog::error("Neighbor {} is blocked", neighbor.toString());
                 continue;
+            }
 
-            int tentativeG = gScore[current] + 1;
+            double moveCost = (current.x != neighbor.x && current.y != neighbor.y) ? 1.4 : 1.0;
+            double tentativeG = gScore[current] + moveCost;
 
             if (!gScore.contains(neighbor) || tentativeG < gScore[neighbor])
             {
                 cameFrom[neighbor] = current;
                 gScore[neighbor] = tentativeG;
-                int fScore = tentativeG + heuristic(neighbor, goal);
+                double fScore = tentativeG + heuristic(neighbor, goal);
                 open.emplace(fScore, neighbor);
             }
         }
@@ -48,26 +54,46 @@ Path PathFinderAStar::findPath(const StaticEntityMap& map, const Vec2d& start, c
     return {}; // No path found
 }
 
-int PathFinderAStar::heuristic(const Vec2d& a, const Vec2d& b)
+double PathFinderAStar::heuristic(const Vec2d& a, const Vec2d& b)
 {
     // Manhattan distance
-    return std::abs(a.x - b.x) + std::abs(a.y - b.y);
+    // return std::abs(a.x - b.x) + std::abs(a.y - b.y);
+
+    // Euclidean distance
+    return std::sqrt(std::pow(a.x - b.x, 2) + std::pow(a.y - b.y, 2));
 }
 
-bool PathFinderAStar::isWalkable(const StaticEntityMap& map, const Vec2d& pos)
+bool isBlocked(const StaticEntityMap& map, const Vec2d& pos)
 {
-    return pos.x >= 0 && pos.x < map.width && pos.y >= 0 && pos.y < map.height &&
-           map.map[pos.y][pos.x] == 0;
+    if (pos.x < 0 || pos.x >= map.width || pos.y < 0 || pos.y >= map.height ||
+        map.map[pos.x][pos.y] != 0)
+        return true;
+    return false;
+}
+
+bool PathFinderAStar::isWalkable(const StaticEntityMap& map, const Vec2d& from, const Vec2d& to)
+{
+    if (isBlocked(map, to))
+        return false;
+
+    if (from.x != to.x && from.y != to.y)
+    {
+        auto diff = to - from;
+        auto corner1 = Vec2d(from.x, from.y + diff.y);
+        auto corner2 = Vec2d(from.x + diff.x, from.y);
+    
+        // Diagonal movement is not allowed if the adjacent tiles are not walkable
+        if (isBlocked(map, corner1) || isBlocked(map, corner2))
+            return false;
+    }
+    return true;
 }
 
 std::vector<Vec2d> PathFinderAStar::getNeighbors(const Vec2d& pos)
 {
-    return {
-        {pos.x + 1, pos.y},
-        {pos.x - 1, pos.y},
-        {pos.x, pos.y + 1},
-        {pos.x, pos.y - 1},
-    };
+    return {{pos.x + 1, pos.y},     {pos.x - 1, pos.y},     {pos.x, pos.y + 1},
+            {pos.x, pos.y - 1},     {pos.x + 1, pos.y + 1}, {pos.x - 1, pos.y - 1},
+            {pos.x + 1, pos.y - 1}, {pos.x - 1, pos.y + 1}};
 }
 
 Path PathFinderAStar::reconstructPath(const std::unordered_map<Vec2d, Vec2d>& cameFrom,

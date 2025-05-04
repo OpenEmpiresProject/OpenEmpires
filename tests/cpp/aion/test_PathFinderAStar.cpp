@@ -51,8 +51,74 @@ TEST_F(PathFinderAStarTest, FindPath_AroundObstacle) {
 
     // Ensure the path avoids obstacles
     for (const Vec2d& pos : path) {
-        EXPECT_TRUE(map.map[pos.y][pos.x] == 0) << "Path crosses an obstacle at " << pos.x << ", " << pos.y;
+        EXPECT_TRUE(map.map[pos.x][pos.y] == 0) << "Path crosses an obstacle at " << pos.x << ", " << pos.y;
     }
+}
+
+TEST_F(PathFinderAStarTest, FindPath_CornersBlocked) {
+    int predefined[5][5] = {
+        {0, 0, 0, 0, 0},
+        {0, 0, 1, 0, 0},
+        {0, 1, 0, 1, 0},
+        {0, 0, 1, 0, 0},
+        {0, 0, 0, 0, 0},
+    };
+
+    for (int i = 0; i < 5; ++i) {
+        for (int j = 0; j < 5; ++j) {
+            map.map[i][j] = predefined[i][j];
+        }
+    }
+
+    Vec2d start = {2, 2}; // inside the block
+    Vec2d goal = {4, 4}; // outside the block
+    Path path = pathFinder.findPath(map, start, goal);
+
+    ASSERT_TRUE(path.empty());
+}
+
+TEST_F(PathFinderAStarTest, FindPath_OnlyOneCornerBlocked) {
+    int predefined[5][5] = {
+        {0, 1, 0, 0, 0},
+        {0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0},
+    };
+
+    for (int i = 0; i < 5; ++i) {
+        for (int j = 0; j < 5; ++j) {
+            map.map[i][j] = predefined[i][j];
+        }
+    }
+
+    Vec2d start = {0, 0};
+    Vec2d goal = {4, 4};
+    Path path = pathFinder.findPath(map, start, goal);
+
+    ASSERT_EQ(path.size(), 6);
+}
+
+TEST_F(PathFinderAStarTest, FindPath_StraightLinesUnblocked) {
+    int predefined[5][5] = {
+        {0, 0, 0, 0, 0},
+        {0, 1, 0, 1, 0},
+        {0, 0, 0, 0, 0},
+        {0, 1, 0, 1, 0},
+        {0, 0, 0, 0, 0},
+    };
+
+    for (int i = 0; i < 5; ++i) {
+        for (int j = 0; j < 5; ++j) {
+            map.map[i][j] = predefined[i][j];
+        }
+    }
+
+    Vec2d start = {2, 2}; // inside the block
+    Vec2d goal = {4, 4}; // outside the block
+    Path path = pathFinder.findPath(map, start, goal);
+
+    ASSERT_FALSE(path.empty());
 }
 
 TEST_F(PathFinderAStarTest, FindPath_NoPathAvailable) {

@@ -57,6 +57,12 @@ class TransformComponent : public aion::Component<TransformComponent>
     {
         return static_cast<utils::Direction>((rotation % 360) / 45);
     }
+
+    Vec2d getTilePosition() const
+    {
+        return Vec2d{static_cast<int>(position.x / utils::Constants::FEET_PER_TILE),
+                     static_cast<int>(position.y / utils::Constants::FEET_PER_TILE)};
+    }
 };
 } // namespace aion
 

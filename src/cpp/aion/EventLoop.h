@@ -41,6 +41,11 @@ class EventLoop : public SubSystem
     std::list<EventHandler*> listenersRawPtrs;
     std::thread eventLoopThread;
     std::queue<Event> eventQueue;
+
+    bool* previousKeyboardState = nullptr;
+    uint32_t previousMouseState = 0;
+    int previouseMouseX = 0;
+    int previouseMouseY = 0;
 };
 
 } // namespace aion

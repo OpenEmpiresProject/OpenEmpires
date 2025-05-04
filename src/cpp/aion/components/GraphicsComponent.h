@@ -19,6 +19,8 @@ class GraphicsComponent : public aion::Component<GraphicsComponent>
     utils::WidthHeight size = {0, 0}; // Size of the texture in pixels
     SDL_FlipMode flip = SDL_FLIP_NONE; // Flip mode for the texture
     SDL_FRect* srcRect = nullptr;      // Source rectangle for the texture
+    int debugHighlightType = static_cast<int>(utils::DebugHighlightType::NONE);
+    bool isStatic = false;
 
     GraphicsComponent() = default;
     GraphicsComponent(const GraphicsID& graphicsID) : graphicsID(graphicsID)
@@ -57,6 +59,24 @@ class GraphicsComponent : public aion::Component<GraphicsComponent>
         {
             spdlog::error("Texture not found for entity: {}", graphicsID.toString());
         }
+    }
+
+    // add set and clear functions to manipulate the debugHighlightType flag
+    void setDebugHighlightType(utils::DebugHighlightType type)
+    {
+        debugHighlightType |= static_cast<int>(type);
+    }
+    void clearDebugHighlightType(utils::DebugHighlightType type)
+    {
+        debugHighlightType &= ~static_cast<int>(type);
+    }
+    bool hasDebugHighlightType(utils::DebugHighlightType type) const
+    {
+        return (debugHighlightType & static_cast<int>(type)) != 0;
+    }
+    void clearAllDebugHighlightTypes()
+    {
+        debugHighlightType = static_cast<int>(utils::DebugHighlightType::NONE);
     }
 };
 } // namespace aion

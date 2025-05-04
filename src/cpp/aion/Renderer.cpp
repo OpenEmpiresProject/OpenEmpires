@@ -8,6 +8,7 @@
 #include "Logger.h"
 #include "ObjectPool.h"
 #include "Renderer.h"
+#include "SDL3_gfxPrimitives.h"
 #include "components/ActionComponent.h"
 #include "components/AnimationComponent.h"
 #include "components/EntityInfoComponent.h"
@@ -176,6 +177,17 @@ bool aion::Renderer::handleEvents()
                     MouseClickData{MouseClickData::Button::LEFT, lastMouseClickPosInFeet});
             }
         }
+        else if (event.type == SDL_EVENT_KEY_UP)
+        {
+            if (event.key.scancode == SDL_SCANCODE_1)
+            {
+                showStaticEntities = !showStaticEntities;
+            }
+            else if (event.key.scancode == SDL_SCANCODE_2)
+            {
+                showDebugInfo = !showDebugInfo;
+            }
+        }
     }
     return true;
 }
@@ -224,6 +236,8 @@ void aion::Renderer::updateGraphicComponents()
                 // gc.graphicsID.frame = instruction->frame; // TODO: Animate
                 gc.graphicsID.variation = instruction->variation;
                 gc.positionInFeet = instruction->positionInFeet;
+                gc.debugHighlightType = instruction->debugHighlightType;
+                gc.isStatic = instruction->isStatic;
 
                 gc.updateTextureDetails(graphicsRegistry);
 
@@ -317,8 +331,30 @@ void aion::Renderer::renderGameEntities()
             dstRect.y = screenPos.y;
             dstRect.w = gc->size.width;
             dstRect.h = gc->size.height;
-            SDL_RenderTextureRotated(renderer_, gc->texture, gc->srcRect, &dstRect, 0, nullptr,
-                                     gc->flip);
+
+            if (!gc->isStatic || showStaticEntities)
+            {
+                SDL_RenderTextureRotated(renderer_, gc->texture, gc->srcRect, &dstRect, 0, nullptr,
+                                         gc->flip);
+            }
+
+            if (showDebugInfo)
+            {
+                if (gc->hasDebugHighlightType(utils::DebugHighlightType::TILE_TREE_MARK))
+                {
+                    ellipseRGBA(renderer_, screenPos.x + utils::Constants::TILE_PIXEL_WIDTH / 2,
+                                screenPos.y + utils::Constants::TILE_PIXEL_HEIGHT / 2, 30, 15, 255,
+                                0, 0, 255); // green circle
+                }
+
+                if (gc->hasDebugHighlightType(utils::DebugHighlightType::TILE_CIRCLE))
+                {
+                    filledEllipseRGBA(renderer_,
+                                      screenPos.x + utils::Constants::TILE_PIXEL_WIDTH / 2,
+                                      screenPos.y + utils::Constants::TILE_PIXEL_HEIGHT / 2, 20, 10,
+                                      0, 0, 255, 100); // blue ellipse
+                }
+            }
         }
     }
     isFirst = false;

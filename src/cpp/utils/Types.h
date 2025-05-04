@@ -53,6 +53,12 @@ static std::string directionToString(Direction direction)
         return "UNKNOWN";
     }
 }
+enum class DebugHighlightType
+{
+    NONE = 0,
+    TILE_CIRCLE = 1 << 0,
+    TILE_TREE_MARK = 1 << 1,
+};
 
 } // namespace utils
 
