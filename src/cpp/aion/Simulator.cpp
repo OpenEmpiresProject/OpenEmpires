@@ -5,16 +5,18 @@
 #include "components/ActionComponent.h"
 #include "components/DirtyComponent.h"
 #include "components/EntityInfoComponent.h"
-#include "components/GraphicsComponent.h"
+#include "components/RenderingComponent.h"
 #include "components/TransformComponent.h"
+#include "components/GraphicsComponent.h"
 
 using namespace aion;
 using namespace utils;
 
 char scancodeToChar(SDL_Scancode scancode, bool shiftPressed);
-GraphicInstruction* convertTileToGraphicInstruction(entt::entity entityID,
+GraphicInstruction* convertEntityToGI(entt::entity entityID,
                                                     aion::TransformComponent& transform,
-                                                    aion::EntityInfoComponent& entityInfo);
+                                                    aion::EntityInfoComponent& entityInfo,
+                                                    GraphicsComponent& gc);
 
 void Simulator::onInit(EventLoop* eventLoop)
 {
@@ -70,41 +72,30 @@ void Simulator::onEvent(const Event& e)
 
 void Simulator::onTick()
 {
-    DirtyComponent::globalDirtyVersion++;
     simulatePhysics();
-
-    if (!sentStaticInstructions)
-    {
-        sendStaticInstructions();
-        sentStaticInstructions = true;
-    }
+    updateGraphicComponents();
     sendGraphicsInstructions();
-
-    if (!messageToRenderer->commandBuffer.empty())
-    {
-        rendererQueue.enqueue(messageToRenderer);
-        messageToRenderer = ObjectPool<ThreadMessage>::acquire(ThreadMessage::Type::RENDER);
-    }
-}
-
-void aion::Simulator::sendStaticInstructions()
-{
-    sendStaticTileInstructions();
-    sendInitialUnitsInstructions();
+    sendThreadMessageToRenderer();
+    incrementDirtyVersion();
 }
 
 void Simulator::sendGraphicsInstructions()
 {
     aion::GameState::getInstance()
-        .getEntities<TransformComponent, ActionComponent, EntityInfoComponent, DirtyComponent>()
+        .getEntities<TransformComponent, EntityInfoComponent, DirtyComponent, GraphicsComponent>()
         .each(
-            [this](entt::entity entity, TransformComponent& transform, ActionComponent& action,
-                   EntityInfoComponent& entityInfo, DirtyComponent& dirty)
+            [this](entt::entity entity, TransformComponent& transform,
+                   EntityInfoComponent& entityInfo, DirtyComponent& dirty, GraphicsComponent& gc)
             {
+                if (gc.entityType == 2 && dirty.dirtyVersion != 0)
+                {
+                    spdlog::debug("Entity dirty: {}/{}", dirty.dirtyVersion, dirty.globalDirtyVersion);
+                }
+                
                 if (dirty.isDirty() == false)
                     return;
 
-                auto gi = convertTileToGraphicInstruction(entity, transform, entityInfo);
+                auto gi = convertEntityToGI(entity, transform, entityInfo, gc);
                 sendGraphiInstruction(gi);
             });
 }
@@ -127,73 +118,35 @@ void Simulator::simulatePhysics()
             });
 }
 
-void aion::Simulator::sendStaticTileInstructions()
+void Simulator::updateGraphicComponents()
 {
-    auto message = ObjectPool<ThreadMessage>::acquire(ThreadMessage::Type::RENDER);
-
-    aion::GameState::getInstance()
-        .getEntities<aion::TransformComponent, aion::EntityInfoComponent>()
-        .each(
-            [this, &message](entt::entity entityID, aion::TransformComponent& transform,
-                             aion::EntityInfoComponent& entityInfo)
-            {
-                // TODO: This works only for testing. Should send these instruction based on the map
-                if (entityInfo.entityType == 2)
-                {
-                    auto graphicInstruction =
-                        convertTileToGraphicInstruction(entityID, transform, entityInfo);
-                    auto tilePos = transform.getTilePosition();
-                    if (GameState::getInstance().staticEntityMap.map[tilePos.x][tilePos.y] != 0)
-                    {
-                        entityInfo.setDebugHighlightType(utils::DebugHighlightType::TILE_TREE_MARK);
-                        graphicInstruction->debugHighlightType = entityInfo.debugHighlightType;
-                    }
-                    message->commandBuffer.push_back(static_cast<void*>(graphicInstruction));
-                }
-                else if (entityInfo.entityType == 4) // tree
-                {
-                    auto graphicInstruction = ObjectPool<GraphicInstruction>::acquire();
-                    graphicInstruction->type = GraphicInstruction::Type::ADD;
-                    graphicInstruction->entity = entityID;
-                    graphicInstruction->positionInFeet = transform.position;
-                    graphicInstruction->entityType = entityInfo.entityType;
-                    graphicInstruction->variation = entityInfo.variation;
-                    graphicInstruction->isStatic = entityInfo.isStatic;
-                    message->commandBuffer.push_back(static_cast<void*>(graphicInstruction));
-                }
-            });
-
-    if (message->commandBuffer.empty())
-        ObjectPool<ThreadMessage>::release(message);
-    else
-        rendererQueue.enqueue(message);
+    GameState::getInstance()
+    .getEntities<TransformComponent, EntityInfoComponent, GraphicsComponent, DirtyComponent>()
+    .each(
+        [this](entt::entity entityID, TransformComponent& transform,
+                         EntityInfoComponent& entityInfo, GraphicsComponent& gc, DirtyComponent& dirty)
+        {
+            // TODO: might need to optimize this later
+            if (dirty.isDirty() == false)
+                return;
+            gc.positionInFeet = transform.position;
+            gc.direction = transform.getIsometricDirection();
+            gc.variation = entityInfo.variation;
+        });
 }
 
-void aion::Simulator::sendInitialUnitsInstructions()
+void aion::Simulator::sendThreadMessageToRenderer()
 {
-    auto message = ObjectPool<ThreadMessage>::acquire(ThreadMessage::Type::RENDER);
+    if (!messageToRenderer->commandBuffer.empty())
+    {
+        rendererQueue.enqueue(messageToRenderer);
+        messageToRenderer = ObjectPool<ThreadMessage>::acquire(ThreadMessage::Type::RENDER);
+    }
+}
 
-    aion::GameState::getInstance()
-        .getEntities<aion::TransformComponent, aion::EntityInfoComponent, ActionComponent>()
-        .each(
-            [this, &message](entt::entity entityID, aion::TransformComponent& transform,
-                             aion::EntityInfoComponent& entityInfo, ActionComponent& action)
-            {
-                auto graphicInstruction = ObjectPool<GraphicInstruction>::acquire();
-                graphicInstruction->type = GraphicInstruction::Type::ADD;
-                graphicInstruction->entity = entityID;
-                graphicInstruction->positionInFeet = transform.position;
-                graphicInstruction->entityType = entityInfo.entityType;
-                graphicInstruction->direction = transform.getIsometricDirection();
-                graphicInstruction->action = action.action;
-
-                message->commandBuffer.push_back(static_cast<void*>(graphicInstruction));
-            });
-
-    if (message->commandBuffer.empty())
-        ObjectPool<ThreadMessage>::release(message);
-    else
-        rendererQueue.enqueue(message);
+void aion::Simulator::incrementDirtyVersion()
+{
+    DirtyComponent::globalDirtyVersion++;
 }
 
 void aion::Simulator::sendGraphiInstruction(GraphicInstruction* instruction)
@@ -221,34 +174,31 @@ void aion::Simulator::testPathFinding(const Vec2d& start, const Vec2d& end)
         auto entity = map.entityMap[node.x][node.y];
         if (entity != entt::null)
         {
-            auto [transform, entityInfo] =
+            auto [dirty, gc] =
                 GameState::getInstance()
-                    .getComponents<TransformComponent, EntityInfoComponent>(entity);
-            auto gi = convertTileToGraphicInstruction(entity, transform, entityInfo);
-            entityInfo.setDebugHighlightType(utils::DebugHighlightType::TILE_CIRCLE);
-            gi->debugHighlightType = entityInfo.debugHighlightType;
-            sendGraphiInstruction(gi);
+                    .getComponents<DirtyComponent, GraphicsComponent>(entity);
+            gc.setDebugHighlightType(utils::DebugHighlightType::TILE_CIRCLE);
+            dirty.markDirty();
         }
     }
 }
 
-GraphicInstruction* convertTileToGraphicInstruction(entt::entity entityID,
+GraphicInstruction* convertEntityToGI(entt::entity entityID,
                                                     aion::TransformComponent& transform,
-                                                    aion::EntityInfoComponent& entityInfo)
+                                                    aion::EntityInfoComponent& entityInfo,
+                                                    GraphicsComponent& gc)
 {
-    if (entityInfo.entityType == 2)
-    {
-        auto graphicInstruction = ObjectPool<GraphicInstruction>::acquire();
-        graphicInstruction->type = GraphicInstruction::Type::ADD;
-        graphicInstruction->entity = entityID;
-        graphicInstruction->positionInFeet = transform.position;
-        graphicInstruction->entityType = entityInfo.entityType;
-        graphicInstruction->direction = transform.getIsometricDirection();
-        graphicInstruction->variation = entityInfo.variation;
-        graphicInstruction->isStatic = entityInfo.isStatic;
-        return graphicInstruction;
-    }
-    return nullptr;
+    auto graphicInstruction = ObjectPool<GraphicInstruction>::acquire();
+    graphicInstruction->type = GraphicInstruction::Type::ADD;
+    graphicInstruction->entity = entityID;
+    graphicInstruction->positionInFeet = transform.position;
+    graphicInstruction->entityType = entityInfo.entityType;
+    graphicInstruction->direction = transform.getIsometricDirection();
+    graphicInstruction->variation = entityInfo.variation;
+    graphicInstruction->isStatic = gc.isStatic;
+    graphicInstruction->debugHighlightType = gc.debugHighlightType;
+
+    return graphicInstruction;
 }
 
 char scancodeToChar(SDL_Scancode scancode, bool shiftPressed)

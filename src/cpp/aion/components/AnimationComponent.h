@@ -1,7 +1,6 @@
 #ifndef ANIMATIONCOMPONENT_H
 #define ANIMATIONCOMPONENT_H
 
-#include "Component.h"
 #include "GraphicsRegistry.h"
 #include "WidthHeight.h"
 
@@ -9,7 +8,7 @@
 
 namespace aion
 {
-class AnimationComponent : public aion::Component<AnimationComponent>
+class AnimationComponent
 {
   public:
     GraphicsID animationId; // GraphicsID to query GraphicsRegistry to get the Animation

@@ -21,7 +21,7 @@
 namespace aion
 {
 class FPSCounter;
-class GraphicsComponent;
+class RenderingComponent;
 
 class Renderer : public SubSystem
 {
@@ -102,7 +102,7 @@ class Renderer : public SubSystem
     struct ZBucketVersion
     {
         int64_t version = 0;
-        std::vector<aion::GraphicsComponent*> graphicsComponents;
+        std::vector<aion::RenderingComponent*> graphicsComponents;
     };
 
     std::vector<ZBucketVersion> zBuckets;

@@ -1,7 +1,6 @@
 #ifndef TRANSFORMCOMPONENT_H
 #define TRANSFORMCOMPONENT_H
 
-#include "Component.h"
 #include "Types.h"
 #include "Vec2d.h"
 
@@ -9,7 +8,7 @@
 
 namespace aion
 {
-class TransformComponent : public aion::Component<TransformComponent>
+class TransformComponent
 {
   public:
     aion::Vec2d position{0, 0}; // Position in feet

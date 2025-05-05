@@ -12,7 +12,7 @@
 #include "components/ActionComponent.h"
 #include "components/AnimationComponent.h"
 #include "components/EntityInfoComponent.h"
-#include "components/GraphicsComponent.h"
+#include "components/RenderingComponent.h"
 #include "components/TransformComponent.h"
 
 #include <SDL3/SDL.h>
@@ -227,14 +227,14 @@ void aion::Renderer::updateGraphicComponents()
 
             if (instruction->type == GraphicInstruction::Type::ADD)
             {
-                auto& gc = aion::GameState::getInstance().getComponent<aion::GraphicsComponent>(
+                auto& gc = aion::GameState::getInstance().getComponent<aion::RenderingComponent>(
                     instruction->entity);
-                gc.graphicsID.entityType = instruction->entityType;
-                gc.graphicsID.action = instruction->action;
-                gc.graphicsID.entitySubType = instruction->entitySubType;
-                gc.graphicsID.direction = instruction->direction;
+                gc.entityType = instruction->entityType;
+                gc.action = instruction->action;
+                gc.entitySubType = instruction->entitySubType;
+                gc.direction = instruction->direction;
                 // gc.graphicsID.frame = instruction->frame; // TODO: Animate
-                gc.graphicsID.variation = instruction->variation;
+                gc.variation = instruction->variation;
                 gc.positionInFeet = instruction->positionInFeet;
                 gc.debugHighlightType = instruction->debugHighlightType;
                 gc.isStatic = instruction->isStatic;
@@ -281,8 +281,8 @@ void aion::Renderer::renderGameEntities()
     // TODO: Introduction of this z ordering cost around 60ms for 2500 entities.
     static bool isFirst = true;
 
-    aion::GameState::getInstance().getEntities<aion::GraphicsComponent>().each(
-        [this](aion::GraphicsComponent& gc)
+    aion::GameState::getInstance().getEntities<aion::RenderingComponent>().each(
+        [this](aion::RenderingComponent& gc)
         {
             int zOrder = gc.positionInFeet.y + gc.positionInFeet.x;
             if (zOrder < 0 || zOrder >= zBucketsSize)
@@ -413,15 +413,15 @@ void aion::Renderer::handleViewportMovement()
 
 void aion::Renderer::handleAnimations()
 {
-    GameState::getInstance().getEntities<GraphicsComponent, AnimationComponent>().each(
-        [this](aion::GraphicsComponent& gc, AnimationComponent& ac)
+    GameState::getInstance().getEntities<RenderingComponent, AnimationComponent>().each(
+        [this](aion::RenderingComponent& gc, AnimationComponent& ac)
         {
-            if (!gc.graphicsID.isValid())
+            if (!gc.isValid())
             {
                 return;
             }
 
-            auto& animation = graphicsRegistry.getAnimation(gc.graphicsID);
+            auto& animation = graphicsRegistry.getAnimation(gc);
 
             auto tickGap = settings.getTicksPerSecond() / animation.speed;
             if (tickCount % tickGap != 0)
@@ -429,16 +429,16 @@ void aion::Renderer::handleAnimations()
                 return;
             }
 
-            gc.graphicsID.frame++;
-            if (gc.graphicsID.frame >= animation.frames.size())
+            gc.frame++;
+            if (gc.frame >= animation.frames.size())
             {
                 if (animation.repeatable)
                 {
-                    gc.graphicsID.frame = 0;
+                    gc.frame = 0;
                 }
                 else
                 {
-                    gc.graphicsID.frame = animation.frames.size() - 1;
+                    gc.frame = animation.frames.size() - 1;
                 }
             }
             gc.updateTextureDetails(graphicsRegistry);

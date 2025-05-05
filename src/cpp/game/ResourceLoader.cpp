@@ -8,8 +8,9 @@
 #include "components/AnimationComponent.h"
 #include "components/DirtyComponent.h"
 #include "components/EntityInfoComponent.h"
-#include "components/GraphicsComponent.h"
+#include "components/RenderingComponent.h"
 #include "components/TransformComponent.h"
+#include "components/GraphicsComponent.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_surface.h>
@@ -33,51 +34,69 @@ void game::ResourceLoader::loadEntities()
 {
     spdlog::info("Loading entities...");
 
+    auto& gameState = GameState::getInstance();
+
     auto size = _settings.getWorldSizeInTiles();
-    GameState::getInstance().initializeStaticEntityMap(size.width, size.height);
-    GameState::getInstance().generateMap();
-    // GameState::getInstance().generateDebugMap();
+    gameState.initializeStaticEntityMap(size.width, size.height);
+    gameState.generateMap();
+    // gameState.generateDebugMap();
 
     for (size_t i = 0; i < size.width; i++)
     {
         for (size_t j = 0; j < size.height; j++)
         {
-            auto tile = GameState::getInstance().createEntity();
-            GameState::getInstance().addComponent(tile, TransformComponent(i * 256, j * 256));
-            GameState::getInstance().addComponent(tile, GraphicsComponent());
-            GameState::getInstance().addComponent(tile, EntityInfoComponent(2, rand() % 50 + 1));
-            auto map = GameState::getInstance().staticEntityMap;
+            auto tile = gameState.createEntity();
+            gameState.addComponent(tile, TransformComponent(i * 256, j * 256));
+            gameState.addComponent(tile, RenderingComponent());
+            gameState.addComponent(tile, EntityInfoComponent(2, rand() % 50 + 1));
+            gameState.addComponent(tile, DirtyComponent());
+
+            auto map = gameState.staticEntityMap;
             map.entityMap[i][j] = tile;
+
+            GraphicsComponent gc;
+            gc.entityID = tile;
+            gc.entityType = 2; // Tile
+            gameState.addComponent(tile, gc);
         }
     }
 
-    {
-        auto villager = GameState::getInstance().createEntity();
-        auto transform = TransformComponent(20 * 256, 20 * 256);
-        transform.face(utils::Direction::SOUTH);
-        GameState::getInstance().addComponent(villager, transform);
-        GameState::getInstance().addComponent(villager, GraphicsComponent());
-        GameState::getInstance().addComponent(villager, EntityInfoComponent(3));
-        GameState::getInstance().addComponent(villager, ActionComponent(0));
-        GameState::getInstance().addComponent(villager, AnimationComponent());
-        GameState::getInstance().addComponent(villager, DirtyComponent());
-    }
+    // {
+    //     auto villager = gameState.createEntity();
+    //     auto transform = TransformComponent(20 * 256, 20 * 256);
+    //     transform.face(utils::Direction::SOUTH);
+    //     gameState.addComponent(villager, transform);
+    //     gameState.addComponent(villager, RenderingComponent());
+    //     gameState.addComponent(villager, EntityInfoComponent(3));
+    //     gameState.addComponent(villager, ActionComponent(0));
+    //     gameState.addComponent(villager, AnimationComponent());
+    //     gameState.addComponent(villager, DirtyComponent());
 
-    // for staticEntityMap in GameState, create entities for each tree marked with 1 in the double
-    // array
+    //     GraphicsComponent gc;
+    //     gc.entityID = villager;
+    //     gc.entityType = 3; // Villager
+    //     gameState.addComponent(villager, gc);
+    // }
+
     for (size_t i = 0; i < size.width; i++)
     {
         for (size_t j = 0; j < size.height; j++)
         {
-            if (GameState::getInstance().staticEntityMap.map[i][j] == 1)
+            if (gameState.staticEntityMap.map[i][j] == 1)
             {
-                auto tree = GameState::getInstance().createEntity();
+                auto tree = gameState.createEntity();
                 auto transform = TransformComponent(i * 256 + 128, j * 256 + 128);
-                GameState::getInstance().addComponent(tree, transform);
-                GameState::getInstance().addComponent(tree, GraphicsComponent());
-                GameState::getInstance().addComponent(tree,
-                                                      EntityInfoComponent(4, rand() % 10, true));
-                GameState::getInstance().addComponent(tree, DirtyComponent());
+                transform.face(utils::Direction::NORTHWEST);
+                gameState.addComponent(tree, transform);
+                gameState.addComponent(tree, RenderingComponent());
+                GraphicsComponent gc;
+                gc.setDebugHighlightType(utils::DebugHighlightType::TILE_TREE_MARK);
+                gc.isStatic = true;
+                gc.entityID = tree;
+                gc.entityType = 4; // tree
+                gameState.addComponent(tree, gc);
+                gameState.addComponent(tree, EntityInfoComponent(4, rand() % 10));
+                gameState.addComponent(tree, DirtyComponent());
             }
         }
     }

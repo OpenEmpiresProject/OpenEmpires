@@ -27,15 +27,16 @@ class Simulator : public EventHandler
 
     void onTick();
     void sendGraphicsInstructions();
-    void sendStaticInstructions(); // Static from ticks point of view, but not entire system
     void simulatePhysics();
     void sendStaticTileInstructions();
     void sendInitialUnitsInstructions();
     void sendGraphiInstruction(GraphicInstruction* instruction);
     void testPathFinding(const Vec2d& start, const Vec2d& end);
+    void updateGraphicComponents();
+    void sendThreadMessageToRenderer();
+    void incrementDirtyVersion();
 
     ThreadQueue& rendererQueue;
-    bool sentStaticInstructions = false;
 
     Vec2d startPosition{0, 0};
     Viewport& viewport;
