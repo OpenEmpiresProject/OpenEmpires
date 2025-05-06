@@ -223,26 +223,23 @@ void aion::Renderer::updateGraphicComponents()
         queueSize_++;
         for (const auto& cmdPtr : message->commandBuffer)
         {
-            auto instruction = static_cast<GraphicInstruction*>(cmdPtr);
+            auto instruction = static_cast<GraphicsComponent*>(cmdPtr);
 
-            if (instruction->type == GraphicInstruction::Type::ADD)
-            {
-                auto& gc = aion::GameState::getInstance().getComponent<aion::RenderingComponent>(
-                    instruction->entity);
-                gc.entityType = instruction->entityType;
-                gc.action = instruction->action;
-                gc.entitySubType = instruction->entitySubType;
-                gc.direction = instruction->direction;
-                // gc.graphicsID.frame = instruction->frame; // TODO: Animate
-                gc.variation = instruction->variation;
-                gc.positionInFeet = instruction->positionInFeet;
-                gc.debugHighlightType = instruction->debugHighlightType;
-                gc.isStatic = instruction->isStatic;
+            auto& gc = aion::GameState::getInstance().getComponent<aion::RenderingComponent>(
+                instruction->entityID);
+            gc.entityType = instruction->entityType;
+            gc.action = instruction->action;
+            gc.entitySubType = instruction->entitySubType;
+            gc.direction = instruction->direction;
+            // gc.graphicsID.frame = instruction->frame; // TODO: Animate
+            gc.variation = instruction->variation;
+            gc.positionInFeet = instruction->positionInFeet;
+            gc.isStatic = instruction->isStatic;
+            gc.debugOverlays = instruction->debugOverlays;
 
-                gc.updateTextureDetails(graphicsRegistry);
+            gc.updateTextureDetails(graphicsRegistry);
 
-                ObjectPool<GraphicInstruction>::release(instruction);
-            }
+            ObjectPool<GraphicsComponent>::release(instruction);
         }
     }
     ObjectPool<ThreadMessage>::release(message);
@@ -272,6 +269,46 @@ void aion::Renderer::renderDebugInfo(FPSCounter& counter)
     }
 
     clearDebugTexts();
+}
+
+Vec2d getDebugOverlayPosition(DebugOverlay::Anchor anchor, const SDL_FRect& rect)
+{
+    int x = rect.x;
+    int y = rect.y;
+    int w = rect.w;
+    int h = rect.h;
+
+    switch (anchor)
+    {
+    case DebugOverlay::Anchor::TOP_LEFT:
+        return {x, y};
+        break;
+    case DebugOverlay::Anchor::TOP_CENTER:
+        return {x + w / 2, y};
+        break;
+    case DebugOverlay::Anchor::TOP_RIGHT:
+        return {x + w, y};
+        break;
+    case DebugOverlay::Anchor::CENTER_LEFT:
+        return {x, y + h / 2};
+        break;
+    case DebugOverlay::Anchor::CENTER:
+        return {x + w / 2, y + h / 2};
+        break;
+    case DebugOverlay::Anchor::CENTER_RIGHT:
+        return {x + w, y + h / 2};
+        break;
+    case DebugOverlay::Anchor::BOTTOM_LEFT:
+        return {x, y + h};
+        break;
+    case DebugOverlay::Anchor::BOTTOM_CENTER:
+        return {x + w / 2, y + h};
+        break;
+    case DebugOverlay::Anchor::BOTTOM_RIGHT:
+        return {x + w, y + h};
+        break;
+    }
+    return {x, y};
 }
 
 void aion::Renderer::renderGameEntities()
@@ -313,14 +350,6 @@ void aion::Renderer::renderGameEntities()
         {
             auto screenPos = viewport.feetToScreenUnits(gc->positionInFeet) - gc->anchor;
 
-            // if (isFirst)
-            // {
-            //     auto tilesPos = viewport.feetToTiles(gc->positionInFeet);
-            //     spdlog::debug("Z-order: {}, entity: {}. pos {},{}", z, gc->graphicsID.entityType,
-            //     tilesPos.x,
-            //         tilesPos.y);
-            // }
-
             // TODO: Remove this testing code
             if (isFirst)
             {
@@ -340,19 +369,23 @@ void aion::Renderer::renderGameEntities()
 
             if (showDebugInfo)
             {
-                if (gc->hasDebugHighlightType(utils::DebugHighlightType::TILE_TREE_MARK))
+                for (auto& overlay : gc->debugOverlays)
                 {
-                    ellipseRGBA(renderer_, screenPos.x + utils::Constants::TILE_PIXEL_WIDTH / 2,
-                                screenPos.y + utils::Constants::TILE_PIXEL_HEIGHT / 2, 30, 15, 255,
-                                0, 0, 255); // green circle
-                }
+                    auto pos = getDebugOverlayPosition(overlay.anchor, dstRect);
 
-                if (gc->hasDebugHighlightType(utils::DebugHighlightType::TILE_CIRCLE))
-                {
-                    filledEllipseRGBA(renderer_,
-                                      screenPos.x + utils::Constants::TILE_PIXEL_WIDTH / 2,
-                                      screenPos.y + utils::Constants::TILE_PIXEL_HEIGHT / 2, 20, 10,
-                                      0, 0, 255, 100); // blue ellipse
+                    switch (overlay.type)
+                    {
+                    case DebugOverlay::Type::CIRCLE:
+                        ellipseRGBA(renderer_, pos.x, pos.y, 30, 15,
+                                    255, 0, 0, 255); // green circle
+                        break;
+                    case DebugOverlay::Type::FILLED_CIRCLE:
+                        filledEllipseRGBA(renderer_,
+                                          pos.x,
+                                          pos.y, 20,
+                                          10, 0, 0, 255, 100); // blue ellipse
+                        break;
+                    }
                 }
             }
         }
@@ -362,8 +395,6 @@ void aion::Renderer::renderGameEntities()
 
 void Renderer::renderBackground()
 {
-    // spdlog::debug("Rendering background...");
-
     SDL_SetRenderDrawColor(renderer_, 30, 30, 30, 255);
     SDL_RenderClear(renderer_);
 }

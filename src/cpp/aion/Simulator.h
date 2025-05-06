@@ -2,9 +2,9 @@
 #define SIMULATOR_H
 
 #include "EventHandler.h"
-#include "GraphicInstruction.h"
 #include "ThreadQueue.h"
 #include "Viewport.h"
+#include "components/GraphicsComponent.h"
 
 #include <readerwriterqueue.h>
 #include <vector>
@@ -30,7 +30,7 @@ class Simulator : public EventHandler
     void simulatePhysics();
     void sendStaticTileInstructions();
     void sendInitialUnitsInstructions();
-    void sendGraphiInstruction(GraphicInstruction* instruction);
+    void sendGraphiInstruction(GraphicsComponent* instruction);
     void testPathFinding(const Vec2d& start, const Vec2d& end);
     void updateGraphicComponents();
     void sendThreadMessageToRenderer();

@@ -8,9 +8,9 @@
 #include "components/AnimationComponent.h"
 #include "components/DirtyComponent.h"
 #include "components/EntityInfoComponent.h"
+#include "components/GraphicsComponent.h"
 #include "components/RenderingComponent.h"
 #include "components/TransformComponent.h"
-#include "components/GraphicsComponent.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_surface.h>
@@ -90,7 +90,8 @@ void game::ResourceLoader::loadEntities()
                 gameState.addComponent(tree, transform);
                 gameState.addComponent(tree, RenderingComponent());
                 GraphicsComponent gc;
-                gc.setDebugHighlightType(utils::DebugHighlightType::TILE_TREE_MARK);
+                gc.debugOverlays.push_back({DebugOverlay::Type::CIRCLE, DebugOverlay::Color::RED,
+                                            DebugOverlay::Anchor::BOTTOM_CENTER});
                 gc.isStatic = true;
                 gc.entityID = tree;
                 gc.entityType = 4; // tree

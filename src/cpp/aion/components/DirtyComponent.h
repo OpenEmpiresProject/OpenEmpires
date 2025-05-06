@@ -20,7 +20,7 @@ class DirtyComponent
     }
 };
 
-inline int64_t DirtyComponent::globalDirtyVersion = 0; 
+inline int64_t DirtyComponent::globalDirtyVersion = 0;
 
 } // namespace aion
 

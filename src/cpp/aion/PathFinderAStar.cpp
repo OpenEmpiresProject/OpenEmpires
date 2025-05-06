@@ -81,7 +81,7 @@ bool PathFinderAStar::isWalkable(const StaticEntityMap& map, const Vec2d& from, 
         auto diff = to - from;
         auto corner1 = Vec2d(from.x, from.y + diff.y);
         auto corner2 = Vec2d(from.x + diff.x, from.y);
-    
+
         // Diagonal movement is not allowed if the adjacent tiles are not walkable
         if (isBlocked(map, corner1) || isBlocked(map, corner2))
             return false;

@@ -1,4 +1,3 @@
-#include "GraphicInstruction.h"
 #include "Simulator.h"
 #include "ThreadQueue.h"
 #include "aion/EventLoop.h"

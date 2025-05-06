@@ -2,7 +2,6 @@
 #define RENDERER_H
 
 #include "GameSettings.h"
-#include "GraphicInstruction.h"
 #include "GraphicsRegistry.h"
 #include "SubSystem.h"
 #include "ThreadQueue.h"
