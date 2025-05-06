@@ -376,14 +376,12 @@ void aion::Renderer::renderGameEntities()
                     switch (overlay.type)
                     {
                     case DebugOverlay::Type::CIRCLE:
-                        ellipseRGBA(renderer_, pos.x, pos.y, 30, 15,
-                                    255, 0, 0, 255); // green circle
+                        ellipseRGBA(renderer_, pos.x, pos.y, 30, 15, 255, 0, 0,
+                                    255); // green circle
                         break;
                     case DebugOverlay::Type::FILLED_CIRCLE:
-                        filledEllipseRGBA(renderer_,
-                                          pos.x,
-                                          pos.y, 20,
-                                          10, 0, 0, 255, 100); // blue ellipse
+                        filledEllipseRGBA(renderer_, pos.x, pos.y, 20, 10, 0, 0, 255,
+                                          100); // blue ellipse
                         break;
                     }
                 }
