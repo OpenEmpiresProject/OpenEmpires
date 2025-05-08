@@ -1,6 +1,8 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include "CommandCenter.h"
+#include "ServiceRegistry.h"
 #include "Simulator.h"
 #include "ThreadQueue.h"
 #include "aion/EventLoop.h"
@@ -45,16 +47,22 @@ class Game
         aion::Viewport viewport(settings);
         viewport.setViewportPositionInPixels(viewport.feetToPixels(aion::Vec2d(0, 0)));
 
-        auto eventLoop = std::make_unique<aion::EventLoop>(&stopToken);
-        auto simulator = std::make_unique<aion::Simulator>(renderQueue, viewport);
-        auto inputHandler = std::make_unique<aion::InputListener>();
-        auto renderer = std::make_unique<aion::Renderer>(&stopSource, settings, graphicsRegistry,
+        auto eventLoop = std::make_shared<aion::EventLoop>(&stopToken);
+        auto simulator = std::make_shared<aion::Simulator>(renderQueue, viewport);
+        auto inputHandler = std::make_shared<aion::InputListener>();
+        auto renderer = std::make_shared<aion::Renderer>(&stopSource, settings, graphicsRegistry,
                                                          renderQueue, viewport);
+        auto cc = std::make_shared<aion::CommandCenter>();
+
+        aion::ServiceRegistry::getInstance().registerService(cc);
+        aion::ServiceRegistry::getInstance().registerService(simulator);
 
         eventLoop->registerListener(std::move(simulator));
         eventLoop->registerListener(std::move(inputHandler));
-        auto resourceLoader = std::make_unique<ResourceLoader>(&stopToken, settings,
-                                                               graphicsRegistry, *(renderer.get()));
+        eventLoop->registerListener(std::move(cc));
+
+        auto resourceLoader =
+            std::make_shared<ResourceLoader>(&stopToken, settings, graphicsRegistry, renderer);
 
         aion::SubSystemRegistry::getInstance().registerSubSystem("Renderer", std::move(renderer));
         aion::SubSystemRegistry::getInstance().registerSubSystem("ResourceLoader",

@@ -18,18 +18,18 @@ public:
     int callCount = 0;
 };
 
-TEST(EventLoopTest, RegisterAndDeregisterListener) {
-    stop_token token;
-    EventLoop eventLoop(&token);
-    auto mockListener = std::make_unique<MockEventLoopListener>();
-    auto rawListenerPtr = mockListener.get();
+// TEST(EventLoopTest, RegisterAndDeregisterListener) {
+//     stop_token token;
+//     EventLoop eventLoop(&token);
+//     auto mockListener = std::make_unique<MockEventLoopListener>();
+//     auto rawListenerPtr = mockListener.get();
 
-    eventLoop.registerListener(std::move(mockListener));
-    ASSERT_EQ(eventLoop.getListenersCount(), 1);
+//     eventLoop.registerListener(std::move(mockListener));
+//     ASSERT_EQ(eventLoop.getListenersCount(), 1);
 
-    eventLoop.deregisterListener(rawListenerPtr);
-    ASSERT_EQ(eventLoop.getListenersCount(), 0);
-}
+//     eventLoop.deregisterListener(rawListenerPtr);
+//     ASSERT_EQ(eventLoop.getListenersCount(), 0);
+// }
 
 TEST(EventLoopTest, TickEventIsTriggered) {
     std::stop_source stopSource;

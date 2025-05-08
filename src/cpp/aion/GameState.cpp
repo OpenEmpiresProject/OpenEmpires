@@ -14,17 +14,17 @@ GameState::~GameState()
 {
 }
 
-entt::entity GameState::createEntity()
+uint32_t GameState::createEntity()
 {
     return registry.create();
 }
 
-void GameState::destroyEntity(entt::entity entity)
+void GameState::destroyEntity(uint32_t entity)
 {
     registry.destroy(entity);
 }
 
-bool GameState::isEntityValid(entt::entity entity) const
+bool GameState::isEntityValid(uint32_t entity) const
 {
     return registry.valid(entity);
 }
@@ -41,12 +41,12 @@ StaticEntityMap GameState::initializeStaticEntityMap(int width, int height)
     staticEntityMap.width = width;
     staticEntityMap.height = height;
     staticEntityMap.map = new int*[width];
-    staticEntityMap.entityMap = new entt::entity*[width];
+    staticEntityMap.entityMap = new uint32_t*[width];
 
     for (int i = 0; i < width; ++i)
     {
         staticEntityMap.map[i] = new int[height];
-        staticEntityMap.entityMap[i] = new entt::entity[height]; // Initialize entity map
+        staticEntityMap.entityMap[i] = new uint32_t[height]; // Initialize entity map
 
         for (int j = 0; j < height; ++j)
         {

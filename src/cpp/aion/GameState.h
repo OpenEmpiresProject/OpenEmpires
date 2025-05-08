@@ -21,32 +21,32 @@ class GameState
     GameState(const GameState&) = delete;
     GameState& operator=(const GameState&) = delete;
 
-    entt::entity createEntity();
-    void destroyEntity(entt::entity entity);
-    bool isEntityValid(entt::entity entity) const;
+    uint32_t createEntity();
+    void destroyEntity(uint32_t entity);
+    bool isEntityValid(uint32_t entity) const;
 
     template <typename T, typename... Args>
-    decltype(auto) addComponent(entt::entity entity, Args&&... args)
+    decltype(auto) addComponent(uint32_t entity, Args&&... args)
     {
         return registry.emplace_or_replace<T>(entity, std::forward<Args>(args)...);
     }
 
-    template <typename T> decltype(auto) addComponent(entt::entity entity, const T& t)
+    template <typename T> decltype(auto) addComponent(uint32_t entity, const T& t)
     {
         return registry.emplace_or_replace<T>(entity, t);
     }
 
-    template <typename T> bool hasComponent(entt::entity entity) const
+    template <typename T> bool hasComponent(uint32_t entity) const
     {
         return registry.all_of<T>(entity);
     }
 
-    template <typename T> T& getComponent(entt::entity entity)
+    template <typename T> T& getComponent(uint32_t entity)
     {
         return registry.get<T>(entity);
     }
 
-    template <typename... T> decltype(auto) getComponents(entt::entity entity)
+    template <typename... T> decltype(auto) getComponents(uint32_t entity)
     {
         return registry.get<T...>(entity);
     }
@@ -74,7 +74,7 @@ class GameState
     GameState();
     ~GameState();
 
-    entt::registry registry;
+    entt::basic_registry<uint32_t> registry;
     PathFinderBase* pathFinder = nullptr;
 };
 } // namespace aion

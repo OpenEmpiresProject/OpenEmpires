@@ -47,7 +47,7 @@ struct DebugOverlay
 class GraphicsComponent : public GraphicsID
 {
   public:
-    entt::entity entityID = entt::null;
+    uint32_t entityID = entt::null;
     Vec2d positionInFeet = {0, 0};
     bool isStatic = false;
     std::vector<DebugOverlay> debugOverlays;

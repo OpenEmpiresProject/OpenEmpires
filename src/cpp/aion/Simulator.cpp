@@ -2,7 +2,10 @@
 
 #include "GameState.h"
 #include "ObjectPool.h"
+#include "commands/CmdIdle.h"
+#include "commands/CmdWalk.h"
 #include "components/ActionComponent.h"
+#include "components/CompUnit.h"
 #include "components/DirtyComponent.h"
 #include "components/EntityInfoComponent.h"
 #include "components/GraphicsComponent.h"
@@ -80,8 +83,8 @@ void Simulator::sendGraphicsInstructions()
     aion::GameState::getInstance()
         .getEntities<TransformComponent, EntityInfoComponent, DirtyComponent, GraphicsComponent>()
         .each(
-            [this](entt::entity entity, TransformComponent& transform,
-                   EntityInfoComponent& entityInfo, DirtyComponent& dirty, GraphicsComponent& gc)
+            [this](uint32_t entity, TransformComponent& transform, EntityInfoComponent& entityInfo,
+                   DirtyComponent& dirty, GraphicsComponent& gc)
             {
                 if (dirty.isDirty() == false)
                     return;
@@ -115,7 +118,7 @@ void Simulator::updateGraphicComponents()
     GameState::getInstance()
         .getEntities<TransformComponent, EntityInfoComponent, GraphicsComponent, DirtyComponent>()
         .each(
-            [this](entt::entity entityID, TransformComponent& transform,
+            [this](uint32_t entityID, TransformComponent& transform,
                    EntityInfoComponent& entityInfo, GraphicsComponent& gc, DirtyComponent& dirty)
             {
                 // TODO: might need to optimize this later
@@ -156,6 +159,16 @@ void aion::Simulator::testPathFinding(const Vec2d& start, const Vec2d& end)
         spdlog::error("No path found from {} to {}", start.toString(), end.toString());
         map.map[start.x][start.y] = 2;
         map.map[end.x][end.y] = 2;
+    }
+    else
+    {
+        auto walk = ObjectPool<CmdWalk>::acquire();
+        walk->path = path;
+        walk->setPriority(10); // TODO: Need a better way
+
+        // TODO: This is not correct, use selector's current selection
+        GameState::getInstance().getEntities<CompUnit>().each(
+            [this, &walk](uint32_t entityID, CompUnit& unit) { unit.commandQueue.push(walk); });
     }
 
     for (Vec2d node : path)

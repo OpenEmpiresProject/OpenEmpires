@@ -43,11 +43,6 @@ void aion::EventLoop::run()
         listener->onInit(this);
     }
 
-    for (auto& listener : listenersRawPtrs)
-    {
-        listener->onInit(this);
-    }
-
     auto lastTick = steady_clock::now();
 
     while (stopToken_->stop_requested() == false)
@@ -87,11 +82,6 @@ void aion::EventLoop::handleTickEvent(std::chrono::steady_clock::time_point& las
         {
             listener->onEvent(tickEvent);
         }
-
-        for (auto& listener : listenersRawPtrs)
-        {
-            listener->onEvent(tickEvent);
-        }
     }
 }
 
@@ -109,20 +99,12 @@ void aion::EventLoop::handleInputEvents()
             {
                 listener->onEvent(keyDownEvent);
             }
-            for (auto& listener : listenersRawPtrs)
-            {
-                listener->onEvent(keyDownEvent);
-            }
         }
         if (!currentKeyboardState[i] && previousKeyboardState[i])
         {
             KeyboardData data{i};
             Event keyDownEvent(Event::Type::KEY_UP, data);
             for (auto& listener : listeners)
-            {
-                listener->onEvent(keyDownEvent);
-            }
-            for (auto& listener : listenersRawPtrs)
             {
                 listener->onEvent(keyDownEvent);
             }
@@ -142,10 +124,6 @@ void aion::EventLoop::handleInputEvents()
         {
             listener->onEvent(mouseMoveEvent);
         }
-        for (auto& listener : listenersRawPtrs)
-        {
-            listener->onEvent(mouseMoveEvent);
-        }
         previouseMouseX = mouseX;
         previouseMouseY = mouseY;
     }
@@ -160,10 +138,6 @@ void aion::EventLoop::handleInputEvents()
             {
                 listener->onEvent(mouseClickEvent);
             }
-            for (auto& listener : listenersRawPtrs)
-            {
-                listener->onEvent(mouseClickEvent);
-            }
         }
 
         if (!(currentMouseState & SDL_BUTTON_LMASK) && (previousMouseState & SDL_BUTTON_LMASK))
@@ -171,10 +145,6 @@ void aion::EventLoop::handleInputEvents()
             MouseClickData data{MouseClickData::Button::LEFT, Vec2d(mouseX, mouseY)};
             Event mouseClickEvent(Event::Type::MOUSE_BTN_UP, data);
             for (auto& listener : listeners)
-            {
-                listener->onEvent(mouseClickEvent);
-            }
-            for (auto& listener : listenersRawPtrs)
             {
                 listener->onEvent(mouseClickEvent);
             }
@@ -188,10 +158,6 @@ void aion::EventLoop::handleInputEvents()
             {
                 listener->onEvent(mouseClickEvent);
             }
-            for (auto& listener : listenersRawPtrs)
-            {
-                listener->onEvent(mouseClickEvent);
-            }
         }
         if (!(currentMouseState & SDL_BUTTON_RMASK) && (previousMouseState & SDL_BUTTON_RMASK))
         {
@@ -201,28 +167,12 @@ void aion::EventLoop::handleInputEvents()
             {
                 listener->onEvent(mouseClickEvent);
             }
-            for (auto& listener : listenersRawPtrs)
-            {
-                listener->onEvent(mouseClickEvent);
-            }
         }
         previousMouseState = currentMouseState;
     }
 }
 
-void aion::EventLoop::registerListenerRawPtr(EventHandler* listener)
-{
-    listenersRawPtrs.push_back(listener);
-}
-
-void EventLoop::registerListener(std::unique_ptr<EventHandler> listener)
+void EventLoop::registerListener(std::shared_ptr<EventHandler> listener)
 {
     listeners.push_back(std::move(listener));
-}
-
-void EventLoop::deregisterListener(EventHandler* listener)
-{
-    listeners.remove_if([listener](const std::unique_ptr<EventHandler>& ptr)
-                        { return ptr.get() == listener; });
-    listenersRawPtrs.remove(listener);
 }

@@ -7,6 +7,7 @@
 #include "Renderer.h"
 #include "SubSystem.h"
 
+#include <memory>
 namespace game
 {
 class ResourceLoader : public aion::SubSystem
@@ -15,7 +16,7 @@ class ResourceLoader : public aion::SubSystem
     ResourceLoader(std::stop_token* stopToken,
                    const aion::GameSettings& settings,
                    aion::GraphicsRegistry& graphicsRegistry,
-                   aion::Renderer& renderer);
+                   std::shared_ptr<aion::Renderer> renderer);
     ~ResourceLoader() = default;
 
     void loadEntities();
@@ -31,7 +32,7 @@ class ResourceLoader : public aion::SubSystem
 
     const aion::GameSettings& _settings;
     aion::GraphicsRegistry& graphicsRegistry;
-    aion::Renderer& renderer;
+    std::shared_ptr<aion::Renderer> renderer;
 };
 } // namespace game
 

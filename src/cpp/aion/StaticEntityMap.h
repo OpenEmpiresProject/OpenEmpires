@@ -10,7 +10,7 @@ struct StaticEntityMap
     int width = 0;
     int height = 0;
     int** map = nullptr;
-    entt::entity** entityMap = nullptr; // Map of entities
+    uint32_t** entityMap = nullptr; // Map of entities
 };
 } // namespace aion
 

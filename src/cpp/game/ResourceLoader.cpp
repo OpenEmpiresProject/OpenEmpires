@@ -2,10 +2,13 @@
 
 #include "GameState.h"
 #include "Logger.h"
+#include "ObjectPool.h"
 #include "Renderer.h"
 #include "SubSystemRegistry.h"
+#include "commands/CmdIdle.h"
 #include "components/ActionComponent.h"
 #include "components/AnimationComponent.h"
+#include "components/CompUnit.h"
 #include "components/DirtyComponent.h"
 #include "components/EntityInfoComponent.h"
 #include "components/GraphicsComponent.h"
@@ -20,13 +23,14 @@
 namespace fs = std::filesystem;
 using namespace game;
 using namespace aion;
+using namespace utils;
 
 ResourceLoader::ResourceLoader(std::stop_token* stopToken,
                                const aion::GameSettings& settings,
                                aion::GraphicsRegistry& graphicsRegistry,
-                               aion::Renderer& renderer)
+                               std::shared_ptr<aion::Renderer> renderer)
     : SubSystem(stopToken), _settings(settings), graphicsRegistry(graphicsRegistry),
-      renderer(renderer)
+      renderer(std::move(renderer))
 {
 }
 
@@ -61,22 +65,27 @@ void game::ResourceLoader::loadEntities()
         }
     }
 
-    // {
-    //     auto villager = gameState.createEntity();
-    //     auto transform = TransformComponent(20 * 256, 20 * 256);
-    //     transform.face(utils::Direction::SOUTH);
-    //     gameState.addComponent(villager, transform);
-    //     gameState.addComponent(villager, RenderingComponent());
-    //     gameState.addComponent(villager, EntityInfoComponent(3));
-    //     gameState.addComponent(villager, ActionComponent(0));
-    //     gameState.addComponent(villager, AnimationComponent());
-    //     gameState.addComponent(villager, DirtyComponent());
+    {
+        auto villager = gameState.createEntity();
+        auto transform = TransformComponent(20 * 256, 20 * 256);
+        transform.face(utils::Direction::SOUTH);
+        gameState.addComponent(villager, transform);
+        gameState.addComponent(villager, RenderingComponent());
+        gameState.addComponent(villager, EntityInfoComponent(3));
+        gameState.addComponent(villager, ActionComponent(0));
+        gameState.addComponent(villager, AnimationComponent());
+        gameState.addComponent(villager, DirtyComponent());
 
-    //     GraphicsComponent gc;
-    //     gc.entityID = villager;
-    //     gc.entityType = 3; // Villager
-    //     gameState.addComponent(villager, gc);
-    // }
+        // villager goes idle by default
+        CompUnit unit;
+        unit.commandQueue.push(ObjectPool<CmdIdle>::acquire());
+        gameState.addComponent(villager, unit);
+
+        GraphicsComponent gc;
+        gc.entityID = villager;
+        gc.entityType = 3; // Villager
+        gameState.addComponent(villager, gc);
+    }
 
     for (size_t i = 0; i < size.width; i++)
     {

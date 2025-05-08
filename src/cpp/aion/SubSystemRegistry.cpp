@@ -12,7 +12,7 @@ SubSystemRegistry& SubSystemRegistry::getInstance()
 }
 
 void SubSystemRegistry::registerSubSystem(const std::string& name,
-                                          std::unique_ptr<SubSystem> component)
+                                          std::shared_ptr<SubSystem> component)
 {
     subSystems[name] = std::move(component);
 }

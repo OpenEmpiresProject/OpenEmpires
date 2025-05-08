@@ -10,7 +10,7 @@ namespace aion
     {
         GameState& gameState = GameState::getInstance();
 
-        entt::entity entity = gameState.createEntity();
+        uint32_t entity = gameState.createEntity();
         EXPECT_TRUE(gameState.isEntityValid(entity)) << "Entity should be valid after creation";
     }
 
@@ -18,7 +18,7 @@ namespace aion
     {
         GameState& gameState = GameState::getInstance();
 
-        entt::entity entity = gameState.createEntity();
+        uint32_t entity = gameState.createEntity();
         gameState.destroyEntity(entity);
         EXPECT_FALSE(gameState.isEntityValid(entity)) << "Entity should be invalid after destruction";
     }
@@ -27,7 +27,7 @@ namespace aion
     {
         GameState& gameState = GameState::getInstance();
 
-        entt::entity entity = gameState.createEntity();
+        uint32_t entity = gameState.createEntity();
         EXPECT_TRUE(gameState.isEntityValid(entity)) << "Entity should be valid after creation";
 
         gameState.destroyEntity(entity);
@@ -38,7 +38,7 @@ namespace aion
     {
         GameState& gameState = GameState::getInstance();
 
-        entt::entity entity = gameState.createEntity();
+        uint32_t entity = gameState.createEntity();
         struct TestComponent { int value; };
         gameState.addComponent<TestComponent>(entity, 42);
 
@@ -49,7 +49,7 @@ namespace aion
     TEST(GameStateTest, HasComponent)
     {
         GameState& gameState = GameState::getInstance();
-        entt::entity entity = gameState.createEntity();
+        uint32_t entity = gameState.createEntity();
         struct TestComponent { int value; };
         EXPECT_FALSE(gameState.hasComponent<TestComponent>(entity)) << "Entity should not have TestComponent initially";
 
@@ -61,7 +61,7 @@ namespace aion
     {
         GameState& gameState = GameState::getInstance();
 
-        entt::entity entity = gameState.createEntity();
+        uint32_t entity = gameState.createEntity();
         struct TestComponent { int value; };
         gameState.addComponent<TestComponent>(entity, 42);
 
@@ -73,7 +73,7 @@ namespace aion
     {
         GameState& gameState = GameState::getInstance();
 
-        entt::entity entity = gameState.createEntity();
+        uint32_t entity = gameState.createEntity();
         struct TestComponent { int value; };
         struct AnotherComponent { float data; };
 
@@ -89,8 +89,8 @@ namespace aion
     {
         GameState& gameState = GameState::getInstance();
 
-        entt::entity entity1 = gameState.createEntity();
-        entt::entity entity2 = gameState.createEntity();
+        uint32_t entity1 = gameState.createEntity();
+        uint32_t entity2 = gameState.createEntity();
 
         gameState.clearAll();
 
