@@ -1,7 +1,7 @@
 #ifndef COMMAND_H
 #define COMMAND_H
 
-#include "Types.h"
+#include "utils/Types.h"
 
 #include <list>
 

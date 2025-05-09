@@ -5,8 +5,6 @@
 #include "FPSCounter.h"
 #include "GameState.h"
 #include "GraphicsLoader.h"
-#include "Logger.h"
-#include "ObjectPool.h"
 #include "Renderer.h"
 #include "SDL3_gfxPrimitives.h"
 #include "components/ActionComponent.h"
@@ -14,6 +12,8 @@
 #include "components/EntityInfoComponent.h"
 #include "components/RenderingComponent.h"
 #include "components/TransformComponent.h"
+#include "utils/Logger.h"
+#include "utils/ObjectPool.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_video.h>
@@ -24,22 +24,21 @@
 #include <thread>
 namespace fs = std::filesystem;
 using namespace aion;
-using namespace utils;
 using namespace std::chrono;
 
 Renderer::Renderer(std::stop_source* stopSource,
                    const GameSettings& settings,
-                   aion::GraphicsRegistry& graphicsRegistry,
+                   GraphicsRegistry& graphicsRegistry,
                    ThreadQueue& simulatorQueue,
                    Viewport& viewport)
-    : SubSystem(stopSource), settings(settings), graphicsRegistry(graphicsRegistry),
-      simulatorQueue(simulatorQueue), viewport(viewport),
-      zBucketsSize(settings.getWorldSizeInTiles().height * Constants::FEET_PER_TILE * 3),
-      zBuckets(settings.getWorldSizeInTiles().height * Constants::FEET_PER_TILE * 3)
+    : SubSystem(stopSource), m_settings(settings), m_graphicsRegistry(graphicsRegistry),
+      m_simulatorQueue(simulatorQueue), m_viewport(viewport),
+      m_zBucketsSize(settings.getWorldSizeInTiles().height * Constants::FEET_PER_TILE * 3),
+      m_zBuckets(settings.getWorldSizeInTiles().height * Constants::FEET_PER_TILE * 3)
 {
-    running_ = false;
-    lastTickTime = steady_clock::now();
-    spdlog::info("Max z-order: {}", viewport.getMaxZOrder());
+    m_running = false;
+    m_lastTickTime = steady_clock::now();
+    spdlog::info("Max z-order: {}", m_viewport.getMaxZOrder());
 }
 
 Renderer::~Renderer()
@@ -51,36 +50,36 @@ Renderer::~Renderer()
 
 void Renderer::init()
 {
-    if (!running_)
+    if (!m_running)
     {
-        running_ = true;
-        renderThread_ = std::thread(&Renderer::threadEntry, this);
+        m_running = true;
+        m_renderThread = std::thread(&Renderer::threadEntry, this);
     }
 }
 
 void Renderer::shutdown()
 {
-    running_ = false;
-    if (renderThread_.joinable())
+    m_running = false;
+    if (m_renderThread.joinable())
     {
-        // renderThread_.request_stop();
-        renderThread_.join();
+        // m_renderThread.request_stop();
+        m_renderThread.join();
     }
 }
 
 void Renderer::cleanup()
 {
-    if (renderer_)
-        SDL_DestroyRenderer(renderer_);
-    if (window_)
-        SDL_DestroyWindow(window_);
+    if (m_renderer)
+        SDL_DestroyRenderer(m_renderer);
+    if (m_window)
+        SDL_DestroyWindow(m_window);
 }
 
 void Renderer::threadEntry()
 {
     initSDL();
     AtlasGeneratorBasic atlasGenerator;
-    GraphicsLoader(renderer_, graphicsRegistry, atlasGenerator).loadAllGraphics();
+    GraphicsLoader(m_renderer, m_graphicsRegistry, atlasGenerator).loadAllGraphics();
     renderingLoop();
 }
 
@@ -94,29 +93,30 @@ void Renderer::initSDL()
         throw std::runtime_error("SDL_Init failed");
     }
 
-    window_ = SDL_CreateWindow(settings.getTitle().c_str(), settings.getWindowDimensions().width,
-                               settings.getWindowDimensions().height, SDL_WINDOW_OPENGL);
-    if (!window_)
+    m_window =
+        SDL_CreateWindow(m_settings.getTitle().c_str(), m_settings.getWindowDimensions().width,
+                         m_settings.getWindowDimensions().height, SDL_WINDOW_OPENGL);
+    if (!m_window)
     {
         spdlog::error("SDL_CreateWindow failed: {}", SDL_GetError());
         throw std::runtime_error("SDL_CreateWindow failed");
     }
 
-    renderer_ = SDL_CreateRenderer(window_, nullptr);
-    if (!renderer_)
+    m_renderer = SDL_CreateRenderer(m_window, nullptr);
+    if (!m_renderer)
     {
         spdlog::error("SDL_CreateRenderer failed: {}", SDL_GetError());
         throw std::runtime_error("SDL_CreateRenderer failed");
     }
     {
-        std::lock_guard<std::mutex> lock(sdlInitMutex_);
-        sdlInitialized_ = true;
+        std::lock_guard<std::mutex> lock(m_sdlInitMutex);
+        m_sdlInitialized = true;
     }
-    sdlInitCV_.notify_all();
+    m_sdlInitCV.notify_all();
     spdlog::info("SDL initialized successfully");
 }
 
-void aion::Renderer::renderingLoop()
+void Renderer::renderingLoop()
 {
     spdlog::info("Starting rendering loop...");
     bool running = true;
@@ -135,9 +135,9 @@ void aion::Renderer::renderingLoop()
         renderGameEntities();
         renderDebugInfo(fpsCounter);
 
-        SDL_RenderPresent(renderer_);
+        SDL_RenderPresent(m_renderer);
 
-        int delay = (1000 / settings.getTargetFPS()) - (SDL_GetTicks() - start);
+        int delay = (1000 / m_settings.getTargetFPS()) - (SDL_GetTicks() - start);
         delay = std::max(1, delay);
 
         SDL_Delay(delay);
@@ -148,12 +148,12 @@ void aion::Renderer::renderingLoop()
 
     spdlog::info("Shutting down renderer...");
 
-    SDL_DestroyWindow(window_);
+    SDL_DestroyWindow(m_window);
     SDL_Quit();
-    stopSource_->request_stop();
+    m_stopSource->request_stop();
 }
 
-bool aion::Renderer::handleEvents()
+bool Renderer::handleEvents()
 {
     SDL_Event event;
 
@@ -168,24 +168,24 @@ bool aion::Renderer::handleEvents()
         {
             if (event.button.button == SDL_BUTTON_LEFT)
             {
-                lastMouseClickPosInFeet =
-                    viewport.screenUnitsToFeet(Vec2d(event.button.x, event.button.y));
-                lastMouseClickPosInTiles = viewport.feetToTiles(lastMouseClickPosInFeet);
+                m_lastMouseClickPosInFeet =
+                    m_viewport.screenUnitsToFeet(Vec2d(event.button.x, event.button.y));
+                m_lastMouseClickPosInTiles = m_viewport.feetToTiles(m_lastMouseClickPosInFeet);
 
                 Event clickEvent(
                     Event::Type::MOUSE_BTN_UP,
-                    MouseClickData{MouseClickData::Button::LEFT, lastMouseClickPosInFeet});
+                    MouseClickData{MouseClickData::Button::LEFT, m_lastMouseClickPosInFeet});
             }
         }
         else if (event.type == SDL_EVENT_KEY_UP)
         {
             if (event.key.scancode == SDL_SCANCODE_1)
             {
-                showStaticEntities = !showStaticEntities;
+                m_showStaticEntities = !m_showStaticEntities;
             }
             else if (event.key.scancode == SDL_SCANCODE_2)
             {
-                showDebugInfo = !showDebugInfo;
+                m_showDebugInfo = !m_showDebugInfo;
             }
         }
     }
@@ -202,15 +202,15 @@ bool aion::Renderer::handleEvents()
  *
  * @throws std::runtime_error If a message with an invalid type is encountered.
  */
-void aion::Renderer::updateGraphicComponents()
+void Renderer::updateGraphicComponents()
 {
     // spdlog::debug("Handling graphic instructions...");
-    maxQueueSize_ = std::max(maxQueueSize_, queueSize_);
-    queueSize_ = 0;
+    m_maxQueueSize = std::max(m_maxQueueSize, m_queueSize);
+    m_queueSize = 0;
 
     ThreadMessage* message = nullptr;
 
-    while (simulatorQueue.try_dequeue(message))
+    while (m_simulatorQueue.try_dequeue(message))
     {
         // spdlog::debug("Handling graphic instructions...");
 
@@ -220,13 +220,13 @@ void aion::Renderer::updateGraphicComponents()
             throw std::runtime_error("Invalid message type for Renderer.");
         }
 
-        queueSize_++;
+        m_queueSize++;
         for (const auto& cmdPtr : message->commandBuffer)
         {
             auto instruction = static_cast<GraphicsComponent*>(cmdPtr);
 
-            auto& gc = aion::GameState::getInstance().getComponent<aion::RenderingComponent>(
-                instruction->entityID);
+            auto& gc =
+                GameState::getInstance().getComponent<RenderingComponent>(instruction->entityID);
             gc.entityType = instruction->entityType;
             gc.action = instruction->action;
             gc.entitySubType = instruction->entitySubType;
@@ -237,7 +237,7 @@ void aion::Renderer::updateGraphicComponents()
             gc.isStatic = instruction->isStatic;
             gc.debugOverlays = instruction->debugOverlays;
 
-            gc.updateTextureDetails(graphicsRegistry);
+            gc.updateTextureDetails(m_graphicsRegistry);
 
             ObjectPool<GraphicsComponent>::release(instruction);
         }
@@ -245,26 +245,26 @@ void aion::Renderer::updateGraphicComponents()
     ObjectPool<ThreadMessage>::release(message);
 }
 
-void aion::Renderer::renderDebugInfo(FPSCounter& counter)
+void Renderer::renderDebugInfo(FPSCounter& counter)
 {
     // spdlog::debug("Rendering debug info...");
 
     addDebugText("Average FPS        : " + std::to_string(counter.getAverageFPS()));
     addDebugText("Avg Sleep/frame    : " + std::to_string(counter.getAverageSleepMs()));
-    addDebugText("Queue depth        : " + std::to_string(queueSize_));
-    addDebugText("Max Queue depth    : " + std::to_string(maxQueueSize_));
-    addDebugText("Viewport           : " + viewport.getViewportPositionInPixels().toString());
-    addDebugText("Anchor Tile        : " + anchorTilePixelsPos.toString());
-    addDebugText("Mouse clicked feet : " + lastMouseClickPosInFeet.toString());
-    addDebugText("Mouse clicked tile : " + lastMouseClickPosInTiles.toString());
-    addDebugText("Graphics loaded    : " + std::to_string(graphicsRegistry.getTextureCount()));
+    addDebugText("Queue depth        : " + std::to_string(m_queueSize));
+    addDebugText("Max Queue depth    : " + std::to_string(m_maxQueueSize));
+    addDebugText("Viewport           : " + m_viewport.getViewportPositionInPixels().toString());
+    addDebugText("Anchor Tile        : " + m_anchorTilePixelsPos.toString());
+    addDebugText("Mouse clicked feet : " + m_lastMouseClickPosInFeet.toString());
+    addDebugText("Mouse clicked tile : " + m_lastMouseClickPosInTiles.toString());
+    addDebugText("Graphics loaded    : " + std::to_string(m_graphicsRegistry.getTextureCount()));
 
-    SDL_SetRenderDrawColor(renderer_, 255, 255, 255, SDL_ALPHA_OPAQUE); /* white, full alpha */
+    SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, SDL_ALPHA_OPAQUE); /* white, full alpha */
 
     int y = 10;
-    for (const auto& line : debugTexts)
+    for (const auto& line : m_debugTexts)
     {
-        SDL_RenderDebugText(renderer_, 10, y, line.c_str());
+        SDL_RenderDebugText(m_renderer, 10, y, line.c_str());
         y += 20;
     }
 
@@ -311,49 +311,49 @@ Vec2d getDebugOverlayPosition(DebugOverlay::Anchor anchor, const SDL_FRect& rect
     return {x, y};
 }
 
-void aion::Renderer::renderGameEntities()
+void Renderer::renderGameEntities()
 {
-    ++zBucketVersion; // it will take 4 trillion years to overflow this
+    ++m_zBucketVersion; // it will take 4 trillion years to overflow this
 
     // TODO: Introduction of this z ordering cost around 60ms for 2500 entities.
     static bool isFirst = true;
 
-    aion::GameState::getInstance().getEntities<aion::RenderingComponent>().each(
-        [this](aion::RenderingComponent& gc)
+    GameState::getInstance().getEntities<RenderingComponent>().each(
+        [this](RenderingComponent& gc)
         {
             int zOrder = gc.positionInFeet.y + gc.positionInFeet.x;
-            if (zOrder < 0 || zOrder >= zBucketsSize)
+            if (zOrder < 0 || zOrder >= m_zBucketsSize)
             {
                 spdlog::error("Z-order out of bounds: {}", zOrder);
                 return;
             }
 
-            if (zBucketVersion != zBuckets[zOrder].version)
+            if (m_zBucketVersion != m_zBuckets[zOrder].version)
             {
-                zBuckets[zOrder].version = zBucketVersion;
-                zBuckets[zOrder].graphicsComponents.clear();
+                m_zBuckets[zOrder].version = m_zBucketVersion;
+                m_zBuckets[zOrder].graphicsComponents.clear();
             }
 
-            zBuckets[zOrder].graphicsComponents.push_back(&gc);
+            m_zBuckets[zOrder].graphicsComponents.push_back(&gc);
         });
 
     SDL_FRect dstRect = {0, 0, 0, 0};
 
-    for (int z = 0; z < zBucketsSize; ++z)
+    for (int z = 0; z < m_zBucketsSize; ++z)
     {
-        if (zBuckets[z].version != zBucketVersion)
+        if (m_zBuckets[z].version != m_zBucketVersion)
         {
             continue; // Skip if the version doesn't match
         }
 
-        for (auto& gc : zBuckets[z].graphicsComponents)
+        for (auto& gc : m_zBuckets[z].graphicsComponents)
         {
-            auto screenPos = viewport.feetToScreenUnits(gc->positionInFeet) - gc->anchor;
+            auto screenPos = m_viewport.feetToScreenUnits(gc->positionInFeet) - gc->anchor;
 
             // TODO: Remove this testing code
             if (isFirst)
             {
-                anchorTilePixelsPos = viewport.feetToPixels(gc->positionInFeet);
+                m_anchorTilePixelsPos = m_viewport.feetToPixels(gc->positionInFeet);
             }
 
             dstRect.x = screenPos.x;
@@ -361,13 +361,13 @@ void aion::Renderer::renderGameEntities()
             dstRect.w = gc->size.width;
             dstRect.h = gc->size.height;
 
-            if (!gc->isStatic || showStaticEntities)
+            if (!gc->isStatic || m_showStaticEntities)
             {
-                SDL_RenderTextureRotated(renderer_, gc->texture, gc->srcRect, &dstRect, 0, nullptr,
+                SDL_RenderTextureRotated(m_renderer, gc->texture, gc->srcRect, &dstRect, 0, nullptr,
                                          gc->flip);
             }
 
-            if (showDebugInfo)
+            if (m_showDebugInfo)
             {
                 for (auto& overlay : gc->debugOverlays)
                 {
@@ -376,11 +376,11 @@ void aion::Renderer::renderGameEntities()
                     switch (overlay.type)
                     {
                     case DebugOverlay::Type::CIRCLE:
-                        ellipseRGBA(renderer_, pos.x, pos.y, 30, 15, 255, 0, 0,
+                        ellipseRGBA(m_renderer, pos.x, pos.y, 30, 15, 255, 0, 0,
                                     255); // green circle
                         break;
                     case DebugOverlay::Type::FILLED_CIRCLE:
-                        filledEllipseRGBA(renderer_, pos.x, pos.y, 20, 10, 0, 0, 255,
+                        filledEllipseRGBA(m_renderer, pos.x, pos.y, 20, 10, 0, 0, 255,
                                           100); // blue ellipse
                         break;
                     }
@@ -393,18 +393,18 @@ void aion::Renderer::renderGameEntities()
 
 void Renderer::renderBackground()
 {
-    SDL_SetRenderDrawColor(renderer_, 30, 30, 30, 255);
-    SDL_RenderClear(renderer_);
+    SDL_SetRenderDrawColor(m_renderer, 30, 30, 30, 255);
+    SDL_RenderClear(m_renderer);
 }
 
 void Renderer::generateTicks()
 {
-    const auto tickDelay = milliseconds(1000 / settings.getTicksPerSecond());
+    const auto tickDelay = milliseconds(1000 / m_settings.getTicksPerSecond());
     auto now = steady_clock::now();
-    if (now - lastTickTime >= tickDelay)
+    if (now - m_lastTickTime >= tickDelay)
     {
-        lastTickTime = now;
-        tickCount++;
+        m_lastTickTime = now;
+        m_tickCount++;
         onTick();
     }
 }
@@ -415,45 +415,49 @@ void Renderer::onTick()
     handleAnimations();
 }
 
-void aion::Renderer::handleViewportMovement()
+void Renderer::handleViewportMovement()
 {
     auto keyStates = SDL_GetKeyboardState(nullptr);
     if (keyStates[SDL_SCANCODE_W])
     {
-        viewport.setViewportPositionInPixelsWithBounryChecking(
-            viewport.getViewportPositionInPixels() - Vec2d(0, settings.getViewportMovingSpeed()));
+        m_viewport.setViewportPositionInPixelsWithBounryChecking(
+            m_viewport.getViewportPositionInPixels() -
+            Vec2d(0, m_settings.getViewportMovingSpeed()));
     }
     if (keyStates[SDL_SCANCODE_A])
     {
-        viewport.setViewportPositionInPixelsWithBounryChecking(
-            viewport.getViewportPositionInPixels() - Vec2d(settings.getViewportMovingSpeed(), 0));
+        m_viewport.setViewportPositionInPixelsWithBounryChecking(
+            m_viewport.getViewportPositionInPixels() -
+            Vec2d(m_settings.getViewportMovingSpeed(), 0));
     }
     if (keyStates[SDL_SCANCODE_S])
     {
-        viewport.setViewportPositionInPixelsWithBounryChecking(
-            viewport.getViewportPositionInPixels() + Vec2d(0, settings.getViewportMovingSpeed()));
+        m_viewport.setViewportPositionInPixelsWithBounryChecking(
+            m_viewport.getViewportPositionInPixels() +
+            Vec2d(0, m_settings.getViewportMovingSpeed()));
     }
     if (keyStates[SDL_SCANCODE_D])
     {
-        viewport.setViewportPositionInPixelsWithBounryChecking(
-            viewport.getViewportPositionInPixels() + Vec2d(settings.getViewportMovingSpeed(), 0));
+        m_viewport.setViewportPositionInPixelsWithBounryChecking(
+            m_viewport.getViewportPositionInPixels() +
+            Vec2d(m_settings.getViewportMovingSpeed(), 0));
     }
 }
 
-void aion::Renderer::handleAnimations()
+void Renderer::handleAnimations()
 {
     GameState::getInstance().getEntities<RenderingComponent, AnimationComponent>().each(
-        [this](aion::RenderingComponent& gc, AnimationComponent& ac)
+        [this](RenderingComponent& gc, AnimationComponent& ac)
         {
             if (!gc.isValid())
             {
                 return;
             }
 
-            auto& animation = graphicsRegistry.getAnimation(gc);
+            auto& animation = m_graphicsRegistry.getAnimation(gc);
 
-            auto tickGap = settings.getTicksPerSecond() / animation.speed;
-            if (tickCount % tickGap != 0)
+            auto tickGap = m_settings.getTicksPerSecond() / animation.speed;
+            if (m_tickCount % tickGap != 0)
             {
                 return;
             }
@@ -470,6 +474,6 @@ void aion::Renderer::handleAnimations()
                     gc.frame = animation.frames.size() - 1;
                 }
             }
-            gc.updateTextureDetails(graphicsRegistry);
+            gc.updateTextureDetails(m_graphicsRegistry);
         });
 }

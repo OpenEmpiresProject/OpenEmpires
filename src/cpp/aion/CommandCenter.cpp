@@ -1,13 +1,12 @@
 #include "CommandCenter.h"
 
 #include "GameState.h"
-#include "Logger.h"
-#include "Types.h"
 #include "commands/Command.h"
 #include "components/CompUnit.h"
+#include "utils/Logger.h"
+#include "utils/Types.h"
 
 using namespace aion;
-using namespace utils;
 
 CommandCenter::CommandCenter()
 {

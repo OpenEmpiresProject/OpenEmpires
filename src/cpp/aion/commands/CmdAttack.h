@@ -1,8 +1,8 @@
 #ifndef CMDATTACK_H
 #define CMDATTACK_H
 
-#include "ObjectPool.h"
 #include "commands/Command.h"
+#include "utils/ObjectPool.h"
 
 namespace aion
 {
@@ -25,7 +25,7 @@ class CmdAttack : public Command
     };
     void destroy() override
     {
-        utils::ObjectPool<CmdAttack>::release(this);
+        ObjectPool<CmdAttack>::release(this);
     }
     bool onCreateSubCommands(std::list<Command*>& subCommands) override
     {

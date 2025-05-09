@@ -3,7 +3,7 @@
 
 #include "GraphicsComponent.h"
 #include "GraphicsRegistry.h"
-#include "WidthHeight.h"
+#include "utils/WidthHeight.h"
 
 #include <SDL3/SDL.h>
 
@@ -14,8 +14,8 @@ class RenderingComponent : public GraphicsComponent
 {
   public:
     SDL_Texture* texture = nullptr;
-    Vec2d anchor = {0, 0};            // Anchor position in pixels
-    utils::WidthHeight size = {0, 0}; // Size of the texture in pixels
+    Vec2d anchor = {0, 0};     // Anchor position in pixels
+    WidthHeight size = {0, 0}; // Size of the texture in pixels
     SDL_FlipMode flip = SDL_FLIP_NONE;
     SDL_FRect* srcRect = nullptr; // Source rectangle for the texture
 

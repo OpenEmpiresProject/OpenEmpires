@@ -1,7 +1,7 @@
 #include "EventLoop.h"
 
 #include "EventHandler.h"
-#include "Logger.h"
+#include "utils/Logger.h"
 
 #include <SDL3/SDL_keyboard.h>
 #include <SDL3/SDL_mouse.h>
@@ -12,10 +12,10 @@ using namespace std::chrono;
 
 EventLoop::EventLoop(std::stop_token* stopToken) : SubSystem(stopToken)
 {
-    previousKeyboardState = new bool[SDL_SCANCODE_COUNT];
+    m_previousKeyboardState = new bool[SDL_SCANCODE_COUNT];
     for (int i = 0; i < SDL_SCANCODE_COUNT; ++i)
     {
-        previousKeyboardState[i] = false;
+        m_previousKeyboardState[i] = false;
     }
 }
 
@@ -24,28 +24,28 @@ EventLoop::~EventLoop()
 }
 
 // TODO rename this to singular or accept multiple
-void aion::EventLoop::submitEvents(const Event& event)
+void EventLoop::submitEvents(const Event& event)
 {
-    eventQueue.push(event);
+    m_eventQueue.push(event);
 }
 
-void aion::EventLoop::init()
+void EventLoop::init()
 {
-    eventLoopThread = std::thread(&EventLoop::run, this);
+    m_eventLoopThread = std::thread(&EventLoop::run, this);
 }
 
-void aion::EventLoop::run()
+void EventLoop::run()
 {
     spdlog::info("Starting event loop...");
 
-    for (auto& listener : listeners)
+    for (auto& listener : m_listeners)
     {
         listener->onInit(this);
     }
 
     auto lastTick = steady_clock::now();
 
-    while (stopToken_->stop_requested() == false)
+    while (m_stopToken->stop_requested() == false)
     {
         handleTickEvent(lastTick);
         handleInputEvents();
@@ -57,16 +57,16 @@ void aion::EventLoop::run()
     spdlog::info("Shutting down event loop...");
 }
 
-void aion::EventLoop::shutdown()
+void EventLoop::shutdown()
 {
     // TODO: Terminate the thread first, otherwise it won't exit from the loop
-    if (eventLoopThread.joinable())
+    if (m_eventLoopThread.joinable())
     {
-        eventLoopThread.join();
+        m_eventLoopThread.join();
     }
 }
 
-void aion::EventLoop::handleTickEvent(std::chrono::steady_clock::time_point& lastTime)
+void EventLoop::handleTickEvent(std::chrono::steady_clock::time_point& lastTime)
 {
     // TODO: Make this configurable
     const auto tickRate = milliseconds(16); // ~60 ticks per second
@@ -78,101 +78,101 @@ void aion::EventLoop::handleTickEvent(std::chrono::steady_clock::time_point& las
         Event tickEvent(Event::Type::TICK);
 
         // Notify listeners about the event
-        for (auto& listener : listeners)
+        for (auto& listener : m_listeners)
         {
             listener->onEvent(tickEvent);
         }
     }
 }
 
-void aion::EventLoop::handleInputEvents()
+void EventLoop::handleInputEvents()
 {
     int numEvents = 0;
     const bool* currentKeyboardState = SDL_GetKeyboardState(&numEvents);
     for (int i = 0; i < numEvents; ++i)
     {
-        if (currentKeyboardState[i] && !previousKeyboardState[i])
+        if (currentKeyboardState[i] && !m_previousKeyboardState[i])
         {
             KeyboardData data{i};
             Event keyDownEvent(Event::Type::KEY_DOWN, data);
-            for (auto& listener : listeners)
+            for (auto& listener : m_listeners)
             {
                 listener->onEvent(keyDownEvent);
             }
         }
-        if (!currentKeyboardState[i] && previousKeyboardState[i])
+        if (!currentKeyboardState[i] && m_previousKeyboardState[i])
         {
             KeyboardData data{i};
             Event keyDownEvent(Event::Type::KEY_UP, data);
-            for (auto& listener : listeners)
+            for (auto& listener : m_listeners)
             {
                 listener->onEvent(keyDownEvent);
             }
         }
-        previousKeyboardState[i] = currentKeyboardState[i];
+        m_previousKeyboardState[i] = currentKeyboardState[i];
     }
 
     float mouseX = 0;
     float mouseY = 0;
     SDL_MouseButtonFlags currentMouseState = SDL_GetMouseState(&mouseX, &mouseY);
 
-    if (previouseMouseX != mouseX || previouseMouseY != mouseY)
+    if (m_previouseMouseX != mouseX || m_previouseMouseY != mouseY)
     {
         MouseMoveData data{Vec2d(mouseX, mouseY)};
         Event mouseMoveEvent(Event::Type::MOUSE_MOVE, data);
-        for (auto& listener : listeners)
+        for (auto& listener : m_listeners)
         {
             listener->onEvent(mouseMoveEvent);
         }
-        previouseMouseX = mouseX;
-        previouseMouseY = mouseY;
+        m_previouseMouseX = mouseX;
+        m_previouseMouseY = mouseY;
     }
 
-    if (currentMouseState != previousMouseState)
+    if (currentMouseState != m_previousMouseState)
     {
-        if ((currentMouseState & SDL_BUTTON_LMASK) && !(previousMouseState & SDL_BUTTON_LMASK))
+        if ((currentMouseState & SDL_BUTTON_LMASK) && !(m_previousMouseState & SDL_BUTTON_LMASK))
         {
             MouseClickData data{MouseClickData::Button::LEFT, Vec2d(mouseX, mouseY)};
             Event mouseClickEvent(Event::Type::MOUSE_BTN_DOWN, data);
-            for (auto& listener : listeners)
+            for (auto& listener : m_listeners)
             {
                 listener->onEvent(mouseClickEvent);
             }
         }
 
-        if (!(currentMouseState & SDL_BUTTON_LMASK) && (previousMouseState & SDL_BUTTON_LMASK))
+        if (!(currentMouseState & SDL_BUTTON_LMASK) && (m_previousMouseState & SDL_BUTTON_LMASK))
         {
             MouseClickData data{MouseClickData::Button::LEFT, Vec2d(mouseX, mouseY)};
             Event mouseClickEvent(Event::Type::MOUSE_BTN_UP, data);
-            for (auto& listener : listeners)
+            for (auto& listener : m_listeners)
             {
                 listener->onEvent(mouseClickEvent);
             }
         }
 
-        if ((currentMouseState & SDL_BUTTON_RMASK) && !(previousMouseState & SDL_BUTTON_RMASK))
+        if ((currentMouseState & SDL_BUTTON_RMASK) && !(m_previousMouseState & SDL_BUTTON_RMASK))
         {
             MouseClickData data{MouseClickData::Button::RIGHT, Vec2d(mouseX, mouseY)};
             Event mouseClickEvent(Event::Type::MOUSE_BTN_DOWN, data);
-            for (auto& listener : listeners)
+            for (auto& listener : m_listeners)
             {
                 listener->onEvent(mouseClickEvent);
             }
         }
-        if (!(currentMouseState & SDL_BUTTON_RMASK) && (previousMouseState & SDL_BUTTON_RMASK))
+        if (!(currentMouseState & SDL_BUTTON_RMASK) && (m_previousMouseState & SDL_BUTTON_RMASK))
         {
             MouseClickData data{MouseClickData::Button::RIGHT, Vec2d(mouseX, mouseY)};
             Event mouseClickEvent(Event::Type::MOUSE_BTN_UP, data);
-            for (auto& listener : listeners)
+            for (auto& listener : m_listeners)
             {
                 listener->onEvent(mouseClickEvent);
             }
         }
-        previousMouseState = currentMouseState;
+        m_previousMouseState = currentMouseState;
     }
 }
 
 void EventLoop::registerListener(std::shared_ptr<EventHandler> listener)
 {
-    listeners.push_back(std::move(listener));
+    m_listeners.push_back(std::move(listener));
 }

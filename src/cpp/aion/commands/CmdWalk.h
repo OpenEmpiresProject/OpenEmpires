@@ -1,9 +1,9 @@
 #ifndef CMDWALK_H
 #define CMDWALK_H
 
-#include "ObjectPool.h"
 #include "Vec2d.h"
 #include "commands/Command.h"
+#include "utils/ObjectPool.h"
 
 #include <vector>
 
@@ -39,7 +39,7 @@ class CmdWalk : public Command
     };
     void destroy() override
     {
-        utils::ObjectPool<CmdWalk>::release(this);
+        ObjectPool<CmdWalk>::release(this);
     }
     bool onCreateSubCommands(std::list<Command*>& subCommands) override
     {

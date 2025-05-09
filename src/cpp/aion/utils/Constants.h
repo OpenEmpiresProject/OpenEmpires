@@ -1,7 +1,7 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-namespace utils
+namespace aion
 {
 class Constants
 {
@@ -12,6 +12,6 @@ class Constants
     static const int TILE_PIXEL_WIDTH = 96;
     static const int TILE_PIXEL_HEIGHT = 48;
 };
-} // namespace utils
+} // namespace aion
 
 #endif

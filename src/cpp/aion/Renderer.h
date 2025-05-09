@@ -27,7 +27,7 @@ class Renderer : public SubSystem
   public:
     Renderer(std::stop_source* stopSource,
              const GameSettings& settings,
-             aion::GraphicsRegistry& graphicsRegistry,
+             GraphicsRegistry& graphicsRegistry,
              ThreadQueue& renderQueue,
              Viewport& viewport);
     ~Renderer();
@@ -38,9 +38,9 @@ class Renderer : public SubSystem
 
     SDL_Renderer* getSDLRenderer()
     {
-        std::unique_lock<std::mutex> lock(sdlInitMutex_);
-        sdlInitCV_.wait(lock, [this] { return sdlInitialized_; });
-        return renderer_;
+        std::unique_lock<std::mutex> lock(m_sdlInitMutex);
+        m_sdlInitCV.wait(lock, [this] { return m_sdlInitialized; });
+        return m_renderer;
     }
 
   private:
@@ -57,12 +57,12 @@ class Renderer : public SubSystem
 
     void addDebugText(const std::string& text)
     {
-        debugTexts.push_back(text);
+        m_debugTexts.push_back(text);
     }
 
     void clearDebugTexts()
     {
-        debugTexts.clear();
+        m_debugTexts.clear();
     }
 
     void generateTicks();
@@ -70,48 +70,48 @@ class Renderer : public SubSystem
     void handleViewportMovement();
     void handleAnimations();
 
-    SDL_Window* window_ = nullptr;
-    SDL_Renderer* renderer_ = nullptr;
-    SDL_Texture* texture_ = nullptr;
+    SDL_Window* m_window = nullptr;
+    SDL_Renderer* m_renderer = nullptr;
+    SDL_Texture* m_texture = nullptr;
 
-    std::thread renderThread_;
-    std::atomic<bool> running_ = false;
-    const GameSettings& settings;
-    aion::GraphicsRegistry& graphicsRegistry;
+    std::thread m_renderThread;
+    std::atomic<bool> m_running = false;
+    const GameSettings& m_settings;
+    GraphicsRegistry& m_graphicsRegistry;
 
-    std::condition_variable sdlInitCV_;
-    std::mutex sdlInitMutex_;
-    bool sdlInitialized_ = false;
+    std::condition_variable m_sdlInitCV;
+    std::mutex m_sdlInitMutex;
+    bool m_sdlInitialized = false;
 
-    ThreadQueue& simulatorQueue;
-    int queueSize_ = 0;
-    int maxQueueSize_ = 0;
+    ThreadQueue& m_simulatorQueue;
+    int m_queueSize = 0;
+    int m_maxQueueSize = 0;
 
-    std::vector<std::string> debugTexts;
+    std::vector<std::string> m_debugTexts;
 
-    Viewport& viewport;
+    Viewport& m_viewport;
 
-    Vec2d anchorTilePixelsPos;
+    Vec2d m_anchorTilePixelsPos;
 
-    std::chrono::steady_clock::time_point lastTickTime;
+    std::chrono::steady_clock::time_point m_lastTickTime;
 
-    Vec2d lastMouseClickPosInFeet;
-    Vec2d lastMouseClickPosInTiles;
+    Vec2d m_lastMouseClickPosInFeet;
+    Vec2d m_lastMouseClickPosInTiles;
 
     struct ZBucketVersion
     {
         int64_t version = 0;
-        std::vector<aion::RenderingComponent*> graphicsComponents;
+        std::vector<RenderingComponent*> graphicsComponents;
     };
 
-    std::vector<ZBucketVersion> zBuckets;
-    const size_t zBucketsSize = 0;
-    int64_t zBucketVersion = 0;
+    std::vector<ZBucketVersion> m_zBuckets;
+    const size_t m_zBucketsSize = 0;
+    int64_t m_zBucketVersion = 0;
 
-    int64_t tickCount = 0;
+    int64_t m_tickCount = 0;
 
-    bool showStaticEntities = true;
-    bool showDebugInfo = false;
+    bool m_showStaticEntities = true;
+    bool m_showDebugInfo = false;
 };
 } // namespace aion
 

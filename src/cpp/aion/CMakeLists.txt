@@ -52,7 +52,6 @@ add_library(aion STATIC ${SOURCES})
 
 target_include_directories(aion PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(aion PUBLIC 
-    utils
     readerwriterqueue
     EnTT::EnTT
     SDL3::SDL3

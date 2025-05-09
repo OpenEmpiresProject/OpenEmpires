@@ -21,7 +21,7 @@ class EventLoop : public SubSystem
     void registerListener(std::shared_ptr<EventHandler> listener);
     int getListenersCount() const
     {
-        return listeners.size();
+        return m_listeners.size();
     }
 
     void submitEvents(const Event& event);
@@ -34,14 +34,14 @@ class EventLoop : public SubSystem
     void handleTickEvent(std::chrono::steady_clock::time_point& lastTime);
     void handleInputEvents();
 
-    std::list<std::shared_ptr<EventHandler>> listeners;
-    std::thread eventLoopThread;
-    std::queue<Event> eventQueue;
+    std::list<std::shared_ptr<EventHandler>> m_listeners;
+    std::thread m_eventLoopThread;
+    std::queue<Event> m_eventQueue;
 
-    bool* previousKeyboardState = nullptr;
-    uint32_t previousMouseState = 0;
-    int previouseMouseX = 0;
-    int previouseMouseY = 0;
+    bool* m_previousKeyboardState = nullptr;
+    uint32_t m_previousMouseState = 0;
+    int m_previouseMouseX = 0;
+    int m_previouseMouseY = 0;
 };
 
 } // namespace aion

@@ -1,9 +1,9 @@
 #ifndef GRAPHICSREGISTRY_H
 #define GRAPHICSREGISTRY_H
 
-#include "Types.h"
 #include "Vec2d.h"
-#include "WidthHeight.h"
+#include "utils/Types.h"
+#include "utils/WidthHeight.h"
 
 #include <SDL3/SDL.h>
 #include <string>
@@ -14,13 +14,13 @@ namespace aion
 class GraphicsID
 {
   public:
-    int entityType = 0;                                   // 15bits: 0-32767
-    int action = 0;                                       // 15bits: 0-32767
-    int frame = 0;                                        // 5bits: 0-31
-    utils::Direction direction = utils::Direction::NORTH; // 3bits: 0-7
-    int entitySubType = 0;                                // 10bits: 0-1023
-    int variation = 0;                                    // 10bits: 0-1023
-    int custom3 = 0;                                      // 4bits: 0-15
+    int entityType = 0;                     // 15bits: 0-32767
+    int action = 0;                         // 15bits: 0-32767
+    int frame = 0;                          // 5bits: 0-31
+    Direction direction = Direction::NORTH; // 3bits: 0-7
+    int entitySubType = 0;                  // 10bits: 0-1023
+    int variation = 0;                      // 10bits: 0-1023
+    int custom3 = 0;                        // 4bits: 0-15
 
     bool isValid() const
     {
@@ -61,13 +61,13 @@ class GraphicsID
     static GraphicsID fromHash(int64_t hash)
     {
         GraphicsID id;
-        id.entityType = (hash >> 46) & 0x7FFF;                            // 15 bits
-        id.action = (hash >> 31) & 0x7FFF;                                // 15 bits
-        id.direction = static_cast<utils::Direction>((hash >> 28) & 0x7); // 3 bits
-        id.frame = (hash >> 23) & 0x1F;                                   // 5 bits
-        id.entitySubType = (hash >> 13) & 0x3FF;                          // 10 bits
-        id.variation = (hash >> 3) & 0x3FF;                               // 10 bits
-        id.custom3 = hash & 0xF;                                          // 4 bits
+        id.entityType = (hash >> 46) & 0x7FFF;                     // 15 bits
+        id.action = (hash >> 31) & 0x7FFF;                         // 15 bits
+        id.direction = static_cast<Direction>((hash >> 28) & 0x7); // 3 bits
+        id.frame = (hash >> 23) & 0x1F;                            // 5 bits
+        id.entitySubType = (hash >> 13) & 0x3FF;                   // 10 bits
+        id.variation = (hash >> 3) & 0x3FF;                        // 10 bits
+        id.custom3 = hash & 0xF;                                   // 4 bits
         return id;
     }
 };
@@ -77,7 +77,7 @@ struct Texture
     SDL_Texture* image = nullptr;
     SDL_FRect* srcRect = nullptr; // Source rectangle for the texture
     Vec2d anchor{0, 0};
-    utils::WidthHeight size{0, 0};
+    WidthHeight size{0, 0};
     bool flip = false;
 };
 

@@ -1,7 +1,6 @@
 #include "Simulator.h"
 
 #include "GameState.h"
-#include "ObjectPool.h"
 #include "commands/CmdIdle.h"
 #include "commands/CmdWalk.h"
 #include "components/ActionComponent.h"
@@ -11,15 +10,15 @@
 #include "components/GraphicsComponent.h"
 #include "components/RenderingComponent.h"
 #include "components/TransformComponent.h"
+#include "utils/ObjectPool.h"
 
 using namespace aion;
-using namespace utils;
 
 char scancodeToChar(SDL_Scancode scancode, bool shiftPressed);
 
 void Simulator::onInit(EventLoop* eventLoop)
 {
-    messageToRenderer = ObjectPool<ThreadMessage>::acquire(ThreadMessage::Type::RENDER);
+    m_messageToRenderer = ObjectPool<ThreadMessage>::acquire(ThreadMessage::Type::RENDER);
 }
 
 void Simulator::onExit()
@@ -47,20 +46,20 @@ void Simulator::onEvent(const Event& e)
 
         auto mousePos = e.getData<MouseClickData>().screenPosition;
         // TODO: This is not thread safe.
-        auto worldPos = viewport.screenUnitsToFeet(mousePos);
-        auto tilePos = viewport.feetToTiles(worldPos);
+        auto worldPos = m_viewport.screenUnitsToFeet(mousePos);
+        auto tilePos = m_viewport.feetToTiles(worldPos);
 
         if (e.getData<MouseClickData>().button == MouseClickData::Button::LEFT)
         {
             spdlog::debug("Mouse clicked at tile position: {}", tilePos.toString());
 
-            startPosition = tilePos;
+            m_startPosition = tilePos;
         }
         else if (e.getData<MouseClickData>().button == MouseClickData::Button::RIGHT)
         {
             spdlog::debug("Right mouse clicked at tile position: {}", tilePos.toString());
 
-            testPathFinding(startPosition, tilePos);
+            testPathFinding(m_startPosition, tilePos);
         }
     }
     break;
@@ -80,7 +79,7 @@ void Simulator::onTick()
 
 void Simulator::sendGraphicsInstructions()
 {
-    aion::GameState::getInstance()
+    GameState::getInstance()
         .getEntities<TransformComponent, EntityInfoComponent, DirtyComponent, GraphicsComponent>()
         .each(
             [this](uint32_t entity, TransformComponent& transform, EntityInfoComponent& entityInfo,
@@ -97,7 +96,7 @@ void Simulator::sendGraphicsInstructions()
 
 void Simulator::simulatePhysics()
 {
-    aion::GameState::getInstance()
+    GameState::getInstance()
         .getEntities<TransformComponent, ActionComponent, EntityInfoComponent, DirtyComponent>()
         .each(
             [this](TransformComponent& transform, ActionComponent& action,
@@ -130,26 +129,26 @@ void Simulator::updateGraphicComponents()
             });
 }
 
-void aion::Simulator::sendThreadMessageToRenderer()
+void Simulator::sendThreadMessageToRenderer()
 {
-    if (!messageToRenderer->commandBuffer.empty())
+    if (!m_messageToRenderer->commandBuffer.empty())
     {
-        rendererQueue.enqueue(messageToRenderer);
-        messageToRenderer = ObjectPool<ThreadMessage>::acquire(ThreadMessage::Type::RENDER);
+        m_rendererQueue.enqueue(m_messageToRenderer);
+        m_messageToRenderer = ObjectPool<ThreadMessage>::acquire(ThreadMessage::Type::RENDER);
     }
 }
 
-void aion::Simulator::incrementDirtyVersion()
+void Simulator::incrementDirtyVersion()
 {
     DirtyComponent::globalDirtyVersion++;
 }
 
-void aion::Simulator::sendGraphiInstruction(GraphicsComponent* instruction)
+void Simulator::sendGraphiInstruction(GraphicsComponent* instruction)
 {
-    messageToRenderer->commandBuffer.push_back(static_cast<void*>(instruction));
+    m_messageToRenderer->commandBuffer.push_back(static_cast<void*>(instruction));
 }
 
-void aion::Simulator::testPathFinding(const Vec2d& start, const Vec2d& end)
+void Simulator::testPathFinding(const Vec2d& start, const Vec2d& end)
 {
     StaticEntityMap map = GameState::getInstance().staticEntityMap;
     std::vector<Vec2d> path = GameState::getInstance().getPathFinder()->findPath(map, start, end);

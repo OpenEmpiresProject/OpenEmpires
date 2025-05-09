@@ -30,9 +30,9 @@ class ResourceLoader : public aion::SubSystem
         // Cleanup code for resource loading
     }
 
-    const aion::GameSettings& _settings;
-    aion::GraphicsRegistry& graphicsRegistry;
-    std::shared_ptr<aion::Renderer> renderer;
+    const aion::GameSettings& m_settings;
+    aion::GraphicsRegistry& m_graphicsRegistry;
+    std::shared_ptr<aion::Renderer> m_renderer;
 };
 } // namespace game
 

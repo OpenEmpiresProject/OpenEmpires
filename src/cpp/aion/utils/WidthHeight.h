@@ -1,7 +1,7 @@
 #ifndef WIDTHHEIGHT_H
 #define WIDTHHEIGHT_H
 
-namespace utils
+namespace aion
 {
 struct WidthHeight
 {
@@ -12,6 +12,6 @@ struct WidthHeight
     {
     }
 };
-} // namespace utils
+} // namespace aion
 
 #endif

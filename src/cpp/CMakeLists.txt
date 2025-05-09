@@ -1,5 +1,4 @@
 add_subdirectory(game)
-add_subdirectory(utils)
 add_subdirectory(aion)
 add_subdirectory(sdl3_gfx)
 
@@ -14,7 +13,6 @@ set_target_properties(openEmpires PROPERTIES
 target_link_libraries(openEmpires
     PRIVATE
         game
-        utils
         aion
         sdl3_gfx
 )
@@ -22,7 +20,6 @@ target_link_libraries(openEmpires
 target_include_directories(openEmpires
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/game
-        ${CMAKE_CURRENT_SOURCE_DIR}/utils
         ${CMAKE_CURRENT_SOURCE_DIR}/aion
         ${CMAKE_CURRENT_SOURCE_DIR}/sdl3_gfx
 )

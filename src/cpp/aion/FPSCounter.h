@@ -12,57 +12,58 @@ class FPSCounter
 {
   public:
     FPSCounter(size_t averagingWindowFrames = 100)
-        : averagingWindowFrames_(averagingWindowFrames), frameTimeAccumulator_(0.0f),
-          frameSleepAccumulator_(0.0f), frameCount_(0), averageFPS_(0.0f), averageSleep_(0.0f),
-          lastTime_(std::chrono::steady_clock::now()),
-          lastTotalSleepReturnedTime(std::chrono::steady_clock::now()), stableFPS_(0.0f),
-          lastStableUpdate_(lastTime_)
+        : m_averagingWindowFrames(averagingWindowFrames), m_frameTimeAccumulator(0.0f),
+          m_frameSleepAccumulator(0.0f), m_frameCount(0), m_averageFPS(0.0f), m_averageSleep(0.0f),
+          m_lastTime(std::chrono::steady_clock::now()),
+          m_lastTotalSleepReturnedTime(std::chrono::steady_clock::now()), m_stableFPS(0.0f),
+          m_lastStableUpdate(m_lastTime)
     {
     }
 
     void frame()
     {
         auto now = std::chrono::steady_clock::now();
-        float delta = std::chrono::duration<float>(now - lastTime_).count();
-        lastTime_ = now;
+        float delta = std::chrono::duration<float>(now - m_lastTime).count();
+        m_lastTime = now;
 
         if (delta > 0.0f)
         {
-            frameTimeAccumulator_ += delta;
-            frameCount_++;
+            m_frameTimeAccumulator += delta;
+            m_frameCount++;
 
-            if (frameCount_ >= averagingWindowFrames_)
+            if (m_frameCount >= m_averagingWindowFrames)
             {
-                averageFPS_ = static_cast<float>(averagingWindowFrames_) / frameTimeAccumulator_;
-                averageSleep_ = frameSleepAccumulator_ / static_cast<float>(averagingWindowFrames_);
-                frameTimeAccumulator_ = 0.0f;
-                frameSleepAccumulator_ = 0.0f;
-                frameCount_ = 0;
+                m_averageFPS = static_cast<float>(m_averagingWindowFrames) / m_frameTimeAccumulator;
+                m_averageSleep =
+                    m_frameSleepAccumulator / static_cast<float>(m_averagingWindowFrames);
+                m_frameTimeAccumulator = 0.0f;
+                m_frameSleepAccumulator = 0.0f;
+                m_frameCount = 0;
             }
         }
     }
 
     float getAverageFPS() const
     {
-        return averageFPS_;
+        return m_averageFPS;
     }
 
     float getFPS() const
     {
-        if (frameCount_ > 0 && frameTimeAccumulator_ > 0.0f)
+        if (m_frameCount > 0 && m_frameTimeAccumulator > 0.0f)
         {
-            return static_cast<float>(frameCount_) / frameTimeAccumulator_;
+            return static_cast<float>(m_frameCount) / m_frameTimeAccumulator;
         }
-        return averageFPS_; // Return the rolling average if not enough frames yet
+        return m_averageFPS; // Return the rolling average if not enough frames yet
     }
 
     bool isStable()
     {
         auto now = std::chrono::steady_clock::now();
-        if (std::chrono::duration<float>(now - lastStableUpdate_).count() >= 1.0f)
+        if (std::chrono::duration<float>(now - m_lastStableUpdate).count() >= 1.0f)
         {
-            stableFPS_ = getAverageFPS();
-            lastStableUpdate_ = now;
+            m_stableFPS = getAverageFPS();
+            m_lastStableUpdate = now;
             return true;
         }
         return false;
@@ -72,41 +73,41 @@ class FPSCounter
     {
         if (ms > 0.0f)
         {
-            frameSleepAccumulator_ += ms;
+            m_frameSleepAccumulator += ms;
         }
     }
 
     int getTotalSleep()
     {
         auto now = std::chrono::steady_clock::now();
-        if (std::chrono::duration<float>(now - lastTotalSleepReturnedTime).count() >= 1.0f)
+        if (std::chrono::duration<float>(now - m_lastTotalSleepReturnedTime).count() >= 1.0f)
         {
-            lastReturnedTotalSleep_ = frameSleepAccumulator_;
-            lastTotalSleepReturnedTime = now;
+            m_lastReturnedTotalSleep = m_frameSleepAccumulator;
+            m_lastTotalSleepReturnedTime = now;
             return true;
         }
 
-        return lastReturnedTotalSleep_;
+        return m_lastReturnedTotalSleep;
     }
 
     float getAverageSleepMs() const
     {
-        return averageSleep_;
+        return m_averageSleep;
     }
 
   private:
-    size_t averagingWindowFrames_;
-    float frameTimeAccumulator_;
-    float frameSleepAccumulator_;
-    float lastReturnedTotalSleep_ = 0.0f;
-    std::chrono::steady_clock::time_point lastTotalSleepReturnedTime;
+    size_t m_averagingWindowFrames;
+    float m_frameTimeAccumulator;
+    float m_frameSleepAccumulator;
+    float m_lastReturnedTotalSleep = 0.0f;
+    std::chrono::steady_clock::time_point m_lastTotalSleepReturnedTime;
 
-    size_t frameCount_;
-    float averageFPS_;
-    float averageSleep_;
-    std::chrono::steady_clock::time_point lastTime_;
-    float stableFPS_;
-    std::chrono::steady_clock::time_point lastStableUpdate_;
+    size_t m_frameCount;
+    float m_averageFPS;
+    float m_averageSleep;
+    std::chrono::steady_clock::time_point m_lastTime;
+    float m_stableFPS;
+    std::chrono::steady_clock::time_point m_lastStableUpdate;
 };
 
 } // namespace aion

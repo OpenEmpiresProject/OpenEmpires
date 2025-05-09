@@ -1,14 +1,14 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#include "Constants.h"
+#include "utils/Constants.h"
 
 #include <bitset>
 #include <string>
 
-namespace utils
+namespace aion
 {
-using Signature = std::bitset<utils::Constants::MAX_COMPONENTS>;
+using Signature = std::bitset<Constants::MAX_COMPONENTS>;
 
 enum class WorldSizeType
 {
@@ -61,6 +61,6 @@ enum class DebugHighlightType
     TILE_TREE_MARK = 1 << 1,
 };
 
-} // namespace utils
+} // namespace aion
 
 #endif

@@ -30,7 +30,7 @@ class SubSystemRegistry
     SubSystemRegistry(SubSystemRegistry&&) = delete;
     SubSystemRegistry& operator=(SubSystemRegistry&&) = delete;
 
-    std::unordered_map<std::string, std::shared_ptr<SubSystem>> subSystems;
+    std::unordered_map<std::string, std::shared_ptr<SubSystem>> m_subSystems;
 };
 } // namespace aion
 

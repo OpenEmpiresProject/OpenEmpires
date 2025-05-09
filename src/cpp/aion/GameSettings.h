@@ -1,9 +1,9 @@
 #ifndef GAMESETTINGS_H
 #define GAMESETTINGS_H
 
-#include "Constants.h"
-#include "Types.h"
-#include "WidthHeight.h"
+#include "utils/Constants.h"
+#include "utils/Types.h"
+#include "utils/WidthHeight.h"
 
 namespace aion
 {
@@ -15,137 +15,137 @@ class GameSettings
 
     void setResolution(int width, int height)
     {
-        resolution.width = width;
-        resolution.height = height;
+        m_resolution.width = width;
+        m_resolution.height = height;
     }
     void setFullscreen(bool fullscreen)
     {
-        _isFullscreen = fullscreen;
+        m_isFullscreen = fullscreen;
     }
     void setVSync(bool vsync)
     {
-        _isVSync = vsync;
+        m_isVSync = vsync;
     }
     void setVolume(float volume)
     {
-        soundVolume = volume;
+        m_soundVolume = volume;
     }
     void setMusicVolume(float volume)
     {
-        musicVolume = volume;
+        m_musicVolume = volume;
     }
     void setWindowDimensions(int width, int height)
     {
-        windowDimensions.width = width;
-        windowDimensions.height = height;
+        m_windowDimensions.width = width;
+        m_windowDimensions.height = height;
     }
-    void setWorldSizeType(utils::WorldSizeType size)
+    void setWorldSizeType(WorldSizeType size)
     {
-        worldSizeType = size;
+        m_worldSizeType = size;
     }
-    void setTitle(const std::string& title)
+    void setTitle(const std::string& m_title)
     {
-        this->title = title;
+        this->m_title = m_title;
     }
 
     void setViewportMovingSpeed(int speed)
     {
-        viewportMovingSpeed = speed;
+        m_viewportMovingSpeed = speed;
     }
 
     void setTicksPerSecond(int tps)
     {
-        ticksPerSecond = tps;
+        m_ticksPerSecond = tps;
     }
 
     void setTargetFPS(int fps)
     {
-        targetFPS = fps;
+        m_targetFPS = fps;
     }
 
-    const utils::WidthHeight& getResolution() const
+    const WidthHeight& getResolution() const
     {
-        return resolution;
+        return m_resolution;
     }
-    const utils::WidthHeight& getWindowDimensions() const
+    const WidthHeight& getWindowDimensions() const
     {
-        return windowDimensions;
+        return m_windowDimensions;
     }
-    utils::WorldSizeType getWorldSizeType() const
+    WorldSizeType getWorldSizeType() const
     {
-        return worldSizeType;
+        return m_worldSizeType;
     }
-    utils::WidthHeight getWorldSize() const
+    WidthHeight getWorldSize() const
     {
-        switch (worldSizeType)
+        switch (m_worldSizeType)
         {
-        case utils::WorldSizeType::DEMO:
-            return {50 * utils::Constants::FEET_PER_TILE, 50 * utils::Constants::FEET_PER_TILE};
-        case utils::WorldSizeType::TINY:
-            return {120 * utils::Constants::FEET_PER_TILE, 120 * utils::Constants::FEET_PER_TILE};
-        case utils::WorldSizeType::MEDIUM:
-            return {180 * utils::Constants::FEET_PER_TILE, 180 * utils::Constants::FEET_PER_TILE};
-        case utils::WorldSizeType::GIANT:
-            return {240 * utils::Constants::FEET_PER_TILE, 240 * utils::Constants::FEET_PER_TILE};
+        case WorldSizeType::DEMO:
+            return {50 * Constants::FEET_PER_TILE, 50 * Constants::FEET_PER_TILE};
+        case WorldSizeType::TINY:
+            return {120 * Constants::FEET_PER_TILE, 120 * Constants::FEET_PER_TILE};
+        case WorldSizeType::MEDIUM:
+            return {180 * Constants::FEET_PER_TILE, 180 * Constants::FEET_PER_TILE};
+        case WorldSizeType::GIANT:
+            return {240 * Constants::FEET_PER_TILE, 240 * Constants::FEET_PER_TILE};
         default:
             // TODO: Handle error case
             return {-1, -1};
         }
     }
-    utils::WidthHeight getWorldSizeInTiles() const
+    WidthHeight getWorldSizeInTiles() const
     {
         auto worldSize = getWorldSize();
-        return {worldSize.width / utils::Constants::FEET_PER_TILE,
-                worldSize.height / utils::Constants::FEET_PER_TILE};
+        return {worldSize.width / Constants::FEET_PER_TILE,
+                worldSize.height / Constants::FEET_PER_TILE};
     }
     bool isFullscreen() const
     {
-        return _isFullscreen;
+        return m_isFullscreen;
     }
     bool isVSync() const
     {
-        return _isVSync;
+        return m_isVSync;
     }
     float getVolume() const
     {
-        return soundVolume;
+        return m_soundVolume;
     }
     float getMusicVolume() const
     {
-        return musicVolume;
+        return m_musicVolume;
     }
     std::string getTitle() const
     {
-        return title;
+        return m_title;
     }
 
     int getViewportMovingSpeed() const
     {
-        return viewportMovingSpeed;
+        return m_viewportMovingSpeed;
     }
 
     int getTicksPerSecond() const
     {
-        return ticksPerSecond;
+        return m_ticksPerSecond;
     }
 
     int getTargetFPS() const
     {
-        return targetFPS;
+        return m_targetFPS;
     }
 
   private:
-    utils::WidthHeight resolution{800, 600};
-    utils::WidthHeight windowDimensions{800, 600};
-    utils::WorldSizeType worldSizeType = utils::WorldSizeType::DEMO;
-    bool _isFullscreen = false;
-    bool _isVSync = true;
-    float soundVolume = 1.0f;
-    float musicVolume = 1.0f;
-    std::string title = "openEmipires";
-    int viewportMovingSpeed = 100;
-    int ticksPerSecond = 60;
-    int targetFPS = 60;
+    WidthHeight m_resolution{800, 600};
+    WidthHeight m_windowDimensions{800, 600};
+    WorldSizeType m_worldSizeType = WorldSizeType::DEMO;
+    bool m_isFullscreen = false;
+    bool m_isVSync = true;
+    float m_soundVolume = 1.0f;
+    float m_musicVolume = 1.0f;
+    std::string m_title = "openEmipires";
+    int m_viewportMovingSpeed = 100;
+    int m_ticksPerSecond = 60;
+    int m_targetFPS = 60;
 };
 } // namespace aion
 

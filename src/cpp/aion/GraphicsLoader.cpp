@@ -1,8 +1,8 @@
 #include "GraphicsLoader.h"
 
 #include "GraphicsRegistry.h"
-#include "Logger.h"
-#include "WidthHeight.h"
+#include "utils/Logger.h"
+#include "utils/WidthHeight.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_rect.h>
@@ -13,14 +13,13 @@
 #include <vector>
 
 using namespace aion;
-using namespace utils;
 namespace fs = std::filesystem;
 using namespace std;
 
 GraphicsLoader::GraphicsLoader(SDL_Renderer* renderer,
                                GraphicsRegistry& graphicsRegistry,
                                AtlasGeneratorBase& atlasGenerator)
-    : renderer_(renderer), graphicsRegistry(graphicsRegistry), atlasGenerator(atlasGenerator)
+    : m_renderer(renderer), m_graphicsRegistry(graphicsRegistry), m_atlasGenerator(atlasGenerator)
 {
 }
 
@@ -80,7 +79,7 @@ void GraphicsLoader::createAtlasForEntityType(int entityType,
 
     std::vector<SDL_Rect> srcRects;
 
-    auto atlasTexture = atlasGenerator.generateAtlas(renderer_, entityType, paths, srcRects);
+    auto atlasTexture = m_atlasGenerator.generateAtlas(m_renderer, entityType, paths, srcRects);
     if (!atlasTexture)
     {
         spdlog::error("Failed to create atlas texture for entity type {}.", entityType);
@@ -94,11 +93,11 @@ void GraphicsLoader::createAtlasForEntityType(int entityType,
         const auto& srcRect = srcRects[i];
         WidthHeight imageSize = {srcRect.w, srcRect.h};
 
-        aion::GraphicsID id;
+        GraphicsID id;
         id.entityType = entityType;
         id.action = 0; // Deduce action if applicable
-        // id.variation = i; // Variation index
-        id.direction = utils::Direction::NORTH; // Default direction
+        // id.m_variation = i; // Variation index
+        id.direction = Direction::NORTH; // Default direction
 
         Vec2d anchor = {imageSize.width / 2 + 1, imageSize.height};
         std::string pathStr = path.string();
@@ -106,8 +105,8 @@ void GraphicsLoader::createAtlasForEntityType(int entityType,
         if (entityType == 2)
         {
             id.variation =
-                variation++; // Different grass tiles. TODO: This doesn't scale or work well.
-            id.direction = utils::Direction::NORTHEAST;
+                m_variation++; // Different grass tiles. TODO: This doesn't scale or work well.
+            id.direction = Direction::NORTHEAST;
             anchor = {imageSize.width / 2 + 1, 0};
         }
         else if (entityType == 3)
@@ -125,23 +124,23 @@ void GraphicsLoader::createAtlasForEntityType(int entityType,
             auto direction = (int) (index / 15); // 0-3
             if (direction == 0)
             {
-                id.direction = utils::Direction::SOUTH;
+                id.direction = Direction::SOUTH;
             }
             else if (direction == 1)
             {
-                id.direction = utils::Direction::SOUTHWEST;
+                id.direction = Direction::SOUTHWEST;
             }
             else if (direction == 2)
             {
-                id.direction = utils::Direction::WEST;
+                id.direction = Direction::WEST;
             }
             else if (direction == 3)
             {
-                id.direction = utils::Direction::NORTHWEST;
+                id.direction = Direction::NORTHWEST;
             }
             else if (direction == 4)
             {
-                id.direction = utils::Direction::NORTH;
+                id.direction = Direction::NORTH;
             }
         }
         else if (entityType == 4) // Trees
@@ -149,7 +148,7 @@ void GraphicsLoader::createAtlasForEntityType(int entityType,
             for (size_t i = 0; i < 100; i++)
             {
                 id.variation = i;
-                if (!graphicsRegistry.hasTexture(id))
+                if (!m_graphicsRegistry.hasTexture(id))
                 {
                     break;
                 }
@@ -159,19 +158,19 @@ void GraphicsLoader::createAtlasForEntityType(int entityType,
         SDL_FRect* srcRectF = new SDL_FRect{(float) srcRect.x, (float) srcRect.y, (float) srcRect.w,
                                             (float) srcRect.h};
 
-        aion::Texture entry{atlasTexture, srcRectF, anchor, imageSize, false};
-        graphicsRegistry.registerTexture(id, entry);
+        Texture entry{atlasTexture, srcRectF, anchor, imageSize, false};
+        m_graphicsRegistry.registerTexture(id, entry);
     }
 }
 
-void aion::GraphicsLoader::loadAnimations()
+void GraphicsLoader::loadAnimations()
 {
-    for (const auto& [id, texture] : graphicsRegistry.getTextures())
+    for (const auto& [id, texture] : m_graphicsRegistry.getTextures())
     {
         auto idFull = GraphicsID::fromHash(id);
         // Find all textures with the same entityType, action, and direction
         std::vector<int64_t> animationFrames;
-        for (const auto& [otherId, otherTexture] : graphicsRegistry.getTextures())
+        for (const auto& [otherId, otherTexture] : m_graphicsRegistry.getTextures())
         {
             auto otherIdFull = GraphicsID::fromHash(otherId);
             if (idFull.entityType == otherIdFull.entityType &&
@@ -188,7 +187,7 @@ void aion::GraphicsLoader::loadAnimations()
             animationID.action = idFull.action;
             animationID.direction = idFull.direction;
             Animation animation{animationFrames, true, 10}; // 10 FPS
-            graphicsRegistry.registerAnimation(animationID, animation);
+            m_graphicsRegistry.registerAnimation(animationID, animation);
 
             // spdlog::debug(
             //     "Animation created for entityType: {}, action: {}, direction: {} with {}
@@ -198,7 +197,7 @@ void aion::GraphicsLoader::loadAnimations()
     }
 }
 
-void aion::GraphicsLoader::loadCursors()
+void GraphicsLoader::loadCursors()
 {
     for (const auto& entry : fs::recursive_directory_iterator("assets/images/interfaces/cursors"))
     {
@@ -233,20 +232,20 @@ void aion::GraphicsLoader::loadCursors()
             return;
         }
         auto variationStr = pathStr.substr(pathStr.find_last_of('_') + 1, 2);
-        auto variation = std::stoi(variationStr);
-        cursors[variation] = cursor; // Store the cursor in the map
+        auto m_variation = std::stoi(variationStr);
+        m_cursors[m_variation] = cursor; // Store the cursor in the map
     }
 }
 
-void aion::GraphicsLoader::setCursor(int variation)
+void GraphicsLoader::setCursor(int variation)
 {
-    SDL_SetCursor(cursors[variation]);
+    SDL_SetCursor(m_cursors[variation]);
 }
 
-void aion::GraphicsLoader::adjustDirections()
+void GraphicsLoader::adjustDirections()
 {
     std::list<std::pair<GraphicsID, Texture>> graphicsToFlip;
-    for (const auto& [id, texture] : graphicsRegistry.getTextures())
+    for (const auto& [id, texture] : m_graphicsRegistry.getTextures())
     {
         GraphicsID idFull = GraphicsID::fromHash(id);
         if (isTextureFlippingNeededEntity(idFull.entityType) &&
@@ -260,33 +259,33 @@ void aion::GraphicsLoader::adjustDirections()
     {
         texture.flip = true; // Mark the texture for flipping
         id.direction =
-            static_cast<utils::Direction>(getFlippedDirection(id.direction)); // Flip the direction
+            static_cast<Direction>(getFlippedDirection(id.direction)); // Flip the direction
 
-        graphicsRegistry.registerTexture(id, texture);
+        m_graphicsRegistry.registerTexture(id, texture);
     }
 }
 
-bool aion::GraphicsLoader::isTextureFlippingNeededEntity(int entityType) const
+bool GraphicsLoader::isTextureFlippingNeededEntity(int entityType) const
 {
     return entityType == 3;
 }
 
-bool aion::GraphicsLoader::isTextureFlippingNeededDirection(utils::Direction direction) const
+bool GraphicsLoader::isTextureFlippingNeededDirection(Direction direction) const
 {
-    return direction == utils::Direction::SOUTHWEST || direction == utils::Direction::NORTHWEST ||
-           direction == utils::Direction::WEST;
+    return direction == Direction::SOUTHWEST || direction == Direction::NORTHWEST ||
+           direction == Direction::WEST;
 }
 
-utils::Direction aion::GraphicsLoader::getFlippedDirection(utils::Direction direction) const
+Direction GraphicsLoader::getFlippedDirection(Direction direction) const
 {
     switch (direction)
     {
-    case utils::Direction::SOUTHWEST:
-        return utils::Direction::SOUTHEAST;
-    case utils::Direction::NORTHWEST:
-        return utils::Direction::NORTHEAST;
-    case utils::Direction::WEST:
-        return utils::Direction::EAST;
+    case Direction::SOUTHWEST:
+        return Direction::SOUTHEAST;
+    case Direction::NORTHWEST:
+        return Direction::NORTHEAST;
+    case Direction::WEST:
+        return Direction::EAST;
     default:
         return direction; // No flipping needed
     }

@@ -4,10 +4,12 @@
 #include "Event.h"
 #include <gtest/gtest.h>
 
+using namespace aion;
+
 // Test the parameterized constructor
 TEST(EventTest, ParameterizedConstructor) {
-    aion::Event event(aion::Event::Type::TICK);
-    EXPECT_EQ(event.type, aion::Event::Type::TICK);
+    Event event(Event::Type::TICK);
+    EXPECT_EQ(event.type, Event::Type::TICK);
 }
 
 #endif

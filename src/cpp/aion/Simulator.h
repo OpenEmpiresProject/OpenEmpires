@@ -15,7 +15,7 @@ class Simulator : public EventHandler
 {
   public:
     Simulator(ThreadQueue& rendererQueue, Viewport& viewport)
-        : rendererQueue(rendererQueue), viewport(viewport)
+        : m_rendererQueue(rendererQueue), m_viewport(viewport)
     {
     }
     ~Simulator() = default;
@@ -36,12 +36,12 @@ class Simulator : public EventHandler
     void sendThreadMessageToRenderer();
     void incrementDirtyVersion();
 
-    ThreadQueue& rendererQueue;
+    ThreadQueue& m_rendererQueue;
 
-    Vec2d startPosition{0, 0};
-    Viewport& viewport;
+    Vec2d m_startPosition{0, 0};
+    Viewport& m_viewport;
 
-    ThreadMessage* messageToRenderer = nullptr;
+    ThreadMessage* m_messageToRenderer = nullptr;
 };
 } // namespace aion
 

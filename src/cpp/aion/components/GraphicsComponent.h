@@ -3,7 +3,7 @@
 
 #include "GraphicsRegistry.h"
 #include "Vec2d.h"
-#include "WidthHeight.h"
+#include "utils/WidthHeight.h"
 
 #include <SDL3/SDL.h>
 #include <entt/entity/registry.hpp>

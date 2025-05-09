@@ -7,7 +7,7 @@
 
 #include <string>
 
-namespace utils
+namespace aion
 {
 static void initLogger(const std::string& filename)
 {
@@ -25,6 +25,6 @@ static void initLogger(const std::string& filename)
     spdlog::set_level(spdlog::level::debug);
 }
 
-} // namespace utils
+} // namespace aion
 
 #endif // LOGGER_H

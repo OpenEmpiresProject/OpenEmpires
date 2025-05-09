@@ -2,7 +2,7 @@
 #define ANIMATIONCOMPONENT_H
 
 #include "GraphicsRegistry.h"
-#include "WidthHeight.h"
+#include "utils/WidthHeight.h"
 
 #include <SDL3/SDL.h>
 

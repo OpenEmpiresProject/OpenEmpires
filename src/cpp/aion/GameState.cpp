@@ -5,9 +5,9 @@
 #include <random>
 using namespace aion;
 
-GameState::GameState(/* args */)
+GameState::GameState()
 {
-    pathFinder = new PathFinderAStar();
+    m_pathFinder = new PathFinderAStar();
 }
 
 GameState::~GameState()
@@ -16,22 +16,22 @@ GameState::~GameState()
 
 uint32_t GameState::createEntity()
 {
-    return registry.create();
+    return m_registry.create();
 }
 
 void GameState::destroyEntity(uint32_t entity)
 {
-    registry.destroy(entity);
+    m_registry.destroy(entity);
 }
 
 bool GameState::isEntityValid(uint32_t entity) const
 {
-    return registry.valid(entity);
+    return m_registry.valid(entity);
 }
 
 void GameState::clearAll()
 {
-    registry.clear();
+    m_registry.clear();
 }
 
 StaticEntityMap GameState::initializeStaticEntityMap(int width, int height)
@@ -57,7 +57,7 @@ StaticEntityMap GameState::initializeStaticEntityMap(int width, int height)
     return staticEntityMap;
 }
 
-StaticEntityMap aion::GameState::generateMap()
+StaticEntityMap GameState::generateMap()
 {
     assert(staticEntityMap.map != nullptr, "Static entity map is not initialized.");
 
@@ -112,7 +112,7 @@ StaticEntityMap aion::GameState::generateMap()
     return staticEntityMap;
 }
 
-StaticEntityMap aion::GameState::generateDebugMap()
+StaticEntityMap GameState::generateDebugMap()
 {
     for (size_t i = 0; i < 5; i++)
     {

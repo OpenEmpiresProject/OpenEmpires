@@ -1,8 +1,6 @@
 #include "ResourceLoader.h"
 
 #include "GameState.h"
-#include "Logger.h"
-#include "ObjectPool.h"
 #include "Renderer.h"
 #include "SubSystemRegistry.h"
 #include "commands/CmdIdle.h"
@@ -14,6 +12,8 @@
 #include "components/GraphicsComponent.h"
 #include "components/RenderingComponent.h"
 #include "components/TransformComponent.h"
+#include "utils/Logger.h"
+#include "utils/ObjectPool.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_surface.h>
@@ -23,14 +23,13 @@
 namespace fs = std::filesystem;
 using namespace game;
 using namespace aion;
-using namespace utils;
 
 ResourceLoader::ResourceLoader(std::stop_token* stopToken,
-                               const aion::GameSettings& settings,
-                               aion::GraphicsRegistry& graphicsRegistry,
-                               std::shared_ptr<aion::Renderer> renderer)
-    : SubSystem(stopToken), _settings(settings), graphicsRegistry(graphicsRegistry),
-      renderer(std::move(renderer))
+                               const GameSettings& settings,
+                               GraphicsRegistry& graphicsRegistry,
+                               std::shared_ptr<Renderer> renderer)
+    : SubSystem(stopToken), m_settings(settings), m_graphicsRegistry(graphicsRegistry),
+      m_renderer(std::move(renderer))
 {
 }
 
@@ -40,7 +39,7 @@ void game::ResourceLoader::loadEntities()
 
     auto& gameState = GameState::getInstance();
 
-    auto size = _settings.getWorldSizeInTiles();
+    auto size = m_settings.getWorldSizeInTiles();
     gameState.initializeStaticEntityMap(size.width, size.height);
     gameState.generateMap();
     // gameState.generateDebugMap();
@@ -68,7 +67,7 @@ void game::ResourceLoader::loadEntities()
     {
         auto villager = gameState.createEntity();
         auto transform = TransformComponent(20 * 256, 20 * 256);
-        transform.face(utils::Direction::SOUTH);
+        transform.face(Direction::SOUTH);
         gameState.addComponent(villager, transform);
         gameState.addComponent(villager, RenderingComponent());
         gameState.addComponent(villager, EntityInfoComponent(3));
@@ -95,7 +94,7 @@ void game::ResourceLoader::loadEntities()
             {
                 auto tree = gameState.createEntity();
                 auto transform = TransformComponent(i * 256 + 128, j * 256 + 128);
-                transform.face(utils::Direction::NORTHWEST);
+                transform.face(Direction::NORTHWEST);
                 gameState.addComponent(tree, transform);
                 gameState.addComponent(tree, RenderingComponent());
                 GraphicsComponent gc;

@@ -5,7 +5,7 @@
 #include <memory>
 #include <stack>
 
-namespace utils
+namespace aion
 {
 template <typename T> class ObjectPool
 {
@@ -86,9 +86,9 @@ template <typename T> class ObjectPool
         return storage;
     }
 
-    static thread_local WarmUpInitializer warmUpInitializer; // Ensure the pool is warmed up
+    static thread_local WarmUpInitializer s_warmUpInitializer; // Ensure the pool is warmed up
 };
 
-} // namespace utils
+} // namespace aion
 
 #endif

@@ -28,18 +28,18 @@ class GraphicsLoader
     void loadTextures();
     void adjustDirections();
     bool isTextureFlippingNeededEntity(int entityType) const;
-    bool isTextureFlippingNeededDirection(utils::Direction direction) const;
-    utils::Direction getFlippedDirection(utils::Direction direction) const;
+    bool isTextureFlippingNeededDirection(Direction direction) const;
+    Direction getFlippedDirection(Direction direction) const;
     int determineEntityType(const std::filesystem::path& path);
     void createAtlasForEntityType(int entityType, const std::vector<std::filesystem::path>& paths);
 
-    SDL_Renderer* renderer_;
-    int variation = 0;
-    GraphicsRegistry& graphicsRegistry;
+    SDL_Renderer* m_renderer;
+    int m_variation = 0;
+    GraphicsRegistry& m_graphicsRegistry;
 
-    AtlasGeneratorBase& atlasGenerator;
+    AtlasGeneratorBase& m_atlasGenerator;
 
-    std::unordered_map<int, SDL_Cursor*> cursors;
+    std::unordered_map<int, SDL_Cursor*> m_cursors;
 
 }; // namespace aion
 } // namespace aion

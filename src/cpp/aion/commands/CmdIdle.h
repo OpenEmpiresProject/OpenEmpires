@@ -1,9 +1,9 @@
 #ifndef CMDIDLEH
 #define CMDIDLEH
 
-#include "Logger.h"
-#include "ObjectPool.h"
 #include "commands/Command.h"
+#include "utils/Logger.h"
+#include "utils/ObjectPool.h"
 
 namespace aion
 {
@@ -27,7 +27,7 @@ class CmdIdle : public Command
     };
     void destroy() override
     {
-        utils::ObjectPool<CmdIdle>::release(this);
+        ObjectPool<CmdIdle>::release(this);
     }
     bool onCreateSubCommands(std::list<Command*>& subCommands) override
     {

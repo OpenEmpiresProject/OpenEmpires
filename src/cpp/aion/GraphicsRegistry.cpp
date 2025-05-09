@@ -1,12 +1,12 @@
 #include "GraphicsRegistry.h"
 
-#include "Logger.h"
+#include "utils/Logger.h"
 
 #include <stdexcept>
 
 using namespace aion;
 
-void aion::GraphicsRegistry::registerTexture(const GraphicsID& graphicID, const Texture& entry)
+void GraphicsRegistry::registerTexture(const GraphicsID& graphicID, const Texture& entry)
 {
     // spdlog::debug("Registering texture with ID: {}", graphicID.toString());
 
@@ -22,7 +22,7 @@ void aion::GraphicsRegistry::registerTexture(const GraphicsID& graphicID, const 
     }
 }
 
-const Texture& aion::GraphicsRegistry::getTexture(const GraphicsID& graphicID) const
+const Texture& GraphicsRegistry::getTexture(const GraphicsID& graphicID) const
 {
     // Check if the graphicID exists in the map
     auto it = m_textureMap.find(graphicID.hash());
@@ -34,7 +34,7 @@ const Texture& aion::GraphicsRegistry::getTexture(const GraphicsID& graphicID) c
     return m_textureMap.at(graphicID.hash());
 }
 
-void aion::GraphicsRegistry::registerAnimation(const GraphicsID& graphicID, const Animation& entry)
+void GraphicsRegistry::registerAnimation(const GraphicsID& graphicID, const Animation& entry)
 {
     if (graphicID.frame != 0)
     {
@@ -55,7 +55,7 @@ void aion::GraphicsRegistry::registerAnimation(const GraphicsID& graphicID, cons
     }
 }
 
-const Animation& aion::GraphicsRegistry::getAnimation(const GraphicsID& graphicID) const
+const Animation& GraphicsRegistry::getAnimation(const GraphicsID& graphicID) const
 {
     int64_t hash = graphicID.hashWithClearingFrame();
 

@@ -22,13 +22,13 @@ class ServiceRegistry
 
     template <typename T> void registerService(std::shared_ptr<T> service)
     {
-        services_[std::type_index(typeid(T))] = std::move(service);
+        m_services[std::type_index(typeid(T))] = std::move(service);
     }
 
     template <typename T> std::shared_ptr<T> getService() const
     {
-        auto it = services_.find(std::type_index(typeid(T)));
-        if (it == services_.end())
+        auto it = m_services.find(std::type_index(typeid(T)));
+        if (it == m_services.end())
         {
             throw std::runtime_error("Service not found");
         }
@@ -37,7 +37,7 @@ class ServiceRegistry
 
     template <typename T> bool hasService() const
     {
-        return services_.find(std::type_index(typeid(T))) != services_.end();
+        return m_services.find(std::type_index(typeid(T))) != m_services.end();
     }
 
   private:
@@ -48,7 +48,7 @@ class ServiceRegistry
     {
     }
 
-    std::unordered_map<std::type_index, std::shared_ptr<void>> services_;
+    std::unordered_map<std::type_index, std::shared_ptr<void>> m_services;
 };
 
 } // namespace aion

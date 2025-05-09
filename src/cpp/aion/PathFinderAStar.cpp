@@ -1,6 +1,6 @@
 #include "PathFinderAStar.h"
 
-#include "Logger.h"
+#include "utils/Logger.h"
 
 #include <cmath>
 #include <limits>

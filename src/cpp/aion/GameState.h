@@ -28,33 +28,33 @@ class GameState
     template <typename T, typename... Args>
     decltype(auto) addComponent(uint32_t entity, Args&&... args)
     {
-        return registry.emplace_or_replace<T>(entity, std::forward<Args>(args)...);
+        return m_registry.emplace_or_replace<T>(entity, std::forward<Args>(args)...);
     }
 
     template <typename T> decltype(auto) addComponent(uint32_t entity, const T& t)
     {
-        return registry.emplace_or_replace<T>(entity, t);
+        return m_registry.emplace_or_replace<T>(entity, t);
     }
 
     template <typename T> bool hasComponent(uint32_t entity) const
     {
-        return registry.all_of<T>(entity);
+        return m_registry.all_of<T>(entity);
     }
 
     template <typename T> T& getComponent(uint32_t entity)
     {
-        return registry.get<T>(entity);
+        return m_registry.get<T>(entity);
     }
 
     template <typename... T> decltype(auto) getComponents(uint32_t entity)
     {
-        return registry.get<T...>(entity);
+        return m_registry.get<T...>(entity);
     }
 
     // write a function get all entities with all given components
     template <typename... T> auto getEntities()
     {
-        return registry.view<T...>();
+        return m_registry.view<T...>();
     }
 
     void clearAll();
@@ -67,15 +67,15 @@ class GameState
 
     PathFinderBase* getPathFinder() const
     {
-        return pathFinder;
+        return m_pathFinder;
     }
 
   private:
     GameState();
     ~GameState();
 
-    entt::basic_registry<uint32_t> registry;
-    PathFinderBase* pathFinder = nullptr;
+    entt::basic_registry<uint32_t> m_registry;
+    PathFinderBase* m_pathFinder = nullptr;
 };
 } // namespace aion
 

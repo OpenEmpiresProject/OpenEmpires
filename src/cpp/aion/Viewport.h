@@ -1,10 +1,10 @@
 #ifndef VIEWPORT_H
 #define VIEWPORT_H
 
-#include "Constants.h"
 #include "GameSettings.h"
-#include "Utilities.h"
 #include "Vec2d.h"
+#include "utils/Constants.h"
+#include "utils/Utilities.h"
 
 namespace aion
 {
@@ -31,11 +31,11 @@ class Viewport
     bool isViewportCenterInsideMap() const;
 
   private:
-    Vec2d viewportPositionInPixels;
-    const GameSettings& settings;
+    Vec2d m_viewportPositionInPixels;
+    const GameSettings& m_settings;
 
-    bool positionChangeRequested = false;
-    Vec2d requestedChange;
+    bool m_positionChangeRequested = false;
+    Vec2d m_requestedChange;
 };
 
 } // namespace aion
