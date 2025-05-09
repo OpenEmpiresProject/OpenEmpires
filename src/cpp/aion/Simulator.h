@@ -4,7 +4,7 @@
 #include "EventHandler.h"
 #include "ThreadQueue.h"
 #include "Viewport.h"
-#include "components/GraphicsComponent.h"
+#include "components/CompGraphics.h"
 
 #include <readerwriterqueue.h>
 #include <vector>
@@ -30,7 +30,7 @@ class Simulator : public EventHandler
     void simulatePhysics();
     void sendStaticTileInstructions();
     void sendInitialUnitsInstructions();
-    void sendGraphiInstruction(GraphicsComponent* instruction);
+    void sendGraphiInstruction(CompGraphics* instruction);
     void testPathFinding(const Vec2d& start, const Vec2d& end);
     void updateGraphicComponents();
     void sendThreadMessageToRenderer();

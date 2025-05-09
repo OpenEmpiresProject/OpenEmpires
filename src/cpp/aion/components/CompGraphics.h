@@ -1,5 +1,5 @@
-#ifndef GRAPHICSCOMPONENT_H
-#define GRAPHICSCOMPONENT_H
+#ifndef COMPGRAPHICS_H
+#define COMPGRAPHICS_H
 
 #include "GraphicsRegistry.h"
 #include "Vec2d.h"
@@ -44,7 +44,7 @@ struct DebugOverlay
 };
 
 // Component will be owned by the Simulator
-class GraphicsComponent : public GraphicsID
+class CompGraphics : public GraphicsID
 {
   public:
     uint32_t entityID = entt::null;

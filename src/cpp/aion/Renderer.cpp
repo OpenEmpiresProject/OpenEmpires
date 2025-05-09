@@ -7,11 +7,11 @@
 #include "GraphicsLoader.h"
 #include "Renderer.h"
 #include "SDL3_gfxPrimitives.h"
-#include "components/ActionComponent.h"
-#include "components/AnimationComponent.h"
-#include "components/EntityInfoComponent.h"
-#include "components/RenderingComponent.h"
-#include "components/TransformComponent.h"
+#include "components/CompAction.h"
+#include "components/CompAnimation.h"
+#include "components/CompEntityInfo.h"
+#include "components/CompRendering.h"
+#include "components/CompTransform.h"
 #include "utils/Logger.h"
 #include "utils/ObjectPool.h"
 
@@ -223,10 +223,10 @@ void Renderer::updateGraphicComponents()
         m_queueSize++;
         for (const auto& cmdPtr : message->commandBuffer)
         {
-            auto instruction = static_cast<GraphicsComponent*>(cmdPtr);
+            auto instruction = static_cast<CompGraphics*>(cmdPtr);
 
             auto& gc =
-                GameState::getInstance().getComponent<RenderingComponent>(instruction->entityID);
+                GameState::getInstance().getComponent<CompRendering>(instruction->entityID);
             gc.entityType = instruction->entityType;
             gc.action = instruction->action;
             gc.entitySubType = instruction->entitySubType;
@@ -239,7 +239,7 @@ void Renderer::updateGraphicComponents()
 
             gc.updateTextureDetails(m_graphicsRegistry);
 
-            ObjectPool<GraphicsComponent>::release(instruction);
+            ObjectPool<CompGraphics>::release(instruction);
         }
     }
     ObjectPool<ThreadMessage>::release(message);
@@ -318,8 +318,8 @@ void Renderer::renderGameEntities()
     // TODO: Introduction of this z ordering cost around 60ms for 2500 entities.
     static bool isFirst = true;
 
-    GameState::getInstance().getEntities<RenderingComponent>().each(
-        [this](RenderingComponent& gc)
+    GameState::getInstance().getEntities<CompRendering>().each(
+        [this](CompRendering& gc)
         {
             int zOrder = gc.positionInFeet.y + gc.positionInFeet.x;
             if (zOrder < 0 || zOrder >= m_zBucketsSize)
@@ -446,8 +446,8 @@ void Renderer::handleViewportMovement()
 
 void Renderer::handleAnimations()
 {
-    GameState::getInstance().getEntities<RenderingComponent, AnimationComponent>().each(
-        [this](RenderingComponent& gc, AnimationComponent& ac)
+    GameState::getInstance().getEntities<CompRendering, CompAnimation>().each(
+        [this](CompRendering& gc, CompAnimation& ac)
         {
             if (!gc.isValid())
             {

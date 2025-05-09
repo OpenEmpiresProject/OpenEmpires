@@ -4,14 +4,14 @@
 #include "Renderer.h"
 #include "SubSystemRegistry.h"
 #include "commands/CmdIdle.h"
-#include "components/ActionComponent.h"
-#include "components/AnimationComponent.h"
+#include "components/CompAction.h"
+#include "components/CompAnimation.h"
 #include "components/CompUnit.h"
-#include "components/DirtyComponent.h"
-#include "components/EntityInfoComponent.h"
-#include "components/GraphicsComponent.h"
-#include "components/RenderingComponent.h"
-#include "components/TransformComponent.h"
+#include "components/CompDirty.h"
+#include "components/CompEntityInfo.h"
+#include "components/CompGraphics.h"
+#include "components/CompRendering.h"
+#include "components/CompTransform.h"
 #include "utils/Logger.h"
 #include "utils/ObjectPool.h"
 
@@ -49,15 +49,15 @@ void game::ResourceLoader::loadEntities()
         for (size_t j = 0; j < size.height; j++)
         {
             auto tile = gameState.createEntity();
-            gameState.addComponent(tile, TransformComponent(i * 256, j * 256));
-            gameState.addComponent(tile, RenderingComponent());
-            gameState.addComponent(tile, EntityInfoComponent(2, rand() % 50 + 1));
-            gameState.addComponent(tile, DirtyComponent());
+            gameState.addComponent(tile, CompTransform(i * 256, j * 256));
+            gameState.addComponent(tile, CompRendering());
+            gameState.addComponent(tile, CompEntityInfo(2, rand() % 50 + 1));
+            gameState.addComponent(tile, CompDirty());
 
             auto map = gameState.staticEntityMap;
             map.entityMap[i][j] = tile;
 
-            GraphicsComponent gc;
+            CompGraphics gc;
             gc.entityID = tile;
             gc.entityType = 2; // Tile
             gameState.addComponent(tile, gc);
@@ -66,21 +66,21 @@ void game::ResourceLoader::loadEntities()
 
     {
         auto villager = gameState.createEntity();
-        auto transform = TransformComponent(20 * 256, 20 * 256);
+        auto transform = CompTransform(20 * 256, 20 * 256);
         transform.face(Direction::SOUTH);
         gameState.addComponent(villager, transform);
-        gameState.addComponent(villager, RenderingComponent());
-        gameState.addComponent(villager, EntityInfoComponent(3));
-        gameState.addComponent(villager, ActionComponent(0));
-        gameState.addComponent(villager, AnimationComponent());
-        gameState.addComponent(villager, DirtyComponent());
+        gameState.addComponent(villager, CompRendering());
+        gameState.addComponent(villager, CompEntityInfo(3));
+        gameState.addComponent(villager, CompAction(0));
+        gameState.addComponent(villager, CompAnimation());
+        gameState.addComponent(villager, CompDirty());
 
         // villager goes idle by default
         CompUnit unit;
         unit.commandQueue.push(ObjectPool<CmdIdle>::acquire());
         gameState.addComponent(villager, unit);
 
-        GraphicsComponent gc;
+        CompGraphics gc;
         gc.entityID = villager;
         gc.entityType = 3; // Villager
         gameState.addComponent(villager, gc);
@@ -93,19 +93,19 @@ void game::ResourceLoader::loadEntities()
             if (gameState.staticEntityMap.map[i][j] == 1)
             {
                 auto tree = gameState.createEntity();
-                auto transform = TransformComponent(i * 256 + 128, j * 256 + 128);
+                auto transform = CompTransform(i * 256 + 128, j * 256 + 128);
                 transform.face(Direction::NORTHWEST);
                 gameState.addComponent(tree, transform);
-                gameState.addComponent(tree, RenderingComponent());
-                GraphicsComponent gc;
+                gameState.addComponent(tree, CompRendering());
+                CompGraphics gc;
                 gc.debugOverlays.push_back({DebugOverlay::Type::CIRCLE, DebugOverlay::Color::RED,
                                             DebugOverlay::Anchor::BOTTOM_CENTER});
                 gc.isStatic = true;
                 gc.entityID = tree;
                 gc.entityType = 4; // tree
                 gameState.addComponent(tree, gc);
-                gameState.addComponent(tree, EntityInfoComponent(4, rand() % 10));
-                gameState.addComponent(tree, DirtyComponent());
+                gameState.addComponent(tree, CompEntityInfo(4, rand() % 10));
+                gameState.addComponent(tree, CompDirty());
             }
         }
     }

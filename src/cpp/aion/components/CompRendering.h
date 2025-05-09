@@ -1,7 +1,7 @@
-#ifndef RENDERINGCOMPONENT_H
-#define RENDERINGCOMPONENT_H
+#ifndef COMPRENDERING_H
+#define COMPRENDERING_H
 
-#include "GraphicsComponent.h"
+#include "CompGraphics.h"
 #include "GraphicsRegistry.h"
 #include "utils/WidthHeight.h"
 
@@ -10,7 +10,7 @@
 namespace aion
 {
 // Component will be owned by the Renderer
-class RenderingComponent : public GraphicsComponent
+class CompRendering : public CompGraphics
 {
   public:
     SDL_Texture* texture = nullptr;

@@ -1,5 +1,5 @@
-#ifndef TRANSFORMCOMPONENT_H
-#define TRANSFORMCOMPONENT_H
+#ifndef COMPTRANSFORM_H
+#define COMPTRANSFORM_H
 
 #include "Vec2d.h"
 #include "utils/Types.h"
@@ -8,22 +8,22 @@
 
 namespace aion
 {
-class TransformComponent
+class CompTransform
 {
   public:
     Vec2d position{0, 0}; // Position in feet
     int rotation = 0;     // Rotation in degrees from North (0 degrees is up)
     int speed = 0;        // Speed in feet per second
 
-    TransformComponent() = default;
-    TransformComponent(int x, int y) : position(x, y)
+    CompTransform() = default;
+    CompTransform(int x, int y) : position(x, y)
     {
     }
-    TransformComponent(const Vec2d& pos) : position(pos)
+    CompTransform(const Vec2d& pos) : position(pos)
     {
     }
-    TransformComponent(const TransformComponent&) = default;
-    TransformComponent& operator=(const TransformComponent&) = default;
+    CompTransform(const CompTransform&) = default;
+    CompTransform& operator=(const CompTransform&) = default;
 
     void face(const Vec2d& target)
     {

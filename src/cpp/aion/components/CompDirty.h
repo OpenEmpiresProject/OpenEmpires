@@ -1,9 +1,9 @@
-#ifndef DIRTYCOMPONENT_H
-#define DIRTYCOMPONENT_H
+#ifndef COMPDIRTY_H
+#define COMPDIRTY_H
 
 namespace aion
 {
-class DirtyComponent
+class CompDirty
 {
   public:
     int64_t dirtyVersion = 0;          // Dirty counter for this entity
@@ -20,7 +20,7 @@ class DirtyComponent
     }
 };
 
-inline int64_t DirtyComponent::globalDirtyVersion = 0;
+inline int64_t CompDirty::globalDirtyVersion = 0;
 
 } // namespace aion
 

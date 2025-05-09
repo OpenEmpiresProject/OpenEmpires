@@ -3,13 +3,13 @@
 #include "GameState.h"
 #include "commands/CmdIdle.h"
 #include "commands/CmdWalk.h"
-#include "components/ActionComponent.h"
+#include "components/CompAction.h"
 #include "components/CompUnit.h"
-#include "components/DirtyComponent.h"
-#include "components/EntityInfoComponent.h"
-#include "components/GraphicsComponent.h"
-#include "components/RenderingComponent.h"
-#include "components/TransformComponent.h"
+#include "components/CompDirty.h"
+#include "components/CompEntityInfo.h"
+#include "components/CompGraphics.h"
+#include "components/CompRendering.h"
+#include "components/CompTransform.h"
 #include "utils/ObjectPool.h"
 
 using namespace aion;
@@ -80,15 +80,15 @@ void Simulator::onTick()
 void Simulator::sendGraphicsInstructions()
 {
     GameState::getInstance()
-        .getEntities<TransformComponent, EntityInfoComponent, DirtyComponent, GraphicsComponent>()
+        .getEntities<CompTransform, CompEntityInfo, CompDirty, CompGraphics>()
         .each(
-            [this](uint32_t entity, TransformComponent& transform, EntityInfoComponent& entityInfo,
-                   DirtyComponent& dirty, GraphicsComponent& gc)
+            [this](uint32_t entity, CompTransform& transform, CompEntityInfo& entityInfo,
+                   CompDirty& dirty, CompGraphics& gc)
             {
                 if (dirty.isDirty() == false)
                     return;
 
-                auto instruction = ObjectPool<GraphicsComponent>::acquire();
+                auto instruction = ObjectPool<CompGraphics>::acquire();
                 *instruction = gc;
                 sendGraphiInstruction(instruction);
             });
@@ -97,10 +97,10 @@ void Simulator::sendGraphicsInstructions()
 void Simulator::simulatePhysics()
 {
     GameState::getInstance()
-        .getEntities<TransformComponent, ActionComponent, EntityInfoComponent, DirtyComponent>()
+        .getEntities<CompTransform, CompAction, CompEntityInfo, CompDirty>()
         .each(
-            [this](TransformComponent& transform, ActionComponent& action,
-                   EntityInfoComponent& entityInfo, DirtyComponent& dirty)
+            [this](CompTransform& transform, CompAction& action,
+                   CompEntityInfo& entityInfo, CompDirty& dirty)
             {
                 // transform.speed = 256;
                 // action.action = 1;         // Walk
@@ -115,10 +115,10 @@ void Simulator::simulatePhysics()
 void Simulator::updateGraphicComponents()
 {
     GameState::getInstance()
-        .getEntities<TransformComponent, EntityInfoComponent, GraphicsComponent, DirtyComponent>()
+        .getEntities<CompTransform, CompEntityInfo, CompGraphics, CompDirty>()
         .each(
-            [this](uint32_t entityID, TransformComponent& transform,
-                   EntityInfoComponent& entityInfo, GraphicsComponent& gc, DirtyComponent& dirty)
+            [this](uint32_t entityID, CompTransform& transform,
+                   CompEntityInfo& entityInfo, CompGraphics& gc, CompDirty& dirty)
             {
                 // TODO: might need to optimize this later
                 if (dirty.isDirty() == false)
@@ -140,10 +140,10 @@ void Simulator::sendThreadMessageToRenderer()
 
 void Simulator::incrementDirtyVersion()
 {
-    DirtyComponent::globalDirtyVersion++;
+    CompDirty::globalDirtyVersion++;
 }
 
-void Simulator::sendGraphiInstruction(GraphicsComponent* instruction)
+void Simulator::sendGraphiInstruction(CompGraphics* instruction)
 {
     m_messageToRenderer->commandBuffer.push_back(static_cast<void*>(instruction));
 }
@@ -177,7 +177,7 @@ void Simulator::testPathFinding(const Vec2d& start, const Vec2d& end)
         if (entity != entt::null)
         {
             auto [dirty, gc] =
-                GameState::getInstance().getComponents<DirtyComponent, GraphicsComponent>(entity);
+                GameState::getInstance().getComponents<CompDirty, CompGraphics>(entity);
             gc.debugOverlays.push_back({DebugOverlay::Type::FILLED_CIRCLE,
                                         DebugOverlay::Color::BLUE, DebugOverlay::Anchor::CENTER});
             dirty.markDirty();

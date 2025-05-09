@@ -1,21 +1,21 @@
-#ifndef ENTITYINFOCOMPONENT_H
-#define ENTITYINFOCOMPONENT_H
+#ifndef COMPENTITYINFO_H
+#define COMPENTITYINFO_H
 
 #include <entt/entity/registry.hpp>
 
 namespace aion
 {
-class EntityInfoComponent
+class CompEntityInfo
 {
   public:
     int entityType = 0;
     int variation = 0;
 
-    EntityInfoComponent(int entityType) : entityType(entityType)
+    CompEntityInfo(int entityType) : entityType(entityType)
     {
     }
 
-    EntityInfoComponent(int entityType, int variation)
+    CompEntityInfo(int entityType, int variation)
         : entityType(entityType), variation(variation)
     {
     }
