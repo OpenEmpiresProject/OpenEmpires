@@ -2,16 +2,16 @@
 #define GAME_H
 
 #include "CommandCenter.h"
-#include "ServiceRegistry.h"
-#include "Simulator.h"
-#include "ThreadQueue.h"
 #include "EventLoop.h"
 #include "GameState.h"
 #include "GraphicsRegistry.h"
 #include "Renderer.h"
-#include "SubSystemRegistry.h"
-#include "Viewport.h"
 #include "ResourceLoader.h"
+#include "ServiceRegistry.h"
+#include "Simulator.h"
+#include "SubSystemRegistry.h"
+#include "ThreadQueue.h"
+#include "Viewport.h"
 #include "utils/Logger.h"
 
 #include <iostream>
@@ -34,9 +34,10 @@ class Game
         spdlog::info("Game started");
         spdlog::info("Initializing subsystems...");
 
-        aion::GameSettings settings;
         aion::GraphicsRegistry graphicsRegistry;
-        settings.setWindowDimensions(1366, 768);
+
+        auto settings = std::make_shared<aion::GameSettings>();
+        settings->setWindowDimensions(1366, 768);
 
         std::stop_source stopSource;
         std::stop_token stopToken = stopSource.get_token();
@@ -49,11 +50,12 @@ class Game
         auto eventLoop = std::make_shared<aion::EventLoop>(&stopToken);
         auto simulator = std::make_shared<aion::Simulator>(renderQueue, viewport);
         auto renderer = std::make_shared<aion::Renderer>(&stopSource, settings, graphicsRegistry,
-                                                   renderQueue, viewport);
+                                                         renderQueue, viewport);
         auto cc = std::make_shared<aion::CommandCenter>();
 
         aion::ServiceRegistry::getInstance().registerService(cc);
         aion::ServiceRegistry::getInstance().registerService(simulator);
+        aion::ServiceRegistry::getInstance().registerService(settings);
 
         eventLoop->registerListener(std::move(simulator));
         eventLoop->registerListener(std::move(cc));
@@ -63,7 +65,7 @@ class Game
 
         aion::SubSystemRegistry::getInstance().registerSubSystem("Renderer", std::move(renderer));
         aion::SubSystemRegistry::getInstance().registerSubSystem("ResourceLoader",
-                                                           std::move(resourceLoader));
+                                                                 std::move(resourceLoader));
         aion::SubSystemRegistry::getInstance().registerSubSystem("EventLoop", std::move(eventLoop));
 
         aion::SubSystemRegistry::getInstance().initAll();

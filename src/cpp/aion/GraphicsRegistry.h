@@ -14,17 +14,24 @@ namespace aion
 class GraphicsID
 {
   public:
-    int entityType = 0;                     // 15bits: 0-32767
-    int action = 0;                         // 15bits: 0-32767
-    int frame = 0;                          // 5bits: 0-31
-    Direction direction = Direction::NORTH; // 3bits: 0-7
-    int entitySubType = 0;                  // 10bits: 0-1023
-    int variation = 0;                      // 10bits: 0-1023
-    int custom3 = 0;                        // 4bits: 0-15
+    // Bit layout
+    // 63            49 48         39 38        29 28     24 23       19 18         9 8          0
+    //  +---------------+-------------+-------------+---------+-----------+-----------+----------+
+    //  |  entityType   | entitySubTp |   action    | frame   | direction | variation | reserved |
+    //  |   (15 bits)   |  (10 bits)  |  (10 bits)  | (5 bits)|  (4 bits) | (10 bits) | (9 bits) |
+    //  +---------------+-------------+-------------+---------+-----------+-----------+----------+
+
+    int entityType = 0;                    // 32,768 values
+    int entitySubType = 0;                 // 1,024 values
+    int action = 0;                        // 1,024 values
+    int frame = 0;                         // 32 values
+    Direction direction = Direction::NONE; // 16 values
+    int variation = 0;                     // 1,024 values
+    int reserved = 0;                      // 512 values
 
     bool isValid() const
     {
-        return entityType != 0 && action != 0 && frame != 0;
+        return entityType != 0;
     }
 
     bool operator==(const GraphicsID& other) const
@@ -32,42 +39,42 @@ class GraphicsID
         return entityType == other.entityType && action == other.action &&
                direction == other.direction && frame == other.frame &&
                entitySubType == other.entitySubType && variation == other.variation &&
-               custom3 == other.custom3;
+               reserved == other.reserved;
     }
 
     int64_t hashWithClearingFrame() const
     {
         int64_t h = hash();
-        h &= ~(0x1F << 23); // Clear the frame bits
+        h &= ~(0x1FLL << 24); // Clear 5-bit frame field
         return h;
     }
 
     int64_t hash() const
     {
-        return (static_cast<int64_t>(entityType) << 46) | (static_cast<int64_t>(action) << 31) |
-               (static_cast<int64_t>(direction) << 28) | (static_cast<int64_t>(frame) << 23) |
-               (static_cast<int64_t>(entitySubType) << 13) |
-               (static_cast<int64_t>(variation) << 3) | static_cast<int64_t>(custom3);
+        return (static_cast<int64_t>(entityType) << 49) |
+               (static_cast<int64_t>(entitySubType) << 39) | (static_cast<int64_t>(action) << 29) |
+               (static_cast<int64_t>(frame) << 24) | (static_cast<int64_t>(direction) << 19) |
+               (static_cast<int64_t>(variation) << 9) | static_cast<int64_t>(reserved);
     }
 
     std::string toString() const
     {
-        return "GraphicsID(T" + std::to_string(entityType) + ", A" + std::to_string(action) +
-               ", F" + std::to_string(frame) + ", D" + std::to_string(static_cast<int>(direction)) +
-               ", S" + std::to_string(entitySubType) + ", V" + std::to_string(variation) + ", " +
-               std::to_string(custom3) + ")";
+        return "GraphicsID(T" + std::to_string(entityType) + ", S" + std::to_string(entitySubType) +
+               ", A" + std::to_string(action) + ", F" + std::to_string(frame) + ", D" +
+               std::to_string(static_cast<int>(direction)) + ", V" + std::to_string(variation) +
+               ", " + std::to_string(reserved) + ")";
     }
 
     static GraphicsID fromHash(int64_t hash)
     {
         GraphicsID id;
-        id.entityType = (hash >> 46) & 0x7FFF;                     // 15 bits
-        id.action = (hash >> 31) & 0x7FFF;                         // 15 bits
-        id.direction = static_cast<Direction>((hash >> 28) & 0x7); // 3 bits
-        id.frame = (hash >> 23) & 0x1F;                            // 5 bits
-        id.entitySubType = (hash >> 13) & 0x3FF;                   // 10 bits
-        id.variation = (hash >> 3) & 0x3FF;                        // 10 bits
-        id.custom3 = hash & 0xF;                                   // 4 bits
+        id.entityType = (hash >> 49) & 0x7FFF;                     // 15 bits
+        id.entitySubType = (hash >> 39) & 0x3FF;                   // 10 bits
+        id.action = (hash >> 29) & 0x3FF;                          // 10 bits
+        id.frame = (hash >> 24) & 0x1F;                            // 5 bits
+        id.direction = static_cast<Direction>((hash >> 19) & 0xF); // 4 bits
+        id.variation = (hash >> 9) & 0x3FF;                        // 10 bits
+        id.reserved = hash & 0x1FF;                                // 9 bits
         return id;
     }
 };

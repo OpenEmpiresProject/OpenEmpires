@@ -14,8 +14,9 @@ class CmdAttack : public Command
     }
     void onQueue(uint32_t entityID) override
     {
+        // TODO: Reset frame to zero (since this is a new command)
     }
-    bool onExecute() override
+    bool onExecute(uint32_t entityID, int deltaTimeMs) override
     {
         return false;
     }

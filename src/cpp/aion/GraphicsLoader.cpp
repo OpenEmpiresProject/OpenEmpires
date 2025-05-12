@@ -8,8 +8,15 @@
 #include <SDL3/SDL_rect.h>
 #include <SDL3/SDL_surface.h>
 #include <SDL3_image/SDL_image.h>
+#include <algorithm>
+#include <cctype>
+#include <charconv>
 #include <filesystem>
+#include <fstream>
 #include <map>
+#include <sstream>
+#include <string>
+#include <utility>
 #include <vector>
 
 using namespace aion;
@@ -32,11 +39,54 @@ void GraphicsLoader::loadAllGraphics()
     setCursor(4);
 }
 
+std::vector<Vec2d> loadAnchorsFromCSV(const std::filesystem::path& filepath)
+{
+    std::vector<Vec2d> anchors;
+    std::ifstream file(filepath);
+    std::string line;
+
+    auto trim = [](std::string_view s) -> std::string_view
+    {
+        size_t start = 0;
+        while (start < s.size() && std::isspace(static_cast<unsigned char>(s[start])))
+            ++start;
+        size_t end = s.size();
+        while (end > start && std::isspace(static_cast<unsigned char>(s[end - 1])))
+            --end;
+        return s.substr(start, end - start);
+    };
+
+    while (std::getline(file, line))
+    {
+        std::string_view sv = trim(line);
+        if (sv.empty())
+            continue;
+
+        size_t comma = sv.find(',');
+        if (comma == std::string_view::npos)
+            continue;
+
+        std::string_view x_str = trim(sv.substr(0, comma));
+        std::string_view y_str = trim(sv.substr(comma + 1));
+
+        int x = 0, y = 0;
+        auto [px, ecx] = std::from_chars(x_str.data(), x_str.data() + x_str.size(), x);
+        auto [py, ecy] = std::from_chars(y_str.data(), y_str.data() + y_str.size(), y);
+        if (ecx == std::errc() && ecy == std::errc())
+        {
+            anchors.emplace_back(Vec2d(x, y));
+        }
+    }
+
+    return anchors;
+}
+
 void GraphicsLoader::loadTextures()
 {
     spdlog::info("Loading textures from assets/images...");
 
     std::map<int, std::vector<std::filesystem::path>> entityTypeToPaths;
+    std::map<std::string, Vec2d> anchorsByFileName;
     int loadedCount = 0;
 
     // Group textures by entityType
@@ -44,6 +94,22 @@ void GraphicsLoader::loadTextures()
     {
         if (!entry.is_regular_file())
             continue;
+
+        std::vector<Vec2d> anchors;
+
+        if (entry.path().extension() == ".csv")
+        {
+            anchors = loadAnchorsFromCSV(entry.path());
+
+            for (size_t i = 0; i < anchors.size(); i++)
+            {
+                auto ii = i + 1;
+                auto imageName =
+                    entry.path().stem().string() + "_" + (ii < 10 ? "0" : "") + std::to_string(ii);
+                anchorsByFileName[imageName] = anchors[i];
+            }
+            continue;
+        }
 
         const auto& path = entry.path();
         int entityType = determineEntityType(path); // Implement a helper to determine entityType
@@ -55,7 +121,7 @@ void GraphicsLoader::loadTextures()
     // Create atlas textures for each entityType
     for (const auto& [entityType, paths] : entityTypeToPaths)
     {
-        createAtlasForEntityType(entityType, paths);
+        createAtlasForEntityType(entityType, paths, anchorsByFileName);
         loadedCount += paths.size();
     }
 
@@ -74,7 +140,8 @@ int GraphicsLoader::determineEntityType(const std::filesystem::path& path)
 }
 
 void GraphicsLoader::createAtlasForEntityType(int entityType,
-                                              const std::vector<std::filesystem::path>& paths)
+                                              const std::vector<std::filesystem::path>& paths,
+                                              const std::map<std::string, Vec2d>& anchors)
 {
 
     std::vector<SDL_Rect> srcRects;
@@ -97,7 +164,6 @@ void GraphicsLoader::createAtlasForEntityType(int entityType,
         id.entityType = entityType;
         id.action = 0; // Deduce action if applicable
         // id.m_variation = i; // Variation index
-        id.direction = Direction::NORTH; // Default direction
 
         Vec2d anchor = {imageSize.width / 2 + 1, imageSize.height};
         std::string pathStr = path.string();
@@ -106,11 +172,17 @@ void GraphicsLoader::createAtlasForEntityType(int entityType,
         {
             id.variation =
                 m_variation++; // Different grass tiles. TODO: This doesn't scale or work well.
-            id.direction = Direction::NORTHEAST;
             anchor = {imageSize.width / 2 + 1, 0};
         }
         else if (entityType == 3)
         {
+            // get anchor from anchors based on filename
+            auto imageName = path.stem().string();
+            if (anchors.find(imageName) != anchors.end())
+            {
+                anchor = anchors.at(imageName);
+            }
+
             auto actionFolder = path.parent_path().filename().string();
             auto actionStr = actionFolder.substr(0, actionFolder.find('_'));
             id.action = std::stoi(actionStr);
@@ -119,8 +191,8 @@ void GraphicsLoader::createAtlasForEntityType(int entityType,
                 direction animation contains 15 frames. 1-15 for south, 16-30 for southwest, 31-45
                for west, 46-60 for northwest, and so on. implement this logic to manipulate frame
                number and direction of id (type of GraphicsID) */
-            auto index = std::stoi(pathStr.substr(pathStr.find_last_of('_') + 1, 2)) - 1; // 0-14
-            id.frame = index % 15;
+            auto index = std::stoi(pathStr.substr(pathStr.find_last_of('_') + 1, 2)) - 1;
+            id.frame = index % 15;               // 0-14
             auto direction = (int) (index / 15); // 0-3
             if (direction == 0)
             {

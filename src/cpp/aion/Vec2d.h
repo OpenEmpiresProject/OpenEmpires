@@ -99,6 +99,11 @@ class Vec2d
         return x * x + y * y;
     }
 
+    int distanceSquared(const Vec2d& other) const noexcept
+    {
+        return std::powl(x - other.x, 2) + std::powl(y - other.y, 2);
+    }
+
     // Dot product
     constexpr int dot(const Vec2d& other) const noexcept
     {

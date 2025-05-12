@@ -30,7 +30,7 @@ class ServiceRegistry
         auto it = m_services.find(std::type_index(typeid(T)));
         if (it == m_services.end())
         {
-            throw std::runtime_error("Service not found");
+            throw std::runtime_error(std::format("Service {} not found", typeid(T).name()));
         }
         return std::static_pointer_cast<T>(it->second);
     }

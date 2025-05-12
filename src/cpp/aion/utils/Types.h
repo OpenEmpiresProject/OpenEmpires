@@ -27,7 +27,8 @@ enum class Direction
     SOUTH,
     SOUTHWEST,
     WEST,
-    NORTHWEST
+    NORTHWEST,
+    NONE
 };
 
 static std::string directionToString(Direction direction)

@@ -26,7 +26,7 @@ class Renderer : public SubSystem
 {
   public:
     Renderer(std::stop_source* stopSource,
-             const GameSettings& settings,
+             std::shared_ptr<GameSettings> settings,
              GraphicsRegistry& graphicsRegistry,
              ThreadQueue& renderQueue,
              Viewport& viewport);
@@ -50,7 +50,7 @@ class Renderer : public SubSystem
     void cleanup();
 
     bool handleEvents();
-    void updateGraphicComponents();
+    void updateRenderingComponents();
     void renderDebugInfo(FPSCounter& counter);
     void renderGameEntities();
     void renderBackground();
@@ -68,7 +68,6 @@ class Renderer : public SubSystem
     void generateTicks();
     void onTick();
     void handleViewportMovement();
-    void handleAnimations();
 
     SDL_Window* m_window = nullptr;
     SDL_Renderer* m_renderer = nullptr;
@@ -76,7 +75,7 @@ class Renderer : public SubSystem
 
     std::thread m_renderThread;
     std::atomic<bool> m_running = false;
-    const GameSettings& m_settings;
+    std::shared_ptr<GameSettings> m_settings;
     GraphicsRegistry& m_graphicsRegistry;
 
     std::condition_variable m_sdlInitCV;

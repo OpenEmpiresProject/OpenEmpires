@@ -27,14 +27,14 @@ using namespace aion;
 using namespace std::chrono;
 
 Renderer::Renderer(std::stop_source* stopSource,
-                   const GameSettings& settings,
+                   std::shared_ptr<GameSettings> settings,
                    GraphicsRegistry& graphicsRegistry,
                    ThreadQueue& simulatorQueue,
                    Viewport& viewport)
     : SubSystem(stopSource), m_settings(settings), m_graphicsRegistry(graphicsRegistry),
       m_simulatorQueue(simulatorQueue), m_viewport(viewport),
-      m_zBucketsSize(settings.getWorldSizeInTiles().height * Constants::FEET_PER_TILE * 3),
-      m_zBuckets(settings.getWorldSizeInTiles().height * Constants::FEET_PER_TILE * 3)
+      m_zBucketsSize(settings->getWorldSizeInTiles().height * Constants::FEET_PER_TILE * 3),
+      m_zBuckets(settings->getWorldSizeInTiles().height * Constants::FEET_PER_TILE * 3)
 {
     m_running = false;
     m_lastTickTime = steady_clock::now();
@@ -94,8 +94,8 @@ void Renderer::initSDL()
     }
 
     m_window =
-        SDL_CreateWindow(m_settings.getTitle().c_str(), m_settings.getWindowDimensions().width,
-                         m_settings.getWindowDimensions().height, SDL_WINDOW_OPENGL);
+        SDL_CreateWindow(m_settings->getTitle().c_str(), m_settings->getWindowDimensions().width,
+                         m_settings->getWindowDimensions().height, SDL_WINDOW_OPENGL);
     if (!m_window)
     {
         spdlog::error("SDL_CreateWindow failed: {}", SDL_GetError());
@@ -130,14 +130,14 @@ void Renderer::renderingLoop()
         running = handleEvents();
         generateTicks();
 
-        updateGraphicComponents();
+        updateRenderingComponents();
         renderBackground();
         renderGameEntities();
         renderDebugInfo(fpsCounter);
 
         SDL_RenderPresent(m_renderer);
 
-        int delay = (1000 / m_settings.getTargetFPS()) - (SDL_GetTicks() - start);
+        int delay = (1000 / m_settings->getTargetFPS()) - (SDL_GetTicks() - start);
         delay = std::max(1, delay);
 
         SDL_Delay(delay);
@@ -202,7 +202,7 @@ bool Renderer::handleEvents()
  *
  * @throws std::runtime_error If a message with an invalid type is encountered.
  */
-void Renderer::updateGraphicComponents()
+void Renderer::updateRenderingComponents()
 {
     // spdlog::debug("Handling graphic instructions...");
     m_maxQueueSize = std::max(m_maxQueueSize, m_queueSize);
@@ -225,13 +225,12 @@ void Renderer::updateGraphicComponents()
         {
             auto instruction = static_cast<CompGraphics*>(cmdPtr);
 
-            auto& gc =
-                GameState::getInstance().getComponent<CompRendering>(instruction->entityID);
+            auto& gc = GameState::getInstance().getComponent<CompRendering>(instruction->entityID);
             gc.entityType = instruction->entityType;
             gc.action = instruction->action;
             gc.entitySubType = instruction->entitySubType;
             gc.direction = instruction->direction;
-            // gc.graphicsID.frame = instruction->frame; // TODO: Animate
+            gc.frame = instruction->frame;
             gc.variation = instruction->variation;
             gc.positionInFeet = instruction->positionInFeet;
             gc.isStatic = instruction->isStatic;
@@ -399,7 +398,7 @@ void Renderer::renderBackground()
 
 void Renderer::generateTicks()
 {
-    const auto tickDelay = milliseconds(1000 / m_settings.getTicksPerSecond());
+    const auto tickDelay = milliseconds(1000 / m_settings->getTicksPerSecond());
     auto now = steady_clock::now();
     if (now - m_lastTickTime >= tickDelay)
     {
@@ -412,7 +411,6 @@ void Renderer::generateTicks()
 void Renderer::onTick()
 {
     handleViewportMovement();
-    handleAnimations();
 }
 
 void Renderer::handleViewportMovement()
@@ -422,58 +420,24 @@ void Renderer::handleViewportMovement()
     {
         m_viewport.setViewportPositionInPixelsWithBounryChecking(
             m_viewport.getViewportPositionInPixels() -
-            Vec2d(0, m_settings.getViewportMovingSpeed()));
+            Vec2d(0, m_settings->getViewportMovingSpeed()));
     }
     if (keyStates[SDL_SCANCODE_A])
     {
         m_viewport.setViewportPositionInPixelsWithBounryChecking(
             m_viewport.getViewportPositionInPixels() -
-            Vec2d(m_settings.getViewportMovingSpeed(), 0));
+            Vec2d(m_settings->getViewportMovingSpeed(), 0));
     }
     if (keyStates[SDL_SCANCODE_S])
     {
         m_viewport.setViewportPositionInPixelsWithBounryChecking(
             m_viewport.getViewportPositionInPixels() +
-            Vec2d(0, m_settings.getViewportMovingSpeed()));
+            Vec2d(0, m_settings->getViewportMovingSpeed()));
     }
     if (keyStates[SDL_SCANCODE_D])
     {
         m_viewport.setViewportPositionInPixelsWithBounryChecking(
             m_viewport.getViewportPositionInPixels() +
-            Vec2d(m_settings.getViewportMovingSpeed(), 0));
+            Vec2d(m_settings->getViewportMovingSpeed(), 0));
     }
-}
-
-void Renderer::handleAnimations()
-{
-    GameState::getInstance().getEntities<CompRendering, CompAnimation>().each(
-        [this](CompRendering& gc, CompAnimation& ac)
-        {
-            if (!gc.isValid())
-            {
-                return;
-            }
-
-            auto& animation = m_graphicsRegistry.getAnimation(gc);
-
-            auto tickGap = m_settings.getTicksPerSecond() / animation.speed;
-            if (m_tickCount % tickGap != 0)
-            {
-                return;
-            }
-
-            gc.frame++;
-            if (gc.frame >= animation.frames.size())
-            {
-                if (animation.repeatable)
-                {
-                    gc.frame = 0;
-                }
-                else
-                {
-                    gc.frame = animation.frames.size() - 1;
-                }
-            }
-            gc.updateTextureDetails(m_graphicsRegistry);
-        });
 }

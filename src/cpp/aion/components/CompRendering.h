@@ -32,6 +32,10 @@ class CompRendering : public CompGraphics
             {
                 flip = SDL_FLIP_HORIZONTAL;
             }
+            else
+            {
+                flip = SDL_FLIP_NONE;
+            }
         }
         else
         {

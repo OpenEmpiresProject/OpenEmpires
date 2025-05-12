@@ -3,9 +3,11 @@
 
 #include "AtlasGeneratorBase.h"
 #include "GraphicsRegistry.h"
+#include "Vec2d.h"
 
 #include <SDL3/SDL.h>
 #include <filesystem>
+#include <map>
 
 namespace aion
 {
@@ -31,7 +33,9 @@ class GraphicsLoader
     bool isTextureFlippingNeededDirection(Direction direction) const;
     Direction getFlippedDirection(Direction direction) const;
     int determineEntityType(const std::filesystem::path& path);
-    void createAtlasForEntityType(int entityType, const std::vector<std::filesystem::path>& paths);
+    void createAtlasForEntityType(int entityType,
+                                  const std::vector<std::filesystem::path>& paths,
+                                  const std::map<std::string, Vec2d>& anchors);
 
     SDL_Renderer* m_renderer;
     int m_variation = 0;

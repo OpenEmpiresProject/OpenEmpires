@@ -14,7 +14,7 @@ class ResourceLoader : public aion::SubSystem
 {
   public:
     ResourceLoader(std::stop_token* stopToken,
-                   const aion::GameSettings& settings,
+                   std::shared_ptr<aion::GameSettings> settings,
                    aion::GraphicsRegistry& graphicsRegistry,
                    std::shared_ptr<aion::Renderer> renderer);
     ~ResourceLoader() = default;
@@ -30,7 +30,7 @@ class ResourceLoader : public aion::SubSystem
         // Cleanup code for resource loading
     }
 
-    const aion::GameSettings& m_settings;
+    std::shared_ptr<aion::GameSettings> m_settings;
     aion::GraphicsRegistry& m_graphicsRegistry;
     std::shared_ptr<aion::Renderer> m_renderer;
 };

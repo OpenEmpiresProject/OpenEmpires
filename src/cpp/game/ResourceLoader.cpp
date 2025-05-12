@@ -6,12 +6,12 @@
 #include "commands/CmdIdle.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
-#include "components/CompUnit.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
 #include "components/CompRendering.h"
 #include "components/CompTransform.h"
+#include "components/CompUnit.h"
 #include "utils/Logger.h"
 #include "utils/ObjectPool.h"
 
@@ -25,10 +25,10 @@ using namespace game;
 using namespace aion;
 
 ResourceLoader::ResourceLoader(std::stop_token* stopToken,
-                               const GameSettings& settings,
+                               std::shared_ptr<GameSettings> settings,
                                GraphicsRegistry& graphicsRegistry,
                                std::shared_ptr<Renderer> renderer)
-    : SubSystem(stopToken), m_settings(settings), m_graphicsRegistry(graphicsRegistry),
+    : SubSystem(stopToken), m_settings(std::move(settings)), m_graphicsRegistry(graphicsRegistry),
       m_renderer(std::move(renderer))
 {
 }
@@ -39,7 +39,7 @@ void game::ResourceLoader::loadEntities()
 
     auto& gameState = GameState::getInstance();
 
-    auto size = m_settings.getWorldSizeInTiles();
+    auto size = m_settings->getWorldSizeInTiles();
     gameState.initializeStaticEntityMap(size.width, size.height);
     gameState.generateMap();
     // gameState.generateDebugMap();
@@ -68,11 +68,23 @@ void game::ResourceLoader::loadEntities()
         auto villager = gameState.createEntity();
         auto transform = CompTransform(20 * 256, 20 * 256);
         transform.face(Direction::SOUTH);
+        transform.hasRotation = true;
+        transform.speed = 256;
+
+        CompAnimation anim;
+        anim.animations[0].frames = 15;
+        anim.animations[0].repeatable = true;
+        anim.animations[0].speed = 10;
+
+        anim.animations[1].frames = 15;
+        anim.animations[1].repeatable = true;
+        anim.animations[1].speed = 15;
+
         gameState.addComponent(villager, transform);
         gameState.addComponent(villager, CompRendering());
         gameState.addComponent(villager, CompEntityInfo(3));
         gameState.addComponent(villager, CompAction(0));
-        gameState.addComponent(villager, CompAnimation());
+        gameState.addComponent(villager, anim);
         gameState.addComponent(villager, CompDirty());
 
         // villager goes idle by default

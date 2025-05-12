@@ -6,12 +6,14 @@
 #include "utils/Constants.h"
 #include "utils/Utilities.h"
 
+#include <memory>
+
 namespace aion
 {
 class Viewport
 {
   public:
-    Viewport(const GameSettings& settings);
+    Viewport(std::shared_ptr<GameSettings> settings);
 
     Vec2d feetToPixels(const Vec2d& feet) const;
     Vec2d pixelsToFeet(const Vec2d& pixels) const;
@@ -20,6 +22,8 @@ class Viewport
     Vec2d screenUnitsToFeet(const Vec2d& screenUnits) const;
     Vec2d feetToScreenUnits(const Vec2d& feet) const;
     Vec2d feetToTiles(const Vec2d& feet) const;
+    Vec2d tilesToFeet(const Vec2d& tiles) const;
+    Vec2d getTileCenterInFeet(const Vec2d& tile) const;
     int getZOrder(const Vec2d& feet) const;
     int getMaxZOrder() const;
 
@@ -32,7 +36,7 @@ class Viewport
 
   private:
     Vec2d m_viewportPositionInPixels;
-    const GameSettings& m_settings;
+    std::shared_ptr<GameSettings> m_settings;
 
     bool m_positionChangeRequested = false;
     Vec2d m_requestedChange;

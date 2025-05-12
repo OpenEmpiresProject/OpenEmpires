@@ -70,6 +70,12 @@ StaticEntityMap GameState::generateMap()
     int targetTreeTiles = totalTiles / 6; // 25% of map should have trees
     int treesPlaced = 0;
 
+    // Define the middle 5x5 area boundaries
+    int midXStart = staticEntityMap.width / 2 - 10;
+    int midXEnd = staticEntityMap.width / 2 + 10;
+    int midYStart = staticEntityMap.height / 2 - 10;
+    int midYEnd = staticEntityMap.height / 2 + 10;
+
     // 1. Place tree clusters (forests)
     while (treesPlaced < targetTreeTiles * 0.95) // Majority in forests
     {
@@ -87,6 +93,10 @@ StaticEntityMap GameState::generateMap()
 
             if (x >= 0 && x < staticEntityMap.width && y >= 0 && y < staticEntityMap.height)
             {
+                // Skip the middle 5x5 area
+                if (x >= midXStart && x <= midXEnd && y >= midYStart && y <= midYEnd)
+                    continue;
+
                 if (staticEntityMap.map[y][x] == 0)
                 {
                     staticEntityMap.map[y][x] = 1; // tree
@@ -101,6 +111,10 @@ StaticEntityMap GameState::generateMap()
     {
         int x = posX(rng);
         int y = posY(rng);
+
+        // Skip the middle 5x5 area
+        if (x >= midXStart && x <= midXEnd && y >= midYStart && y <= midYEnd)
+            continue;
 
         if (staticEntityMap.map[y][x] == 0)
         {

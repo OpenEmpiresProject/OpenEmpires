@@ -7,6 +7,11 @@
 
 namespace aion
 {
+struct TickData
+{
+    int deltaTimeMs = 0;
+};
+
 struct KeyboardData
 {
     int keyCode = 0; // SDL_Scancode
@@ -43,7 +48,8 @@ struct Event
         MAX_TYPE_MARKER
     };
 
-    using Data = std::variant<std::monostate, MouseClickData, KeyboardData, MouseMoveData>;
+    using Data =
+        std::variant<std::monostate, TickData, MouseClickData, KeyboardData, MouseMoveData>;
 
     const Type type = Type::NONE;
     const Data data = std::monostate{};

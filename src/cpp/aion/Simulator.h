@@ -27,7 +27,6 @@ class Simulator : public EventHandler
 
     void onTick();
     void sendGraphicsInstructions();
-    void simulatePhysics();
     void sendStaticTileInstructions();
     void sendInitialUnitsInstructions();
     void sendGraphiInstruction(CompGraphics* instruction);

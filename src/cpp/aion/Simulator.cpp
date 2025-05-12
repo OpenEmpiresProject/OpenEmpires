@@ -4,12 +4,13 @@
 #include "commands/CmdIdle.h"
 #include "commands/CmdWalk.h"
 #include "components/CompAction.h"
-#include "components/CompUnit.h"
+#include "components/CompAnimation.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
 #include "components/CompRendering.h"
 #include "components/CompTransform.h"
+#include "components/CompUnit.h"
 #include "utils/ObjectPool.h"
 
 using namespace aion;
@@ -18,6 +19,9 @@ char scancodeToChar(SDL_Scancode scancode, bool shiftPressed);
 
 void Simulator::onInit(EventLoop* eventLoop)
 {
+    ObjectPool<ThreadMessage>::reserve(1000);
+    ObjectPool<CompGraphics>::reserve(1000);
+
     m_messageToRenderer = ObjectPool<ThreadMessage>::acquire(ThreadMessage::Type::RENDER);
 }
 
@@ -70,7 +74,6 @@ void Simulator::onEvent(const Event& e)
 
 void Simulator::onTick()
 {
-    simulatePhysics();
     updateGraphicComponents();
     sendGraphicsInstructions();
     sendThreadMessageToRenderer();
@@ -94,31 +97,13 @@ void Simulator::sendGraphicsInstructions()
             });
 }
 
-void Simulator::simulatePhysics()
-{
-    GameState::getInstance()
-        .getEntities<CompTransform, CompAction, CompEntityInfo, CompDirty>()
-        .each(
-            [this](CompTransform& transform, CompAction& action,
-                   CompEntityInfo& entityInfo, CompDirty& dirty)
-            {
-                // transform.speed = 256;
-                // action.action = 1;         // Walk
-                // transform.walk(1000 / 60); // TODO: Make this configurable
-                // dirty.markDirty();
-
-                // spdlog::debug("Entity {} moved to position: ({}, {})", entityInfo.entityType,
-                // transform.position.x, transform.position.y);
-            });
-}
-
 void Simulator::updateGraphicComponents()
 {
     GameState::getInstance()
         .getEntities<CompTransform, CompEntityInfo, CompGraphics, CompDirty>()
         .each(
-            [this](uint32_t entityID, CompTransform& transform,
-                   CompEntityInfo& entityInfo, CompGraphics& gc, CompDirty& dirty)
+            [this](uint32_t entityID, CompTransform& transform, CompEntityInfo& entityInfo,
+                   CompGraphics& gc, CompDirty& dirty)
             {
                 // TODO: might need to optimize this later
                 if (dirty.isDirty() == false)
@@ -127,6 +112,24 @@ void Simulator::updateGraphicComponents()
                 gc.direction = transform.getIsometricDirection();
                 gc.variation = entityInfo.variation;
             });
+
+    GameState::getInstance().getEntities<CompGraphics, CompDirty, CompAnimation>().each(
+        [this](uint32_t entityID, CompGraphics& gc, CompDirty& dirty, CompAnimation& animation)
+        {
+            // TODO: might need to optimize this later
+            if (dirty.isDirty() == false)
+                return;
+            gc.frame = animation.frame;
+        });
+
+    GameState::getInstance().getEntities<CompGraphics, CompDirty, CompAction>().each(
+        [this](uint32_t entityID, CompGraphics& gc, CompDirty& dirty, CompAction& action)
+        {
+            // TODO: might need to optimize this later
+            if (dirty.isDirty() == false)
+                return;
+            gc.action = action.action;
+        });
 }
 
 void Simulator::sendThreadMessageToRenderer()
@@ -150,38 +153,63 @@ void Simulator::sendGraphiInstruction(CompGraphics* instruction)
 
 void Simulator::testPathFinding(const Vec2d& start, const Vec2d& end)
 {
+    Vec2d startPos;
+    GameState::getInstance().getEntities<CompUnit, CompTransform>().each(
+        [this, &startPos](uint32_t entityID, CompUnit& unit, CompTransform& transofrm)
+        { startPos = transofrm.position; });
+
+    startPos = m_viewport.feetToTiles(startPos);
+
     StaticEntityMap map = GameState::getInstance().staticEntityMap;
-    std::vector<Vec2d> path = GameState::getInstance().getPathFinder()->findPath(map, start, end);
+    std::vector<Vec2d> path =
+        GameState::getInstance().getPathFinder()->findPath(map, startPos, end);
 
     if (path.empty())
     {
-        spdlog::error("No path found from {} to {}", start.toString(), end.toString());
+        spdlog::error("No path found from {} to {}", startPos.toString(), end.toString());
         map.map[start.x][start.y] = 2;
         map.map[end.x][end.y] = 2;
     }
     else
     {
+        for (Vec2d node : path)
+        {
+            // map.map[node.x][node.y] = 2;
+            auto entity = map.entityMap[node.x][node.y];
+            if (entity != entt::null)
+            {
+                auto [dirty, gc] =
+                    GameState::getInstance().getComponents<CompDirty, CompGraphics>(entity);
+                gc.debugOverlays.push_back({DebugOverlay::Type::FILLED_CIRCLE,
+                                            DebugOverlay::Color::BLUE,
+                                            DebugOverlay::Anchor::CENTER});
+                dirty.markDirty();
+            }
+        }
+
+        std::list<Vec2d> pathList;
+        for (size_t i = 0; i < path.size(); i++)
+        {
+            pathList.push_back(m_viewport.getTileCenterInFeet(path[i]));
+        }
+
         auto walk = ObjectPool<CmdWalk>::acquire();
-        walk->path = path;
+        walk->path = pathList;
         walk->setPriority(10); // TODO: Need a better way
 
         // TODO: This is not correct, use selector's current selection
         GameState::getInstance().getEntities<CompUnit>().each(
-            [this, &walk](uint32_t entityID, CompUnit& unit) { unit.commandQueue.push(walk); });
-    }
-
-    for (Vec2d node : path)
-    {
-        // map.map[node.x][node.y] = 2;
-        auto entity = map.entityMap[node.x][node.y];
-        if (entity != entt::null)
-        {
-            auto [dirty, gc] =
-                GameState::getInstance().getComponents<CompDirty, CompGraphics>(entity);
-            gc.debugOverlays.push_back({DebugOverlay::Type::FILLED_CIRCLE,
-                                        DebugOverlay::Color::BLUE, DebugOverlay::Anchor::CENTER});
-            dirty.markDirty();
-        }
+            [this, &walk](uint32_t entityID, CompUnit& unit)
+            {
+                if (unit.commandQueue.empty() == false)
+                {
+                    if (walk->getPriority() == unit.commandQueue.top()->getPriority())
+                    {
+                        unit.commandQueue.pop();
+                    }
+                }
+                unit.commandQueue.push(walk);
+            });
     }
 }
 

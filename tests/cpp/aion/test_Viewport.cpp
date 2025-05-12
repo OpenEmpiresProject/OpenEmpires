@@ -21,7 +21,7 @@ public:
 // Test fixture for Viewport
 class ViewportTest : public ::testing::Test {
 protected:
-    MockGameSettings settings;
+    std::shared_ptr<MockGameSettings> settings = std::make_shared<MockGameSettings>();
     Viewport viewport;
 
     ViewportTest() : viewport(settings) {}

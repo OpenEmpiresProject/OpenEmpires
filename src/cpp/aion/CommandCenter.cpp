@@ -28,14 +28,15 @@ void CommandCenter::onEvent(const Event& e)
 {
     if (e.type == Event::Type::TICK)
     {
+        Command::incrementTotalTicks();
         std::list<Command*> newCommands;
         GameState::getInstance().getEntities<CompUnit>().each(
-            [this, &newCommands](uint32_t entity, CompUnit& unit)
+            [this, &newCommands, &e](uint32_t entity, CompUnit& unit)
             {
                 if (!unit.commandQueue.empty())
                 {
                     auto cmd = unit.commandQueue.top();
-                    auto completed = cmd->onExecute();
+                    auto completed = cmd->onExecute(entity, e.getData<TickData>().deltaTimeMs);
                     if (completed)
                     {
                         spdlog::debug("Entity {}'s command {} completed.", entity, cmd->toString());

@@ -1,14 +1,14 @@
 #ifndef OBJECTPOOL_H
 #define OBJECTPOOL_H
 
+#include "utils/Logger.h"
+
 #include <cstddef>
 #include <memory>
-#include <stack>
 #include <mutex>
-#include <thread>
 #include <sstream>
-
-#include "utils/Logger.h"
+#include <stack>
+#include <thread>
 
 namespace aion
 {
@@ -19,12 +19,14 @@ template <typename T> class ObjectPool
 
     using Ptr = T*;
 
-    struct GlobalStorage {
+    struct GlobalStorage
+    {
         std::stack<Ptr> pool;
         std::mutex mutex;
     };
 
-    static GlobalStorage& getGlobalStorage() {
+    static GlobalStorage& getGlobalStorage()
+    {
         static GlobalStorage storage;
         return storage;
     }
@@ -78,8 +80,8 @@ template <typename T> class ObjectPool
 
             if (refillCount > 0)
             {
-                spdlog::debug("Thread [{}] refilled {} objects from global pool.",
-                            threadIdStr(), refillCount);
+                spdlog::debug("Thread [{}] refilled {} objects from global pool.", threadIdStr(),
+                              refillCount);
             }
         }
 
@@ -117,7 +119,7 @@ template <typename T> class ObjectPool
                 }
 
                 spdlog::debug("Thread [{}] offloaded {} objects from local pool to global pool.",
-                          threadIdStr(), CHUNK_SIZE);
+                              threadIdStr(), CHUNK_SIZE);
 
                 storage.pool.push(obj);
             }

@@ -73,15 +73,15 @@ void EventLoop::handleTickEvent(std::chrono::steady_clock::time_point& lastTime)
     auto now = steady_clock::now();
     if (now - lastTime >= tickRate)
     {
-        lastTime = now;
-
-        Event tickEvent(Event::Type::TICK);
+        TickData data{static_cast<int>(duration_cast<milliseconds>(now - lastTime).count())};
+        Event tickEvent(Event::Type::TICK, data);
 
         // Notify listeners about the event
         for (auto& listener : m_listeners)
         {
             listener->onEvent(tickEvent);
         }
+        lastTime = now;
     }
 }
 

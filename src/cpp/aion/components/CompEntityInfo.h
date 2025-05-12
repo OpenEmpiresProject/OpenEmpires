@@ -15,8 +15,7 @@ class CompEntityInfo
     {
     }
 
-    CompEntityInfo(int entityType, int variation)
-        : entityType(entityType), variation(variation)
+    CompEntityInfo(int entityType, int variation) : entityType(entityType), variation(variation)
     {
     }
 };
