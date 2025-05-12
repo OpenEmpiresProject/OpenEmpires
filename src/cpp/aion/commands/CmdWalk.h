@@ -79,7 +79,7 @@ class CmdWalk : public Command
             else
             {
                 transform.face(nextPos);
-                transform.walk(deltaTimeMs); // TODO: calcu time accurately
+                transform.walk(deltaTimeMs);
             }
         }
 
