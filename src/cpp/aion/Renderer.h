@@ -6,6 +6,7 @@
 #include "SubSystem.h"
 #include "ThreadQueue.h"
 #include "Viewport.h"
+#include "ThreadSynchronizer.h"
 
 #include <SDL3/SDL.h>
 #include <atomic>
@@ -29,7 +30,8 @@ class Renderer : public SubSystem
              std::shared_ptr<GameSettings> settings,
              GraphicsRegistry& graphicsRegistry,
              ThreadQueue& renderQueue,
-             Viewport& viewport);
+             Viewport& viewport,
+             ThreadSynchronizer& synchronizer);
     ~Renderer();
 
     // SubSystem methods
@@ -111,6 +113,9 @@ class Renderer : public SubSystem
 
     bool m_showStaticEntities = true;
     bool m_showDebugInfo = false;
+
+    ThreadSynchronizer& m_synchronizer;
+
 };
 } // namespace aion
 

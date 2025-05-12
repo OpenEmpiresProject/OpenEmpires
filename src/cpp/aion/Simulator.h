@@ -5,6 +5,7 @@
 #include "ThreadQueue.h"
 #include "Viewport.h"
 #include "components/CompGraphics.h"
+#include "ThreadSynchronizer.h"
 
 #include <readerwriterqueue.h>
 #include <vector>
@@ -14,8 +15,8 @@ namespace aion
 class Simulator : public EventHandler
 {
   public:
-    Simulator(ThreadQueue& rendererQueue, Viewport& viewport)
-        : m_rendererQueue(rendererQueue), m_viewport(viewport)
+    Simulator(ThreadQueue& rendererQueue, Viewport& viewport, ThreadSynchronizer& synchronizer)
+        : m_rendererQueue(rendererQueue), m_viewport(viewport), m_synchronizer(synchronizer)
     {
     }
     ~Simulator() = default;
@@ -27,8 +28,6 @@ class Simulator : public EventHandler
 
     void onTick();
     void sendGraphicsInstructions();
-    void sendStaticTileInstructions();
-    void sendInitialUnitsInstructions();
     void sendGraphiInstruction(CompGraphics* instruction);
     void testPathFinding(const Vec2d& start, const Vec2d& end);
     void updateGraphicComponents();
@@ -41,6 +40,8 @@ class Simulator : public EventHandler
     Viewport& m_viewport;
 
     ThreadMessage* m_messageToRenderer = nullptr;
+    ThreadSynchronizer& m_synchronizer;
+    int m_frame = 0;
 };
 } // namespace aion
 

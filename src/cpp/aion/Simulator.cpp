@@ -74,10 +74,15 @@ void Simulator::onEvent(const Event& e)
 
 void Simulator::onTick()
 {
+    m_synchronizer.getSenderFrameData().frameNumber = m_frame;
+    //spdlog::info("Simulating frame {}", m_frame);
+
     updateGraphicComponents();
     sendGraphicsInstructions();
     sendThreadMessageToRenderer();
     incrementDirtyVersion();
+    m_frame++;
+    m_synchronizer.waitForReceiver();
 }
 
 void Simulator::sendGraphicsInstructions()

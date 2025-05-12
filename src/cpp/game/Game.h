@@ -13,6 +13,7 @@
 #include "ThreadQueue.h"
 #include "Viewport.h"
 #include "utils/Logger.h"
+#include "ThreadSynchronizer.h"
 
 #include <iostream>
 #include <readerwriterqueue.h>
@@ -44,13 +45,16 @@ class Game
 
         aion::ThreadQueue renderQueue;
 
+        aion::ThreadSynchronizer simulatorRendererSynchronizer;
+
         aion::Viewport viewport(settings);
         viewport.setViewportPositionInPixels(viewport.feetToPixels(aion::Vec2d(0, 0)));
 
         auto eventLoop = std::make_shared<aion::EventLoop>(&stopToken);
-        auto simulator = std::make_shared<aion::Simulator>(renderQueue, viewport);
-        auto renderer = std::make_shared<aion::Renderer>(&stopSource, settings, graphicsRegistry,
-                                                         renderQueue, viewport);
+        auto simulator =
+            std::make_shared<aion::Simulator>(renderQueue, viewport, simulatorRendererSynchronizer);
+        auto renderer = std::make_shared<aion::Renderer>(&stopSource, settings, graphicsRegistry, renderQueue,
+                                             viewport, simulatorRendererSynchronizer);
         auto cc = std::make_shared<aion::CommandCenter>();
 
         aion::ServiceRegistry::getInstance().registerService(cc);

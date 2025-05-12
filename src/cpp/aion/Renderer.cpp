@@ -30,11 +30,13 @@ Renderer::Renderer(std::stop_source* stopSource,
                    std::shared_ptr<GameSettings> settings,
                    GraphicsRegistry& graphicsRegistry,
                    ThreadQueue& simulatorQueue,
-                   Viewport& viewport)
+                   Viewport& viewport,
+                   ThreadSynchronizer& synchronizer)
     : SubSystem(stopSource), m_settings(settings), m_graphicsRegistry(graphicsRegistry),
       m_simulatorQueue(simulatorQueue), m_viewport(viewport),
       m_zBucketsSize(settings->getWorldSizeInTiles().height * Constants::FEET_PER_TILE * 3),
-      m_zBuckets(settings->getWorldSizeInTiles().height * Constants::FEET_PER_TILE * 3)
+      m_zBuckets(settings->getWorldSizeInTiles().height * Constants::FEET_PER_TILE * 3),
+      m_synchronizer(synchronizer)
 {
     m_running = false;
     m_lastTickTime = steady_clock::now();
@@ -125,6 +127,9 @@ void Renderer::renderingLoop()
 
     while (running)
     {
+        auto frame = m_synchronizer.getReceiverFrameData().frameNumber;
+        //spdlog::info("Rendering frame {}", frame);
+
         auto start = SDL_GetTicks();
         fpsCounter.frame();
         running = handleEvents();
@@ -144,6 +149,8 @@ void Renderer::renderingLoop()
 
         fpsCounter.sleptFor(delay);
         fpsCounter.getTotalSleep();
+
+        m_synchronizer.waitForSender();
     }
 
     spdlog::info("Shutting down renderer...");
