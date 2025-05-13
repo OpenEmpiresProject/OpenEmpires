@@ -7,7 +7,7 @@
 #include "SubSystem.h"
 #include "ThreadQueue.h"
 #include "ThreadSynchronizer.h"
-#include "Viewport.h"
+#include "Coordinates.h"
 
 #include <SDL3/SDL.h>
 #include <atomic>
@@ -28,9 +28,7 @@ class Renderer : public SubSystem
 {
   public:
     Renderer(std::stop_source* stopSource,
-             std::shared_ptr<GameSettings> settings,
              GraphicsRegistry& graphicsRegistry,
-             Viewport& viewport,
              ThreadSynchronizer<FrameData>& synchronizer);
     ~Renderer();
 
@@ -91,7 +89,7 @@ class Renderer : public SubSystem
     bool m_sdlInitialized = false;
 
     std::vector<std::string> m_debugTexts;
-    Viewport& m_viewport;
+    Coordinates m_coordinates;
     Vec2d m_anchorTilePixelsPos;
 
     std::chrono::steady_clock::time_point m_lastTickTime;

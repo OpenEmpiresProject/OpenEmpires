@@ -14,6 +14,7 @@
 #include "components/CompTransform.h"
 #include "utils/Logger.h"
 #include "utils/ObjectPool.h"
+#include "ServiceRegistry.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_video.h>
@@ -27,19 +28,28 @@ using namespace aion;
 using namespace std::chrono;
 
 Renderer::Renderer(std::stop_source* stopSource,
-                   std::shared_ptr<GameSettings> settings,
                    GraphicsRegistry& graphicsRegistry,
-                   Viewport& viewport,
                    ThreadSynchronizer<FrameData>& synchronizer)
-    : SubSystem(stopSource), m_settings(settings), m_graphicsRegistry(graphicsRegistry),
-      m_viewport(viewport),
-      m_zBucketsSize(settings->getWorldSizeInTiles().height * Constants::FEET_PER_TILE * 3),
-      m_zBuckets(settings->getWorldSizeInTiles().height * Constants::FEET_PER_TILE * 3),
+    : SubSystem(stopSource), m_settings(ServiceRegistry::getInstance().getService<GameSettings>()),
+      m_graphicsRegistry(graphicsRegistry),
+      m_coordinates(ServiceRegistry::getInstance().getService<GameSettings>()),
+      m_zBucketsSize(
+          ServiceRegistry::getInstance().getService<GameSettings>()->getWorldSizeInTiles().height *
+          Constants::FEET_PER_TILE * 3),
+      m_zBuckets(
+          ServiceRegistry::getInstance().getService<GameSettings>()->getWorldSizeInTiles().height *
+          Constants::FEET_PER_TILE * 3),
       m_synchronizer(synchronizer)
 {
     m_running = false;
     m_lastTickTime = steady_clock::now();
-    spdlog::info("Max z-order: {}", m_viewport.getMaxZOrder());
+    spdlog::info("Max z-order: {}", m_coordinates.getMaxZOrder());
+
+    auto center = m_coordinates.getMapCenterInFeet();
+    auto centerPixels = m_coordinates.feetToPixels(center);
+    centerPixels -= Vec2d(m_settings->getWindowDimensions().width / 2,
+                          m_settings->getWindowDimensions().height / 2);
+    m_coordinates.setViewportPositionInPixels(centerPixels);
 }
 
 Renderer::~Renderer()
@@ -181,8 +191,8 @@ bool Renderer::handleEvents()
             if (event.button.button == SDL_BUTTON_LEFT)
             {
                 m_lastMouseClickPosInFeet =
-                    m_viewport.screenUnitsToFeet(Vec2d(event.button.x, event.button.y));
-                m_lastMouseClickPosInTiles = m_viewport.feetToTiles(m_lastMouseClickPosInFeet);
+                    m_coordinates.screenUnitsToFeet(Vec2d(event.button.x, event.button.y));
+                m_lastMouseClickPosInTiles = m_coordinates.feetToTiles(m_lastMouseClickPosInFeet);
 
                 Event clickEvent(
                     Event::Type::MOUSE_BTN_UP,
@@ -245,7 +255,7 @@ void Renderer::renderDebugInfo(FPSCounter& counter)
 
     addDebugText("Average FPS        : " + std::to_string(counter.getAverageFPS()));
     addDebugText("Avg Sleep/frame    : " + std::to_string(counter.getAverageSleepMs()));
-    addDebugText("Viewport           : " + m_viewport.getViewportPositionInPixels().toString());
+    addDebugText("Viewport           : " + m_coordinates.getViewportPositionInPixels().toString());
     addDebugText("Anchor Tile        : " + m_anchorTilePixelsPos.toString());
     addDebugText("Mouse clicked feet : " + m_lastMouseClickPosInFeet.toString());
     addDebugText("Mouse clicked tile : " + m_lastMouseClickPosInTiles.toString());
@@ -340,12 +350,12 @@ void Renderer::renderGameEntities()
 
         for (auto& gc : m_zBuckets[z].graphicsComponents)
         {
-            auto screenPos = m_viewport.feetToScreenUnits(gc->positionInFeet) - gc->anchor;
+            auto screenPos = m_coordinates.feetToScreenUnits(gc->positionInFeet) - gc->anchor;
 
             // TODO: Remove this testing code
             if (isFirst)
             {
-                m_anchorTilePixelsPos = m_viewport.feetToPixels(gc->positionInFeet);
+                m_anchorTilePixelsPos = m_coordinates.feetToPixels(gc->positionInFeet);
             }
 
             dstRect.x = screenPos.x;
@@ -404,6 +414,7 @@ void Renderer::generateTicks()
 void Renderer::onTick()
 {
     handleViewportMovement();
+    m_synchronizer.getReceiverFrameData().viewportPositionInPixels = m_coordinates.getViewportPositionInPixels();
 }
 
 void Renderer::handleViewportMovement()
@@ -411,26 +422,26 @@ void Renderer::handleViewportMovement()
     auto keyStates = SDL_GetKeyboardState(nullptr);
     if (keyStates[SDL_SCANCODE_W])
     {
-        m_viewport.setViewportPositionInPixelsWithBounryChecking(
-            m_viewport.getViewportPositionInPixels() -
+        m_coordinates.setViewportPositionInPixelsWithBounryChecking(
+            m_coordinates.getViewportPositionInPixels() -
             Vec2d(0, m_settings->getViewportMovingSpeed()));
     }
     if (keyStates[SDL_SCANCODE_A])
     {
-        m_viewport.setViewportPositionInPixelsWithBounryChecking(
-            m_viewport.getViewportPositionInPixels() -
+        m_coordinates.setViewportPositionInPixelsWithBounryChecking(
+            m_coordinates.getViewportPositionInPixels() -
             Vec2d(m_settings->getViewportMovingSpeed(), 0));
     }
     if (keyStates[SDL_SCANCODE_S])
     {
-        m_viewport.setViewportPositionInPixelsWithBounryChecking(
-            m_viewport.getViewportPositionInPixels() +
+        m_coordinates.setViewportPositionInPixelsWithBounryChecking(
+            m_coordinates.getViewportPositionInPixels() +
             Vec2d(0, m_settings->getViewportMovingSpeed()));
     }
     if (keyStates[SDL_SCANCODE_D])
     {
-        m_viewport.setViewportPositionInPixelsWithBounryChecking(
-            m_viewport.getViewportPositionInPixels() +
+        m_coordinates.setViewportPositionInPixelsWithBounryChecking(
+            m_coordinates.getViewportPositionInPixels() +
             Vec2d(m_settings->getViewportMovingSpeed(), 0));
     }
 }

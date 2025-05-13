@@ -5,7 +5,7 @@
 #include "FrameData.h"
 #include "ThreadQueue.h"
 #include "ThreadSynchronizer.h"
-#include "Viewport.h"
+#include "Coordinates.h"
 #include "components/CompGraphics.h"
 
 #include <readerwriterqueue.h>
@@ -16,10 +16,7 @@ namespace aion
 class Simulator : public EventHandler
 {
   public:
-    Simulator(Viewport& viewport, ThreadSynchronizer<FrameData>& synchronizer)
-        : m_viewport(viewport), m_synchronizer(synchronizer)
-    {
-    }
+    Simulator(ThreadSynchronizer<FrameData>& synchronizer);
     ~Simulator() = default;
 
   private:
@@ -35,7 +32,7 @@ class Simulator : public EventHandler
     void incrementDirtyVersion();
 
     Vec2d m_startPosition{0, 0};
-    Viewport& m_viewport;
+    Coordinates m_coordinates;
 
     ThreadSynchronizer<FrameData>& m_synchronizer;
     int m_frame = 0;

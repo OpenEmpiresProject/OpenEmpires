@@ -1,4 +1,4 @@
-#include "Viewport.h"
+#include "Coordinates.h"
 
 #include "utils/Logger.h"
 
@@ -6,11 +6,11 @@
 
 using namespace aion;
 
-Viewport::Viewport(std::shared_ptr<GameSettings> settings) : m_settings(std::move(settings))
+Coordinates::Coordinates(std::shared_ptr<GameSettings> settings) : m_settings(std::move(settings))
 {
 }
 
-Vec2d Viewport::feetToPixels(const Vec2d& feet) const
+Vec2d Coordinates::feetToPixels(const Vec2d& feet) const
 {
     int pixelsX =
         ((feet.x - feet.y) * Constants::TILE_PIXEL_WIDTH) / (2 * Constants::FEET_PER_TILE);
@@ -23,40 +23,40 @@ Vec2d Viewport::feetToPixels(const Vec2d& feet) const
     return Vec2d(pixelsX, pixelsY);
 }
 
-Vec2d Viewport::feetToScreenUnits(const Vec2d& feet) const
+Vec2d Coordinates::feetToScreenUnits(const Vec2d& feet) const
 {
     return pixelsToScreenUnits(feetToPixels(feet));
 }
 
-Vec2d Viewport::feetToTiles(const Vec2d& feet) const
+Vec2d Coordinates::feetToTiles(const Vec2d& feet) const
 {
     return feet / Constants::FEET_PER_TILE;
 }
 
-Vec2d aion::Viewport::tilesToFeet(const Vec2d& tiles) const
+Vec2d aion::Coordinates::tilesToFeet(const Vec2d& tiles) const
 {
     return tiles * Constants::FEET_PER_TILE;
 }
 
-Vec2d aion::Viewport::getTileCenterInFeet(const Vec2d& tile) const
+Vec2d aion::Coordinates::getTileCenterInFeet(const Vec2d& tile) const
 {
     return tilesToFeet(tile) + Vec2d(Constants::FEET_PER_TILE / 2, Constants::FEET_PER_TILE / 2);
 }
 
-int Viewport::getZOrder(const Vec2d& feet) const
+int Coordinates::getZOrder(const Vec2d& feet) const
 {
     auto pixelPos = feetToPixels(feet);
     return pixelPos.y + pixelPos.x;
 }
 
-int Viewport::getMaxZOrder() const
+int Coordinates::getMaxZOrder() const
 {
     auto worldSize = m_settings->getWorldSize();
     // Bottom corner of the map should has the highest Z-order
     return getZOrder(Vec2d(worldSize.width, worldSize.height));
 }
 
-Vec2d Viewport::pixelsToFeet(const Vec2d& pixels) const
+Vec2d Coordinates::pixelsToFeet(const Vec2d& pixels) const
 {
     int pixelsMapCenterOffsetX =
         m_settings->getWorldSizeInTiles().width * Constants::TILE_PIXEL_WIDTH / 2;
@@ -69,31 +69,36 @@ Vec2d Viewport::pixelsToFeet(const Vec2d& pixels) const
     return Vec2d(feetX, feetY);
 }
 
-Vec2d Viewport::pixelsToScreenUnits(const Vec2d& pixels) const
+Vec2d Coordinates::pixelsToScreenUnits(const Vec2d& pixels) const
 {
     return pixels - m_viewportPositionInPixels;
 }
 
-Vec2d Viewport::screenUnitsToPixels(const Vec2d& screenUnits) const
+Vec2d Coordinates::screenUnitsToPixels(const Vec2d& screenUnits) const
 {
     return screenUnits + m_viewportPositionInPixels;
 }
 
-Vec2d Viewport::screenUnitsToFeet(const Vec2d& screenUnits) const
+Vec2d Coordinates::screenUnitsToFeet(const Vec2d& screenUnits) const
 {
     return pixelsToFeet(screenUnitsToPixels(screenUnits));
 }
 
-const Vec2d& Viewport::getViewportPositionInPixels() const
+const Vec2d& Coordinates::getViewportPositionInPixels() const
 {
     return m_viewportPositionInPixels;
 }
-void Viewport::setViewportPositionInPixels(const Vec2d& pixels)
+void Coordinates::setViewportPositionInPixels(const Vec2d& pixels)
 {
     m_viewportPositionInPixels = pixels;
 }
 
-void Viewport::setViewportPositionInPixelsWithBounryChecking(const Vec2d& pixels)
+Vec2d Coordinates::getMapCenterInFeet() const
+{
+    return Vec2d(m_settings->getWorldSize().width / 2, m_settings->getWorldSize().height / 2);
+}
+
+void Coordinates::setViewportPositionInPixelsWithBounryChecking(const Vec2d& pixels)
 {
     auto originalPos = m_viewportPositionInPixels;
     setViewportPositionInPixels(pixels);
@@ -104,13 +109,13 @@ void Viewport::setViewportPositionInPixelsWithBounryChecking(const Vec2d& pixels
     }
 }
 
-Vec2d Viewport::getViewportCenterInPixels() const
+Vec2d Coordinates::getViewportCenterInPixels() const
 {
     return m_viewportPositionInPixels + Vec2d(m_settings->getWindowDimensions().width / 2,
                                               m_settings->getWindowDimensions().height / 2);
 }
 
-bool Viewport::isInsideMap(const Vec2d& pixelPos) const
+bool Coordinates::isInsideMap(const Vec2d& pixelPos) const
 {
     auto gameWorldSize = m_settings->getWorldSize();
     auto feetPos = pixelsToFeet(pixelPos);
@@ -119,7 +124,7 @@ bool Viewport::isInsideMap(const Vec2d& pixelPos) const
            feetPos.y < gameWorldSize.height;
 }
 
-bool Viewport::isViewportCenterInsideMap() const
+bool Coordinates::isViewportCenterInsideMap() const
 {
     return isInsideMap(getViewportCenterInPixels());
 }

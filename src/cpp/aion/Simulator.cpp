@@ -12,10 +12,17 @@
 #include "components/CompTransform.h"
 #include "components/CompUnit.h"
 #include "utils/ObjectPool.h"
+#include "ServiceRegistry.h"
 
 using namespace aion;
 
 char scancodeToChar(SDL_Scancode scancode, bool shiftPressed);
+    
+Simulator::Simulator(ThreadSynchronizer<FrameData>& synchronizer)
+    : m_synchronizer(synchronizer),
+      m_coordinates(ServiceRegistry::getInstance().getService<GameSettings>())
+{
+}
 
 void Simulator::onInit(EventLoop* eventLoop)
 {
@@ -48,8 +55,8 @@ void Simulator::onEvent(const Event& e)
 
         auto mousePos = e.getData<MouseClickData>().screenPosition;
         // TODO: This is not thread safe.
-        auto worldPos = m_viewport.screenUnitsToFeet(mousePos);
-        auto tilePos = m_viewport.feetToTiles(worldPos);
+        auto worldPos = m_coordinates.screenUnitsToFeet(mousePos);
+        auto tilePos = m_coordinates.feetToTiles(worldPos);
 
         if (e.getData<MouseClickData>().button == MouseClickData::Button::LEFT)
         {
@@ -73,6 +80,7 @@ void Simulator::onEvent(const Event& e)
 void Simulator::onTick()
 {
     m_synchronizer.getSenderFrameData().frameNumber = m_frame;
+    m_coordinates.setViewportPositionInPixels(m_synchronizer.getSenderFrameData().viewportPositionInPixels);
     // spdlog::info("Simulating frame {}", m_frame);
 
     updateGraphicComponents();
@@ -151,7 +159,7 @@ void Simulator::testPathFinding(const Vec2d& start, const Vec2d& end)
         [this, &startPos](uint32_t entityID, CompUnit& unit, CompTransform& transofrm)
         { startPos = transofrm.position; });
 
-    startPos = m_viewport.feetToTiles(startPos);
+    startPos = m_coordinates.feetToTiles(startPos);
 
     StaticEntityMap map = GameState::getInstance().staticEntityMap;
     std::vector<Vec2d> path =
@@ -183,7 +191,7 @@ void Simulator::testPathFinding(const Vec2d& start, const Vec2d& end)
         std::list<Vec2d> pathList;
         for (size_t i = 0; i < path.size(); i++)
         {
-            pathList.push_back(m_viewport.getTileCenterInFeet(path[i]));
+            pathList.push_back(m_coordinates.getTileCenterInFeet(path[i]));
         }
 
         auto walk = ObjectPool<CmdWalk>::acquire();

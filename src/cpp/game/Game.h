@@ -12,7 +12,7 @@
 #include "SubSystemRegistry.h"
 #include "ThreadQueue.h"
 #include "ThreadSynchronizer.h"
-#include "Viewport.h"
+#include "Coordinates.h"
 #include "utils/Logger.h"
 #include "utils/Types.h"
 
@@ -40,24 +40,21 @@ class Game
 
         auto settings = std::make_shared<aion::GameSettings>();
         settings->setWindowDimensions(1366, 768);
+        aion::ServiceRegistry::getInstance().registerService(settings);
 
         std::stop_source stopSource;
         std::stop_token stopToken = stopSource.get_token();
 
         aion::ThreadSynchronizer<aion::FrameData> simulatorRendererSynchronizer;
 
-        aion::Viewport viewport(settings);
-        viewport.setViewportPositionInPixels(viewport.feetToPixels(aion::Vec2d(0, 0)));
-
         auto eventLoop = std::make_shared<aion::EventLoop>(&stopToken);
-        auto simulator = std::make_shared<aion::Simulator>(viewport, simulatorRendererSynchronizer);
-        auto renderer = std::make_shared<aion::Renderer>(&stopSource, settings, graphicsRegistry,
-                                                         viewport, simulatorRendererSynchronizer);
+        auto simulator = std::make_shared<aion::Simulator>(simulatorRendererSynchronizer);
+        auto renderer = std::make_shared<aion::Renderer>(&stopSource, graphicsRegistry,
+                                                         simulatorRendererSynchronizer);
         auto cc = std::make_shared<aion::CommandCenter>();
 
         aion::ServiceRegistry::getInstance().registerService(cc);
         aion::ServiceRegistry::getInstance().registerService(simulator);
-        aion::ServiceRegistry::getInstance().registerService(settings);
 
         eventLoop->registerListener(std::move(simulator));
         eventLoop->registerListener(std::move(cc));

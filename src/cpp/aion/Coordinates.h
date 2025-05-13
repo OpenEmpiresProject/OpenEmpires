@@ -1,5 +1,5 @@
-#ifndef VIEWPORT_H
-#define VIEWPORT_H
+#ifndef COORDINATES_H
+#define COORDINATES_H
 
 #include "GameSettings.h"
 #include "Vec2d.h"
@@ -10,10 +10,10 @@
 
 namespace aion
 {
-class Viewport
+class Coordinates
 {
   public:
-    Viewport(std::shared_ptr<GameSettings> settings);
+    Coordinates(std::shared_ptr<GameSettings> settings);
 
     Vec2d feetToPixels(const Vec2d& feet) const;
     Vec2d pixelsToFeet(const Vec2d& pixels) const;
@@ -24,6 +24,7 @@ class Viewport
     Vec2d feetToTiles(const Vec2d& feet) const;
     Vec2d tilesToFeet(const Vec2d& tiles) const;
     Vec2d getTileCenterInFeet(const Vec2d& tile) const;
+    Vec2d getMapCenterInFeet() const;
     int getZOrder(const Vec2d& feet) const;
     int getMaxZOrder() const;
 
@@ -37,9 +38,6 @@ class Viewport
   private:
     Vec2d m_viewportPositionInPixels;
     std::shared_ptr<GameSettings> m_settings;
-
-    bool m_positionChangeRequested = false;
-    Vec2d m_requestedChange;
 };
 
 } // namespace aion
