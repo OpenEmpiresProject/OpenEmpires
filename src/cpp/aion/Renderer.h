@@ -1,12 +1,13 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+#include "FrameData.h"
 #include "GameSettings.h"
 #include "GraphicsRegistry.h"
 #include "SubSystem.h"
 #include "ThreadQueue.h"
-#include "Viewport.h"
 #include "ThreadSynchronizer.h"
+#include "Viewport.h"
 
 #include <SDL3/SDL.h>
 #include <atomic>
@@ -29,9 +30,8 @@ class Renderer : public SubSystem
     Renderer(std::stop_source* stopSource,
              std::shared_ptr<GameSettings> settings,
              GraphicsRegistry& graphicsRegistry,
-             ThreadQueue& renderQueue,
              Viewport& viewport,
-             ThreadSynchronizer& synchronizer);
+             ThreadSynchronizer<FrameData>& synchronizer);
     ~Renderer();
 
     // SubSystem methods
@@ -71,6 +71,12 @@ class Renderer : public SubSystem
     void onTick();
     void handleViewportMovement();
 
+    struct ZBucketVersion
+    {
+        int64_t version = 0;
+        std::vector<CompRendering*> graphicsComponents;
+    };
+
     SDL_Window* m_window = nullptr;
     SDL_Renderer* m_renderer = nullptr;
     SDL_Texture* m_texture = nullptr;
@@ -84,26 +90,13 @@ class Renderer : public SubSystem
     std::mutex m_sdlInitMutex;
     bool m_sdlInitialized = false;
 
-    ThreadQueue& m_simulatorQueue;
-    int m_queueSize = 0;
-    int m_maxQueueSize = 0;
-
     std::vector<std::string> m_debugTexts;
-
     Viewport& m_viewport;
-
     Vec2d m_anchorTilePixelsPos;
 
     std::chrono::steady_clock::time_point m_lastTickTime;
-
     Vec2d m_lastMouseClickPosInFeet;
     Vec2d m_lastMouseClickPosInTiles;
-
-    struct ZBucketVersion
-    {
-        int64_t version = 0;
-        std::vector<CompRendering*> graphicsComponents;
-    };
 
     std::vector<ZBucketVersion> m_zBuckets;
     const size_t m_zBucketsSize = 0;
@@ -114,8 +107,7 @@ class Renderer : public SubSystem
     bool m_showStaticEntities = true;
     bool m_showDebugInfo = false;
 
-    ThreadSynchronizer& m_synchronizer;
-
+    ThreadSynchronizer<FrameData>& m_synchronizer;
 };
 } // namespace aion
 

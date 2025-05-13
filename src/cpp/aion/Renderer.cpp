@@ -29,11 +29,10 @@ using namespace std::chrono;
 Renderer::Renderer(std::stop_source* stopSource,
                    std::shared_ptr<GameSettings> settings,
                    GraphicsRegistry& graphicsRegistry,
-                   ThreadQueue& simulatorQueue,
                    Viewport& viewport,
-                   ThreadSynchronizer& synchronizer)
+                   ThreadSynchronizer<FrameData>& synchronizer)
     : SubSystem(stopSource), m_settings(settings), m_graphicsRegistry(graphicsRegistry),
-      m_simulatorQueue(simulatorQueue), m_viewport(viewport),
+      m_viewport(viewport),
       m_zBucketsSize(settings->getWorldSizeInTiles().height * Constants::FEET_PER_TILE * 3),
       m_zBuckets(settings->getWorldSizeInTiles().height * Constants::FEET_PER_TILE * 3),
       m_synchronizer(synchronizer)
@@ -128,11 +127,16 @@ void Renderer::renderingLoop()
     while (running)
     {
         auto frame = m_synchronizer.getReceiverFrameData().frameNumber;
-        //spdlog::info("Rendering frame {}", frame);
+        // spdlog::info("Rendering frame {}", frame);
 
         auto start = SDL_GetTicks();
         fpsCounter.frame();
         running = handleEvents();
+
+        if (!running)
+        {
+            break;
+        }
         generateTicks();
 
         updateRenderingComponents();
@@ -157,6 +161,7 @@ void Renderer::renderingLoop()
 
     SDL_DestroyWindow(m_window);
     SDL_Quit();
+    m_synchronizer.shutdown();
     m_stopSource->request_stop();
 }
 
@@ -212,43 +217,26 @@ bool Renderer::handleEvents()
 void Renderer::updateRenderingComponents()
 {
     // spdlog::debug("Handling graphic instructions...");
-    m_maxQueueSize = std::max(m_maxQueueSize, m_queueSize);
-    m_queueSize = 0;
+    auto& frameData = m_synchronizer.getReceiverFrameData().graphicUpdates;
 
-    ThreadMessage* message = nullptr;
-
-    while (m_simulatorQueue.try_dequeue(message))
+    for (const auto& instruction : frameData)
     {
-        // spdlog::debug("Handling graphic instructions...");
+        auto& gc = GameState::getInstance().getComponent<CompRendering>(instruction->entityID);
+        gc.entityType = instruction->entityType;
+        gc.action = instruction->action;
+        gc.entitySubType = instruction->entitySubType;
+        gc.direction = instruction->direction;
+        gc.frame = instruction->frame;
+        gc.variation = instruction->variation;
+        gc.positionInFeet = instruction->positionInFeet;
+        gc.isStatic = instruction->isStatic;
+        gc.debugOverlays = instruction->debugOverlays;
 
-        if (message->type != ThreadMessage::Type::RENDER)
-        {
-            spdlog::error("Invalid message type for Renderer: {}", static_cast<int>(message->type));
-            throw std::runtime_error("Invalid message type for Renderer.");
-        }
+        gc.updateTextureDetails(m_graphicsRegistry);
 
-        m_queueSize++;
-        for (const auto& cmdPtr : message->commandBuffer)
-        {
-            auto instruction = static_cast<CompGraphics*>(cmdPtr);
-
-            auto& gc = GameState::getInstance().getComponent<CompRendering>(instruction->entityID);
-            gc.entityType = instruction->entityType;
-            gc.action = instruction->action;
-            gc.entitySubType = instruction->entitySubType;
-            gc.direction = instruction->direction;
-            gc.frame = instruction->frame;
-            gc.variation = instruction->variation;
-            gc.positionInFeet = instruction->positionInFeet;
-            gc.isStatic = instruction->isStatic;
-            gc.debugOverlays = instruction->debugOverlays;
-
-            gc.updateTextureDetails(m_graphicsRegistry);
-
-            ObjectPool<CompGraphics>::release(instruction);
-        }
+        ObjectPool<CompGraphics>::release(instruction);
     }
-    ObjectPool<ThreadMessage>::release(message);
+    frameData.clear();
 }
 
 void Renderer::renderDebugInfo(FPSCounter& counter)
@@ -257,8 +245,6 @@ void Renderer::renderDebugInfo(FPSCounter& counter)
 
     addDebugText("Average FPS        : " + std::to_string(counter.getAverageFPS()));
     addDebugText("Avg Sleep/frame    : " + std::to_string(counter.getAverageSleepMs()));
-    addDebugText("Queue depth        : " + std::to_string(m_queueSize));
-    addDebugText("Max Queue depth    : " + std::to_string(m_maxQueueSize));
     addDebugText("Viewport           : " + m_viewport.getViewportPositionInPixels().toString());
     addDebugText("Anchor Tile        : " + m_anchorTilePixelsPos.toString());
     addDebugText("Mouse clicked feet : " + m_lastMouseClickPosInFeet.toString());

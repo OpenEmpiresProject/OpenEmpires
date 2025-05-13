@@ -11,9 +11,10 @@
 #include "Simulator.h"
 #include "SubSystemRegistry.h"
 #include "ThreadQueue.h"
+#include "ThreadSynchronizer.h"
 #include "Viewport.h"
 #include "utils/Logger.h"
-#include "ThreadSynchronizer.h"
+#include "utils/Types.h"
 
 #include <iostream>
 #include <readerwriterqueue.h>
@@ -43,18 +44,15 @@ class Game
         std::stop_source stopSource;
         std::stop_token stopToken = stopSource.get_token();
 
-        aion::ThreadQueue renderQueue;
-
-        aion::ThreadSynchronizer simulatorRendererSynchronizer;
+        aion::ThreadSynchronizer<aion::FrameData> simulatorRendererSynchronizer;
 
         aion::Viewport viewport(settings);
         viewport.setViewportPositionInPixels(viewport.feetToPixels(aion::Vec2d(0, 0)));
 
         auto eventLoop = std::make_shared<aion::EventLoop>(&stopToken);
-        auto simulator =
-            std::make_shared<aion::Simulator>(renderQueue, viewport, simulatorRendererSynchronizer);
-        auto renderer = std::make_shared<aion::Renderer>(&stopSource, settings, graphicsRegistry, renderQueue,
-                                             viewport, simulatorRendererSynchronizer);
+        auto simulator = std::make_shared<aion::Simulator>(viewport, simulatorRendererSynchronizer);
+        auto renderer = std::make_shared<aion::Renderer>(&stopSource, settings, graphicsRegistry,
+                                                         viewport, simulatorRendererSynchronizer);
         auto cc = std::make_shared<aion::CommandCenter>();
 
         aion::ServiceRegistry::getInstance().registerService(cc);

@@ -21,8 +21,6 @@ void Simulator::onInit(EventLoop* eventLoop)
 {
     ObjectPool<ThreadMessage>::reserve(1000);
     ObjectPool<CompGraphics>::reserve(1000);
-
-    m_messageToRenderer = ObjectPool<ThreadMessage>::acquire(ThreadMessage::Type::RENDER);
 }
 
 void Simulator::onExit()
@@ -75,11 +73,10 @@ void Simulator::onEvent(const Event& e)
 void Simulator::onTick()
 {
     m_synchronizer.getSenderFrameData().frameNumber = m_frame;
-    //spdlog::info("Simulating frame {}", m_frame);
+    // spdlog::info("Simulating frame {}", m_frame);
 
     updateGraphicComponents();
     sendGraphicsInstructions();
-    sendThreadMessageToRenderer();
     incrementDirtyVersion();
     m_frame++;
     m_synchronizer.waitForReceiver();
@@ -137,15 +134,6 @@ void Simulator::updateGraphicComponents()
         });
 }
 
-void Simulator::sendThreadMessageToRenderer()
-{
-    if (!m_messageToRenderer->commandBuffer.empty())
-    {
-        m_rendererQueue.enqueue(m_messageToRenderer);
-        m_messageToRenderer = ObjectPool<ThreadMessage>::acquire(ThreadMessage::Type::RENDER);
-    }
-}
-
 void Simulator::incrementDirtyVersion()
 {
     CompDirty::globalDirtyVersion++;
@@ -153,7 +141,7 @@ void Simulator::incrementDirtyVersion()
 
 void Simulator::sendGraphiInstruction(CompGraphics* instruction)
 {
-    m_messageToRenderer->commandBuffer.push_back(static_cast<void*>(instruction));
+    m_synchronizer.getSenderFrameData().graphicUpdates.push_back(instruction);
 }
 
 void Simulator::testPathFinding(const Vec2d& start, const Vec2d& end)
