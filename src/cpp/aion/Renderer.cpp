@@ -248,18 +248,24 @@ void Renderer::updateRenderingComponents()
 
     for (const auto& instruction : frameData)
     {
-        auto& gc = GameState::getInstance().getComponent<CompRendering>(instruction->entityID);
-        gc.entityType = instruction->entityType;
-        gc.action = instruction->action;
-        gc.entitySubType = instruction->entitySubType;
-        gc.direction = instruction->direction;
-        gc.frame = instruction->frame;
-        gc.variation = instruction->variation;
-        gc.positionInFeet = instruction->positionInFeet;
-        gc.isStatic = instruction->isStatic;
-        gc.debugOverlays = instruction->debugOverlays;
+        auto& rc = GameState::getInstance().getComponent<CompRendering>(instruction->entityID);
+        static_cast<CompGraphics&>(rc) = *instruction;
+        rc.additionalZOffset = 0;
 
-        gc.updateTextureDetails(m_graphicsRegistry);
+        // Graphic addons on this entity might draw below (screen's Y) the entity. So we need to consider the
+        // overall bottom most position as the Z value. Eg: Unit's selection ellipse should draw on top of
+        // the below tile
+        for (auto& addon : rc.addons)
+        {
+            switch (addon.type)
+            {
+            case GraphicAddon::Type::CIRCLE:
+                rc.additionalZOffset = Constants::FEET_PER_TILE + 1;
+                break;
+            }
+        }
+
+        rc.updateTextureDetails(m_graphicsRegistry);
 
         ObjectPool<CompGraphics>::release(instruction);
     }
@@ -330,6 +336,23 @@ Vec2d getDebugOverlayPosition(DebugOverlay::Anchor anchor, const SDL_FRect& rect
     return {x, y};
 }
 
+void renderCirlceInIsometric(SDL_Renderer* renderer,
+                             Sint16 cx,
+                             Sint16 cy,
+                             Sint16 r,
+                             Uint8 red,
+                             Uint8 green,
+                             Uint8 blue,
+                             Uint8 alpha)
+{
+    // Isometric ellipse radius
+    Sint16 rx = r * 2; // Horizontal radius (diameter of the circle)
+    Sint16 ry = r;     // Vertical radius (half of the original)
+
+    // Render the isometric ellipse
+    ellipseRGBA(renderer, cx, cy, rx, ry, red, green, blue, alpha);
+}
+
 void Renderer::renderGameEntities()
 {
     ++m_zBucketVersion; // it will take 4 trillion years to overflow this
@@ -338,9 +361,10 @@ void Renderer::renderGameEntities()
     static bool isFirst = true;
 
     GameState::getInstance().getEntities<CompRendering>().each(
-        [this](CompRendering& gc)
+        [this](CompRendering& rc)
         {
-            int zOrder = gc.positionInFeet.y + gc.positionInFeet.x;
+            int zOrder = rc.positionInFeet.y + rc.positionInFeet.x + rc.additionalZOffset;
+
             if (zOrder < 0 || zOrder >= m_zBucketsSize)
             {
                 spdlog::error("Z-order out of bounds: {}", zOrder);
@@ -353,7 +377,7 @@ void Renderer::renderGameEntities()
                 m_zBuckets[zOrder].graphicsComponents.clear();
             }
 
-            m_zBuckets[zOrder].graphicsComponents.push_back(&gc);
+            m_zBuckets[zOrder].graphicsComponents.push_back(&rc);
         });
 
     SDL_FRect dstRect = {0, 0, 0, 0};
@@ -365,30 +389,51 @@ void Renderer::renderGameEntities()
             continue; // Skip if the version doesn't match
         }
 
-        for (auto& gc : m_zBuckets[z].graphicsComponents)
+        for (auto& rc : m_zBuckets[z].graphicsComponents)
         {
-            auto screenPos = m_coordinates.feetToScreenUnits(gc->positionInFeet) - gc->anchor;
+            auto screenPos = m_coordinates.feetToScreenUnits(rc->positionInFeet) - rc->anchor;
 
             // TODO: Remove this testing code
             if (isFirst)
             {
-                m_anchorTilePixelsPos = m_coordinates.feetToPixels(gc->positionInFeet);
+                m_anchorTilePixelsPos = m_coordinates.feetToPixels(rc->positionInFeet);
             }
 
             dstRect.x = screenPos.x;
             dstRect.y = screenPos.y;
-            dstRect.w = gc->size.width;
-            dstRect.h = gc->size.height;
+            dstRect.w = rc->size.width;
+            dstRect.h = rc->size.height;
 
-            if (!gc->isStatic || m_showStaticEntities)
+            if (!rc->isStatic || m_showStaticEntities)
             {
-                SDL_RenderTextureRotated(m_renderer, gc->texture, gc->srcRect, &dstRect, 0, nullptr,
-                                         gc->flip);
+                for (auto& addon : rc->addons)
+                {
+                    switch (addon.type)
+                    {
+                    case GraphicAddon::Type::CIRCLE:
+                    {
+                        const auto& circle = addon.getData<GraphicAddon::Circle>();
+                        auto circleScreenPos = screenPos + rc->anchor + circle.center;
+
+                        // TODO: Support colors if required
+                        renderCirlceInIsometric(m_renderer, circleScreenPos.x, circleScreenPos.y,
+                                                circle.radius, 255, 255, 255, 255);
+                    }
+                    break;
+                    case GraphicAddon::Type::SQUARE:
+                        /* code */
+                        break;
+                    default:
+                        break;
+                    }
+                }
+                SDL_RenderTextureRotated(m_renderer, rc->texture, rc->srcRect, &dstRect, 0, nullptr,
+                                         rc->flip);
             }
 
             if (m_showDebugInfo)
             {
-                for (auto& overlay : gc->debugOverlays)
+                for (auto& overlay : rc->debugOverlays)
                 {
                     auto pos = getDebugOverlayPosition(overlay.anchor, dstRect);
 

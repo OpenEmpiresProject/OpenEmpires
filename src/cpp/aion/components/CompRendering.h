@@ -18,6 +18,7 @@ class CompRendering : public CompGraphics
     WidthHeight size = {0, 0}; // Size of the texture in pixels
     SDL_FlipMode flip = SDL_FLIP_NONE;
     SDL_FRect* srcRect = nullptr; // Source rectangle for the texture
+    int additionalZOffset = 0;
 
     void updateTextureDetails(const GraphicsRegistry& graphicsRegistry)
     {

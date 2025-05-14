@@ -176,11 +176,19 @@ void aion::Simulator::onSelectingUnits(const Vec2d& startScreenPos, const Vec2d&
     int selectionTop = std::min(startScreenPos.y, endScreenPos.y);
     int selectionBottom = std::max(startScreenPos.y, endScreenPos.y);
 
+    // Clear any existing selections' addons
+    for (auto& entity : m_currentUnitSelection.selectedEntities)
+    {
+        auto& graphics = GameState::getInstance().getComponent<CompGraphics>(entity);
+        graphics.addons.clear(); // TODO: We might want to selectively remove the addons
+        GameState::getInstance().getComponents<CompDirty>(entity).markDirty();
+    }
     m_currentUnitSelection.selectedEntities.clear();
 
-    GameState::getInstance().getEntities<CompUnit, CompTransform>().each(
+    GameState::getInstance().getEntities<CompUnit, CompTransform, CompGraphics, CompDirty>().each(
         [this, selectionLeft, selectionRight, selectionTop,
-         selectionBottom](uint32_t entity, CompUnit& unit, CompTransform& transform)
+         selectionBottom](uint32_t entity, CompUnit& unit, CompTransform& transform,
+                          CompGraphics& graphics, CompDirty& dirty)
         {
             auto screenPos = m_coordinates.feetToScreenUnits(transform.position);
             int unitRight = screenPos.x + transform.selectionBoxWidth / 2;
@@ -193,8 +201,11 @@ void aion::Simulator::onSelectingUnits(const Vec2d& startScreenPos, const Vec2d&
 
             if (intersects)
             {
-                m_currentUnitSelection.selectedEntities.push_back(entity);
                 spdlog::info("Unit {} is selected", entity);
+                m_currentUnitSelection.selectedEntities.push_back(entity);
+                graphics.addons.push_back(GraphicAddon{
+                    GraphicAddon::Type::CIRCLE, GraphicAddon::Circle{transform.collisionRadius}});
+                dirty.markDirty();
             }
         });
 

@@ -18,6 +18,7 @@ class CompTransform
     int goalRadiusSquared = 100;
     int selectionBoxWidth = 15;
     int selectionBoxHeight = 30;
+    int collisionRadius = 10; // TODO: not every entity would be circular
     // int prevRotation = 0;
 
     CompTransform() = default;
