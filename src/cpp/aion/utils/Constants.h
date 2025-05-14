@@ -12,6 +12,7 @@ class Constants
     static const int TILE_PIXEL_WIDTH = 96;
     static const int TILE_PIXEL_HEIGHT = 48;
     static const int MAX_ANIMATIONS = 10;
+    static const int MAX_UNIT_SELECTION = 30;
 };
 } // namespace aion
 

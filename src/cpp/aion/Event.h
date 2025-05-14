@@ -1,6 +1,7 @@
 #ifndef EVENT_H
 #define EVENT_H
 
+#include "UnitSelection.h"
 #include "Vec2d.h"
 
 #include <variant>
@@ -34,6 +35,11 @@ struct MouseClickData
     Vec2d screenPosition;
 };
 
+struct UnitSelectionData
+{
+    UnitSelection selection;
+};
+
 struct Event
 {
     enum class Type
@@ -45,11 +51,16 @@ struct Event
         MOUSE_MOVE,
         MOUSE_BTN_DOWN,
         MOUSE_BTN_UP,
-        MAX_TYPE_MARKER
+        UNIT_SELECTION,
+        MAX_TYPE_MARKER,
     };
 
-    using Data =
-        std::variant<std::monostate, TickData, MouseClickData, KeyboardData, MouseMoveData>;
+    using Data = std::variant<std::monostate,
+                              TickData,
+                              MouseClickData,
+                              KeyboardData,
+                              MouseMoveData,
+                              UnitSelectionData>;
 
     const Type type = Type::NONE;
     const Data data = std::monostate{};

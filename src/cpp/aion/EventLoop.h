@@ -2,6 +2,7 @@
 #define EVENTLOOP_H
 
 #include "Event.h"
+#include "EventPublisher.h"
 #include "SubSystem.h"
 
 #include <list>
@@ -12,7 +13,7 @@
 namespace aion
 {
 class EventHandler;
-class EventLoop : public SubSystem
+class EventLoop : public SubSystem, public EventPublisher
 {
   public:
     EventLoop(std::stop_token* stopToken);
@@ -24,8 +25,6 @@ class EventLoop : public SubSystem
         return m_listeners.size();
     }
 
-    void submitEvents(const Event& event);
-
   private:
     // SubSystem methods
     void init() override;
@@ -33,6 +32,8 @@ class EventLoop : public SubSystem
     void shutdown() override;
     void handleTickEvent(std::chrono::steady_clock::time_point& lastTime);
     void handleInputEvents();
+    void handleGameEvents();
+    void publish(const Event& event) override;
 
     std::list<std::shared_ptr<EventHandler>> m_listeners;
     std::thread m_eventLoopThread;

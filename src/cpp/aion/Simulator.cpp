@@ -1,6 +1,8 @@
 #include "Simulator.h"
 
+#include "Event.h"
 #include "GameState.h"
+#include "ServiceRegistry.h"
 #include "commands/CmdIdle.h"
 #include "commands/CmdWalk.h"
 #include "components/CompAction.h"
@@ -12,15 +14,16 @@
 #include "components/CompTransform.h"
 #include "components/CompUnit.h"
 #include "utils/ObjectPool.h"
-#include "ServiceRegistry.h"
 
 using namespace aion;
 
 char scancodeToChar(SDL_Scancode scancode, bool shiftPressed);
-    
-Simulator::Simulator(ThreadSynchronizer<FrameData>& synchronizer)
+
+Simulator::Simulator(ThreadSynchronizer<FrameData>& synchronizer,
+                     std::shared_ptr<EventPublisher> publisher)
     : m_synchronizer(synchronizer),
-      m_coordinates(ServiceRegistry::getInstance().getService<GameSettings>())
+      m_coordinates(ServiceRegistry::getInstance().getService<GameSettings>()),
+      m_publisher(std::move(publisher))
 {
 }
 
@@ -56,19 +59,37 @@ void Simulator::onEvent(const Event& e)
         auto mousePos = e.getData<MouseClickData>().screenPosition;
         // TODO: This is not thread safe.
         auto worldPos = m_coordinates.screenUnitsToFeet(mousePos);
-        auto tilePos = m_coordinates.feetToTiles(worldPos);
 
         if (e.getData<MouseClickData>().button == MouseClickData::Button::LEFT)
         {
-            spdlog::debug("Mouse clicked at tile position: {}", tilePos.toString());
-
-            m_startPosition = tilePos;
+            // spdlog::debug("Mouse clicked at tile position: {}", tilePos.toString());
         }
         else if (e.getData<MouseClickData>().button == MouseClickData::Button::RIGHT)
         {
-            spdlog::debug("Right mouse clicked at tile position: {}", tilePos.toString());
+            // spdlog::debug("Right mouse clicked at tile position: {}", tilePos.toString());
 
-            testPathFinding(m_startPosition, tilePos);
+            resolveAction(worldPos);
+        }
+
+        if (m_isSelecting)
+        {
+            if (e.getData<MouseClickData>().button == MouseClickData::Button::LEFT)
+            {
+                m_selectionEndPosScreenUnits = e.getData<MouseClickData>().screenPosition;
+                // TODO: we want on the fly selection instead of mouse button up
+                onSelectingUnits(m_selectionStartPosScreenUnits, m_selectionEndPosScreenUnits);
+                m_isSelecting = false;
+            }
+        }
+    }
+    break;
+    case Event::Type::MOUSE_BTN_DOWN:
+    {
+        if (e.getData<MouseClickData>().button == MouseClickData::Button::LEFT)
+        {
+            m_isSelecting = true;
+            m_selectionStartPosScreenUnits = e.getData<MouseClickData>().screenPosition;
+            m_selectionEndPosScreenUnits = e.getData<MouseClickData>().screenPosition;
         }
     }
     break;
@@ -80,7 +101,8 @@ void Simulator::onEvent(const Event& e)
 void Simulator::onTick()
 {
     m_synchronizer.getSenderFrameData().frameNumber = m_frame;
-    m_coordinates.setViewportPositionInPixels(m_synchronizer.getSenderFrameData().viewportPositionInPixels);
+    m_coordinates.setViewportPositionInPixels(
+        m_synchronizer.getSenderFrameData().viewportPositionInPixels);
     // spdlog::info("Simulating frame {}", m_frame);
 
     updateGraphicComponents();
@@ -147,17 +169,65 @@ void Simulator::incrementDirtyVersion()
     CompDirty::globalDirtyVersion++;
 }
 
+void aion::Simulator::onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endScreenPos)
+{
+    int selectionLeft = std::min(startScreenPos.x, endScreenPos.x);
+    int selectionRight = std::max(startScreenPos.x, endScreenPos.x);
+    int selectionTop = std::min(startScreenPos.y, endScreenPos.y);
+    int selectionBottom = std::max(startScreenPos.y, endScreenPos.y);
+
+    m_currentUnitSelection.selectedEntities.clear();
+
+    GameState::getInstance().getEntities<CompUnit, CompTransform>().each(
+        [this, selectionLeft, selectionRight, selectionTop,
+         selectionBottom](uint32_t entity, CompUnit& unit, CompTransform& transform)
+        {
+            auto screenPos = m_coordinates.feetToScreenUnits(transform.position);
+            int unitRight = screenPos.x + transform.selectionBoxWidth / 2;
+            int unitBottom = screenPos.y;
+            int unitLeft = screenPos.x - transform.selectionBoxWidth / 2;
+            int unitTop = screenPos.y - transform.selectionBoxHeight;
+
+            bool intersects = !(unitRight < selectionLeft || unitLeft > selectionRight ||
+                                unitBottom < selectionTop || unitTop > selectionBottom);
+
+            if (intersects)
+            {
+                m_currentUnitSelection.selectedEntities.push_back(entity);
+                spdlog::info("Unit {} is selected", entity);
+            }
+        });
+
+    if (m_currentUnitSelection.selectedEntities.size() > 0)
+    {
+        Event event(Event::Type::UNIT_SELECTION, UnitSelectionData{m_currentUnitSelection});
+        m_publisher->publish(event);
+    }
+}
+
+void aion::Simulator::resolveAction(const Vec2d& targetFeetPos)
+{
+    auto tilePos = m_coordinates.feetToTiles(targetFeetPos);
+    // TODO: Resolve the common action based on the unit selection here. Assuming movement for now
+    testPathFinding(tilePos);
+}
+
 void Simulator::sendGraphiInstruction(CompGraphics* instruction)
 {
     m_synchronizer.getSenderFrameData().graphicUpdates.push_back(instruction);
 }
 
-void Simulator::testPathFinding(const Vec2d& start, const Vec2d& end)
+void Simulator::testPathFinding(const Vec2d& end)
 {
     Vec2d startPos;
-    GameState::getInstance().getEntities<CompUnit, CompTransform>().each(
-        [this, &startPos](uint32_t entityID, CompUnit& unit, CompTransform& transofrm)
-        { startPos = transofrm.position; });
+    if (!m_currentUnitSelection.selectedEntities.empty())
+    {
+        auto& transform = GameState::getInstance().getComponent<CompTransform>(
+            m_currentUnitSelection.selectedEntities[0]);
+        startPos = transform.position;
+    }
+    else
+        return;
 
     startPos = m_coordinates.feetToTiles(startPos);
 
@@ -168,7 +238,7 @@ void Simulator::testPathFinding(const Vec2d& start, const Vec2d& end)
     if (path.empty())
     {
         spdlog::error("No path found from {} to {}", startPos.toString(), end.toString());
-        map.map[start.x][start.y] = 2;
+        map.map[startPos.x][startPos.y] = 2;
         map.map[end.x][end.y] = 2;
     }
     else

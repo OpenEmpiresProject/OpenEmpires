@@ -23,12 +23,6 @@ EventLoop::~EventLoop()
 {
 }
 
-// TODO rename this to singular or accept multiple
-void EventLoop::submitEvents(const Event& event)
-{
-    m_eventQueue.push(event);
-}
-
 void EventLoop::init()
 {
     m_eventLoopThread = std::thread(&EventLoop::run, this);
@@ -49,6 +43,7 @@ void EventLoop::run()
     {
         handleTickEvent(lastTick);
         handleInputEvents();
+        handleGameEvents();
 
         // Sleep for a short duration to avoid busy-waiting
         std::this_thread::sleep_for(milliseconds(1));
@@ -170,6 +165,24 @@ void EventLoop::handleInputEvents()
         }
         m_previousMouseState = currentMouseState;
     }
+}
+
+void aion::EventLoop::handleGameEvents()
+{
+    while (!m_eventQueue.empty())
+    {
+        auto& event = m_eventQueue.front();
+        for (auto& listener : m_listeners)
+        {
+            listener->onEvent(event);
+        }
+        m_eventQueue.pop();
+    }
+}
+
+void aion::EventLoop::publish(const Event& event)
+{
+    m_eventQueue.push(event);
 }
 
 void EventLoop::registerListener(std::shared_ptr<EventHandler> listener)

@@ -7,6 +7,7 @@
 #include "GraphicsLoader.h"
 #include "Renderer.h"
 #include "SDL3_gfxPrimitives.h"
+#include "ServiceRegistry.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
 #include "components/CompEntityInfo.h"
@@ -14,7 +15,6 @@
 #include "components/CompTransform.h"
 #include "utils/Logger.h"
 #include "utils/ObjectPool.h"
-#include "ServiceRegistry.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_video.h>
@@ -152,6 +152,7 @@ void Renderer::renderingLoop()
         updateRenderingComponents();
         renderBackground();
         renderGameEntities();
+        renderSelectionBox();
         renderDebugInfo(fpsCounter);
 
         SDL_RenderPresent(m_renderer);
@@ -190,14 +191,22 @@ bool Renderer::handleEvents()
         {
             if (event.button.button == SDL_BUTTON_LEFT)
             {
-                m_lastMouseClickPosInFeet =
-                    m_coordinates.screenUnitsToFeet(Vec2d(event.button.x, event.button.y));
+                Vec2d mousePosScreenUnits(event.button.x, event.button.y);
+                m_lastMouseClickPosInFeet = m_coordinates.screenUnitsToFeet(mousePosScreenUnits);
                 m_lastMouseClickPosInTiles = m_coordinates.feetToTiles(m_lastMouseClickPosInFeet);
 
                 Event clickEvent(
                     Event::Type::MOUSE_BTN_UP,
                     MouseClickData{MouseClickData::Button::LEFT, m_lastMouseClickPosInFeet});
+
+                m_isSelecting = true;
+                m_selectionStartPosScreenUnits = mousePosScreenUnits;
+                m_selectionEndPosScreenUnits = mousePosScreenUnits;
             }
+        }
+        else if (event.type == SDL_EVENT_MOUSE_BUTTON_UP)
+        {
+            m_isSelecting = false;
         }
         else if (event.type == SDL_EVENT_KEY_UP)
         {
@@ -208,6 +217,14 @@ bool Renderer::handleEvents()
             else if (event.key.scancode == SDL_SCANCODE_2)
             {
                 m_showDebugInfo = !m_showDebugInfo;
+            }
+        }
+        else if (event.type == SDL_EVENT_MOUSE_MOTION)
+        {
+            if (m_isSelecting)
+            {
+                Vec2d mousePosScreenUnits(event.button.x, event.button.y);
+                m_selectionEndPosScreenUnits = mousePosScreenUnits;
             }
         }
     }
@@ -399,6 +416,20 @@ void Renderer::renderBackground()
     SDL_RenderClear(m_renderer);
 }
 
+void aion::Renderer::renderSelectionBox()
+{
+    if (m_isSelecting && m_selectionStartPosScreenUnits != m_selectionEndPosScreenUnits)
+    {
+        SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
+        SDL_FRect rect = {
+            (float) m_selectionStartPosScreenUnits.x, (float) m_selectionStartPosScreenUnits.y,
+            (float) (m_selectionEndPosScreenUnits.x - m_selectionStartPosScreenUnits.x),
+            (float) (m_selectionEndPosScreenUnits.y - m_selectionStartPosScreenUnits.y)};
+
+        SDL_RenderRect(m_renderer, &rect);
+    }
+}
+
 void Renderer::generateTicks()
 {
     const auto tickDelay = milliseconds(1000 / m_settings->getTicksPerSecond());
@@ -414,7 +445,8 @@ void Renderer::generateTicks()
 void Renderer::onTick()
 {
     handleViewportMovement();
-    m_synchronizer.getReceiverFrameData().viewportPositionInPixels = m_coordinates.getViewportPositionInPixels();
+    m_synchronizer.getReceiverFrameData().viewportPositionInPixels =
+        m_coordinates.getViewportPositionInPixels();
 }
 
 void Renderer::handleViewportMovement()

@@ -16,6 +16,8 @@ class CompTransform
     bool hasRotation = false;
     int speed = 0; // Speed in feet per second
     int goalRadiusSquared = 100;
+    int selectionBoxWidth = 15;
+    int selectionBoxHeight = 30;
     // int prevRotation = 0;
 
     CompTransform() = default;

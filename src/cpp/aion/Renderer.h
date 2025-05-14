@@ -1,13 +1,13 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+#include "Coordinates.h"
 #include "FrameData.h"
 #include "GameSettings.h"
 #include "GraphicsRegistry.h"
 #include "SubSystem.h"
 #include "ThreadQueue.h"
 #include "ThreadSynchronizer.h"
-#include "Coordinates.h"
 
 #include <SDL3/SDL.h>
 #include <atomic>
@@ -54,6 +54,7 @@ class Renderer : public SubSystem
     void renderDebugInfo(FPSCounter& counter);
     void renderGameEntities();
     void renderBackground();
+    void renderSelectionBox();
 
     void addDebugText(const std::string& text)
     {
@@ -106,6 +107,10 @@ class Renderer : public SubSystem
     bool m_showDebugInfo = false;
 
     ThreadSynchronizer<FrameData>& m_synchronizer;
+
+    Vec2d m_selectionStartPosScreenUnits;
+    Vec2d m_selectionEndPosScreenUnits;
+    bool m_isSelecting = false;
 };
 } // namespace aion
 

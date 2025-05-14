@@ -2,6 +2,7 @@
 #define GAME_H
 
 #include "CommandCenter.h"
+#include "Coordinates.h"
 #include "EventLoop.h"
 #include "GameState.h"
 #include "GraphicsRegistry.h"
@@ -12,7 +13,6 @@
 #include "SubSystemRegistry.h"
 #include "ThreadQueue.h"
 #include "ThreadSynchronizer.h"
-#include "Coordinates.h"
 #include "utils/Logger.h"
 #include "utils/Types.h"
 
@@ -48,7 +48,8 @@ class Game
         aion::ThreadSynchronizer<aion::FrameData> simulatorRendererSynchronizer;
 
         auto eventLoop = std::make_shared<aion::EventLoop>(&stopToken);
-        auto simulator = std::make_shared<aion::Simulator>(simulatorRendererSynchronizer);
+        auto simulator =
+            std::make_shared<aion::Simulator>(simulatorRendererSynchronizer, eventLoop);
         auto renderer = std::make_shared<aion::Renderer>(&stopSource, graphicsRegistry,
                                                          simulatorRendererSynchronizer);
         auto cc = std::make_shared<aion::CommandCenter>();
