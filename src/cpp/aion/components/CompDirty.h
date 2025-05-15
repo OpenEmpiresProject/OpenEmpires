@@ -7,7 +7,7 @@ class CompDirty
 {
   public:
     int64_t dirtyVersion = 0;          // Dirty counter for this entity
-    static int64_t globalDirtyVersion; // Global dirty counter to be used for all entities
+    inline static int64_t globalDirtyVersion = 0; // Global dirty counter to be used for all entities
 
     bool isDirty() const
     {
@@ -19,8 +19,6 @@ class CompDirty
         dirtyVersion = globalDirtyVersion;
     }
 };
-
-inline int64_t CompDirty::globalDirtyVersion = 0;
 
 } // namespace aion
 

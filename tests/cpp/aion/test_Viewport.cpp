@@ -1,7 +1,7 @@
 #include "Coordinates.h"
 #include "GameSettings.h"
 #include "Vec2d.h"
-#include "utils/WidthHeight.h"
+#include "utils/Size.h"
 #include "utils/Constants.h"
 #include <gtest/gtest.h>
 #include <SDL3/SDL_events.h>

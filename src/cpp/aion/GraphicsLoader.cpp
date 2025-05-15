@@ -2,7 +2,7 @@
 
 #include "GraphicsRegistry.h"
 #include "utils/Logger.h"
-#include "utils/WidthHeight.h"
+#include "utils/Size.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_rect.h>
@@ -25,7 +25,7 @@ using namespace std;
 
 GraphicsLoader::GraphicsLoader(SDL_Renderer* renderer,
                                GraphicsRegistry& graphicsRegistry,
-                               AtlasGeneratorBase& atlasGenerator)
+                               AtlasGenerator& atlasGenerator)
     : m_renderer(renderer), m_graphicsRegistry(graphicsRegistry), m_atlasGenerator(atlasGenerator)
 {
 }
@@ -158,7 +158,7 @@ void GraphicsLoader::createAtlasForEntityType(int entityType,
     {
         const auto& path = paths[i];
         const auto& srcRect = srcRects[i];
-        WidthHeight imageSize = {srcRect.w, srcRect.h};
+        Size imageSize = {srcRect.w, srcRect.h};
 
         GraphicsID id;
         id.entityType = entityType;

@@ -167,7 +167,7 @@ void EventLoop::handleInputEvents()
     }
 }
 
-void aion::EventLoop::handleGameEvents()
+void EventLoop::handleGameEvents()
 {
     while (!m_eventQueue.empty())
     {
@@ -180,7 +180,7 @@ void aion::EventLoop::handleGameEvents()
     }
 }
 
-void aion::EventLoop::publish(const Event& event)
+void EventLoop::publish(const Event& event)
 {
     m_eventQueue.push(event);
 }

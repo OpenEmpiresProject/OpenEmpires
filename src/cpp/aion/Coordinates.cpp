@@ -1,6 +1,7 @@
 #include "Coordinates.h"
 
 #include "utils/Logger.h"
+#include "utils/Constants.h"
 
 #include <SDL3/SDL_events.h>
 
@@ -33,12 +34,12 @@ Vec2d Coordinates::feetToTiles(const Vec2d& feet) const
     return feet / Constants::FEET_PER_TILE;
 }
 
-Vec2d aion::Coordinates::tilesToFeet(const Vec2d& tiles) const
+Vec2d Coordinates::tilesToFeet(const Vec2d& tiles) const
 {
     return tiles * Constants::FEET_PER_TILE;
 }
 
-Vec2d aion::Coordinates::getTileCenterInFeet(const Vec2d& tile) const
+Vec2d Coordinates::getTileCenterInFeet(const Vec2d& tile) const
 {
     return tilesToFeet(tile) + Vec2d(Constants::FEET_PER_TILE / 2, Constants::FEET_PER_TILE / 2);
 }

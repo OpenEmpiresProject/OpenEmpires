@@ -52,7 +52,7 @@ class CompTransform
         // }
     }
 
-    void walk(int timeMs)
+    void move(int timeMs)
     {
         assert(speed > 0 && "Speed must be greater than zero");
         // Update the position based on speed and time

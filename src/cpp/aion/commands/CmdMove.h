@@ -1,5 +1,5 @@
-#ifndef CMDWALK_H
-#define CMDWALK_H
+#ifndef CMDMOVE_H
+#define CMDMOVE_H
 
 #include "Vec2d.h"
 #include "commands/Command.h"
@@ -13,7 +13,7 @@
 
 namespace aion
 {
-class CmdWalk : public Command
+class CmdMove : public Command
 {
   public:
     // TODO: this is temporary. need flow-field and goal position only.
@@ -35,17 +35,17 @@ class CmdWalk : public Command
                 .getComponents<CompTransform, CompAction, CompAnimation, CompDirty>(entityID);
 
         animate(action, animation, dirty, deltaTimeMs);
-        return walk(transform, deltaTimeMs);
+        return move(transform, deltaTimeMs);
     }
 
     std::string toString() const override
     {
-        return "walk";
-    };
+        return "move";
+    }
 
     void destroy() override
     {
-        ObjectPool<CmdWalk>::release(this);
+        ObjectPool<CmdMove>::release(this);
     }
 
     bool onCreateSubCommands(std::list<Command*>& subCommands) override
@@ -67,7 +67,7 @@ class CmdWalk : public Command
         }
     }
 
-    bool walk(CompTransform& transform, int deltaTimeMs)
+    bool move(CompTransform& transform, int deltaTimeMs)
     {
         if (!path.empty())
         {
@@ -79,10 +79,9 @@ class CmdWalk : public Command
             else
             {
                 transform.face(nextPos);
-                transform.walk(deltaTimeMs);
+                transform.move(deltaTimeMs);
             }
         }
-
         return path.empty();
     }
 };

@@ -68,3 +68,30 @@ const Animation& GraphicsRegistry::getAnimation(const GraphicsID& graphicID) con
     }
     return m_animationMap.at(hash);
 }
+
+bool GraphicsRegistry::hasTexture(const GraphicsID& graphicID) const
+{
+    return m_textureMap.find(graphicID.hash()) != m_textureMap.end();
+}
+
+size_t GraphicsRegistry::getTextureCount() const
+{
+    return m_textureMap.size();
+}
+
+const std::unordered_map<int64_t, Texture>& GraphicsRegistry::getTextures() const
+{
+    return m_textureMap;
+}
+
+bool GraphicsRegistry::hasAnimation(const GraphicsID& graphicID) const
+{
+    int64_t hash = graphicID.hashWithClearingFrame();
+
+    return m_animationMap.find(hash) != m_animationMap.end();
+}
+
+size_t GraphicsRegistry::getAnimationCount() const
+{
+    return m_animationMap.size();
+}

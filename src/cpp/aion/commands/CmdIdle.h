@@ -33,7 +33,7 @@ class CmdIdle : public Command
     std::string toString() const override
     {
         return "idle";
-    };
+    }
 
     void destroy() override
     {

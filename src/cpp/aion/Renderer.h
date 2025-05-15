@@ -32,40 +32,25 @@ class Renderer : public SubSystem
              ThreadSynchronizer<FrameData>& synchronizer);
     ~Renderer();
 
+    SDL_Renderer* getSDLRenderer();
+
+  private:
     // SubSystem methods
     void init() override;
     void shutdown() override;
 
-    SDL_Renderer* getSDLRenderer()
-    {
-        std::unique_lock<std::mutex> lock(m_sdlInitMutex);
-        m_sdlInitCV.wait(lock, [this] { return m_sdlInitialized; });
-        return m_renderer;
-    }
-
-  private:
     void initSDL();
     void threadEntry();
     void renderingLoop();
     void cleanup();
-
     bool handleEvents();
     void updateRenderingComponents();
     void renderDebugInfo(FPSCounter& counter);
     void renderGameEntities();
     void renderBackground();
     void renderSelectionBox();
-
-    void addDebugText(const std::string& text)
-    {
-        m_debugTexts.push_back(text);
-    }
-
-    void clearDebugTexts()
-    {
-        m_debugTexts.clear();
-    }
-
+    void addDebugText(const std::string& text);
+    void clearDebugTexts();
     void generateTicks();
     void onTick();
     void handleViewportMovement();

@@ -1,5 +1,5 @@
-#ifndef ATLASGENERATORBASE_H
-#define ATLASGENERATORBASE_H
+#ifndef ATLASGENERATOR_H
+#define ATLASGENERATOR_H
 
 #include <SDL3/SDL.h>
 #include <filesystem>
@@ -7,10 +7,10 @@
 
 namespace aion
 {
-class AtlasGeneratorBase
+class AtlasGenerator
 {
   public:
-    virtual ~AtlasGeneratorBase() = default;
+    virtual ~AtlasGenerator() = default;
     virtual SDL_Texture* generateAtlas(SDL_Renderer* renderer,
                                        int entityType,
                                        const std::vector<std::filesystem::path>& images,

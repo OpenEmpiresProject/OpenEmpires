@@ -3,8 +3,6 @@
 
 #include "GameSettings.h"
 #include "Vec2d.h"
-#include "utils/Constants.h"
-#include "utils/Utilities.h"
 
 #include <memory>
 

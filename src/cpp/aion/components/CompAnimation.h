@@ -1,11 +1,7 @@
 #ifndef COMPANIMATION_H
 #define COMPANIMATION_H
 
-#include "GraphicsRegistry.h"
 #include "utils/Constants.h"
-#include "utils/WidthHeight.h"
-
-#include <SDL3/SDL.h>
 
 namespace aion
 {

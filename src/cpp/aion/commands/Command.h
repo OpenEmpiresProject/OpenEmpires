@@ -17,9 +17,7 @@ class Command
         m_settings = ServiceRegistry::getInstance().getService<GameSettings>();
     }
 
-    virtual ~Command()
-    {
-    }
+    virtual ~Command() = default;
 
     virtual void onStart() = 0;
     virtual void onQueue(uint32_t entityID) = 0;
@@ -49,6 +47,7 @@ class Command
     inline static int s_totalTicks = 0;
 };
 
+// Comparator to use Commands in priority_queue
 struct CompareTaskPtr
 {
     bool operator()(const Command* a, const Command* b) const

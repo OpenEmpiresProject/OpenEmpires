@@ -3,7 +3,7 @@
 
 #include "utils/Constants.h"
 #include "utils/Types.h"
-#include "utils/WidthHeight.h"
+#include "utils/Size.h"
 
 namespace aion
 {
@@ -18,31 +18,38 @@ class GameSettings
         m_resolution.width = width;
         m_resolution.height = height;
     }
+
     void setFullscreen(bool fullscreen)
     {
         m_isFullscreen = fullscreen;
     }
+
     void setVSync(bool vsync)
     {
         m_isVSync = vsync;
     }
+
     void setVolume(float volume)
     {
         m_soundVolume = volume;
     }
+
     void setMusicVolume(float volume)
     {
         m_musicVolume = volume;
     }
+
     void setWindowDimensions(int width, int height)
     {
         m_windowDimensions.width = width;
         m_windowDimensions.height = height;
     }
+
     void setWorldSizeType(WorldSizeType size)
     {
         m_worldSizeType = size;
     }
+
     void setTitle(const std::string& m_title)
     {
         this->m_title = m_title;
@@ -63,19 +70,22 @@ class GameSettings
         m_targetFPS = fps;
     }
 
-    const WidthHeight& getResolution() const
+    const Size& getResolution() const
     {
         return m_resolution;
     }
-    const WidthHeight& getWindowDimensions() const
+
+    const Size& getWindowDimensions() const
     {
         return m_windowDimensions;
     }
+
     WorldSizeType getWorldSizeType() const
     {
         return m_worldSizeType;
     }
-    WidthHeight getWorldSize() const
+
+    Size getWorldSize() const
     {
         switch (m_worldSizeType)
         {
@@ -92,28 +102,34 @@ class GameSettings
             return {-1, -1};
         }
     }
-    WidthHeight getWorldSizeInTiles() const
+
+    Size getWorldSizeInTiles() const
     {
         auto worldSize = getWorldSize();
         return {worldSize.width / Constants::FEET_PER_TILE,
                 worldSize.height / Constants::FEET_PER_TILE};
     }
+
     bool isFullscreen() const
     {
         return m_isFullscreen;
     }
+
     bool isVSync() const
     {
         return m_isVSync;
     }
+
     float getVolume() const
     {
         return m_soundVolume;
     }
+
     float getMusicVolume() const
     {
         return m_musicVolume;
     }
+    
     std::string getTitle() const
     {
         return m_title;
@@ -135,8 +151,8 @@ class GameSettings
     }
 
   private:
-    WidthHeight m_resolution{800, 600};
-    WidthHeight m_windowDimensions{800, 600};
+    Size m_resolution{800, 600};
+    Size m_windowDimensions{800, 600};
     WorldSizeType m_worldSizeType = WorldSizeType::DEMO;
     bool m_isFullscreen = false;
     bool m_isVSync = true;

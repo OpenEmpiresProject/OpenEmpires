@@ -1,8 +1,6 @@
 #ifndef COMPENTITYINFO_H
 #define COMPENTITYINFO_H
 
-#include <entt/entity/registry.hpp>
-
 namespace aion
 {
 class CompEntityInfo

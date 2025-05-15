@@ -4,7 +4,7 @@
 #include "GameState.h"
 #include "ServiceRegistry.h"
 #include "commands/CmdIdle.h"
-#include "commands/CmdWalk.h"
+#include "commands/CmdMove.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
 #include "components/CompDirty.h"
@@ -52,10 +52,6 @@ void Simulator::onEvent(const Event& e)
     break;
     case Event::Type::MOUSE_BTN_UP:
     {
-        // spdlog::debug("Mouse button up event: {} at {}",
-        //                 e.getData<MouseClickData>().button == MouseClickData::Button::LEFT ?
-        //                 "Left" : "Right", e.getData<MouseClickData>().screenPosition.toString());
-
         auto mousePos = e.getData<MouseClickData>().screenPosition;
         // TODO: This is not thread safe.
         auto worldPos = m_coordinates.screenUnitsToFeet(mousePos);
@@ -67,7 +63,6 @@ void Simulator::onEvent(const Event& e)
         else if (e.getData<MouseClickData>().button == MouseClickData::Button::RIGHT)
         {
             // spdlog::debug("Right mouse clicked at tile position: {}", tilePos.toString());
-
             resolveAction(worldPos);
         }
 
@@ -103,7 +98,6 @@ void Simulator::onTick()
     m_synchronizer.getSenderFrameData().frameNumber = m_frame;
     m_coordinates.setViewportPositionInPixels(
         m_synchronizer.getSenderFrameData().viewportPositionInPixels);
-    // spdlog::info("Simulating frame {}", m_frame);
 
     updateGraphicComponents();
     sendGraphicsInstructions();
@@ -169,7 +163,7 @@ void Simulator::incrementDirtyVersion()
     CompDirty::globalDirtyVersion++;
 }
 
-void aion::Simulator::onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endScreenPos)
+void Simulator::onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endScreenPos)
 {
     int selectionLeft = std::min(startScreenPos.x, endScreenPos.x);
     int selectionRight = std::max(startScreenPos.x, endScreenPos.x);
@@ -216,7 +210,7 @@ void aion::Simulator::onSelectingUnits(const Vec2d& startScreenPos, const Vec2d&
     }
 }
 
-void aion::Simulator::resolveAction(const Vec2d& targetFeetPos)
+void Simulator::resolveAction(const Vec2d& targetFeetPos)
 {
     auto tilePos = m_coordinates.feetToTiles(targetFeetPos);
     // TODO: Resolve the common action based on the unit selection here. Assuming movement for now
@@ -275,23 +269,21 @@ void Simulator::testPathFinding(const Vec2d& end)
             pathList.push_back(m_coordinates.getTileCenterInFeet(path[i]));
         }
 
-        auto walk = ObjectPool<CmdWalk>::acquire();
-        walk->path = pathList;
-        walk->setPriority(10); // TODO: Need a better way
+        auto move = ObjectPool<CmdMove>::acquire();
+        move->path = pathList;
+        move->setPriority(10); // TODO: Need a better way
 
-        // TODO: This is not correct, use selector's current selection
-        GameState::getInstance().getEntities<CompUnit>().each(
-            [this, &walk](uint32_t entityID, CompUnit& unit)
+        CompUnit& unit = GameState::getInstance().getComponent<CompUnit>(
+            m_currentUnitSelection.selectedEntities[0]);
+       
+        if (unit.commandQueue.empty() == false)
+        {
+            if (move->getPriority() == unit.commandQueue.top()->getPriority())
             {
-                if (unit.commandQueue.empty() == false)
-                {
-                    if (walk->getPriority() == unit.commandQueue.top()->getPriority())
-                    {
-                        unit.commandQueue.pop();
-                    }
-                }
-                unit.commandQueue.push(walk);
-            });
+                unit.commandQueue.pop();
+            }
+        }
+        unit.commandQueue.push(move);
     }
 }
 

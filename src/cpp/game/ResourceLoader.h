@@ -19,16 +19,13 @@ class ResourceLoader : public aion::SubSystem
                    std::shared_ptr<aion::Renderer> renderer);
     ~ResourceLoader() = default;
 
-    void loadEntities();
 
   private:
     // SubSystem methods
     void init() override;
+    void shutdown() override;
 
-    void shutdown() override
-    {
-        // Cleanup code for resource loading
-    }
+    void loadEntities();
 
     std::shared_ptr<aion::GameSettings> m_settings;
     aion::GraphicsRegistry& m_graphicsRegistry;

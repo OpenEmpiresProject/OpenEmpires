@@ -1,7 +1,7 @@
 #ifndef ATLASGENERATORBASIC_H
 #define ATLASGENERATORBASIC_H
 
-#include "AtlasGeneratorBase.h"
+#include "AtlasGenerator.h"
 #include "utils/Logger.h"
 
 #include <SDL3/SDL_rect.h>
@@ -10,7 +10,7 @@
 
 namespace aion
 {
-class AtlasGeneratorBasic : public AtlasGeneratorBase
+class AtlasGeneratorBasic : public AtlasGenerator
 {
   public:
     SDL_Texture* generateAtlas(SDL_Renderer* renderer,

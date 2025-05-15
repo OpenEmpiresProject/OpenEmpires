@@ -1,11 +1,9 @@
 #ifndef COMPGRAPHICS_H
 #define COMPGRAPHICS_H
 
-#include "GraphicsRegistry.h"
 #include "Vec2d.h"
-#include "utils/WidthHeight.h"
+#include "GraphicsRegistry.h" // For GraphicsID
 
-#include <SDL3/SDL.h>
 #include <entt/entity/registry.hpp>
 #include <variant>
 #include <vector>

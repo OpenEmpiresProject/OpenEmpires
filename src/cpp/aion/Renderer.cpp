@@ -73,17 +73,40 @@ void Renderer::shutdown()
     m_running = false;
     if (m_renderThread.joinable())
     {
-        // m_renderThread.request_stop();
         m_renderThread.join();
     }
+}
+
+SDL_Renderer* Renderer::getSDLRenderer()
+{
+    std::unique_lock<std::mutex> lock(m_sdlInitMutex);
+    m_sdlInitCV.wait(lock, [this] { return m_sdlInitialized; });
+    return m_renderer;
+}
+
+void Renderer::addDebugText(const std::string& text)
+{
+    m_debugTexts.push_back(text);
+}
+
+void Renderer::clearDebugTexts()
+{
+    m_debugTexts.clear();
 }
 
 void Renderer::cleanup()
 {
     if (m_renderer)
+    {
         SDL_DestroyRenderer(m_renderer);
+        m_renderer = nullptr;
+    }
+
     if (m_window)
+    {
         SDL_DestroyWindow(m_window);
+        m_window = nullptr;
+    }
 }
 
 void Renderer::threadEntry()
@@ -132,7 +155,6 @@ void Renderer::renderingLoop()
     spdlog::info("Starting rendering loop...");
     bool running = true;
     FPSCounter fpsCounter;
-    int counter = 0;
 
     while (running)
     {
@@ -461,7 +483,7 @@ void Renderer::renderBackground()
     SDL_RenderClear(m_renderer);
 }
 
-void aion::Renderer::renderSelectionBox()
+void Renderer::renderSelectionBox()
 {
     if (m_isSelecting && m_selectionStartPosScreenUnits != m_selectionEndPosScreenUnits)
     {

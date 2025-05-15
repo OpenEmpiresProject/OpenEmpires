@@ -10,9 +10,6 @@
 #include "UnitSelection.h"
 #include "components/CompGraphics.h"
 
-#include <readerwriterqueue.h>
-#include <vector>
-
 namespace aion
 {
 class Simulator : public EventHandler
@@ -23,9 +20,10 @@ class Simulator : public EventHandler
     ~Simulator() = default;
 
   private:
-    void onInit(EventLoop* eventLoop);
-    void onExit();
-    void onEvent(const Event& e);
+    // EventHandler overrides
+    void onInit(EventLoop* eventLoop) override;
+    void onExit() override;
+    void onEvent(const Event& e) override;
 
     void onTick();
     void sendGraphicsInstructions();
@@ -37,15 +35,12 @@ class Simulator : public EventHandler
     void resolveAction(const Vec2d& targetFeetPos);
 
     Coordinates m_coordinates;
-
     ThreadSynchronizer<FrameData>& m_synchronizer;
     int m_frame = 0;
-
     Vec2d m_selectionStartPosScreenUnits;
     Vec2d m_selectionEndPosScreenUnits;
     bool m_isSelecting = false;
     std::shared_ptr<EventPublisher> m_publisher;
-
     UnitSelection m_currentUnitSelection;
 };
 } // namespace aion

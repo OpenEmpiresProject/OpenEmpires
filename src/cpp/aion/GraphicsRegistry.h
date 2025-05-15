@@ -3,7 +3,7 @@
 
 #include "Vec2d.h"
 #include "utils/Types.h"
-#include "utils/WidthHeight.h"
+#include "utils/Size.h"
 
 #include <SDL3/SDL.h>
 #include <string>
@@ -84,7 +84,7 @@ struct Texture
     SDL_Texture* image = nullptr;
     SDL_FRect* srcRect = nullptr; // Source rectangle for the texture
     Vec2d anchor{0, 0};
-    WidthHeight size{0, 0};
+    Size size{0, 0};
     bool flip = false;
 };
 
@@ -103,32 +103,13 @@ class GraphicsRegistry
 
     void registerTexture(const GraphicsID& graphicID, const Texture& entry);
     const Texture& getTexture(const GraphicsID& graphicID) const;
-    bool hasTexture(const GraphicsID& graphicID) const
-    {
-        return m_textureMap.find(graphicID.hash()) != m_textureMap.end();
-    }
-
-    size_t getTextureCount() const
-    {
-        return m_textureMap.size();
-    }
-    auto getTextures() const
-    {
-        return m_textureMap;
-    }
-
+    bool hasTexture(const GraphicsID& graphicID) const;
+    size_t getTextureCount() const;
+    const std::unordered_map<int64_t, Texture>& getTextures() const;
     void registerAnimation(const GraphicsID& graphicID, const Animation& entry);
     const Animation& getAnimation(const GraphicsID& graphicID) const;
-    bool hasAnimation(const GraphicsID& graphicID) const
-    {
-        int64_t hash = graphicID.hashWithClearingFrame();
-
-        return m_animationMap.find(hash) != m_animationMap.end();
-    }
-    size_t getAnimationCount() const
-    {
-        return m_animationMap.size();
-    }
+    bool hasAnimation(const GraphicsID& graphicID) const;
+    size_t getAnimationCount() const;
 
   private:
     std::unordered_map<int64_t, Texture> m_textureMap;

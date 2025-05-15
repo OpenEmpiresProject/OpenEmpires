@@ -1,7 +1,7 @@
 #ifndef GRAPHICSLOADER_H
 #define GRAPHICSLOADER_H
 
-#include "AtlasGeneratorBase.h"
+#include "AtlasGenerator.h"
 #include "GraphicsRegistry.h"
 #include "Vec2d.h"
 
@@ -16,7 +16,7 @@ class GraphicsLoader
   public:
     GraphicsLoader(SDL_Renderer* renderer,
                    GraphicsRegistry& graphicsRegistry,
-                   AtlasGeneratorBase& atlasGenerator);
+                   AtlasGenerator& atlasGenerator);
     ~GraphicsLoader() = default;
 
     void loadAllGraphics();
@@ -41,7 +41,7 @@ class GraphicsLoader
     int m_variation = 0;
     GraphicsRegistry& m_graphicsRegistry;
 
-    AtlasGeneratorBase& m_atlasGenerator;
+    AtlasGenerator& m_atlasGenerator;
 
     std::unordered_map<int, SDL_Cursor*> m_cursors;
 

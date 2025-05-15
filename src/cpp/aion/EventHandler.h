@@ -4,8 +4,6 @@
 #include "Event.h"
 #include "EventLoop.h"
 
-#include <queue>
-
 namespace aion
 {
 class EventHandler

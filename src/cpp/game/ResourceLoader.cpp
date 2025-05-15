@@ -129,3 +129,8 @@ void ResourceLoader::init()
 {
     loadEntities();
 }
+
+void ResourceLoader::shutdown()
+{
+    // Cleanup code for resource loading
+}

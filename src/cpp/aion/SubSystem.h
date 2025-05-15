@@ -1,8 +1,6 @@
 #ifndef SUBSYSTEM_H
 #define SUBSYSTEM_H
 
-#include "utils/Logger.h"
-
 #include <stop_token>
 
 namespace aion
