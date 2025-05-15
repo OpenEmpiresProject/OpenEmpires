@@ -170,8 +170,9 @@ void GraphicsLoader::createAtlasForEntityType(int entityType,
 
         if (entityType == 2)
         {
-            id.variation =
-                m_variation++; // Different grass tiles. TODO: This doesn't scale or work well.
+            auto imageName = path.stem().string();
+            auto frameId = std::stoi(imageName.substr(imageName.find_last_of('_') + 1, 3));
+            id.variation = frameId;
             anchor = {imageSize.width / 2 + 1, 0};
         }
         else if (entityType == 3)

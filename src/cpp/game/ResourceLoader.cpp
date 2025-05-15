@@ -51,7 +51,14 @@ void game::ResourceLoader::loadEntities()
             auto tile = gameState.createEntity();
             gameState.addComponent(tile, CompTransform(i * 256, j * 256));
             gameState.addComponent(tile, CompRendering());
-            gameState.addComponent(tile, CompEntityInfo(2, rand() % 50 + 1));
+            // tc = sqrt(total_tile_frame_count)
+            int tc = 10;
+            // Convet our top corner based coordinate to left corner based coordinate
+            int newX = size.height - j;
+            int newY = i;
+            // AOE2 standard tiling rule. From OpenAge documentation
+            int tileVariation = (newX % tc) + ((newY % tc) * tc) + 1;
+            gameState.addComponent(tile, CompEntityInfo(2, tileVariation));
             gameState.addComponent(tile, CompDirty());
 
             auto map = gameState.staticEntityMap;
