@@ -76,6 +76,16 @@ struct GraphicAddon
     }
 };
 
+struct Color
+{
+    uint8_t r = 255;
+    uint8_t g = 255;
+    uint8_t b = 255;
+
+    static const Color RED;
+    static const Color NONE;
+};
+
 // Component will be owned by the Simulator
 class CompGraphics : public GraphicsID
 {
@@ -85,6 +95,7 @@ class CompGraphics : public GraphicsID
     bool isStatic = false;
     std::vector<DebugOverlay> debugOverlays;
     std::vector<GraphicAddon> addons;
+    Color shading;
 
     CompGraphics()
     {

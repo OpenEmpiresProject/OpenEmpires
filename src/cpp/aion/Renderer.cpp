@@ -449,6 +449,7 @@ void Renderer::renderGameEntities()
                         break;
                     }
                 }
+                SDL_SetTextureColorMod(rc->texture, rc->shading.r, rc->shading.g, rc->shading.b);
                 SDL_RenderTextureRotated(m_renderer, rc->texture, rc->srcRect, &dstRect, 0, nullptr,
                                          rc->flip);
             }

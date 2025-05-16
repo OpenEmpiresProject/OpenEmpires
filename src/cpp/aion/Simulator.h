@@ -26,13 +26,15 @@ class Simulator : public EventHandler
     void onEvent(const Event& e) override;
 
     void onTick();
+    void onTickStart();
+    void onTickEnd();
     void sendGraphicsInstructions();
     void sendGraphiInstruction(CompGraphics* instruction);
     void testPathFinding(const Vec2d& end);
     void updateGraphicComponents();
-    void incrementDirtyVersion();
     void onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endScreenPos);
     void resolveAction(const Vec2d& targetFeetPos);
+    void testBuildMill(const Vec2d& targetFeetPos);
 
     Coordinates m_coordinates;
     ThreadSynchronizer<FrameData>& m_synchronizer;
@@ -42,6 +44,8 @@ class Simulator : public EventHandler
     bool m_isSelecting = false;
     std::shared_ptr<EventPublisher> m_publisher;
     UnitSelection m_currentUnitSelection;
+    Vec2d m_lastMouseScreenPos;
+    uint32_t m_currentBuildingOnPlacement = 0;
 };
 } // namespace aion
 

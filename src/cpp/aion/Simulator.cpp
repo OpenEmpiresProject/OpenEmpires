@@ -13,7 +13,10 @@
 #include "components/CompRendering.h"
 #include "components/CompTransform.h"
 #include "components/CompUnit.h"
+#include "components/CompBuilding.h"
 #include "utils/ObjectPool.h"
+
+#include <entt/entity/registry.hpp>
 
 using namespace aion;
 
@@ -25,6 +28,7 @@ Simulator::Simulator(ThreadSynchronizer<FrameData>& synchronizer,
       m_coordinates(ServiceRegistry::getInstance().getService<GameSettings>()),
       m_publisher(std::move(publisher))
 {
+    m_currentBuildingOnPlacement = entt::null;
 }
 
 void Simulator::onInit(EventLoop* eventLoop)
@@ -47,18 +51,40 @@ void Simulator::onEvent(const Event& e)
     case Event::Type::KEY_UP:
     {
         SDL_Scancode scancode = static_cast<SDL_Scancode>(e.getData<KeyboardData>().keyCode);
-        // spdlog::debug("Key up event: {}", scancodeToChar(scancode, false));
+
+        // TODO: temporary
+        if (scancode == SDL_SCANCODE_B)
+        {
+            auto worldPos = m_coordinates.screenUnitsToFeet(m_lastMouseScreenPos);
+
+            testBuildMill(worldPos);
+        } else if (scancode == SDL_SCANCODE_ESCAPE)
+        {
+            GameState::getInstance().destroyEntity(m_currentBuildingOnPlacement);
+            m_currentBuildingOnPlacement = entt::null;
+        }        
     }
     break;
     case Event::Type::MOUSE_BTN_UP:
     {
         auto mousePos = e.getData<MouseClickData>().screenPosition;
-        // TODO: This is not thread safe.
         auto worldPos = m_coordinates.screenUnitsToFeet(mousePos);
 
         if (e.getData<MouseClickData>().button == MouseClickData::Button::LEFT)
         {
             // spdlog::debug("Mouse clicked at tile position: {}", tilePos.toString());
+            if (m_currentBuildingOnPlacement != entt::null)
+            {
+                auto& building = GameState::getInstance().getComponent<CompBuilding>(
+                    m_currentBuildingOnPlacement);
+
+                if (building.cantPlace)
+                {
+                    GameState::getInstance().destroyEntity(m_currentBuildingOnPlacement);
+                }
+                // Building is permanent now, no need to track for placement
+                m_currentBuildingOnPlacement = entt::null;
+            }
         }
         else if (e.getData<MouseClickData>().button == MouseClickData::Button::RIGHT)
         {
@@ -86,8 +112,56 @@ void Simulator::onEvent(const Event& e)
             m_selectionStartPosScreenUnits = e.getData<MouseClickData>().screenPosition;
             m_selectionEndPosScreenUnits = e.getData<MouseClickData>().screenPosition;
         }
+        break;
     }
-    break;
+    case Event::Type::MOUSE_MOVE:
+    {
+        m_lastMouseScreenPos = e.getData<MouseMoveData>().screenPos;
+        if (m_currentBuildingOnPlacement != entt::null)
+        {
+            auto& transform = GameState::getInstance().getComponent<CompTransform>(m_currentBuildingOnPlacement);
+            auto feet = m_coordinates.screenUnitsToFeet(m_lastMouseScreenPos);
+            auto tile = m_coordinates.feetToTiles(feet);
+
+            auto& building =
+                GameState::getInstance().getComponent<CompBuilding>(m_currentBuildingOnPlacement);
+
+            auto& staticMap = GameState::getInstance().staticEntityMap;
+            auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
+
+            building.cantPlace = false;
+
+            if (tile.x <= 1 || tile.y <= 1 || tile.x >= (settings->getWorldSize().width - 2) ||
+                tile.y >= (settings->getWorldSize().height - 2))
+                building.cantPlace = true;
+            else
+            {
+                for (size_t i = 0; i < building.size.width; i++)
+                {
+                    for (size_t j = 0; j < building.size.height; j++)
+                    {
+                        if (staticMap.map[tile.x - i][tile.y - j] != 0)
+                        {
+                            building.cantPlace = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // place buildings almost (10, 10 feet before) at the bottom corner of a tile
+            tile += Vec2d(1, 1);
+            feet = m_coordinates.tilesToFeet(tile) - Vec2d(10, 10);
+
+            transform.position = feet;
+
+            auto& dirty =
+                GameState::getInstance().getComponent<CompDirty>(m_currentBuildingOnPlacement);
+            dirty.markDirty();
+
+        }
+        break;
+    }
     default:
         break;
     }
@@ -95,13 +169,23 @@ void Simulator::onEvent(const Event& e)
 
 void Simulator::onTick()
 {
+    onTickStart();
+    updateGraphicComponents();
+    sendGraphicsInstructions();
+    onTickEnd();
+}
+
+void Simulator::onTickStart()
+{
     m_synchronizer.getSenderFrameData().frameNumber = m_frame;
     m_coordinates.setViewportPositionInPixels(
         m_synchronizer.getSenderFrameData().viewportPositionInPixels);
 
-    updateGraphicComponents();
-    sendGraphicsInstructions();
-    incrementDirtyVersion();
+}
+
+void Simulator::onTickEnd()
+{
+    CompDirty::globalDirtyVersion++;
     m_frame++;
     m_synchronizer.waitForReceiver();
 }
@@ -156,11 +240,18 @@ void Simulator::updateGraphicComponents()
                 return;
             gc.action = action.action;
         });
-}
 
-void Simulator::incrementDirtyVersion()
-{
-    CompDirty::globalDirtyVersion++;
+     GameState::getInstance().getEntities<CompGraphics, CompDirty, CompBuilding>().each(
+        [this](uint32_t entityID, CompGraphics& gc, CompDirty& dirty, CompBuilding& building)
+        {
+            // TODO: might need to optimize this later
+            if (dirty.isDirty() == false)
+                return;
+            if (building.cantPlace)
+                gc.shading = Color::RED;
+            else
+                gc.shading = Color::NONE;
+        });
 }
 
 void Simulator::onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endScreenPos)
@@ -215,6 +306,32 @@ void Simulator::resolveAction(const Vec2d& targetFeetPos)
     auto tilePos = m_coordinates.feetToTiles(targetFeetPos);
     // TODO: Resolve the common action based on the unit selection here. Assuming movement for now
     testPathFinding(tilePos);
+}
+
+void aion::Simulator::testBuildMill(const Vec2d& targetFeetPos)
+{
+    auto& gameState = GameState::getInstance();
+    auto mill = gameState.createEntity();
+    auto transform = CompTransform(targetFeetPos);
+    transform.face(Direction::NORTHWEST);
+    gameState.addComponent(mill, transform);
+    gameState.addComponent(mill, CompRendering());
+    CompGraphics gc;
+    gc.isStatic = true;
+    gc.entityID = mill;
+    gc.entityType = 5; // tree
+    gameState.addComponent(mill, gc);
+    gameState.addComponent(mill, CompEntityInfo(5));
+
+    CompBuilding building;
+    building.size = Size(2, 2);
+    gameState.addComponent(mill, building);
+
+    CompDirty dirty;
+    dirty.markDirty();
+    gameState.addComponent(mill, dirty);
+
+    m_currentBuildingOnPlacement = mill;
 }
 
 void Simulator::sendGraphiInstruction(CompGraphics* instruction)

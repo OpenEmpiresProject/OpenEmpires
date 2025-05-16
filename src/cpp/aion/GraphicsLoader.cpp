@@ -136,6 +136,8 @@ int GraphicsLoader::determineEntityType(const std::filesystem::path& path)
         return 3; // Villager
     if (path.string().find("trees") != std::string::npos)
         return 4; // Trees
+    if (path.string().find("mill") != std::string::npos)
+        return 5; // Mill
     return 0;     // Unknown
 }
 
@@ -226,6 +228,9 @@ void GraphicsLoader::createAtlasForEntityType(int entityType,
                     break;
                 }
             }
+        }
+        else if (entityType == 5)
+        {
         }
 
         SDL_FRect* srcRectF = new SDL_FRect{(float) srcRect.x, (float) srcRect.y, (float) srcRect.w,
