@@ -67,6 +67,11 @@ void game::ResourceLoader::loadEntities()
             CompGraphics gc;
             gc.entityID = tile;
             gc.entityType = 2; // Tile
+            DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, DebugOverlay::Color::GREY, DebugOverlay::FixedPosition::BOTTOM_CENTER};
+            overlay.customPos1 = DebugOverlay::FixedPosition::CENTER_LEFT;
+            overlay.customPos2 = DebugOverlay::FixedPosition::CENTER_RIGHT;
+            gc.debugOverlays.push_back(overlay);
+
             gameState.addComponent(tile, gc);
         }
     }
@@ -118,7 +123,7 @@ void game::ResourceLoader::loadEntities()
                 gameState.addComponent(tree, CompRendering());
                 CompGraphics gc;
                 gc.debugOverlays.push_back({DebugOverlay::Type::CIRCLE, DebugOverlay::Color::RED,
-                                            DebugOverlay::Anchor::BOTTOM_CENTER});
+                                            DebugOverlay::FixedPosition::BOTTOM_CENTER});
                 gc.isStatic = true;
                 gc.entityID = tree;
                 gc.entityType = 4; // tree

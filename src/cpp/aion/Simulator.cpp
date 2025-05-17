@@ -375,7 +375,7 @@ void Simulator::testPathFinding(const Vec2d& end)
                     GameState::getInstance().getComponents<CompDirty, CompGraphics>(entity);
                 gc.debugOverlays.push_back({DebugOverlay::Type::FILLED_CIRCLE,
                                             DebugOverlay::Color::BLUE,
-                                            DebugOverlay::Anchor::CENTER});
+                                            DebugOverlay::FixedPosition::CENTER});
                 dirty.markDirty();
             }
         }

@@ -15,17 +15,19 @@ struct DebugOverlay
     enum class Type : uint8_t
     {
         CIRCLE,
-        FILLED_CIRCLE
+        FILLED_CIRCLE,
+        RHOMBUS
     };
 
     enum class Color : uint8_t
     {
         RED,
         GREEN,
-        BLUE
+        BLUE,
+        GREY
     };
 
-    enum class Anchor : uint8_t
+    enum class FixedPosition : uint8_t
     {
         TOP_LEFT,
         TOP_CENTER,
@@ -40,7 +42,9 @@ struct DebugOverlay
 
     Type type = Type::CIRCLE;
     Color color = Color::RED;
-    Anchor anchor = Anchor::CENTER;
+    FixedPosition anchor = FixedPosition::CENTER;
+    FixedPosition customPos1;
+    FixedPosition customPos2;
 };
 
 struct GraphicAddon

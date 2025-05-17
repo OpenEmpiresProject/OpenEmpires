@@ -318,7 +318,7 @@ void Renderer::renderDebugInfo(FPSCounter& counter)
     clearDebugTexts();
 }
 
-Vec2d getDebugOverlayPosition(DebugOverlay::Anchor anchor, const SDL_FRect& rect)
+Vec2d getDebugOverlayPosition(DebugOverlay::FixedPosition anchor, const SDL_FRect& rect)
 {
     int x = rect.x;
     int y = rect.y;
@@ -327,31 +327,31 @@ Vec2d getDebugOverlayPosition(DebugOverlay::Anchor anchor, const SDL_FRect& rect
 
     switch (anchor)
     {
-    case DebugOverlay::Anchor::TOP_LEFT:
+    case DebugOverlay::FixedPosition::TOP_LEFT:
         return {x, y};
         break;
-    case DebugOverlay::Anchor::TOP_CENTER:
+    case DebugOverlay::FixedPosition::TOP_CENTER:
         return {x + w / 2, y};
         break;
-    case DebugOverlay::Anchor::TOP_RIGHT:
+    case DebugOverlay::FixedPosition::TOP_RIGHT:
         return {x + w, y};
         break;
-    case DebugOverlay::Anchor::CENTER_LEFT:
+    case DebugOverlay::FixedPosition::CENTER_LEFT:
         return {x, y + h / 2};
         break;
-    case DebugOverlay::Anchor::CENTER:
+    case DebugOverlay::FixedPosition::CENTER:
         return {x + w / 2, y + h / 2};
         break;
-    case DebugOverlay::Anchor::CENTER_RIGHT:
+    case DebugOverlay::FixedPosition::CENTER_RIGHT:
         return {x + w, y + h / 2};
         break;
-    case DebugOverlay::Anchor::BOTTOM_LEFT:
+    case DebugOverlay::FixedPosition::BOTTOM_LEFT:
         return {x, y + h};
         break;
-    case DebugOverlay::Anchor::BOTTOM_CENTER:
+    case DebugOverlay::FixedPosition::BOTTOM_CENTER:
         return {x + w / 2, y + h};
         break;
-    case DebugOverlay::Anchor::BOTTOM_RIGHT:
+    case DebugOverlay::FixedPosition::BOTTOM_RIGHT:
         return {x + w, y + h};
         break;
     }
@@ -469,6 +469,15 @@ void Renderer::renderGameEntities()
                     case DebugOverlay::Type::FILLED_CIRCLE:
                         filledEllipseRGBA(m_renderer, pos.x, pos.y, 20, 10, 0, 0, 255,
                                           100); // blue ellipse
+                    case DebugOverlay::Type::RHOMBUS:
+                    {
+                        auto end1 = getDebugOverlayPosition(overlay.customPos1, dstRect);
+                        auto end2 = getDebugOverlayPosition(overlay.customPos2, dstRect);
+
+                        // Lifting the lines by a single pixel to avoid the next tile overriding these
+                        lineRGBA(m_renderer, pos.x, pos.y - 1, end1.x, end1.y - 1, 180, 180, 180, 255);
+                        lineRGBA(m_renderer, pos.x, pos.y - 1, end2.x, end2.y - 1, 180, 180, 180, 255);
+                    }
                         break;
                     }
                 }
