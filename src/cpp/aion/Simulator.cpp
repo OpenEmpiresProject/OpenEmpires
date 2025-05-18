@@ -57,8 +57,15 @@ void Simulator::onEvent(const Event& e)
         {
             auto worldPos = m_coordinates.screenUnitsToFeet(m_lastMouseScreenPos);
 
-            testBuildMill(worldPos);
-        } else if (scancode == SDL_SCANCODE_ESCAPE)
+            testBuildMill(worldPos, 5, Size(2, 2));
+        } 
+        else if (scancode == SDL_SCANCODE_N)
+        {
+            auto worldPos = m_coordinates.screenUnitsToFeet(m_lastMouseScreenPos);
+
+            testBuildMill(worldPos, 6, Size(4, 4));
+        }
+        else if (scancode == SDL_SCANCODE_ESCAPE)
         {
             GameState::getInstance().destroyEntity(m_currentBuildingOnPlacement);
             m_currentBuildingOnPlacement = entt::null;
@@ -151,7 +158,8 @@ void Simulator::onEvent(const Event& e)
 
             // place buildings almost (10, 10 feet before) at the bottom corner of a tile
             tile += Vec2d(1, 1);
-            feet = m_coordinates.tilesToFeet(tile) - Vec2d(10, 10);
+            feet = m_coordinates.tilesToFeet(tile);
+            //feet = m_coordinates.tilesToFeet(tile) - Vec2d(10, 10);
 
             transform.position = feet;
 
@@ -251,6 +259,8 @@ void Simulator::updateGraphicComponents()
                 gc.shading = Color::RED;
             else
                 gc.shading = Color::NONE;
+
+            gc.landSize = building.size;
         });
 }
 
@@ -308,7 +318,7 @@ void Simulator::resolveAction(const Vec2d& targetFeetPos)
     testPathFinding(tilePos);
 }
 
-void aion::Simulator::testBuildMill(const Vec2d& targetFeetPos)
+void aion::Simulator::testBuildMill(const Vec2d& targetFeetPos, int buildingType, Size size)
 {
     auto& gameState = GameState::getInstance();
     auto mill = gameState.createEntity();
@@ -319,12 +329,12 @@ void aion::Simulator::testBuildMill(const Vec2d& targetFeetPos)
     CompGraphics gc;
     gc.isStatic = true;
     gc.entityID = mill;
-    gc.entityType = 5; // tree
+    gc.entityType = buildingType;
     gameState.addComponent(mill, gc);
-    gameState.addComponent(mill, CompEntityInfo(5));
+    gameState.addComponent(mill, CompEntityInfo(buildingType));
 
     CompBuilding building;
-    building.size = Size(2, 2);
+    building.size = size;
     gameState.addComponent(mill, building);
 
     CompDirty dirty;

@@ -18,6 +18,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <list>
 
 namespace aion
 {
@@ -54,11 +55,13 @@ class Renderer : public SubSystem
     void generateTicks();
     void onTick();
     void handleViewportMovement();
+    void addComponentToZBucket(CompRendering* comp, int zOrder);
 
     struct ZBucketVersion
     {
         int64_t version = 0;
         std::vector<CompRendering*> graphicsComponents;
+        std::list<CompRendering*> newGraphicsComponents;
     };
 
     SDL_Window* m_window = nullptr;

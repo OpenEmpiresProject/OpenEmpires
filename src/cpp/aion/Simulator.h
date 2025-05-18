@@ -34,7 +34,7 @@ class Simulator : public EventHandler
     void updateGraphicComponents();
     void onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endScreenPos);
     void resolveAction(const Vec2d& targetFeetPos);
-    void testBuildMill(const Vec2d& targetFeetPos);
+    void testBuildMill(const Vec2d& targetFeetPos, int buildingType, Size size);
 
     Coordinates m_coordinates;
     ThreadSynchronizer<FrameData>& m_synchronizer;

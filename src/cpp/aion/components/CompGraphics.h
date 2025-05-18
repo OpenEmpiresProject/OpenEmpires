@@ -3,6 +3,7 @@
 
 #include "Vec2d.h"
 #include "GraphicsRegistry.h" // For GraphicsID
+#include "utils/Size.h"
 
 #include <entt/entity/registry.hpp>
 #include <variant>
@@ -87,6 +88,10 @@ struct Color
     uint8_t b = 255;
 
     static const Color RED;
+    static const Color GREEN;
+    static const Color BLUE;
+    static const Color PURPLE;
+    static const Color YELLOW;
     static const Color NONE;
 };
 
@@ -100,6 +105,7 @@ class CompGraphics : public GraphicsID
     std::vector<DebugOverlay> debugOverlays;
     std::vector<GraphicAddon> addons;
     Color shading;
+    Size landSize{0, 0};
 
     CompGraphics()
     {

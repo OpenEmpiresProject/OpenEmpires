@@ -138,6 +138,10 @@ int GraphicsLoader::determineEntityType(const std::filesystem::path& path)
         return 4; // Trees
     if (path.string().find("mill") != std::string::npos)
         return 5; // Mill
+    if (path.string().find("marketplace") != std::string::npos)
+        return 6;
+    if (path.string().find("tower") != std::string::npos)
+        return 7;
     return 0;     // Unknown
 }
 

@@ -15,9 +15,8 @@ class CompRendering : public CompGraphics
   public:
     SDL_Texture* texture = nullptr;
     Vec2d anchor = {0, 0};     // Anchor position in pixels
-    Size size = {0, 0}; // Size of the texture in pixels
     SDL_FlipMode flip = SDL_FLIP_NONE;
-    SDL_FRect* srcRect = nullptr; // Source rectangle for the texture
+    SDL_FRect srcRect; // Source rectangle for the texture
     int additionalZOffset = 0;
 
     void updateTextureDetails(const GraphicsRegistry& graphicsRegistry)
@@ -27,8 +26,7 @@ class CompRendering : public CompGraphics
         {
             texture = entry.image;
             anchor = entry.anchor;
-            size = entry.size;
-            srcRect = entry.srcRect;
+            srcRect = *(entry.srcRect);
             if (entry.flip)
             {
                 flip = SDL_FLIP_HORIZONTAL;

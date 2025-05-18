@@ -23,9 +23,11 @@
 #include <filesystem>
 #include <iostream>
 #include <thread>
+#include <list>
 namespace fs = std::filesystem;
 using namespace aion;
 using namespace std::chrono;
+using namespace std;
 
 Renderer::Renderer(std::stop_source* stopSource,
                    GraphicsRegistry& graphicsRegistry,
@@ -382,8 +384,31 @@ void Renderer::renderGameEntities()
     // TODO: Introduction of this z ordering cost around 60ms for 2500 entities.
     static bool isFirst = true;
 
+    /*
+        for each entity
+            assign entity to grid cells
+            mark adjust and corresponding cells for entity size
+
+        for each y in grid.height
+            for each x in grid.width
+                if cell has large entity
+                    if there is a large entity in next y
+                        stop x scanning, go to next y
+                    else
+                        add to list
+                else
+                    add to list
+
+            
+    
+    */
+
+    list<CompRendering*> slices;
+
+    static Color colors[] = {Color::RED, Color::GREEN, Color::BLUE, Color::PURPLE, Color::YELLOW}; 
+
     GameState::getInstance().getEntities<CompRendering>().each(
-        [this](CompRendering& rc)
+        [this, &slices](CompRendering& rc)
         {
             int zOrder = rc.positionInFeet.y + rc.positionInFeet.x + rc.additionalZOffset;
 
@@ -399,8 +424,127 @@ void Renderer::renderGameEntities()
                 m_zBuckets[zOrder].graphicsComponents.clear();
             }
 
-            m_zBuckets[zOrder].graphicsComponents.push_back(&rc);
+            if (rc.landSize.width <= 1 || rc.landSize.height <= 1)
+            {
+                m_zBuckets[zOrder].graphicsComponents.push_back(&rc);
+            }
+            else
+            {
+                auto slice = ObjectPool<CompRendering>::acquire();
+                *slice = rc;
+                slice->srcRect.w = Constants::TILE_PIXEL_WIDTH;
+                slice->srcRect.x += rc.srcRect.w / 2 - (Constants::TILE_PIXEL_WIDTH / 2);
+                // slice->size.width = Constants::TILE_PIXEL_WIDTH;
+                slice->anchor.y = slice->srcRect.h;
+                slice->anchor.x = slice->srcRect.w / 2;
+                auto sliceZOrder =
+                    slice->positionInFeet.y + slice->positionInFeet.x - Constants::FEET_PER_TILE;
+
+                addComponentToZBucket(slice, sliceZOrder);
+                slices.push_back(slice);
+
+               // Slice left
+               for (size_t i = 1; i < rc.landSize.width; i++)
+               {
+                    auto slice = ObjectPool<CompRendering>::acquire();
+                    *slice = rc;
+                  
+                    // DEBUG: Slice coloring
+                    slice->shading = colors[i - 1];
+                    // For the left-most slice, we need to capture everything to left, but not only
+                    // a tile width. Because there can be small details (like shadow) just outside the
+                    // tile width.
+                    if (i == (rc.landSize.width - 1))
+                    {
+                        // Set the source texture width to capture everything to left in the left-most slice
+                        slice->srcRect.w = rc.srcRect.w / 2 - (Constants::TILE_PIXEL_WIDTH / 2 * i);
+
+                        // Left most sclice's left edge is image-half-width left from image-center.
+                        slice->anchor.x = rc.srcRect.w / 2;
+                    }
+                    else
+                    {
+                        // Distance from the center of the original texture
+                        slice->anchor.x = Constants::TILE_PIXEL_WIDTH / 2 * (i + 1);
+
+                        // Intermediate slices are always half of a tile width
+                        slice->srcRect.w = Constants::TILE_PIXEL_WIDTH / 2;
+
+                        // Move the source texture selection to right
+                        slice->srcRect.x = rc.srcRect.x + rc.srcRect.w / 2 - slice->anchor.x;
+                    }
+                    
+                    auto sliceZOrder = slice->positionInFeet.y + slice->positionInFeet.x -
+                                        Constants::FEET_PER_TILE * (i + 1);
+                    addComponentToZBucket(slice, sliceZOrder);
+                    slices.push_back(slice);
+               }
+
+               // Slice right
+               for (size_t i = 1; i < rc.landSize.height; i++)
+               {
+                    auto slice = ObjectPool<CompRendering>::acquire();
+                    *slice = rc;
+                    // slice->srcRect.w = rc.srcRect.w / 2 - Constants::TILE_PIXEL_WIDTH / 2;
+                    // slice->srcRect.x += rc.srcRect.w / 2 + Constants::TILE_PIXEL_WIDTH / 2;
+                    //   slice->size.width = slice->srcRect.w;
+                    // slice->anchor.x = -1 * Constants::TILE_PIXEL_WIDTH / 2;
+
+                    // DEBUG: Slice coloring
+                    slice->shading = colors[i - 1];
+
+                    // For the right-most slice, we need to capture everything to right just like left
+                    if (i == (rc.landSize.height - 1))
+                    {
+                       
+
+                       // Set the source texture width to capture everything to right in the right-most slice
+                       slice->srcRect.w = rc.srcRect.w / 2 - (Constants::TILE_PIXEL_WIDTH / 2 * i);
+
+                       // Right most sclice's left edge is image-half-width left from image-center.
+                       slice->anchor.x = -1 * (rc.srcRect.w / 2 - slice->srcRect.w);
+
+                       // Move the source texture selection to right
+                       slice->srcRect.x = rc.srcRect.x + rc.srcRect.w / 2 - slice->anchor.x;
+                    }
+                    else
+                    {
+                       // Distance from the center of the original texture
+                       slice->anchor.x = -1 * Constants::TILE_PIXEL_WIDTH / 2 * i;
+
+                       // Intermediate slices are always half of a tile width
+                       slice->srcRect.w = Constants::TILE_PIXEL_WIDTH / 2;
+
+                       // Move the source texture selection to right
+                       slice->srcRect.x = rc.srcRect.x + rc.srcRect.w / 2 - slice->anchor.x;
+                    }
+
+                  auto sliceZOrder = slice->positionInFeet.y + slice->positionInFeet.x -
+                                     Constants::FEET_PER_TILE * (i + 1);
+                  addComponentToZBucket(slice, sliceZOrder);
+                  slices.push_back(slice);
+               }
+               
+
+            }
+
+            // TODO: Sort this by left to right (i.e. less x comes first)
+            //m_zBuckets[zOrder].newGraphicsComponents.push_back(&rc);
         });
+
+    //for (int z = 0; z < m_zBucketsSize; ++z)
+    //{
+    //    if (m_zBuckets[z].version != m_zBucketVersion)
+    //    {
+    //        continue; // Skip if the version doesn't match
+    //    }
+
+    //    std::ranges::sort(m_zBuckets[z].graphicsComponents, {},
+    //                      [](CompRendering* p) { return p->positionInFeet.x; });
+
+    //    /*m_zBuckets[z].newGraphicsComponents.sort([](const CompRendering* a, const CompRendering* b)
+    //                                                   { return a->positionInFeet.x < b->positionInFeet.x; });*/
+    //}
 
     SDL_FRect dstRect = {0, 0, 0, 0};
 
@@ -423,8 +567,8 @@ void Renderer::renderGameEntities()
 
             dstRect.x = screenPos.x;
             dstRect.y = screenPos.y;
-            dstRect.w = rc->size.width;
-            dstRect.h = rc->size.height;
+            dstRect.w = rc->srcRect.w;
+            dstRect.h = rc->srcRect.h;
 
             if (!rc->isStatic || m_showStaticEntities)
             {
@@ -450,7 +594,7 @@ void Renderer::renderGameEntities()
                     }
                 }
                 SDL_SetTextureColorMod(rc->texture, rc->shading.r, rc->shading.g, rc->shading.b);
-                SDL_RenderTextureRotated(m_renderer, rc->texture, rc->srcRect, &dstRect, 0, nullptr,
+                SDL_RenderTextureRotated(m_renderer, rc->texture, &(rc->srcRect), &dstRect, 0, nullptr,
                                          rc->flip);
             }
 
@@ -485,6 +629,11 @@ void Renderer::renderGameEntities()
         }
     }
     isFirst = false;
+
+    for (auto& slice : slices)
+    {
+        ObjectPool<CompRendering>::release(slice);
+    }
 }
 
 void Renderer::renderBackground()
@@ -553,4 +702,15 @@ void Renderer::handleViewportMovement()
             m_coordinates.getViewportPositionInPixels() +
             Vec2d(m_settings->getViewportMovingSpeed(), 0));
     }
+}
+
+void aion::Renderer::addComponentToZBucket(CompRendering* comp, int zOrder)
+{
+    if (m_zBucketVersion != m_zBuckets[zOrder].version)
+    {
+        m_zBuckets[zOrder].version = m_zBucketVersion;
+        m_zBuckets[zOrder].graphicsComponents.clear();
+    }
+
+    m_zBuckets[zOrder].graphicsComponents.push_back(comp);
 }

@@ -78,7 +78,7 @@ void game::ResourceLoader::loadEntities()
 
     {
         auto villager = gameState.createEntity();
-        auto transform = CompTransform(20 * 256, 20 * 256);
+        auto transform = CompTransform(20 * 256 + 128, 20 * 256 + 50);
         transform.face(Direction::SOUTH);
         transform.hasRotation = true;
         transform.speed = 256;
