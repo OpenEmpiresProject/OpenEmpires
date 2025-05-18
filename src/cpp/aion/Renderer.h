@@ -56,6 +56,7 @@ class Renderer : public SubSystem
     void onTick();
     void handleViewportMovement();
     void addComponentToZBucket(CompRendering* comp, int zOrder);
+    std::list<CompRendering*> slice(CompRendering& rc);
 
     struct ZBucketVersion
     {
@@ -99,6 +100,9 @@ class Renderer : public SubSystem
     Vec2d m_selectionStartPosScreenUnits;
     Vec2d m_selectionEndPosScreenUnits;
     bool m_isSelecting = false;
+
+    std::list<CompRendering*> m_subRenderingComponents;
+    std::unordered_map<uint32_t, std::list<CompRendering*>> m_subRenderingByEntityId;
 };
 } // namespace aion
 

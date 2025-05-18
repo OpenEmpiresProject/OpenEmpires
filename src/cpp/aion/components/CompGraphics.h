@@ -112,6 +112,11 @@ class CompGraphics : public GraphicsID
         addons.reserve(2);
         debugOverlays.reserve(2);
     }
+
+    bool isBig() const
+    {
+        return landSize.width > 0 && landSize.height > 0;
+    }
 };
 } // namespace aion
 

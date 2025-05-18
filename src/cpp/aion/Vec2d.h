@@ -38,6 +38,11 @@ class Vec2d
         return x == other.x && y == other.y;
     }
 
+    bool operator!=(const Vec2d& other) const
+    {
+        return x != other.x || y != other.y;
+    }
+
     // Arithmetic operators
     constexpr Vec2d operator+(const Vec2d& other) const noexcept
     {
