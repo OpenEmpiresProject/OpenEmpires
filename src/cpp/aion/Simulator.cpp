@@ -29,6 +29,7 @@ Simulator::Simulator(ThreadSynchronizer<FrameData>& synchronizer,
       m_publisher(std::move(publisher))
 {
     m_currentBuildingOnPlacement = entt::null;
+    CompDirty::g_dirtyEntities.reserve(10000);
 }
 
 void Simulator::onInit(EventLoop* eventLoop)
@@ -165,7 +166,7 @@ void Simulator::onEvent(const Event& e)
 
             auto& dirty =
                 GameState::getInstance().getComponent<CompDirty>(m_currentBuildingOnPlacement);
-            dirty.markDirty();
+            dirty.markDirty(m_currentBuildingOnPlacement);
 
         }
         break;
@@ -189,6 +190,18 @@ void Simulator::onTickStart()
     m_coordinates.setViewportPositionInPixels(
         m_synchronizer.getSenderFrameData().viewportPositionInPixels);
 
+    if (!m_initialized)
+    {
+        GameState::getInstance()
+            .getEntities<CompDirty>()
+            .each(
+                [this](uint32_t entity, CompDirty& dirty)
+                {
+                dirty.markDirty(entity);
+            });
+        m_initialized = true;
+    }
+
 }
 
 void Simulator::onTickEnd()
@@ -196,72 +209,115 @@ void Simulator::onTickEnd()
     CompDirty::globalDirtyVersion++;
     m_frame++;
     m_synchronizer.waitForReceiver();
+    CompDirty::g_dirtyEntities.clear();
 }
 
 void Simulator::sendGraphicsInstructions()
 {
-    GameState::getInstance()
-        .getEntities<CompTransform, CompEntityInfo, CompDirty, CompGraphics>()
-        .each(
-            [this](uint32_t entity, CompTransform& transform, CompEntityInfo& entityInfo,
-                   CompDirty& dirty, CompGraphics& gc)
-            {
-                if (dirty.isDirty() == false)
-                    return;
+    //GameState::getInstance()
+    //    .getEntities<CompTransform, CompEntityInfo, CompDirty, CompGraphics>()
+    //    .each(
+    //        [this](uint32_t entity, CompTransform& transform, CompEntityInfo& entityInfo,
+    //               CompDirty& dirty, CompGraphics& gc)
+    //        {
+    //            if (dirty.isDirty() == false)
+    //                return;
 
-                auto instruction = ObjectPool<CompGraphics>::acquire();
-                *instruction = gc;
-                sendGraphiInstruction(instruction);
-            });
+    //            auto instruction = ObjectPool<CompGraphics>::acquire();
+    //            *instruction = gc;
+    //            sendGraphiInstruction(instruction);
+    //        });
+
+    auto& state = GameState::getInstance();
+    for (auto entity : CompDirty::g_dirtyEntities)
+    {
+        auto gc = state.getComponent<CompGraphics>(entity);
+        auto instruction = ObjectPool<CompGraphics>::acquire();
+        *instruction = gc;
+        sendGraphiInstruction(instruction);
+    }
 }
 
 void Simulator::updateGraphicComponents()
 {
-    GameState::getInstance()
-        .getEntities<CompTransform, CompEntityInfo, CompGraphics, CompDirty>()
-        .each(
-            [this](uint32_t entityID, CompTransform& transform, CompEntityInfo& entityInfo,
-                   CompGraphics& gc, CompDirty& dirty)
-            {
-                // TODO: might need to optimize this later
-                if (dirty.isDirty() == false)
-                    return;
-                gc.positionInFeet = transform.position;
-                gc.direction = transform.getIsometricDirection();
-                gc.variation = entityInfo.variation;
-            });
+    auto& state = GameState::getInstance();
+    for (auto entity : CompDirty::g_dirtyEntities)
+    {
+        auto [transform, entityInfo, gc] =
+            state.getComponents<CompTransform, CompEntityInfo, CompGraphics>(entity);
 
-    GameState::getInstance().getEntities<CompGraphics, CompDirty, CompAnimation>().each(
-        [this](uint32_t entityID, CompGraphics& gc, CompDirty& dirty, CompAnimation& animation)
+        gc.positionInFeet = transform.position;
+        gc.direction = transform.getIsometricDirection();
+        gc.variation = entityInfo.variation;
+
+        if (state.hasComponent<CompAnimation>(entity))
         {
-            // TODO: might need to optimize this later
-            if (dirty.isDirty() == false)
-                return;
+            auto animation = state.getComponent<CompAnimation>(entity);
             gc.frame = animation.frame;
-        });
+        }
 
-    GameState::getInstance().getEntities<CompGraphics, CompDirty, CompAction>().each(
-        [this](uint32_t entityID, CompGraphics& gc, CompDirty& dirty, CompAction& action)
+        if (state.hasComponent<CompAction>(entity))
         {
-            // TODO: might need to optimize this later
-            if (dirty.isDirty() == false)
-                return;
-            gc.action = action.action;
-        });
+            auto action = state.getComponent<CompAction>(entity);
+            gc.frame = action.action;
+        }
 
-     GameState::getInstance().getEntities<CompGraphics, CompDirty, CompBuilding>().each(
-        [this](uint32_t entityID, CompGraphics& gc, CompDirty& dirty, CompBuilding& building)
+        if (state.hasComponent<CompBuilding>(entity))
         {
-            // TODO: might need to optimize this later
-            if (dirty.isDirty() == false)
-                return;
+            auto building = state.getComponent<CompBuilding>(entity);
             if (building.cantPlace)
                 gc.shading = Color::RED;
             else
                 gc.shading = Color::NONE;
 
             gc.landSize = building.size;
-        });
+        }
+    }
+    //GameState::getInstance()
+    //    .getEntities<CompTransform, CompEntityInfo, CompGraphics, CompDirty>()
+    //    .each(
+    //        [this](uint32_t entityID, CompTransform& transform, CompEntityInfo& entityInfo,
+    //               CompGraphics& gc, CompDirty& dirty)
+    //        {
+    //            // TODO: might need to optimize this later
+    //            if (dirty.isDirty() == false)
+    //                return;
+    //            gc.positionInFeet = transform.position;
+    //            gc.direction = transform.getIsometricDirection();
+    //            gc.variation = entityInfo.variation;
+    //        });
+
+    //GameState::getInstance().getEntities<CompGraphics, CompDirty, CompAnimation>().each(
+    //    [this](uint32_t entityID, CompGraphics& gc, CompDirty& dirty, CompAnimation& animation)
+    //    {
+    //        // TODO: might need to optimize this later
+    //        if (dirty.isDirty() == false)
+    //            return;
+    //        gc.frame = animation.frame;
+    //    });
+
+    //GameState::getInstance().getEntities<CompGraphics, CompDirty, CompAction>().each(
+    //    [this](uint32_t entityID, CompGraphics& gc, CompDirty& dirty, CompAction& action)
+    //    {
+    //        // TODO: might need to optimize this later
+    //        if (dirty.isDirty() == false)
+    //            return;
+    //        gc.action = action.action;
+    //    });
+
+     //GameState::getInstance().getEntities<CompGraphics, CompDirty, CompBuilding>().each(
+     //   [this](uint32_t entityID, CompGraphics& gc, CompDirty& dirty, CompBuilding& building)
+     //   {
+     //       // TODO: might need to optimize this later
+     //       if (dirty.isDirty() == false)
+     //           return;
+     //       if (building.cantPlace)
+     //           gc.shading = Color::RED;
+     //       else
+     //           gc.shading = Color::NONE;
+
+     //       gc.landSize = building.size;
+     //   });
 }
 
 void Simulator::onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endScreenPos)
@@ -276,7 +332,7 @@ void Simulator::onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endSc
     {
         auto& graphics = GameState::getInstance().getComponent<CompGraphics>(entity);
         graphics.addons.clear(); // TODO: We might want to selectively remove the addons
-        GameState::getInstance().getComponents<CompDirty>(entity).markDirty();
+        GameState::getInstance().getComponents<CompDirty>(entity).markDirty(entity);
     }
     m_currentUnitSelection.selectedEntities.clear();
 
@@ -300,7 +356,7 @@ void Simulator::onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endSc
                 m_currentUnitSelection.selectedEntities.push_back(entity);
                 graphics.addons.push_back(GraphicAddon{
                     GraphicAddon::Type::CIRCLE, GraphicAddon::Circle{transform.collisionRadius}});
-                dirty.markDirty();
+                dirty.markDirty(entity);
             }
         });
 
@@ -338,7 +394,7 @@ void aion::Simulator::testBuildMill(const Vec2d& targetFeetPos, int buildingType
     gameState.addComponent(mill, building);
 
     CompDirty dirty;
-    dirty.markDirty();
+    dirty.markDirty(mill);
     gameState.addComponent(mill, dirty);
 
     m_currentBuildingOnPlacement = mill;
@@ -386,7 +442,7 @@ void Simulator::testPathFinding(const Vec2d& end)
                 gc.debugOverlays.push_back({DebugOverlay::Type::FILLED_CIRCLE,
                                             DebugOverlay::Color::BLUE,
                                             DebugOverlay::FixedPosition::CENTER});
-                dirty.markDirty();
+                dirty.markDirty(entity);
             }
         }
 

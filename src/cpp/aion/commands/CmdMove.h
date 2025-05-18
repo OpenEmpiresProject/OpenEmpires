@@ -34,7 +34,7 @@ class CmdMove : public Command
             GameState::getInstance()
                 .getComponents<CompTransform, CompAction, CompAnimation, CompDirty>(entityID);
 
-        animate(action, animation, dirty, deltaTimeMs);
+        animate(action, animation, dirty, deltaTimeMs, entityID);
         return move(transform, deltaTimeMs);
     }
 
@@ -53,7 +53,7 @@ class CmdMove : public Command
         return false;
     }
 
-    void animate(CompAction& action, CompAnimation& animation, CompDirty& dirty, int deltaTimeMs)
+    void animate(CompAction& action, CompAnimation& animation, CompDirty& dirty, int deltaTimeMs, uint32_t entityId)
     {
         action.action = 1; // TODO: Not good
         auto& actionAnimation = animation.animations[action.action];
@@ -61,7 +61,7 @@ class CmdMove : public Command
         auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.speed;
         if (s_totalTicks % ticksPerFrame == 0)
         {
-            dirty.markDirty();
+            dirty.markDirty(entityId);
             animation.frame++;
             animation.frame %= actionAnimation.frames;
         }

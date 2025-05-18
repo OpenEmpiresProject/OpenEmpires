@@ -406,35 +406,18 @@ void Renderer::renderGameEntities()
     // TODO: Introduction of this z ordering cost around 60ms for 2500 entities.
     static bool isFirst = true;
 
-    auto addToZBucket = [&](CompRendering* rc){
-        int zOrder = rc->positionInFeet.y + rc->positionInFeet.x + rc->additionalZOffset;
-
-        if (zOrder < 0 || zOrder >= m_zBucketsSize)
-        {
-            spdlog::error("Z-order out of bounds: {}", zOrder);
-            return;
-        }
-
-        if (m_zBucketVersion != m_zBuckets[zOrder].version)
-        {
-            m_zBuckets[zOrder].version = m_zBucketVersion;
-            m_zBuckets[zOrder].graphicsComponents.clear();
-        }
-        m_zBuckets[zOrder].graphicsComponents.push_back(rc);
-    };
-
     GameState::getInstance().getEntities<CompRendering>().each(
-        [this, addToZBucket](CompRendering& rc)
+        [this](CompRendering& rc)
         {
             if (!rc.isBig())
             {
-                addToZBucket(&rc);
+                addRenderingCompToZBuckets(&rc);
             }
         });
 
     for (auto& sub : m_subRenderingComponents)
     {
-        addToZBucket(sub);
+        addRenderingCompToZBuckets(sub);
     }
 
     SDL_FRect dstRect = {0, 0, 0, 0};
@@ -693,4 +676,22 @@ std::list<CompRendering*> aion::Renderer::slice(CompRendering& rc)
         }
     }
     return subComponentsToReturn;
+}
+
+void Renderer::addRenderingCompToZBuckets(CompRendering* rc)
+{
+    int zOrder = rc->positionInFeet.y + rc->positionInFeet.x + rc->additionalZOffset;
+
+    if (zOrder < 0 || zOrder >= m_zBucketsSize)
+    {
+        spdlog::error("Z-order out of bounds: {}", zOrder);
+        return;
+    }
+
+    if (m_zBucketVersion != m_zBuckets[zOrder].version)
+    {
+        m_zBuckets[zOrder].version = m_zBucketVersion;
+        m_zBuckets[zOrder].graphicsComponents.clear();
+    }
+    m_zBuckets[zOrder].graphicsComponents.push_back(rc);
 }

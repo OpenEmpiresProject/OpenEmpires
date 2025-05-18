@@ -26,7 +26,7 @@ class CmdIdle : public Command
     {
         auto [action, animation, dirty] =
             GameState::getInstance().getComponents<CompAction, CompAnimation, CompDirty>(entityID);
-        animate(action, animation, dirty);
+        animate(action, animation, dirty, entityID);
         return false; // Idling never completes
     }
 
@@ -45,7 +45,7 @@ class CmdIdle : public Command
         return false;
     }
 
-    void animate(CompAction& action, CompAnimation& animation, CompDirty& dirty)
+    void animate(CompAction& action, CompAnimation& animation, CompDirty& dirty, uint32_t entityId)
     {
         action.action = 0; // TODO: Not good
         auto& actionAnimation = animation.animations[action.action];
@@ -53,7 +53,7 @@ class CmdIdle : public Command
         auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.speed;
         if (s_totalTicks % ticksPerFrame == 0)
         {
-            dirty.markDirty();
+            dirty.markDirty(entityId);
             animation.frame++;
             animation.frame %= actionAnimation.frames; // Idle is always repeatable
         }

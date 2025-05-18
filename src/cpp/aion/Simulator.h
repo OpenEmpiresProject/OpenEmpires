@@ -46,6 +46,7 @@ class Simulator : public EventHandler
     UnitSelection m_currentUnitSelection;
     Vec2d m_lastMouseScreenPos;
     uint32_t m_currentBuildingOnPlacement = 0;
+    bool m_initialized = false;
 };
 } // namespace aion
 

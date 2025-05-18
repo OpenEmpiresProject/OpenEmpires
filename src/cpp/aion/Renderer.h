@@ -57,6 +57,7 @@ class Renderer : public SubSystem
     void handleViewportMovement();
     void addComponentToZBucket(CompRendering* comp, int zOrder);
     std::list<CompRendering*> slice(CompRendering& rc);
+    void addRenderingCompToZBuckets(CompRendering* rc);
 
     struct ZBucketVersion
     {
