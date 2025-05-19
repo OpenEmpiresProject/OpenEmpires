@@ -1,7 +1,7 @@
 #include "Coordinates.h"
 
-#include "utils/Logger.h"
 #include "utils/Constants.h"
+#include "utils/Logger.h"
 
 #include <SDL3/SDL_events.h>
 

@@ -53,8 +53,7 @@ std::vector<Vec2d> getNeighbors(const Vec2d& pos)
             {pos.x + 1, pos.y - 1}, {pos.x - 1, pos.y + 1}};
 }
 
-Path reconstructPath(const std::unordered_map<Vec2d, Vec2d>& cameFrom,
-                                      Vec2d current)
+Path reconstructPath(const std::unordered_map<Vec2d, Vec2d>& cameFrom, Vec2d current)
 {
     Path path;
     while (cameFrom.contains(current))

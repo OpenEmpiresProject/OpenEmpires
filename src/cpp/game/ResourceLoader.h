@@ -19,7 +19,6 @@ class ResourceLoader : public aion::SubSystem
                    std::shared_ptr<aion::Renderer> renderer);
     ~ResourceLoader() = default;
 
-
   private:
     // SubSystem methods
     void init() override;

@@ -142,7 +142,7 @@ int GraphicsLoader::determineEntityType(const std::filesystem::path& path)
         return 6;
     if (path.string().find("tower") != std::string::npos)
         return 7;
-    return 0;     // Unknown
+    return 0; // Unknown
 }
 
 void GraphicsLoader::createAtlasForEntityType(int entityType,

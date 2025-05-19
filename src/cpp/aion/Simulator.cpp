@@ -7,13 +7,13 @@
 #include "commands/CmdMove.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
+#include "components/CompBuilding.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
 #include "components/CompRendering.h"
 #include "components/CompTransform.h"
 #include "components/CompUnit.h"
-#include "components/CompBuilding.h"
 #include "utils/ObjectPool.h"
 
 #include <entt/entity/registry.hpp>
@@ -59,7 +59,7 @@ void Simulator::onEvent(const Event& e)
             auto worldPos = m_coordinates.screenUnitsToFeet(m_lastMouseScreenPos);
 
             testBuildMill(worldPos, 5, Size(2, 2));
-        } 
+        }
         else if (scancode == SDL_SCANCODE_N)
         {
             auto worldPos = m_coordinates.screenUnitsToFeet(m_lastMouseScreenPos);
@@ -70,7 +70,7 @@ void Simulator::onEvent(const Event& e)
         {
             GameState::getInstance().destroyEntity(m_currentBuildingOnPlacement);
             m_currentBuildingOnPlacement = entt::null;
-        }        
+        }
     }
     break;
     case Event::Type::MOUSE_BTN_UP:
@@ -127,7 +127,8 @@ void Simulator::onEvent(const Event& e)
         m_lastMouseScreenPos = e.getData<MouseMoveData>().screenPos;
         if (m_currentBuildingOnPlacement != entt::null)
         {
-            auto& transform = GameState::getInstance().getComponent<CompTransform>(m_currentBuildingOnPlacement);
+            auto& transform =
+                GameState::getInstance().getComponent<CompTransform>(m_currentBuildingOnPlacement);
             auto feet = m_coordinates.screenUnitsToFeet(m_lastMouseScreenPos);
             auto tile = m_coordinates.feetToTiles(feet);
 
@@ -160,14 +161,12 @@ void Simulator::onEvent(const Event& e)
             // place buildings almost (10, 10 feet before) at the bottom corner of a tile
             tile += Vec2d(1, 1);
             feet = m_coordinates.tilesToFeet(tile);
-            //feet = m_coordinates.tilesToFeet(tile) - Vec2d(10, 10);
 
             transform.position = feet;
 
             auto& dirty =
                 GameState::getInstance().getComponent<CompDirty>(m_currentBuildingOnPlacement);
             dirty.markDirty(m_currentBuildingOnPlacement);
-
         }
         break;
     }
@@ -192,16 +191,10 @@ void Simulator::onTickStart()
 
     if (!m_initialized)
     {
-        GameState::getInstance()
-            .getEntities<CompDirty>()
-            .each(
-                [this](uint32_t entity, CompDirty& dirty)
-                {
-                dirty.markDirty(entity);
-            });
+        GameState::getInstance().getEntities<CompDirty>().each(
+            [this](uint32_t entity, CompDirty& dirty) { dirty.markDirty(entity); });
         m_initialized = true;
     }
-
 }
 
 void Simulator::onTickEnd()
@@ -214,24 +207,11 @@ void Simulator::onTickEnd()
 
 void Simulator::sendGraphicsInstructions()
 {
-    //GameState::getInstance()
-    //    .getEntities<CompTransform, CompEntityInfo, CompDirty, CompGraphics>()
-    //    .each(
-    //        [this](uint32_t entity, CompTransform& transform, CompEntityInfo& entityInfo,
-    //               CompDirty& dirty, CompGraphics& gc)
-    //        {
-    //            if (dirty.isDirty() == false)
-    //                return;
-
-    //            auto instruction = ObjectPool<CompGraphics>::acquire();
-    //            *instruction = gc;
-    //            sendGraphiInstruction(instruction);
-    //        });
-
     auto& state = GameState::getInstance();
+
     for (auto entity : CompDirty::g_dirtyEntities)
     {
-        auto gc = state.getComponent<CompGraphics>(entity);
+        auto& gc = state.getComponent<CompGraphics>(entity);
         auto instruction = ObjectPool<CompGraphics>::acquire();
         *instruction = gc;
         sendGraphiInstruction(instruction);
@@ -273,51 +253,6 @@ void Simulator::updateGraphicComponents()
             gc.landSize = building.size;
         }
     }
-    //GameState::getInstance()
-    //    .getEntities<CompTransform, CompEntityInfo, CompGraphics, CompDirty>()
-    //    .each(
-    //        [this](uint32_t entityID, CompTransform& transform, CompEntityInfo& entityInfo,
-    //               CompGraphics& gc, CompDirty& dirty)
-    //        {
-    //            // TODO: might need to optimize this later
-    //            if (dirty.isDirty() == false)
-    //                return;
-    //            gc.positionInFeet = transform.position;
-    //            gc.direction = transform.getIsometricDirection();
-    //            gc.variation = entityInfo.variation;
-    //        });
-
-    //GameState::getInstance().getEntities<CompGraphics, CompDirty, CompAnimation>().each(
-    //    [this](uint32_t entityID, CompGraphics& gc, CompDirty& dirty, CompAnimation& animation)
-    //    {
-    //        // TODO: might need to optimize this later
-    //        if (dirty.isDirty() == false)
-    //            return;
-    //        gc.frame = animation.frame;
-    //    });
-
-    //GameState::getInstance().getEntities<CompGraphics, CompDirty, CompAction>().each(
-    //    [this](uint32_t entityID, CompGraphics& gc, CompDirty& dirty, CompAction& action)
-    //    {
-    //        // TODO: might need to optimize this later
-    //        if (dirty.isDirty() == false)
-    //            return;
-    //        gc.action = action.action;
-    //    });
-
-     //GameState::getInstance().getEntities<CompGraphics, CompDirty, CompBuilding>().each(
-     //   [this](uint32_t entityID, CompGraphics& gc, CompDirty& dirty, CompBuilding& building)
-     //   {
-     //       // TODO: might need to optimize this later
-     //       if (dirty.isDirty() == false)
-     //           return;
-     //       if (building.cantPlace)
-     //           gc.shading = Color::RED;
-     //       else
-     //           gc.shading = Color::NONE;
-
-     //       gc.landSize = building.size;
-     //   });
 }
 
 void Simulator::onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endScreenPos)
@@ -458,7 +393,7 @@ void Simulator::testPathFinding(const Vec2d& end)
 
         CompUnit& unit = GameState::getInstance().getComponent<CompUnit>(
             m_currentUnitSelection.selectedEntities[0]);
-       
+
         if (unit.commandQueue.empty() == false)
         {
             if (move->getPriority() == unit.commandQueue.top()->getPriority())

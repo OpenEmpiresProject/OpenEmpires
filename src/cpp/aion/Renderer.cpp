@@ -22,8 +22,8 @@
 #include <algorithm>
 #include <filesystem>
 #include <iostream>
-#include <thread>
 #include <list>
+#include <thread>
 namespace fs = std::filesystem;
 using namespace aion;
 using namespace std::chrono;
@@ -181,6 +181,12 @@ void Renderer::renderingLoop()
 
         SDL_RenderPresent(m_renderer);
 
+        m_frameTime.addSample(SDL_GetTicks() - start);
+
+        auto waitStart = SDL_GetTicks();
+        m_synchronizer.waitForSender();
+        m_waitTime.addSample(SDL_GetTicks() - waitStart);
+
         int delay = (1000 / m_settings->getTargetFPS()) - (SDL_GetTicks() - start);
         delay = std::max(1, delay);
 
@@ -189,7 +195,8 @@ void Renderer::renderingLoop()
         fpsCounter.sleptFor(delay);
         fpsCounter.getTotalSleep();
 
-        m_synchronizer.waitForSender();
+        m_waitTime.resetIfCountIs(1000);
+        m_frameTime.resetIfCountIs(1000);
     }
 
     spdlog::info("Shutting down renderer...");
@@ -276,9 +283,9 @@ void Renderer::updateRenderingComponents()
         static_cast<CompGraphics&>(rc) = *instruction;
         rc.additionalZOffset = 0;
 
-        // Graphic addons on this entity might draw below (screen's Y) the entity. So we need to consider the
-        // overall bottom most position as the Z value. Eg: Unit's selection ellipse should draw on top of
-        // the below tile
+        // Graphic addons on this entity might draw below (screen's Y) the entity. So we need to
+        // consider the overall bottom most position as the Z value. Eg: Unit's selection ellipse
+        // should draw on top of the below tile
         for (auto& addon : rc.addons)
         {
             switch (addon.type)
@@ -293,7 +300,7 @@ void Renderer::updateRenderingComponents()
         {
             auto subComponents = slice(rc);
             auto existingSubComponents = m_subRenderingByEntityId.find(rc.entityID);
-            
+
             if (existingSubComponents != m_subRenderingByEntityId.end())
             {
                 for (auto& existing : existingSubComponents->second)
@@ -324,6 +331,8 @@ void Renderer::renderDebugInfo(FPSCounter& counter)
 
     addDebugText("Average FPS        : " + std::to_string(counter.getAverageFPS()));
     addDebugText("Avg Sleep/frame    : " + std::to_string(counter.getAverageSleepMs()));
+    addDebugText("Avg frame time     : " + std::to_string(m_frameTime.average()));
+    addDebugText("Avg wait time      : " + std::to_string(m_waitTime.average()));
     addDebugText("Viewport           : " + m_coordinates.getViewportPositionInPixels().toString());
     addDebugText("Anchor Tile        : " + m_anchorTilePixelsPos.toString());
     addDebugText("Mouse clicked feet : " + m_lastMouseClickPosInFeet.toString());
@@ -468,8 +477,8 @@ void Renderer::renderGameEntities()
                     }
                 }
                 SDL_SetTextureColorMod(rc->texture, rc->shading.r, rc->shading.g, rc->shading.b);
-                SDL_RenderTextureRotated(m_renderer, rc->texture, &(rc->srcRect), &dstRect, 0, nullptr,
-                                         rc->flip);
+                SDL_RenderTextureRotated(m_renderer, rc->texture, &(rc->srcRect), &dstRect, 0,
+                                         nullptr, rc->flip);
             }
 
             if (m_showDebugInfo)
@@ -492,11 +501,14 @@ void Renderer::renderGameEntities()
                         auto end1 = getDebugOverlayPosition(overlay.customPos1, dstRect);
                         auto end2 = getDebugOverlayPosition(overlay.customPos2, dstRect);
 
-                        // Lifting the lines by a single pixel to avoid the next tile overriding these
-                        lineRGBA(m_renderer, pos.x, pos.y - 1, end1.x, end1.y - 1, 180, 180, 180, 255);
-                        lineRGBA(m_renderer, pos.x, pos.y - 1, end2.x, end2.y - 1, 180, 180, 180, 255);
+                        // Lifting the lines by a single pixel to avoid the next tile overriding
+                        // these
+                        lineRGBA(m_renderer, pos.x, pos.y - 1, end1.x, end1.y - 1, 180, 180, 180,
+                                 255);
+                        lineRGBA(m_renderer, pos.x, pos.y - 1, end2.x, end2.y - 1, 180, 180, 180,
+                                 255);
                     }
-                        break;
+                    break;
                     }
                 }
             }
@@ -586,7 +598,7 @@ void aion::Renderer::addComponentToZBucket(CompRendering* comp, int zOrder)
 
 std::list<CompRendering*> aion::Renderer::slice(CompRendering& rc)
 {
-    static Color colors[] = {Color::RED, Color::GREEN, Color::BLUE, Color::PURPLE, Color::YELLOW}; 
+    static Color colors[] = {Color::RED, Color::GREEN, Color::BLUE, Color::PURPLE, Color::YELLOW};
     std::list<CompRendering*> subComponentsToReturn;
 
     if (rc.landSize.width > 0 && rc.landSize.height > 0)
@@ -606,7 +618,7 @@ std::list<CompRendering*> aion::Renderer::slice(CompRendering& rc)
         {
             auto slice = ObjectPool<CompRendering>::acquire();
             *slice = rc;
-            
+
             // DEBUG: Slice coloring
             // slice->shading = colors[i - 1];
 
@@ -632,7 +644,7 @@ std::list<CompRendering*> aion::Renderer::slice(CompRendering& rc)
                 // Move the source texture selection to right
                 slice->srcRect.x = rc.srcRect.x + rc.srcRect.w / 2 - slice->anchor.x;
             }
-            
+
             // auto sliceZOrder = slice->positionInFeet.y + slice->positionInFeet.x -
             //                     Constants::FEET_PER_TILE * (i + 1);
             slice->additionalZOffset += -1 * Constants::FEET_PER_TILE * (i + 1);
@@ -651,7 +663,8 @@ std::list<CompRendering*> aion::Renderer::slice(CompRendering& rc)
             // For the right-most slice, we need to capture everything to right just like left
             if (i == (rc.landSize.height - 1))
             {
-                // Set the source texture width to capture everything to right in the right-most slice
+                // Set the source texture width to capture everything to right in the right-most
+                // slice
                 slice->srcRect.w = rc.srcRect.w / 2 - (Constants::TILE_PIXEL_WIDTH / 2 * i);
 
                 // Right most sclice's left edge is image-half-width left from image-center.

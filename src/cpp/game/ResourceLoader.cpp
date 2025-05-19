@@ -67,7 +67,8 @@ void game::ResourceLoader::loadEntities()
             CompGraphics gc;
             gc.entityID = tile;
             gc.entityType = 2; // Tile
-            DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, DebugOverlay::Color::GREY, DebugOverlay::FixedPosition::BOTTOM_CENTER};
+            DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, DebugOverlay::Color::GREY,
+                                 DebugOverlay::FixedPosition::BOTTOM_CENTER};
             overlay.customPos1 = DebugOverlay::FixedPosition::CENTER_LEFT;
             overlay.customPos2 = DebugOverlay::FixedPosition::CENTER_RIGHT;
             gc.debugOverlays.push_back(overlay);

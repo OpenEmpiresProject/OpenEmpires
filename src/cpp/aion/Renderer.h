@@ -5,6 +5,7 @@
 #include "FrameData.h"
 #include "GameSettings.h"
 #include "GraphicsRegistry.h"
+#include "StatsCounter.h"
 #include "SubSystem.h"
 #include "ThreadQueue.h"
 #include "ThreadSynchronizer.h"
@@ -13,12 +14,12 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <list>
 #include <memory>
 #include <readerwriterqueue.h>
 #include <string>
 #include <thread>
 #include <vector>
-#include <list>
 
 namespace aion
 {
@@ -104,6 +105,9 @@ class Renderer : public SubSystem
 
     std::list<CompRendering*> m_subRenderingComponents;
     std::unordered_map<uint32_t, std::list<CompRendering*>> m_subRenderingByEntityId;
+
+    StatsCounter<uint64_t> m_frameTime;
+    StatsCounter<uint64_t> m_waitTime;
 };
 } // namespace aion
 

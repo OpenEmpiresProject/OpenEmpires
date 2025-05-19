@@ -2,8 +2,8 @@
 #define GRAPHICSREGISTRY_H
 
 #include "Vec2d.h"
-#include "utils/Types.h"
 #include "utils/Size.h"
+#include "utils/Types.h"
 
 #include <SDL3/SDL.h>
 #include <string>

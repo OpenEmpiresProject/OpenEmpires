@@ -32,7 +32,7 @@ class CmdAttack : public Command
     {
         ObjectPool<CmdAttack>::release(this);
     }
-    
+
     bool onCreateSubCommands(std::list<Command*>& subCommands) override
     {
         return false;

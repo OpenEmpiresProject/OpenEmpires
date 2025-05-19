@@ -14,7 +14,7 @@ class CompRendering : public CompGraphics
 {
   public:
     SDL_Texture* texture = nullptr;
-    Vec2d anchor = {0, 0};     // Anchor position in pixels
+    Vec2d anchor = {0, 0}; // Anchor position in pixels
     SDL_FlipMode flip = SDL_FLIP_NONE;
     SDL_FRect srcRect; // Source rectangle for the texture
     int additionalZOffset = 0;

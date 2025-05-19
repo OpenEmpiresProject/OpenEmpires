@@ -2,8 +2,8 @@
 #define GAMESETTINGS_H
 
 #include "utils/Constants.h"
-#include "utils/Types.h"
 #include "utils/Size.h"
+#include "utils/Types.h"
 
 namespace aion
 {
@@ -129,7 +129,7 @@ class GameSettings
     {
         return m_musicVolume;
     }
-    
+
     std::string getTitle() const
     {
         return m_title;

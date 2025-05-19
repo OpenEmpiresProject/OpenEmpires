@@ -1,8 +1,8 @@
 #ifndef COMPGRAPHICS_H
 #define COMPGRAPHICS_H
 
-#include "Vec2d.h"
 #include "GraphicsRegistry.h" // For GraphicsID
+#include "Vec2d.h"
 #include "utils/Size.h"
 
 #include <entt/entity/registry.hpp>

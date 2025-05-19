@@ -53,7 +53,11 @@ class CmdMove : public Command
         return false;
     }
 
-    void animate(CompAction& action, CompAnimation& animation, CompDirty& dirty, int deltaTimeMs, uint32_t entityId)
+    void animate(CompAction& action,
+                 CompAnimation& animation,
+                 CompDirty& dirty,
+                 int deltaTimeMs,
+                 uint32_t entityId)
     {
         action.action = 1; // TODO: Not good
         auto& actionAnimation = animation.animations[action.action];
