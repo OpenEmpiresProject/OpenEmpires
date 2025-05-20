@@ -20,8 +20,8 @@ We use milestone versions for planning. Early versions are experimental. Feature
 - [x] Command system for units with move and idle commands
 - [x] Basic unit movement (click-to-move with path preview)
 - [ ] DRS reader
-- [ ] Building placement system
-- [ ] Basic building construction (mill)
+- [x] Building placement system
+- [x] Basic building construction (mill)
 - [ ] Occlusion culling
 
 ---

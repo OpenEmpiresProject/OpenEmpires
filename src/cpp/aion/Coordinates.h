@@ -25,6 +25,8 @@ class Coordinates
     Vec2d getMapCenterInFeet() const;
     int getZOrder(const Vec2d& feet) const;
     int getMaxZOrder() const;
+    bool isValidFeet(const Vec2d& feet) const;
+    bool isValidTile(const Vec2d& tile) const;
 
     const Vec2d& getViewportPositionInPixels() const;
     void setViewportPositionInPixels(const Vec2d& pixels);

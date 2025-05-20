@@ -9,7 +9,7 @@ class CompBuilding
 {
   public:
     bool isPlacing = false;
-    bool cantPlace = false;
+    bool validPlacement = true;
     Size size{0, 0};
 };
 

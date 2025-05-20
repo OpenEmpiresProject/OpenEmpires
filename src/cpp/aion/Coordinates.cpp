@@ -57,6 +57,18 @@ int Coordinates::getMaxZOrder() const
     return getZOrder(Vec2d(worldSize.width, worldSize.height));
 }
 
+bool Coordinates::isValidFeet(const Vec2d& feet) const
+{
+    auto worldSize = m_settings->getWorldSize();
+    return feet.x >= 0 && feet.x < worldSize.width && feet.y >= 0 && feet.y < worldSize.height;
+}
+
+bool Coordinates::isValidTile(const Vec2d& tile) const
+{
+    auto worldSize = m_settings->getWorldSizeInTiles();
+    return tile.x >= 0 && tile.x < worldSize.width && tile.y >= 0 && tile.y < worldSize.height;
+}
+
 Vec2d Coordinates::pixelsToFeet(const Vec2d& pixels) const
 {
     int pixelsMapCenterOffsetX =

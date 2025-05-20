@@ -9,6 +9,7 @@
 #include "ThreadSynchronizer.h"
 #include "UnitSelection.h"
 #include "components/CompGraphics.h"
+#include "components/CompBuilding.h"
 
 namespace aion
 {
@@ -34,7 +35,8 @@ class Simulator : public EventHandler
     void updateGraphicComponents();
     void onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endScreenPos);
     void resolveAction(const Vec2d& targetFeetPos);
-    void testBuildMill(const Vec2d& targetFeetPos, int buildingType, Size size);
+    void testBuild(const Vec2d& targetFeetPos, int buildingType, Size size);
+    bool canPlaceBuildingAt(const CompBuilding& building, const Vec2d& feet, bool&  outOfMap);
 
     Coordinates m_coordinates;
     ThreadSynchronizer<FrameData>& m_synchronizer;

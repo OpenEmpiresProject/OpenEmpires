@@ -58,13 +58,13 @@ void Simulator::onEvent(const Event& e)
         {
             auto worldPos = m_coordinates.screenUnitsToFeet(m_lastMouseScreenPos);
 
-            testBuildMill(worldPos, 5, Size(2, 2));
+            testBuild(worldPos, 5, Size(2, 2));
         }
         else if (scancode == SDL_SCANCODE_N)
         {
             auto worldPos = m_coordinates.screenUnitsToFeet(m_lastMouseScreenPos);
 
-            testBuildMill(worldPos, 6, Size(4, 4));
+            testBuild(worldPos, 6, Size(4, 4));
         }
         else if (scancode == SDL_SCANCODE_ESCAPE)
         {
@@ -86,7 +86,7 @@ void Simulator::onEvent(const Event& e)
                 auto& building = GameState::getInstance().getComponent<CompBuilding>(
                     m_currentBuildingOnPlacement);
 
-                if (building.cantPlace)
+                if (!building.validPlacement)
                 {
                     GameState::getInstance().destroyEntity(m_currentBuildingOnPlacement);
                 }
@@ -135,34 +135,16 @@ void Simulator::onEvent(const Event& e)
             auto& building =
                 GameState::getInstance().getComponent<CompBuilding>(m_currentBuildingOnPlacement);
 
-            auto& staticMap = GameState::getInstance().staticEntityMap;
-            auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
+            bool outOfMap = false;
+            building.validPlacement = canPlaceBuildingAt(building, feet, outOfMap);
 
-            building.cantPlace = false;
-
-            if (tile.x <= 1 || tile.y <= 1 || tile.x >= (settings->getWorldSize().width - 2) ||
-                tile.y >= (settings->getWorldSize().height - 2))
-                building.cantPlace = true;
-            else
+            if (!outOfMap)
             {
-                for (size_t i = 0; i < building.size.width; i++)
-                {
-                    for (size_t j = 0; j < building.size.height; j++)
-                    {
-                        if (staticMap.map[tile.x - i][tile.y - j] != 0)
-                        {
-                            building.cantPlace = true;
-                            break;
-                        }
-                    }
-                }
+                // place buildings at the bottom corner of a tile
+                tile += Vec2d(1, 1);
+                feet = m_coordinates.tilesToFeet(tile);
+                transform.position = feet;
             }
-
-            // place buildings almost (10, 10 feet before) at the bottom corner of a tile
-            tile += Vec2d(1, 1);
-            feet = m_coordinates.tilesToFeet(tile);
-
-            transform.position = feet;
 
             auto& dirty =
                 GameState::getInstance().getComponent<CompDirty>(m_currentBuildingOnPlacement);
@@ -245,10 +227,10 @@ void Simulator::updateGraphicComponents()
         if (state.hasComponent<CompBuilding>(entity))
         {
             auto building = state.getComponent<CompBuilding>(entity);
-            if (building.cantPlace)
-                gc.shading = Color::RED;
-            else
+            if (building.validPlacement)
                 gc.shading = Color::NONE;
+            else
+                gc.shading = Color::RED;
 
             gc.landSize = building.size;
         }
@@ -309,7 +291,7 @@ void Simulator::resolveAction(const Vec2d& targetFeetPos)
     testPathFinding(tilePos);
 }
 
-void aion::Simulator::testBuildMill(const Vec2d& targetFeetPos, int buildingType, Size size)
+void aion::Simulator::testBuild(const Vec2d& targetFeetPos, int buildingType, Size size)
 {
     auto& gameState = GameState::getInstance();
     auto mill = gameState.createEntity();
@@ -333,6 +315,37 @@ void aion::Simulator::testBuildMill(const Vec2d& targetFeetPos, int buildingType
     gameState.addComponent(mill, dirty);
 
     m_currentBuildingOnPlacement = mill;
+}
+
+bool Simulator::canPlaceBuildingAt(const CompBuilding& building, const Vec2d& feet, bool&  outOfMap)
+{
+    auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
+    auto tile = m_coordinates.feetToTiles(feet);
+    auto& staticMap = GameState::getInstance().staticEntityMap;
+
+    auto isValidTile = [&](const Vec2d& tile){
+        return tile.x >= 0 && tile.y >= 0 && tile.x < settings->getWorldSizeInTiles().width &&
+        tile.y < settings->getWorldSizeInTiles().height;
+    };
+
+    outOfMap = false;
+
+    for (int i = 0; i < building.size.width; i++)
+    {
+        for (int j = 0; j < building.size.height; j++)
+        {
+            if (!isValidTile({tile.x - i, tile.y - j}))
+            {
+                outOfMap = true;
+                return false;
+            }
+            if (staticMap.map[tile.x - i][tile.y - j] != 0)
+            {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 void Simulator::sendGraphiInstruction(CompGraphics* instruction)
