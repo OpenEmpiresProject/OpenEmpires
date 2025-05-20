@@ -82,7 +82,6 @@ class Renderer : public SubSystem
 
     std::vector<std::string> m_debugTexts;
     Coordinates m_coordinates;
-    Vec2d m_anchorTilePixelsPos;
 
     std::chrono::steady_clock::time_point m_lastTickTime;
     Vec2d m_lastMouseClickPosInFeet;
@@ -108,6 +107,8 @@ class Renderer : public SubSystem
 
     StatsCounter<uint64_t> m_frameTime;
     StatsCounter<uint64_t> m_waitTime;
+
+    size_t m_texturesDrew = 0;
 };
 } // namespace aion
 

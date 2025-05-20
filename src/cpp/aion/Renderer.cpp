@@ -166,6 +166,7 @@ void Renderer::renderingLoop()
         auto start = SDL_GetTicks();
         fpsCounter.frame();
         running = handleEvents();
+        m_texturesDrew = 0;
 
         if (!running)
         {
@@ -333,8 +334,8 @@ void Renderer::renderDebugInfo(FPSCounter& counter)
     addDebugText("Avg Sleep/frame    : " + std::to_string(counter.getAverageSleepMs()));
     addDebugText("Avg frame time     : " + std::to_string(m_frameTime.average()));
     addDebugText("Avg wait time      : " + std::to_string(m_waitTime.average()));
+    addDebugText("Textures Drew      : " + std::to_string(m_texturesDrew));
     addDebugText("Viewport           : " + m_coordinates.getViewportPositionInPixels().toString());
-    addDebugText("Anchor Tile        : " + m_anchorTilePixelsPos.toString());
     addDebugText("Mouse clicked feet : " + m_lastMouseClickPosInFeet.toString());
     addDebugText("Mouse clicked tile : " + m_lastMouseClickPosInTiles.toString());
     addDebugText("Graphics loaded    : " + std::to_string(m_graphicsRegistry.getTextureCount()));
@@ -412,8 +413,7 @@ void Renderer::renderGameEntities()
 {
     ++m_zBucketVersion; // it will take 4 trillion years to overflow this
 
-    // TODO: Introduction of this z ordering cost around 60ms for 2500 entities.
-    static bool isFirst = true;
+    // Following z ordering cost around 60ms for 2500 entities.
 
     GameState::getInstance().getEntities<CompRendering>().each(
         [this](CompRendering& rc)
@@ -441,12 +441,6 @@ void Renderer::renderGameEntities()
         for (auto& rc : m_zBuckets[z].graphicsComponents)
         {
             auto screenPos = m_coordinates.feetToScreenUnits(rc->positionInFeet) - rc->anchor;
-
-            // TODO: Remove this testing code
-            if (isFirst)
-            {
-                m_anchorTilePixelsPos = m_coordinates.feetToPixels(rc->positionInFeet);
-            }
 
             dstRect.x = screenPos.x;
             dstRect.y = screenPos.y;
@@ -479,6 +473,7 @@ void Renderer::renderGameEntities()
                 SDL_SetTextureColorMod(rc->texture, rc->shading.r, rc->shading.g, rc->shading.b);
                 SDL_RenderTextureRotated(m_renderer, rc->texture, &(rc->srcRect), &dstRect, 0,
                                          nullptr, rc->flip);
+                ++m_texturesDrew;
             }
 
             if (m_showDebugInfo)
@@ -514,7 +509,6 @@ void Renderer::renderGameEntities()
             }
         }
     }
-    isFirst = false;
 }
 
 void Renderer::renderBackground()
@@ -698,6 +692,21 @@ void Renderer::addRenderingCompToZBuckets(CompRendering* rc)
     if (zOrder < 0 || zOrder >= m_zBucketsSize)
     {
         spdlog::error("Z-order out of bounds: {}", zOrder);
+        return;
+    }
+
+    SDL_Rect viewportRect = {0, 0, m_settings->getWindowDimensions().width,
+                             m_settings->getWindowDimensions().height};
+
+    auto screenPos = m_coordinates.feetToScreenUnits(rc->positionInFeet) - rc->anchor;
+
+    SDL_Rect dstRectInt = {screenPos.x, screenPos.y, rc->srcRect.w, rc->srcRect.h};
+
+    // Skip any texture that doesn't overlap with viewport (i.e. outside of screen)
+    // This has reduced frame rendering time from 6ms to 3ms for 1366x768 window on the 
+    // development setup for 50x50 map in debug mode on Windows.
+    if (!SDL_HasRectIntersection(&viewportRect, &dstRectInt))
+    {
         return;
     }
 

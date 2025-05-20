@@ -22,7 +22,7 @@ We use milestone versions for planning. Early versions are experimental. Feature
 - [ ] DRS reader
 - [x] Building placement system
 - [x] Basic building construction (mill)
-- [ ] Occlusion culling
+- [x] Frustum culling
 
 ---
 
