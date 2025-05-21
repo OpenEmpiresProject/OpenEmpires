@@ -106,6 +106,7 @@ class CompGraphics : public GraphicsID
     std::vector<GraphicAddon> addons;
     Color shading;
     Size landSize{0, 0};
+    bool isDestroyed = false;
 
     CompGraphics()
     {

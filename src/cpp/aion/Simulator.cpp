@@ -72,6 +72,11 @@ void Simulator::onKeyUp(const Event& e)
     }
     else if (scancode == SDL_SCANCODE_ESCAPE)
     {
+        // TODO: Not the ideal way to delete an entity
+        auto [gc, dirty] = GameState::getInstance().getComponents<CompGraphics, CompDirty>(
+            m_currentBuildingOnPlacement);
+        gc.isDestroyed = true;
+        dirty.markDirty(m_currentBuildingOnPlacement);
         GameState::getInstance().destroyEntity(m_currentBuildingOnPlacement);
         m_currentBuildingOnPlacement = entt::null;
     }
@@ -91,8 +96,8 @@ void Simulator::onMouseButtonUp(const Event& e)
         // spdlog::debug("Mouse clicked at tile position: {}", tilePos.toString());
         if (m_currentBuildingOnPlacement != entt::null)
         {
-            auto& building = GameState::getInstance().getComponent<CompBuilding>(
-                m_currentBuildingOnPlacement);
+            auto& building =
+                GameState::getInstance().getComponent<CompBuilding>(m_currentBuildingOnPlacement);
 
             if (!building.validPlacement)
             {
@@ -178,8 +183,14 @@ void Simulator::onTickEnd()
 {
     CompDirty::globalDirtyVersion++;
     m_frame++;
-    m_synchronizer.waitForReceiver();
+    m_synchronizer.waitForReceiver([&]() { onSynchorizedBlock(); });
     CompDirty::g_dirtyEntities.clear();
+}
+
+void Simulator::onSynchorizedBlock()
+{
+    // TODO: Make this work, might need to delay destroying entities
+    // GameState::getInstance().destroyAllPendingEntities();
 }
 
 void Simulator::sendGraphicsInstructions()
@@ -312,15 +323,16 @@ void aion::Simulator::testBuild(const Vec2d& targetFeetPos, int buildingType, Si
     m_currentBuildingOnPlacement = mill;
 }
 
-bool Simulator::canPlaceBuildingAt(const CompBuilding& building, const Vec2d& feet, bool&  outOfMap)
+bool Simulator::canPlaceBuildingAt(const CompBuilding& building, const Vec2d& feet, bool& outOfMap)
 {
     auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
     auto tile = m_coordinates.feetToTiles(feet);
     auto& staticMap = GameState::getInstance().staticEntityMap;
 
-    auto isValidTile = [&](const Vec2d& tile){
+    auto isValidTile = [&](const Vec2d& tile)
+    {
         return tile.x >= 0 && tile.y >= 0 && tile.x < settings->getWorldSizeInTiles().width &&
-        tile.y < settings->getWorldSizeInTiles().height;
+               tile.y < settings->getWorldSizeInTiles().height;
     };
 
     outOfMap = false;

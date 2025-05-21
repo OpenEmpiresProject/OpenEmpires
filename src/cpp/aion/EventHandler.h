@@ -4,10 +4,10 @@
 #include "Event.h"
 #include "EventLoop.h"
 
-#include <functional>
 #include <array>
-#include <cstddef>
 #include <cassert>
+#include <cstddef>
+#include <functional>
 
 namespace aion
 {
@@ -19,20 +19,21 @@ class EventHandler
     virtual void onEvent(const Event& e) {};
 
     // Will be called from EventLoop
-    void dispatchEvent(const Event& e) 
+    void dispatchEvent(const Event& e)
     {
         onEvent(e);
         size_t index = static_cast<size_t>(e.type);
         assert(index < callbacksTable.size());
-        if (auto& handler = callbacksTable[index]) {
-            handler(e);  // Call the bound handler
+        if (auto& handler = callbacksTable[index])
+        {
+            handler(e); // Call the bound handler
         }
     }
 
     template <typename T>
-    void registerCallback(Event::Type type, T* instance, void (T::*method)(const Event&)) {
-        static_assert(std::is_base_of_v<EventHandler, T>,
-                      "Handler must inherit from EventHandler");
+    void registerCallback(Event::Type type, T* instance, void (T::*method)(const Event&))
+    {
+        static_assert(std::is_base_of_v<EventHandler, T>, "Handler must inherit from EventHandler");
         size_t index = static_cast<size_t>(type);
         assert(index < callbacksTable.size());
         callbacksTable[index] = std::bind(method, instance, std::placeholders::_1);

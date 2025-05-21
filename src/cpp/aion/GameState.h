@@ -6,6 +6,7 @@
 #include "SubSystem.h"
 
 #include <entt/entity/registry.hpp>
+#include <vector>
 
 namespace aion
 {
@@ -22,8 +23,13 @@ class GameState
     GameState& operator=(const GameState&) = delete;
 
     uint32_t createEntity();
+
+    // Safe to call this at any time without any synchronization, but not thread safe
     void destroyEntity(uint32_t entity);
     bool isEntityValid(uint32_t entity) const;
+
+    // This should be called in a synchronized manner with all stakeholders of components
+    void destroyAllPendingEntities();
 
     template <typename T, typename... Args>
     decltype(auto) addComponent(uint32_t entity, Args&&... args)
@@ -76,6 +82,7 @@ class GameState
 
     entt::basic_registry<uint32_t> m_registry;
     PathFinderBase* m_pathFinder = nullptr;
+    std::vector<uint32_t> m_entitiesToDestroy;
 };
 } // namespace aion
 

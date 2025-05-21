@@ -21,7 +21,16 @@ uint32_t GameState::createEntity()
 
 void GameState::destroyEntity(uint32_t entity)
 {
-    m_registry.destroy(entity);
+    m_entitiesToDestroy.push_back(entity);
+}
+
+void aion::GameState::destroyAllPendingEntities()
+{
+    for (auto entity : m_entitiesToDestroy)
+    {
+        m_registry.destroy(entity);
+    }
+    m_entitiesToDestroy.clear();
 }
 
 bool GameState::isEntityValid(uint32_t entity) const

@@ -8,8 +8,8 @@
 #include "ThreadQueue.h"
 #include "ThreadSynchronizer.h"
 #include "UnitSelection.h"
-#include "components/CompGraphics.h"
 #include "components/CompBuilding.h"
+#include "components/CompGraphics.h"
 
 namespace aion
 {
@@ -32,6 +32,7 @@ class Simulator : public EventHandler
     void onMouseMove(const Event& e);
     void onTickStart();
     void onTickEnd();
+    void onSynchorizedBlock();
     void sendGraphicsInstructions();
     void sendGraphiInstruction(CompGraphics* instruction);
     void testPathFinding(const Vec2d& end);
@@ -39,7 +40,7 @@ class Simulator : public EventHandler
     void onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endScreenPos);
     void resolveAction(const Vec2d& targetFeetPos);
     void testBuild(const Vec2d& targetFeetPos, int buildingType, Size size);
-    bool canPlaceBuildingAt(const CompBuilding& building, const Vec2d& feet, bool&  outOfMap);
+    bool canPlaceBuildingAt(const CompBuilding& building, const Vec2d& feet, bool& outOfMap);
 
     Coordinates m_coordinates;
     ThreadSynchronizer<FrameData>& m_synchronizer;

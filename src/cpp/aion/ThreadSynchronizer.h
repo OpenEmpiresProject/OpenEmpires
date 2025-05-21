@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <functional>
 #include <iostream>
 #include <mutex>
 #include <thread>
@@ -36,7 +37,7 @@ template <typename T> class ThreadSynchronizer
         }
     }
 
-    void waitForReceiver()
+    void waitForReceiver(std::function<void()> synchronizedBlock = []() {})
     {
         {
             std::unique_lock lock(m_mtx);
@@ -44,6 +45,8 @@ template <typename T> class ThreadSynchronizer
 
             if (m_shutdown)
                 return;
+
+            synchronizedBlock();
 
             int temp = m_senderIndex.load(std::memory_order_relaxed);
             m_senderIndex.store(m_receiverIndex.load(std::memory_order_relaxed),

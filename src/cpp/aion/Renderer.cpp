@@ -297,30 +297,47 @@ void Renderer::updateRenderingComponents()
             }
         }
 
+        rc.updateTextureDetails(m_graphicsRegistry);
+
         if (rc.isBig())
         {
-            auto subComponents = slice(rc);
-            auto existingSubComponents = m_subRenderingByEntityId.find(rc.entityID);
-
-            if (existingSubComponents != m_subRenderingByEntityId.end())
+            if (rc.isDestroyed)
             {
-                for (auto& existing : existingSubComponents->second)
+                auto existingSubComponents = m_subRenderingByEntityId.find(rc.entityID);
+
+                if (existingSubComponents != m_subRenderingByEntityId.end())
                 {
-                    m_subRenderingComponents.remove(existing);
-                    ObjectPool<CompRendering>::release(existing);
+                    for (auto& existing : existingSubComponents->second)
+                    {
+                        m_subRenderingComponents.remove(existing);
+                        ObjectPool<CompRendering>::release(existing);
+                    }
+                    existingSubComponents->second.clear();
+                    m_subRenderingByEntityId.erase(existingSubComponents);
                 }
-                existingSubComponents->second.clear();
-                existingSubComponents->second = subComponents;
             }
             else
             {
-                m_subRenderingByEntityId[rc.entityID] = subComponents;
+                auto subComponents = slice(rc);
+                auto existingSubComponents = m_subRenderingByEntityId.find(rc.entityID);
+
+                if (existingSubComponents != m_subRenderingByEntityId.end())
+                {
+                    for (auto& existing : existingSubComponents->second)
+                    {
+                        m_subRenderingComponents.remove(existing);
+                        ObjectPool<CompRendering>::release(existing);
+                    }
+                    existingSubComponents->second.clear();
+                    existingSubComponents->second = subComponents;
+                }
+                else
+                {
+                    m_subRenderingByEntityId[rc.entityID] = subComponents;
+                }
+                m_subRenderingComponents.splice(m_subRenderingComponents.end(), subComponents);
             }
-            m_subRenderingComponents.splice(m_subRenderingComponents.end(), subComponents);
         }
-
-        rc.updateTextureDetails(m_graphicsRegistry);
-
         ObjectPool<CompGraphics>::release(instruction);
     }
     frameData.clear();
@@ -687,6 +704,11 @@ std::list<CompRendering*> aion::Renderer::slice(CompRendering& rc)
 
 void Renderer::addRenderingCompToZBuckets(CompRendering* rc)
 {
+    if (rc->isDestroyed)
+    {
+        return;
+    }
+
     int zOrder = rc->positionInFeet.y + rc->positionInFeet.x + rc->additionalZOffset;
 
     if (zOrder < 0 || zOrder >= m_zBucketsSize)
@@ -703,7 +725,7 @@ void Renderer::addRenderingCompToZBuckets(CompRendering* rc)
     SDL_Rect dstRectInt = {screenPos.x, screenPos.y, rc->srcRect.w, rc->srcRect.h};
 
     // Skip any texture that doesn't overlap with viewport (i.e. outside of screen)
-    // This has reduced frame rendering time from 6ms to 3ms for 1366x768 window on the 
+    // This has reduced frame rendering time from 6ms to 3ms for 1366x768 window on the
     // development setup for 50x50 map in debug mode on Windows.
     if (!SDL_HasRectIntersection(&viewportRect, &dstRectInt))
     {
