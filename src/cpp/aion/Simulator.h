@@ -23,10 +23,13 @@ class Simulator : public EventHandler
   private:
     // EventHandler overrides
     void onInit(EventLoop* eventLoop) override;
-    void onExit() override;
-    void onEvent(const Event& e) override;
 
-    void onTick();
+    void onTick(const Event& e);
+    void onKeyUp(const Event& e);
+    void onKeyDown(const Event& e);
+    void onMouseButtonUp(const Event& e);
+    void onMouseButtonDown(const Event& e);
+    void onMouseMove(const Event& e);
     void onTickStart();
     void onTickEnd();
     void sendGraphicsInstructions();

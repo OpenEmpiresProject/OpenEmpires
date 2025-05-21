@@ -30,6 +30,13 @@ Simulator::Simulator(ThreadSynchronizer<FrameData>& synchronizer,
 {
     m_currentBuildingOnPlacement = entt::null;
     CompDirty::g_dirtyEntities.reserve(10000);
+
+    registerCallback(Event::Type::TICK, this, &Simulator::onTick);
+    registerCallback(Event::Type::KEY_UP, this, &Simulator::onKeyUp);
+    registerCallback(Event::Type::KEY_DOWN, this, &Simulator::onKeyDown);
+    registerCallback(Event::Type::MOUSE_BTN_UP, this, &Simulator::onMouseButtonUp);
+    registerCallback(Event::Type::MOUSE_BTN_DOWN, this, &Simulator::onMouseButtonDown);
+    registerCallback(Event::Type::MOUSE_MOVE, this, &Simulator::onMouseMove);
 }
 
 void Simulator::onInit(EventLoop* eventLoop)
@@ -38,131 +45,119 @@ void Simulator::onInit(EventLoop* eventLoop)
     ObjectPool<CompGraphics>::reserve(1000);
 }
 
-void Simulator::onExit()
-{
-}
-
-void Simulator::onEvent(const Event& e)
-{
-    switch (e.type)
-    {
-    case Event::Type::TICK:
-        onTick();
-        break;
-    case Event::Type::KEY_UP:
-    {
-        SDL_Scancode scancode = static_cast<SDL_Scancode>(e.getData<KeyboardData>().keyCode);
-
-        // TODO: temporary
-        if (scancode == SDL_SCANCODE_B)
-        {
-            auto worldPos = m_coordinates.screenUnitsToFeet(m_lastMouseScreenPos);
-
-            testBuild(worldPos, 5, Size(2, 2));
-        }
-        else if (scancode == SDL_SCANCODE_N)
-        {
-            auto worldPos = m_coordinates.screenUnitsToFeet(m_lastMouseScreenPos);
-
-            testBuild(worldPos, 6, Size(4, 4));
-        }
-        else if (scancode == SDL_SCANCODE_ESCAPE)
-        {
-            GameState::getInstance().destroyEntity(m_currentBuildingOnPlacement);
-            m_currentBuildingOnPlacement = entt::null;
-        }
-    }
-    break;
-    case Event::Type::MOUSE_BTN_UP:
-    {
-        auto mousePos = e.getData<MouseClickData>().screenPosition;
-        auto worldPos = m_coordinates.screenUnitsToFeet(mousePos);
-
-        if (e.getData<MouseClickData>().button == MouseClickData::Button::LEFT)
-        {
-            // spdlog::debug("Mouse clicked at tile position: {}", tilePos.toString());
-            if (m_currentBuildingOnPlacement != entt::null)
-            {
-                auto& building = GameState::getInstance().getComponent<CompBuilding>(
-                    m_currentBuildingOnPlacement);
-
-                if (!building.validPlacement)
-                {
-                    GameState::getInstance().destroyEntity(m_currentBuildingOnPlacement);
-                }
-                // Building is permanent now, no need to track for placement
-                m_currentBuildingOnPlacement = entt::null;
-            }
-        }
-        else if (e.getData<MouseClickData>().button == MouseClickData::Button::RIGHT)
-        {
-            // spdlog::debug("Right mouse clicked at tile position: {}", tilePos.toString());
-            resolveAction(worldPos);
-        }
-
-        if (m_isSelecting)
-        {
-            if (e.getData<MouseClickData>().button == MouseClickData::Button::LEFT)
-            {
-                m_selectionEndPosScreenUnits = e.getData<MouseClickData>().screenPosition;
-                // TODO: we want on the fly selection instead of mouse button up
-                onSelectingUnits(m_selectionStartPosScreenUnits, m_selectionEndPosScreenUnits);
-                m_isSelecting = false;
-            }
-        }
-    }
-    break;
-    case Event::Type::MOUSE_BTN_DOWN:
-    {
-        if (e.getData<MouseClickData>().button == MouseClickData::Button::LEFT)
-        {
-            m_isSelecting = true;
-            m_selectionStartPosScreenUnits = e.getData<MouseClickData>().screenPosition;
-            m_selectionEndPosScreenUnits = e.getData<MouseClickData>().screenPosition;
-        }
-        break;
-    }
-    case Event::Type::MOUSE_MOVE:
-    {
-        m_lastMouseScreenPos = e.getData<MouseMoveData>().screenPos;
-        if (m_currentBuildingOnPlacement != entt::null)
-        {
-            auto& transform =
-                GameState::getInstance().getComponent<CompTransform>(m_currentBuildingOnPlacement);
-            auto feet = m_coordinates.screenUnitsToFeet(m_lastMouseScreenPos);
-            auto tile = m_coordinates.feetToTiles(feet);
-
-            auto& building =
-                GameState::getInstance().getComponent<CompBuilding>(m_currentBuildingOnPlacement);
-
-            bool outOfMap = false;
-            building.validPlacement = canPlaceBuildingAt(building, feet, outOfMap);
-
-            if (!outOfMap)
-            {
-                // place buildings at the bottom corner of a tile
-                tile += Vec2d(1, 1);
-                feet = m_coordinates.tilesToFeet(tile);
-                transform.position = feet;
-            }
-
-            auto& dirty =
-                GameState::getInstance().getComponent<CompDirty>(m_currentBuildingOnPlacement);
-            dirty.markDirty(m_currentBuildingOnPlacement);
-        }
-        break;
-    }
-    default:
-        break;
-    }
-}
-
-void Simulator::onTick()
+void Simulator::onTick(const Event& e)
 {
     onTickStart();
     updateGraphicComponents();
     sendGraphicsInstructions();
     onTickEnd();
+}
+
+void Simulator::onKeyUp(const Event& e)
+{
+    SDL_Scancode scancode = static_cast<SDL_Scancode>(e.getData<KeyboardData>().keyCode);
+
+    // TODO: temporary
+    if (scancode == SDL_SCANCODE_B)
+    {
+        auto worldPos = m_coordinates.screenUnitsToFeet(m_lastMouseScreenPos);
+
+        testBuild(worldPos, 5, Size(2, 2));
+    }
+    else if (scancode == SDL_SCANCODE_N)
+    {
+        auto worldPos = m_coordinates.screenUnitsToFeet(m_lastMouseScreenPos);
+
+        testBuild(worldPos, 6, Size(4, 4));
+    }
+    else if (scancode == SDL_SCANCODE_ESCAPE)
+    {
+        GameState::getInstance().destroyEntity(m_currentBuildingOnPlacement);
+        m_currentBuildingOnPlacement = entt::null;
+    }
+}
+
+void Simulator::onKeyDown(const Event& e)
+{
+}
+
+void Simulator::onMouseButtonUp(const Event& e)
+{
+    auto mousePos = e.getData<MouseClickData>().screenPosition;
+    auto worldPos = m_coordinates.screenUnitsToFeet(mousePos);
+
+    if (e.getData<MouseClickData>().button == MouseClickData::Button::LEFT)
+    {
+        // spdlog::debug("Mouse clicked at tile position: {}", tilePos.toString());
+        if (m_currentBuildingOnPlacement != entt::null)
+        {
+            auto& building = GameState::getInstance().getComponent<CompBuilding>(
+                m_currentBuildingOnPlacement);
+
+            if (!building.validPlacement)
+            {
+                GameState::getInstance().destroyEntity(m_currentBuildingOnPlacement);
+            }
+            // Building is permanent now, no need to track for placement
+            m_currentBuildingOnPlacement = entt::null;
+        }
+    }
+    else if (e.getData<MouseClickData>().button == MouseClickData::Button::RIGHT)
+    {
+        // spdlog::debug("Right mouse clicked at tile position: {}", tilePos.toString());
+        resolveAction(worldPos);
+    }
+
+    if (m_isSelecting)
+    {
+        if (e.getData<MouseClickData>().button == MouseClickData::Button::LEFT)
+        {
+            m_selectionEndPosScreenUnits = e.getData<MouseClickData>().screenPosition;
+            // TODO: we want on the fly selection instead of mouse button up
+            onSelectingUnits(m_selectionStartPosScreenUnits, m_selectionEndPosScreenUnits);
+            m_isSelecting = false;
+        }
+    }
+}
+
+void Simulator::onMouseButtonDown(const Event& e)
+{
+    if (e.getData<MouseClickData>().button == MouseClickData::Button::LEFT)
+    {
+        m_isSelecting = true;
+        m_selectionStartPosScreenUnits = e.getData<MouseClickData>().screenPosition;
+        m_selectionEndPosScreenUnits = e.getData<MouseClickData>().screenPosition;
+    }
+}
+
+void Simulator::onMouseMove(const Event& e)
+{
+    m_lastMouseScreenPos = e.getData<MouseMoveData>().screenPos;
+    if (m_currentBuildingOnPlacement != entt::null)
+    {
+        auto& transform =
+            GameState::getInstance().getComponent<CompTransform>(m_currentBuildingOnPlacement);
+        auto feet = m_coordinates.screenUnitsToFeet(m_lastMouseScreenPos);
+        auto tile = m_coordinates.feetToTiles(feet);
+
+        auto& building =
+            GameState::getInstance().getComponent<CompBuilding>(m_currentBuildingOnPlacement);
+
+        bool outOfMap = false;
+        building.validPlacement = canPlaceBuildingAt(building, feet, outOfMap);
+
+        if (!outOfMap)
+        {
+            // place buildings at the bottom corner of a tile
+            tile += Vec2d(1, 1);
+            feet = m_coordinates.tilesToFeet(tile);
+            transform.position = feet;
+        }
+
+        auto& dirty =
+            GameState::getInstance().getComponent<CompDirty>(m_currentBuildingOnPlacement);
+        dirty.markDirty(m_currentBuildingOnPlacement);
+    }
 }
 
 void Simulator::onTickStart()

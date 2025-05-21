@@ -74,7 +74,7 @@ void EventLoop::handleTickEvent(std::chrono::steady_clock::time_point& lastTime)
         // Notify listeners about the event
         for (auto& listener : m_listeners)
         {
-            listener->onEvent(tickEvent);
+            listener->dispatchEvent(tickEvent);
         }
         lastTime = now;
     }
@@ -92,7 +92,7 @@ void EventLoop::handleInputEvents()
             Event keyDownEvent(Event::Type::KEY_DOWN, data);
             for (auto& listener : m_listeners)
             {
-                listener->onEvent(keyDownEvent);
+                listener->dispatchEvent(keyDownEvent);
             }
         }
         if (!currentKeyboardState[i] && m_previousKeyboardState[i])
@@ -101,7 +101,7 @@ void EventLoop::handleInputEvents()
             Event keyDownEvent(Event::Type::KEY_UP, data);
             for (auto& listener : m_listeners)
             {
-                listener->onEvent(keyDownEvent);
+                listener->dispatchEvent(keyDownEvent);
             }
         }
         m_previousKeyboardState[i] = currentKeyboardState[i];
@@ -117,7 +117,7 @@ void EventLoop::handleInputEvents()
         Event mouseMoveEvent(Event::Type::MOUSE_MOVE, data);
         for (auto& listener : m_listeners)
         {
-            listener->onEvent(mouseMoveEvent);
+            listener->dispatchEvent(mouseMoveEvent);
         }
         m_previouseMouseX = mouseX;
         m_previouseMouseY = mouseY;
@@ -131,7 +131,7 @@ void EventLoop::handleInputEvents()
             Event mouseClickEvent(Event::Type::MOUSE_BTN_DOWN, data);
             for (auto& listener : m_listeners)
             {
-                listener->onEvent(mouseClickEvent);
+                listener->dispatchEvent(mouseClickEvent);
             }
         }
 
@@ -141,7 +141,7 @@ void EventLoop::handleInputEvents()
             Event mouseClickEvent(Event::Type::MOUSE_BTN_UP, data);
             for (auto& listener : m_listeners)
             {
-                listener->onEvent(mouseClickEvent);
+                listener->dispatchEvent(mouseClickEvent);
             }
         }
 
@@ -151,7 +151,7 @@ void EventLoop::handleInputEvents()
             Event mouseClickEvent(Event::Type::MOUSE_BTN_DOWN, data);
             for (auto& listener : m_listeners)
             {
-                listener->onEvent(mouseClickEvent);
+                listener->dispatchEvent(mouseClickEvent);
             }
         }
         if (!(currentMouseState & SDL_BUTTON_RMASK) && (m_previousMouseState & SDL_BUTTON_RMASK))
@@ -160,7 +160,7 @@ void EventLoop::handleInputEvents()
             Event mouseClickEvent(Event::Type::MOUSE_BTN_UP, data);
             for (auto& listener : m_listeners)
             {
-                listener->onEvent(mouseClickEvent);
+                listener->dispatchEvent(mouseClickEvent);
             }
         }
         m_previousMouseState = currentMouseState;
@@ -174,7 +174,7 @@ void EventLoop::handleGameEvents()
         auto& event = m_eventQueue.front();
         for (auto& listener : m_listeners)
         {
-            listener->onEvent(event);
+            listener->dispatchEvent(event);
         }
         m_eventQueue.pop();
     }
