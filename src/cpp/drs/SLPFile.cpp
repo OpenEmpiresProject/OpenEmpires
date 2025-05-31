@@ -1,5 +1,6 @@
 #include "SLPFile.h"
 
+#include <iostream>
 #include <string>
 
 using namespace drs;
@@ -14,8 +15,7 @@ struct SLPHeader
 
 #pragma pack(pop)
 
-SLPFile::SLPFile(const DRSResourceData& resource)
-    : m_resourceData(resource)
+SLPFile::SLPFile(const DRSResourceData& resource) : m_resourceData(resource)
 {
     init();
 }
@@ -37,10 +37,20 @@ std::vector<Frame> drs::SLPFile::getFrames() const
 {
     std::vector<Frame> frames;
 
-    for (int i = 0; i < getFrameCount(); ++i) {
+    for (int i = 0; i < getFrameCount(); ++i)
+    {
         frames.push_back(getFrame(i));
     }
     return frames;
+}
+
+void drs::SLPFile::writeAllFramesToBMP(const std::string& prefix) const
+{
+    auto frames = getFrames();
+    for (size_t i = 0; i < frames.size(); i++)
+    {
+        frames[i].writeToBMP(prefix + std::to_string(i) + ".bmp");
+    }
 }
 
 void SLPFile::init()
@@ -48,7 +58,8 @@ void SLPFile::init()
     const uint8_t* data = m_resourceData.data;
     size_t size = m_resourceData.entry.size;
 
-    if (size < sizeof(SLPHeader)) {
+    if (size < sizeof(SLPHeader))
+    {
         throw std::runtime_error("SLP file too small for header.");
     }
 
@@ -56,7 +67,8 @@ void SLPFile::init()
     const SLPHeader* header = reinterpret_cast<const SLPHeader*>(data);
 
     // Verify version if needed (e.g., "2.0N")
-    if (std::string(header->version, 4) != "2.0N") {
+    if (std::string(header->version, 4) != "2.0N")
+    {
         throw std::runtime_error("Unsupported SLP version.");
     }
 
@@ -65,12 +77,12 @@ void SLPFile::init()
     const size_t frameInfosOffset = sizeof(SLPHeader);
 
     // Bounds check
-    if (size < frameInfosOffset + frameCount * frameInfoSize) {
+    if (size < frameInfosOffset + frameCount * frameInfoSize)
+    {
         throw std::runtime_error("SLP file too small for frame infos.");
     }
 
     // Load frame info table
     const SLPFrameInfo* frameInfos = reinterpret_cast<const SLPFrameInfo*>(data + frameInfosOffset);
     m_frameInfos = std::span<const SLPFrameInfo>(frameInfos, frameCount);
-    
 }

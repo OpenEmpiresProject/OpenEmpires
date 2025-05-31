@@ -5,18 +5,18 @@
 
 namespace drs
 {
-    struct DRSResourceEntry 
-    {
-        int32_t id;
-        int32_t offset; // Abosulte
-        int32_t size;
-    };
+struct DRSResourceEntry
+{
+    int32_t id = 0;
+    int32_t offset = 0; // Abosulte
+    int32_t size = 0;
+};
 
-    struct DRSResourceData 
-    {
-        DRSResourceEntry entry;
-        uint8_t* data;
-    };
+struct DRSResourceData
+{
+    DRSResourceEntry entry;
+    uint8_t* data = nullptr;
+};
 } // namespace drs
 
 #endif

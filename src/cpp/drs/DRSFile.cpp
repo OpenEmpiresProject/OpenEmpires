@@ -1,8 +1,8 @@
 #include "DRSFile.h"
 
-#include <iostream>
-#include <cassert>
 #include <algorithm>
+#include <cassert>
+#include <iostream>
 
 using namespace drs;
 using namespace std;
@@ -17,10 +17,11 @@ struct drs_header
     int32_t file_offset;
 };
 
-struct drs_table_info {
-	char file_extension[4];
-	int32_t file_info_offset; // Absolute position from DRS file start
-	int32_t num_files;
+struct drs_table_info
+{
+    char file_extension[4];
+    int32_t file_info_offset; // Absolute position from DRS file start
+    int32_t num_files;
 };
 
 struct drs_file_info
@@ -31,10 +32,11 @@ struct drs_file_info
 };
 #pragma pack(pop)
 
-
-bool DRSFile::load(const std::string& filename) {
+bool DRSFile::load(const std::string& filename)
+{
     file.open(filename, std::ios::binary);
-    if (!file) return false;
+    if (!file)
+        return false;
 
     drs_header header;
 
@@ -77,7 +79,8 @@ bool DRSFile::load(const std::string& filename) {
 DRSResourceData DRSFile::getResource(int resourceId)
 {
     auto it = m_resources.find(resourceId);
-    if (it == m_resources.end()) throw std::runtime_error("Resource not found");
+    if (it == m_resources.end())
+        throw std::runtime_error("Resource not found");
 
     const DRSResourceEntry& entry = it->second;
 
@@ -101,7 +104,8 @@ SLPFile drs::DRSFile::getSLPFile(int resourceId)
 std::vector<int> DRSFile::listResources() const
 {
     std::vector<int> ids;
-    for (const auto& kv : m_resources) ids.push_back(kv.first);
+    for (const auto& kv : m_resources)
+        ids.push_back(kv.first);
 
     std::sort(ids.begin(), ids.end());
     return ids;
