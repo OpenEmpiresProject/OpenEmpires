@@ -4,12 +4,12 @@
 #include "Coordinates.h"
 #include "FrameData.h"
 #include "GameSettings.h"
+#include "GraphicsLoader.h"
 #include "GraphicsRegistry.h"
 #include "StatsCounter.h"
 #include "SubSystem.h"
 #include "ThreadQueue.h"
 #include "ThreadSynchronizer.h"
-#include "GraphicsLoader.h"
 
 #include <SDL3/SDL.h>
 #include <atomic>
@@ -33,8 +33,7 @@ class Renderer : public SubSystem
     Renderer(std::stop_source* stopSource,
              GraphicsRegistry& graphicsRegistry,
              ThreadSynchronizer<FrameData>& synchronizer,
-             GraphicsLoader& graphicsLoader
-            );
+             GraphicsLoader& graphicsLoader);
     ~Renderer();
 
     SDL_Renderer* getSDLRenderer();

@@ -41,8 +41,7 @@ Renderer::Renderer(std::stop_source* stopSource,
       m_zBuckets(
           ServiceRegistry::getInstance().getService<GameSettings>()->getWorldSizeInTiles().height *
           Constants::FEET_PER_TILE * 3),
-      m_synchronizer(synchronizer),
-      m_graphicsLoader(graphicsLoader)
+      m_synchronizer(synchronizer), m_graphicsLoader(graphicsLoader)
 {
     m_running = false;
     m_lastTickTime = steady_clock::now();

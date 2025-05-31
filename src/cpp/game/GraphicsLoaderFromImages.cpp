@@ -24,8 +24,8 @@ namespace fs = std::filesystem;
 using namespace std;
 
 void GraphicsLoaderFromImages::loadAllGraphics(SDL_Renderer* renderer,
-                   GraphicsRegistry& graphicsRegistry,
-                   AtlasGenerator& atlasGenerator)
+                                               GraphicsRegistry& graphicsRegistry,
+                                               AtlasGenerator& atlasGenerator)
 {
     m_renderer = renderer;
     loadTextures(graphicsRegistry, atlasGenerator);
@@ -77,7 +77,8 @@ std::vector<Vec2d> loadAnchorsFromCSV(const std::filesystem::path& filepath)
     return anchors;
 }
 
-void GraphicsLoaderFromImages::loadTextures(GraphicsRegistry& graphicsRegistry, AtlasGenerator& atlasGenerator)
+void GraphicsLoaderFromImages::loadTextures(GraphicsRegistry& graphicsRegistry,
+                                            AtlasGenerator& atlasGenerator)
 {
     spdlog::info("Loading textures from assets/images...");
 
@@ -117,7 +118,8 @@ void GraphicsLoaderFromImages::loadTextures(GraphicsRegistry& graphicsRegistry, 
     // Create atlas textures for each entityType
     for (const auto& [entityType, paths] : entityTypeToPaths)
     {
-        createAtlasForEntityType(entityType, paths, anchorsByFileName, graphicsRegistry, atlasGenerator);
+        createAtlasForEntityType(entityType, paths, anchorsByFileName, graphicsRegistry,
+                                 atlasGenerator);
         loadedCount += paths.size();
     }
 
@@ -141,11 +143,12 @@ int GraphicsLoaderFromImages::determineEntityType(const std::filesystem::path& p
     return 0; // Unknown
 }
 
-void GraphicsLoaderFromImages::createAtlasForEntityType(int entityType,
-                                              const std::vector<std::filesystem::path>& paths,
-                                              const std::map<std::string, Vec2d>& anchors,
-                                            GraphicsRegistry& graphicsRegistry,
-                                        AtlasGenerator& atlasGenerator)
+void GraphicsLoaderFromImages::createAtlasForEntityType(
+    int entityType,
+    const std::vector<std::filesystem::path>& paths,
+    const std::map<std::string, Vec2d>& anchors,
+    GraphicsRegistry& graphicsRegistry,
+    AtlasGenerator& atlasGenerator)
 {
 
     std::vector<SDL_Rect> srcRects;

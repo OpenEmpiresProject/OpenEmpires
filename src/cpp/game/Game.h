@@ -5,6 +5,7 @@
 #include "Coordinates.h"
 #include "EventLoop.h"
 #include "GameState.h"
+#include "GraphicsLoaderFromImages.h"
 #include "GraphicsRegistry.h"
 #include "Renderer.h"
 #include "ResourceLoader.h"
@@ -13,7 +14,6 @@
 #include "SubSystemRegistry.h"
 #include "ThreadQueue.h"
 #include "ThreadSynchronizer.h"
-#include "GraphicsLoaderFromImages.h"
 #include "utils/Logger.h"
 #include "utils/Types.h"
 
@@ -49,13 +49,11 @@ class Game
         aion::ThreadSynchronizer<aion::FrameData> simulatorRendererSynchronizer;
         aion::GraphicsLoaderFromImages graphicsLoader;
 
-
         auto eventLoop = std::make_shared<aion::EventLoop>(&stopToken);
         auto simulator =
             std::make_shared<aion::Simulator>(simulatorRendererSynchronizer, eventLoop);
-        auto renderer = std::make_shared<aion::Renderer>(&stopSource, graphicsRegistry,
-                                                         simulatorRendererSynchronizer,
-                                                        graphicsLoader);
+        auto renderer = std::make_shared<aion::Renderer>(
+            &stopSource, graphicsRegistry, simulatorRendererSynchronizer, graphicsLoader);
         auto cc = std::make_shared<aion::CommandCenter>();
 
         aion::ServiceRegistry::getInstance().registerService(cc);
