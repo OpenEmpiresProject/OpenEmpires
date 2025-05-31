@@ -1,4 +1,4 @@
-#include "GraphicsLoader.h"
+#include "GraphicsLoaderFromImages.h"
 
 #include "GraphicsRegistry.h"
 #include "utils/Logger.h"
@@ -23,18 +23,14 @@ using namespace aion;
 namespace fs = std::filesystem;
 using namespace std;
 
-GraphicsLoader::GraphicsLoader(SDL_Renderer* renderer,
-                               GraphicsRegistry& graphicsRegistry,
-                               AtlasGenerator& atlasGenerator)
-    : m_renderer(renderer), m_graphicsRegistry(graphicsRegistry), m_atlasGenerator(atlasGenerator)
+void GraphicsLoaderFromImages::loadAllGraphics(SDL_Renderer* renderer,
+                   GraphicsRegistry& graphicsRegistry,
+                   AtlasGenerator& atlasGenerator)
 {
-}
-
-void GraphicsLoader::loadAllGraphics()
-{
-    loadTextures();
-    adjustDirections();
-    loadAnimations();
+    m_renderer = renderer;
+    loadTextures(graphicsRegistry, atlasGenerator);
+    adjustDirections(graphicsRegistry);
+    loadAnimations(graphicsRegistry);
     loadCursors();
     setCursor(4);
 }
@@ -81,7 +77,7 @@ std::vector<Vec2d> loadAnchorsFromCSV(const std::filesystem::path& filepath)
     return anchors;
 }
 
-void GraphicsLoader::loadTextures()
+void GraphicsLoaderFromImages::loadTextures(GraphicsRegistry& graphicsRegistry, AtlasGenerator& atlasGenerator)
 {
     spdlog::info("Loading textures from assets/images...");
 
@@ -121,14 +117,14 @@ void GraphicsLoader::loadTextures()
     // Create atlas textures for each entityType
     for (const auto& [entityType, paths] : entityTypeToPaths)
     {
-        createAtlasForEntityType(entityType, paths, anchorsByFileName);
+        createAtlasForEntityType(entityType, paths, anchorsByFileName, graphicsRegistry, atlasGenerator);
         loadedCount += paths.size();
     }
 
     spdlog::info("{} textures loaded into atlases.", loadedCount);
 }
 
-int GraphicsLoader::determineEntityType(const std::filesystem::path& path)
+int GraphicsLoaderFromImages::determineEntityType(const std::filesystem::path& path)
 {
     if (path.string().find("terrain") != std::string::npos)
         return 2; // Tile
@@ -145,14 +141,29 @@ int GraphicsLoader::determineEntityType(const std::filesystem::path& path)
     return 0; // Unknown
 }
 
-void GraphicsLoader::createAtlasForEntityType(int entityType,
+void GraphicsLoaderFromImages::createAtlasForEntityType(int entityType,
                                               const std::vector<std::filesystem::path>& paths,
-                                              const std::map<std::string, Vec2d>& anchors)
+                                              const std::map<std::string, Vec2d>& anchors,
+                                            GraphicsRegistry& graphicsRegistry,
+                                        AtlasGenerator& atlasGenerator)
 {
 
     std::vector<SDL_Rect> srcRects;
+    std::vector<SDL_Surface*> surfaces;
 
-    auto atlasTexture = m_atlasGenerator.generateAtlas(m_renderer, entityType, paths, srcRects);
+    // Load all surfaces for this entityType
+    for (const auto& path : paths)
+    {
+        SDL_Surface* surface = IMG_Load(path.string().c_str());
+        if (!surface)
+        {
+            spdlog::warn("Failed to load image: {}, error: {}", path.string(), SDL_GetError());
+            continue;
+        }
+        surfaces.push_back(surface);
+    }
+
+    auto atlasTexture = atlasGenerator.generateAtlas(m_renderer, surfaces, srcRects);
     if (!atlasTexture)
     {
         spdlog::error("Failed to create atlas texture for entity type {}.", entityType);
@@ -227,7 +238,7 @@ void GraphicsLoader::createAtlasForEntityType(int entityType,
             for (size_t i = 0; i < 100; i++)
             {
                 id.variation = i;
-                if (!m_graphicsRegistry.hasTexture(id))
+                if (!graphicsRegistry.hasTexture(id))
                 {
                     break;
                 }
@@ -241,18 +252,18 @@ void GraphicsLoader::createAtlasForEntityType(int entityType,
                                             (float) srcRect.h};
 
         Texture entry{atlasTexture, srcRectF, anchor, imageSize, false};
-        m_graphicsRegistry.registerTexture(id, entry);
+        graphicsRegistry.registerTexture(id, entry);
     }
 }
 
-void GraphicsLoader::loadAnimations()
+void GraphicsLoaderFromImages::loadAnimations(GraphicsRegistry& graphicsRegistry)
 {
-    for (const auto& [id, texture] : m_graphicsRegistry.getTextures())
+    for (const auto& [id, texture] : graphicsRegistry.getTextures())
     {
         auto idFull = GraphicsID::fromHash(id);
         // Find all textures with the same entityType, action, and direction
         std::vector<int64_t> animationFrames;
-        for (const auto& [otherId, otherTexture] : m_graphicsRegistry.getTextures())
+        for (const auto& [otherId, otherTexture] : graphicsRegistry.getTextures())
         {
             auto otherIdFull = GraphicsID::fromHash(otherId);
             if (idFull.entityType == otherIdFull.entityType &&
@@ -269,7 +280,7 @@ void GraphicsLoader::loadAnimations()
             animationID.action = idFull.action;
             animationID.direction = idFull.direction;
             Animation animation{animationFrames, true, 10}; // 10 FPS
-            m_graphicsRegistry.registerAnimation(animationID, animation);
+            graphicsRegistry.registerAnimation(animationID, animation);
 
             // spdlog::debug(
             //     "Animation created for entityType: {}, action: {}, direction: {} with {}
@@ -279,7 +290,7 @@ void GraphicsLoader::loadAnimations()
     }
 }
 
-void GraphicsLoader::loadCursors()
+void GraphicsLoaderFromImages::loadCursors()
 {
     for (const auto& entry : fs::recursive_directory_iterator("assets/images/interfaces/cursors"))
     {
@@ -319,15 +330,15 @@ void GraphicsLoader::loadCursors()
     }
 }
 
-void GraphicsLoader::setCursor(int variation)
+void GraphicsLoaderFromImages::setCursor(int variation)
 {
     SDL_SetCursor(m_cursors[variation]);
 }
 
-void GraphicsLoader::adjustDirections()
+void GraphicsLoaderFromImages::adjustDirections(GraphicsRegistry& graphicsRegistry)
 {
     std::list<std::pair<GraphicsID, Texture>> graphicsToFlip;
-    for (const auto& [id, texture] : m_graphicsRegistry.getTextures())
+    for (const auto& [id, texture] : graphicsRegistry.getTextures())
     {
         GraphicsID idFull = GraphicsID::fromHash(id);
         if (isTextureFlippingNeededEntity(idFull.entityType) &&
@@ -343,22 +354,22 @@ void GraphicsLoader::adjustDirections()
         id.direction =
             static_cast<Direction>(getFlippedDirection(id.direction)); // Flip the direction
 
-        m_graphicsRegistry.registerTexture(id, texture);
+        graphicsRegistry.registerTexture(id, texture);
     }
 }
 
-bool GraphicsLoader::isTextureFlippingNeededEntity(int entityType) const
+bool GraphicsLoaderFromImages::isTextureFlippingNeededEntity(int entityType) const
 {
     return entityType == 3;
 }
 
-bool GraphicsLoader::isTextureFlippingNeededDirection(Direction direction) const
+bool GraphicsLoaderFromImages::isTextureFlippingNeededDirection(Direction direction) const
 {
     return direction == Direction::SOUTHWEST || direction == Direction::NORTHWEST ||
            direction == Direction::WEST;
 }
 
-Direction GraphicsLoader::getFlippedDirection(Direction direction) const
+Direction GraphicsLoaderFromImages::getFlippedDirection(Direction direction) const
 {
     switch (direction)
     {

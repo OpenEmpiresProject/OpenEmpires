@@ -4,7 +4,6 @@
 #include "Event.h"
 #include "FPSCounter.h"
 #include "GameState.h"
-#include "GraphicsLoader.h"
 #include "Renderer.h"
 #include "SDL3_gfxPrimitives.h"
 #include "ServiceRegistry.h"
@@ -31,7 +30,8 @@ using namespace std;
 
 Renderer::Renderer(std::stop_source* stopSource,
                    GraphicsRegistry& graphicsRegistry,
-                   ThreadSynchronizer<FrameData>& synchronizer)
+                   ThreadSynchronizer<FrameData>& synchronizer,
+                   GraphicsLoader& graphicsLoader)
     : SubSystem(stopSource), m_settings(ServiceRegistry::getInstance().getService<GameSettings>()),
       m_graphicsRegistry(graphicsRegistry),
       m_coordinates(ServiceRegistry::getInstance().getService<GameSettings>()),
@@ -41,7 +41,8 @@ Renderer::Renderer(std::stop_source* stopSource,
       m_zBuckets(
           ServiceRegistry::getInstance().getService<GameSettings>()->getWorldSizeInTiles().height *
           Constants::FEET_PER_TILE * 3),
-      m_synchronizer(synchronizer)
+      m_synchronizer(synchronizer),
+      m_graphicsLoader(graphicsLoader)
 {
     m_running = false;
     m_lastTickTime = steady_clock::now();
@@ -115,7 +116,7 @@ void Renderer::threadEntry()
 {
     initSDL();
     AtlasGeneratorBasic atlasGenerator;
-    GraphicsLoader(m_renderer, m_graphicsRegistry, atlasGenerator).loadAllGraphics();
+    m_graphicsLoader.loadAllGraphics(m_renderer, m_graphicsRegistry, atlasGenerator);
     renderingLoop();
 }
 

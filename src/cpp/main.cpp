@@ -3,10 +3,10 @@
 
 int main()
 {
-    // game::Game game;
-    // return game.run();
+    game::Game game;
+    return game.run();
 
-    drs::DRSTester tester;
-    tester.load();
-    return 0;
+    // drs::DRSTester tester;
+    // tester.load();
+    // return 0;
 }

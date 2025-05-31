@@ -13,6 +13,7 @@
 #include "SubSystemRegistry.h"
 #include "ThreadQueue.h"
 #include "ThreadSynchronizer.h"
+#include "GraphicsLoaderFromImages.h"
 #include "utils/Logger.h"
 #include "utils/Types.h"
 
@@ -46,12 +47,15 @@ class Game
         std::stop_token stopToken = stopSource.get_token();
 
         aion::ThreadSynchronizer<aion::FrameData> simulatorRendererSynchronizer;
+        aion::GraphicsLoaderFromImages graphicsLoader;
+
 
         auto eventLoop = std::make_shared<aion::EventLoop>(&stopToken);
         auto simulator =
             std::make_shared<aion::Simulator>(simulatorRendererSynchronizer, eventLoop);
         auto renderer = std::make_shared<aion::Renderer>(&stopSource, graphicsRegistry,
-                                                         simulatorRendererSynchronizer);
+                                                         simulatorRendererSynchronizer,
+                                                        graphicsLoader);
         auto cc = std::make_shared<aion::CommandCenter>();
 
         aion::ServiceRegistry::getInstance().registerService(cc);
