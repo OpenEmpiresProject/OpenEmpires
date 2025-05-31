@@ -23,9 +23,9 @@ class DRSTester
                 // std::cout << "Loaded resource " << id << " (" << data.size() << " bytes)\n";
             }
 
-            auto slp = drs.getSLPFile(2);
-            auto frame = slp.getFrame(0);
-            frame.writeToBMP("test.bmp");
+            auto slp = drs.getSLPFile(1388);
+            //auto frame = slp.getFrame(0);
+            //frame.writeToBMP("test.bmp");
             slp.writeAllFramesToBMP("2_");
         }
     }
