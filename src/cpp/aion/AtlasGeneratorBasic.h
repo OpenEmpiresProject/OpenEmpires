@@ -14,23 +14,9 @@ class AtlasGeneratorBasic : public AtlasGenerator
 {
   public:
     SDL_Texture* generateAtlas(SDL_Renderer* renderer,
-                               int entityType,
-                               const std::vector<std::filesystem::path>& images,
+                               const std::vector<SDL_Surface*>& surfaces,
                                std::vector<SDL_Rect>& sourceRects) override
     {
-        // Load all surfaces for this entityType
-        std::vector<SDL_Surface*> surfaces;
-        for (const auto& path : images)
-        {
-            SDL_Surface* surface = IMG_Load(path.string().c_str());
-            if (!surface)
-            {
-                spdlog::warn("Failed to load image: {}, error: {}", path.string(), SDL_GetError());
-                continue;
-            }
-            surfaces.push_back(surface);
-        }
-
         if (surfaces.empty())
             return nullptr;
 
@@ -46,7 +32,7 @@ class AtlasGeneratorBasic : public AtlasGenerator
         SDL_Surface* atlasSurface = SDL_CreateSurface(atlasWidth, atlasHeight, surfaces[0]->format);
         if (!atlasSurface)
         {
-            spdlog::error("Failed to create atlas surface for entity type {}. {}", entityType,
+            spdlog::error("Failed to create atlas surface. {}",
                           SDL_GetError());
             return nullptr;
         }
@@ -81,7 +67,7 @@ class AtlasGeneratorBasic : public AtlasGenerator
 
         if (!atlasTexture)
         {
-            spdlog::error("Failed to create atlas texture for entity type {}. {}", entityType,
+            spdlog::error("Failed to create atlas texture. {}",
                           SDL_GetError());
             return nullptr;
         }

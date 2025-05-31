@@ -9,6 +9,7 @@
 #include "SubSystem.h"
 #include "ThreadQueue.h"
 #include "ThreadSynchronizer.h"
+#include "GraphicsLoader.h"
 
 #include <SDL3/SDL.h>
 #include <atomic>
@@ -31,7 +32,9 @@ class Renderer : public SubSystem
   public:
     Renderer(std::stop_source* stopSource,
              GraphicsRegistry& graphicsRegistry,
-             ThreadSynchronizer<FrameData>& synchronizer);
+             ThreadSynchronizer<FrameData>& synchronizer,
+             GraphicsLoader& graphicsLoader
+            );
     ~Renderer();
 
     SDL_Renderer* getSDLRenderer();
@@ -109,6 +112,8 @@ class Renderer : public SubSystem
     StatsCounter<uint64_t> m_waitTime;
 
     size_t m_texturesDrew = 0;
+
+    GraphicsLoader& m_graphicsLoader;
 };
 } // namespace aion
 
