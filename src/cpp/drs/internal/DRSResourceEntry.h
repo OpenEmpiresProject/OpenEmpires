@@ -16,6 +16,12 @@ struct DRSResourceData
 {
     DRSResourceEntry entry;
     uint8_t* data = nullptr;
+
+    ~DRSResourceData()
+    {
+        if (data != nullptr)
+            delete[] data;
+    }
 };
 } // namespace drs
 

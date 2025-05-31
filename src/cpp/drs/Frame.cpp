@@ -1,6 +1,8 @@
 #include "Frame.h"
 
-#include "libbmp.h"
+#include "internal/FrameInfo.h"
+#include "internal/Palettes.h"
+#include "internal/libbmp.h"
 
 #include <functional>
 #include <iostream>
@@ -32,59 +34,80 @@ void decodeSLPRow(const uint8_t* cmdStream,
                   const std::function<Color(uint8_t index)>& playerColorLookup,
                   const Outline& outlineEntry);
 
-void Frame::load(const SLPFrameInfo& fi, std::span<const uint8_t> data)
+Frame::Frame(const FrameInfo& fi) : m_frameInfo(fi)
 {
-    auto paletteLookup = [&fi](uint8_t index) -> Color
+}
+
+const std::vector<std::vector<Color>>& Frame::getImage() const
+{
+    return m_image;
+}
+
+std::pair<int, int> Frame::getAnchor() const
+{
+    return std::pair<int, int>(m_frameInfo.hotspot_x, m_frameInfo.hotspot_y);
+}
+
+std::pair<int, int> Frame::getDimensions() const
+{
+    return std::pair<int, int>(m_frameInfo.width, m_frameInfo.height);
+}
+
+void Frame::load(std::span<const uint8_t> data)
+{
+    auto paletteLookup = [&](uint8_t index) -> Color
     {
-        auto& palette = PaletteCollection::palettes.at(fi.paletteOffset);
+        auto& palette = PaletteCollection::palettes.at(m_frameInfo.paletteOffset);
         return palette.colors.at(index);
     };
 
-    auto playerColorLookup = [&fi](uint8_t index) -> Color
+    auto playerColorLookup = [&](uint8_t index) -> Color
     {
         size_t playerIndex = 0; // Assuming player index is 0 for now
-        auto& palette = PaletteCollection::palettes.at(fi.paletteOffset);
+        auto& palette = PaletteCollection::palettes.at(m_frameInfo.paletteOffset);
         return palette.colors.at(index + playerIndex * 16);
     };
 
     // Bounds check on frame internals
-    if (fi.width <= 0 || fi.height <= 0 || fi.width > MAX_IMAGE_SIZE || fi.height > MAX_IMAGE_SIZE)
+    if (m_frameInfo.width <= 0 || m_frameInfo.height <= 0 || m_frameInfo.width > MAX_IMAGE_SIZE ||
+        m_frameInfo.height > MAX_IMAGE_SIZE)
     {
         throw std::runtime_error("Frame size is out of bounds.");
     }
 
-    std::cout << fi.width << "," << fi.height << "; " << fi.hotspot_x << "," << fi.hotspot_y
-              << std::endl;
+    std::cout << m_frameInfo.width << "," << m_frameInfo.height << "; " << m_frameInfo.hotspot_x
+              << "," << m_frameInfo.hotspot_y << std::endl;
 
     // Outline Table
-    size_t outlineTableSize = fi.height * sizeof(Outline);
-    if (fi.outlineTableOffset + outlineTableSize > data.size())
+    size_t outlineTableSize = m_frameInfo.height * sizeof(Outline);
+    if (m_frameInfo.outlineTableOffset + outlineTableSize > data.size())
     {
         throw std::runtime_error("Outline table out of bounds.");
     }
 
     const Outline* outlineTable =
-        reinterpret_cast<const Outline*>(data.data() + fi.outlineTableOffset);
+        reinterpret_cast<const Outline*>(data.data() + m_frameInfo.outlineTableOffset);
 
     // Command Offset Table
-    size_t cmdOffsetTableSize = fi.height * sizeof(RowCmdOffset);
-    if (fi.cmdTableOffset + cmdOffsetTableSize > data.size())
+    size_t cmdOffsetTableSize = m_frameInfo.height * sizeof(RowCmdOffset);
+    if (m_frameInfo.cmdTableOffset + cmdOffsetTableSize > data.size())
     {
         throw std::runtime_error("Cmd offset table out of bounds.");
     }
 
-    // create double array with fi.width and fi.height and init m_image span of span
+    // create double array with m_frameInfo.width and m_frameInfo.height and init m_image span of
+    // span
 
-    // int frameInfoEnd = frameInfosOffset + sizeof(SLPFrameInfo) * frameCount;
-    // int outlineStart = sizeof(SLPHeader) + frameCount * sizeof(SLPFrameInfo);
+    // int frameInfoEnd = frameInfosOffset + sizeof(FrameInfo) * frameCount;
+    // int outlineStart = sizeof(SLPHeader) + frameCount * sizeof(FrameInfo);
     // int cmdOffset2nd = outlineStart + sizeof(Outline) * frameCount;
 
     const RowCmdOffset* cmdOffsets =
-        reinterpret_cast<const RowCmdOffset*>(data.data() + fi.cmdTableOffset);
+        reinterpret_cast<const RowCmdOffset*>(data.data() + m_frameInfo.cmdTableOffset);
 
     // Each row's pixel command data is located at: base + cmdOffsets[row].offset
     // Actual command decoding would happen here
-    for (int row = 0; row < fi.height; ++row)
+    for (int row = 0; row < m_frameInfo.height; ++row)
     {
         uint32_t rowCmdOffset = cmdOffsets[row].offset;
         if (rowCmdOffset >= data.size())
@@ -95,13 +118,13 @@ void Frame::load(const SLPFrameInfo& fi, std::span<const uint8_t> data)
         const uint8_t* rowCmds = data.data() + rowCmdOffset;
 
         std::vector<Color> rowPixels;
-        decodeSLPRow(rowCmds, fi.width, rowPixels, paletteLookup, playerColorLookup,
+        decodeSLPRow(rowCmds, m_frameInfo.width, rowPixels, paletteLookup, playerColorLookup,
                      outlineTable[row]);
         m_image.push_back(rowPixels);
     }
 }
 
-void drs::Frame::writeToBMP(const std::string& filename) const
+void Frame::writeToBMP(const std::string& filename) const
 {
     auto height = m_image.size();
     auto width = m_image[0].size();

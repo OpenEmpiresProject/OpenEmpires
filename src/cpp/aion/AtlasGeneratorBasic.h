@@ -32,8 +32,7 @@ class AtlasGeneratorBasic : public AtlasGenerator
         SDL_Surface* atlasSurface = SDL_CreateSurface(atlasWidth, atlasHeight, surfaces[0]->format);
         if (!atlasSurface)
         {
-            spdlog::error("Failed to create atlas surface. {}",
-                          SDL_GetError());
+            spdlog::error("Failed to create atlas surface. {}", SDL_GetError());
             return nullptr;
         }
 
@@ -67,8 +66,7 @@ class AtlasGeneratorBasic : public AtlasGenerator
 
         if (!atlasTexture)
         {
-            spdlog::error("Failed to create atlas texture. {}",
-                          SDL_GetError());
+            spdlog::error("Failed to create atlas texture. {}", SDL_GetError());
             return nullptr;
         }
         return atlasTexture;

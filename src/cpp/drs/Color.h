@@ -1,7 +1,6 @@
-#ifndef PALETTES_H
-#define PALETTES_H
+#ifndef COLOR_H
+#define COLOR_H
 
-#include <array>
 #include <cstdint>
 
 namespace drs
@@ -21,16 +20,6 @@ struct Color
     {
         return !(*this == other);
     }
-};
-
-struct Palette
-{
-    std::array<Color, 256> colors;
-};
-
-struct PaletteCollection
-{
-    static const std::array<Palette, 1> palettes;
 };
 } // namespace drs
 

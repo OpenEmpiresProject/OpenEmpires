@@ -24,8 +24,8 @@ class DRSTester
             }
 
             auto slp = drs.getSLPFile(1388);
-            //auto frame = slp.getFrame(0);
-            //frame.writeToBMP("test.bmp");
+            // auto frame = slp.getFrame(0);
+            // frame.writeToBMP("test.bmp");
             slp.writeAllFramesToBMP("2_");
         }
     }

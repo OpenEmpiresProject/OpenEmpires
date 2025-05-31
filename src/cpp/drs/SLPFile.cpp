@@ -1,5 +1,8 @@
 #include "SLPFile.h"
 
+#include "DRSFile.h"
+#include "internal/FrameInfo.h"
+
 #include <iostream>
 #include <string>
 
@@ -15,25 +18,25 @@ struct SLPHeader
 
 #pragma pack(pop)
 
-SLPFile::SLPFile(const DRSResourceData& resource) : m_resourceData(resource)
+SLPFile::SLPFile(const std::span<const uint8_t>& slpData) : m_slpData(slpData)
 {
     init();
 }
 
-size_t drs::SLPFile::getFrameCount() const
+size_t SLPFile::getFrameCount() const
 {
     return m_frameInfos.size();
 }
 
-Frame drs::SLPFile::getFrame(size_t index) const
+Frame SLPFile::getFrame(size_t index) const
 {
-    const SLPFrameInfo& fi = m_frameInfos[index];
-    Frame frame;
-    frame.load(fi, std::span<const uint8_t>(m_resourceData.data, m_resourceData.entry.size));
+    const FrameInfo& fi = m_frameInfos[index];
+    Frame frame(fi);
+    frame.load(m_slpData);
     return frame;
 }
 
-std::vector<Frame> drs::SLPFile::getFrames() const
+std::vector<Frame> SLPFile::getFrames() const
 {
     std::vector<Frame> frames;
 
@@ -44,7 +47,7 @@ std::vector<Frame> drs::SLPFile::getFrames() const
     return frames;
 }
 
-void drs::SLPFile::writeAllFramesToBMP(const std::string& prefix) const
+void SLPFile::writeAllFramesToBMP(const std::string& prefix) const
 {
     auto frames = getFrames();
     for (size_t i = 0; i < frames.size(); i++)
@@ -55,8 +58,8 @@ void drs::SLPFile::writeAllFramesToBMP(const std::string& prefix) const
 
 void SLPFile::init()
 {
-    const uint8_t* data = m_resourceData.data;
-    size_t size = m_resourceData.entry.size;
+    const uint8_t* data = m_slpData.data();
+    size_t size = m_slpData.size();
 
     if (size < sizeof(SLPHeader))
     {
@@ -73,7 +76,7 @@ void SLPFile::init()
     }
 
     int32_t frameCount = header->numOfFrames;
-    const size_t frameInfoSize = sizeof(SLPFrameInfo);
+    const size_t frameInfoSize = sizeof(FrameInfo);
     const size_t frameInfosOffset = sizeof(SLPHeader);
 
     // Bounds check
@@ -83,6 +86,6 @@ void SLPFile::init()
     }
 
     // Load frame info table
-    const SLPFrameInfo* frameInfos = reinterpret_cast<const SLPFrameInfo*>(data + frameInfosOffset);
-    m_frameInfos = std::span<const SLPFrameInfo>(frameInfos, frameCount);
+    const FrameInfo* frameInfos = reinterpret_cast<const FrameInfo*>(data + frameInfosOffset);
+    m_frameInfos = std::span<const FrameInfo>(frameInfos, frameCount);
 }

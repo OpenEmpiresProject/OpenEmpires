@@ -1,104 +1,115 @@
 #include "DRSFile.h"
 
+#include "internal/DRSResourceEntry.h"
+
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
+#include <fstream>
 #include <iostream>
+#include <span>
+#include <stdexcept>
 
 using namespace drs;
 using namespace std;
 
 #pragma pack(push, 1)
-struct drs_header
+struct DRSHeader
 {
     char copyright[40];
     char version[4];
     char ftype[12];
-    int32_t table_count;
-    int32_t file_offset;
+    int32_t tableCount;
+    int32_t fileOffset;
 };
 
-struct drs_table_info
+struct DRSTableInfo
 {
-    char file_extension[4];
-    int32_t file_info_offset; // Absolute position from DRS file start
-    int32_t num_files;
+    char fileExtension[4];
+    int32_t fileInfoOffset; // Absolute position from DRS m_file start
+    int32_t numOfFiles;
 };
 
-struct drs_file_info
+struct DRSFileInfo
 {
-    int32_t file_id;
-    int32_t file_data_offset; // Absolute position from DRS file start
-    int32_t file_size;
+    int32_t fileId;
+    int32_t fileDataOffset; // Absolute position from DRS m_file start
+    int32_t fileSize;
 };
 #pragma pack(pop)
 
 bool DRSFile::load(const std::string& filename)
 {
-    file.open(filename, std::ios::binary);
-    if (!file)
+    m_file.open(filename, std::ios::binary);
+    if (!m_file)
         return false;
 
-    drs_header header;
+    DRSHeader header;
 
-    file.read(reinterpret_cast<char*>(&header), sizeof(header));
-    if (!file)
+    m_file.read(reinterpret_cast<char*>(&header), sizeof(header));
+    if (!m_file)
     {
         throw std::runtime_error("Failed to read DRS header.");
     }
 
-    for (size_t i = 0; i < header.table_count; i++)
+    for (size_t i = 0; i < header.tableCount; i++)
     {
-        drs_table_info tableInfo;
-        file.read(reinterpret_cast<char*>(&tableInfo), sizeof(tableInfo));
-        if (!file)
+        DRSTableInfo tableInfo;
+        m_file.read(reinterpret_cast<char*>(&tableInfo), sizeof(tableInfo));
+        if (!m_file)
         {
             throw std::runtime_error("Failed to read table info.");
         }
 
-        for (size_t i = 0; i < tableInfo.num_files; i++)
+        for (size_t i = 0; i < tableInfo.numOfFiles; i++)
         {
-            drs_file_info fileInfo;
-            file.read(reinterpret_cast<char*>(&fileInfo), sizeof(fileInfo));
-            if (!file)
+            DRSFileInfo fileInfo;
+            m_file.read(reinterpret_cast<char*>(&fileInfo), sizeof(fileInfo));
+            if (!m_file)
             {
-                throw std::runtime_error("Failed to file info.");
+                throw std::runtime_error("Failed to m_file info.");
             }
             // cout << "File ID: " << fileInfo.id << ", Offset: " << fileInfo.offset
             //      << ", Size: " << fileInfo.size << endl;
 
-            DRSResourceEntry entry;
-            entry.id = fileInfo.file_id;
-            entry.offset = fileInfo.file_data_offset;
-            entry.size = fileInfo.file_size;
-            m_resources[fileInfo.file_id] = entry;
+            auto resourceData = make_shared<DRSResourceData>();
+
+            resourceData->entry.id = fileInfo.fileId;
+            resourceData->entry.offset = fileInfo.fileDataOffset;
+            resourceData->entry.size = fileInfo.fileSize;
+            m_resources[fileInfo.fileId] = std::move(resourceData);
         }
     }
     return true;
 }
 
-DRSResourceData DRSFile::getResource(int resourceId)
+std::shared_ptr<DRSResourceData> DRSFile::getResource(int resourceId)
 {
     auto it = m_resources.find(resourceId);
     if (it == m_resources.end())
         throw std::runtime_error("Resource not found");
 
-    const DRSResourceEntry& entry = it->second;
+    auto& resourceData = it->second;
 
-    assert(entry.size > 0 && "Resource size is zero");
+    assert(resourceData->entry.size > 0 && "Resource size is zero");
 
-    DRSResourceData resourceData;
-    resourceData.entry = entry;
-    resourceData.data = new uint8_t[entry.size];
+    if (resourceData->data != nullptr)
+    {
+        return resourceData;
+    }
+    resourceData->data = new uint8_t[resourceData->entry.size];
 
-    file.seekg(entry.offset);
-    file.read(reinterpret_cast<char*>(resourceData.data), entry.size);
+    m_file.seekg(resourceData->entry.offset);
+    m_file.read(reinterpret_cast<char*>(resourceData->data), resourceData->entry.size);
 
     return resourceData;
 }
 
 SLPFile drs::DRSFile::getSLPFile(int resourceId)
 {
-    return SLPFile(getResource(resourceId));
+    auto resourceData = getResource(resourceId);
+
+    return SLPFile(std::span<const uint8_t>(resourceData->data, resourceData->entry.size));
 }
 
 std::vector<int> DRSFile::listResources() const

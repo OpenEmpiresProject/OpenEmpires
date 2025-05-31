@@ -8,15 +8,14 @@
 
 namespace aion
 {
-    class GraphicsLoader
-    {
-    public:
-        virtual void loadAllGraphics(SDL_Renderer* renderer,
-                   GraphicsRegistry& graphicsRegistry,
-                   AtlasGenerator& atlasGenerator) = 0;
-        virtual ~GraphicsLoader() = default;
-    };
+class GraphicsLoader
+{
+  public:
+    virtual void loadAllGraphics(SDL_Renderer* renderer,
+                                 GraphicsRegistry& graphicsRegistry,
+                                 AtlasGenerator& atlasGenerator) = 0;
+    virtual ~GraphicsLoader() = default;
+};
 } // namespace aion
-
 
 #endif
