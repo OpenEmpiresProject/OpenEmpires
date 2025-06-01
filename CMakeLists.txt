@@ -20,12 +20,13 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 add_subdirectory(src)
 add_subdirectory(tests)
 
-# Find all source/header files
-file(GLOB_RECURSE ALL_SOURCE_FILES
-    "${CMAKE_SOURCE_DIR}/src/*.cpp"
-    "${CMAKE_SOURCE_DIR}/src/*.h"
-    "${CMAKE_SOURCE_DIR}/include/*.h"
-)
+include(ClangFormatUtils)
+# Define patterns and ignore file
+set(GLOB_PATTERNS "src/*.cpp" "src/*.h")
+set(IGNORE_FILE "${CMAKE_SOURCE_DIR}/.clang-format-ignore")
+
+# Collect format files
+collect_format_files(SOURCE_FILES_TO_FORMAT "${CMAKE_SOURCE_DIR}" "${GLOB_PATTERNS}" "${IGNORE_FILE}")
 
 # Find clang-format
 find_program(CLANG_FORMAT_BIN clang-format)
@@ -37,7 +38,7 @@ if(CLANG_FORMAT_BIN)
         COMMAND ${CLANG_FORMAT_BIN}
         -i
         -style=file
-        ${ALL_SOURCE_FILES}
+        ${SOURCE_FILES_TO_FORMAT}
         COMMENT "Running clang-format on source files"
     )
 else()
