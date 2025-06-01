@@ -15,14 +15,14 @@ class DRSFile
 {
   public:
     bool load(const std::string& filename);
-    SLPFile getSLPFile(int resourceId);
-    std::vector<int> listResources() const;
+    SLPFile getSLPFile(uint32_t resourceId);
+    std::vector<uint32_t> listResources() const;
 
   private:
-    std::shared_ptr<DRSResourceData> getResource(int resourceId);
+    std::shared_ptr<DRSResourceData> getResource(uint32_t resourceId);
 
     std::ifstream m_file;
-    std::unordered_map<int, std::shared_ptr<DRSResourceData>> m_resources;
+    std::unordered_map<uint32_t, std::shared_ptr<DRSResourceData>> m_resources;
 };
 } // namespace drs
 

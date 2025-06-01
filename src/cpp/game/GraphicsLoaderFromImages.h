@@ -10,38 +10,39 @@
 #include <filesystem>
 #include <map>
 
-namespace aion
+namespace game
 {
-class GraphicsLoaderFromImages : public GraphicsLoader
+class GraphicsLoaderFromImages : public aion::GraphicsLoader
 {
   public:
     void loadAllGraphics(SDL_Renderer* renderer,
-                         GraphicsRegistry& graphicsRegistry,
-                         AtlasGenerator& atlasGenerator) override;
+                         aion::GraphicsRegistry& graphicsRegistry,
+                         aion::AtlasGenerator& atlasGenerator) override;
     void loadTexture(const std::filesystem::path& path);
     void unloadGraphics(const std::string& graphicsPath);
-    void loadAnimations(GraphicsRegistry& graphicsRegistry);
+    void loadAnimations(aion::GraphicsRegistry& graphicsRegistry);
     void loadCursors();
     void setCursor(int variation);
 
   private:
-    void loadTextures(GraphicsRegistry& graphicsRegistry, AtlasGenerator& atlasGenerator);
-    void adjustDirections(GraphicsRegistry& graphicsRegistry);
+    void loadTextures(aion::GraphicsRegistry& graphicsRegistry,
+                      aion::AtlasGenerator& atlasGenerator);
+    void adjustDirections(aion::GraphicsRegistry& graphicsRegistry);
     bool isTextureFlippingNeededEntity(int entityType) const;
-    bool isTextureFlippingNeededDirection(Direction direction) const;
-    Direction getFlippedDirection(Direction direction) const;
+    bool isTextureFlippingNeededDirection(aion::Direction direction) const;
+    aion::Direction getFlippedDirection(aion::Direction direction) const;
     int determineEntityType(const std::filesystem::path& path);
     void createAtlasForEntityType(int entityType,
                                   const std::vector<std::filesystem::path>& paths,
-                                  const std::map<std::string, Vec2d>& anchors,
-                                  GraphicsRegistry& graphicsRegistry,
-                                  AtlasGenerator& atlasGenerator);
+                                  const std::map<std::string, aion::Vec2d>& anchors,
+                                  aion::GraphicsRegistry& graphicsRegistry,
+                                  aion::AtlasGenerator& atlasGenerator);
 
     SDL_Renderer* m_renderer;
     int m_variation = 0;
     std::unordered_map<int, SDL_Cursor*> m_cursors;
 
-}; // namespace aion
-} // namespace aion
+};
+} // namespace game
 
 #endif

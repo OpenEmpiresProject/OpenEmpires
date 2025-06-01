@@ -83,7 +83,7 @@ bool DRSFile::load(const std::string& filename)
     return true;
 }
 
-std::shared_ptr<DRSResourceData> DRSFile::getResource(int resourceId)
+std::shared_ptr<DRSResourceData> DRSFile::getResource(uint32_t resourceId)
 {
     auto it = m_resources.find(resourceId);
     if (it == m_resources.end())
@@ -105,16 +105,17 @@ std::shared_ptr<DRSResourceData> DRSFile::getResource(int resourceId)
     return resourceData;
 }
 
-SLPFile drs::DRSFile::getSLPFile(int resourceId)
+SLPFile drs::DRSFile::getSLPFile(uint32_t resourceId)
 {
     auto resourceData = getResource(resourceId);
 
-    return SLPFile(std::span<const uint8_t>(resourceData->data, resourceData->entry.size));
+    return SLPFile(resourceId,
+                   std::span<const uint8_t>(resourceData->data, resourceData->entry.size));
 }
 
-std::vector<int> DRSFile::listResources() const
+std::vector<uint32_t> DRSFile::listResources() const
 {
-    std::vector<int> ids;
+    std::vector<uint32_t> ids;
     for (const auto& kv : m_resources)
         ids.push_back(kv.first);
 

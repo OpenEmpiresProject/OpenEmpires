@@ -5,6 +5,7 @@
 #include "Coordinates.h"
 #include "EventLoop.h"
 #include "GameState.h"
+#include "GraphicsLoaderFromDRS.h"
 #include "GraphicsLoaderFromImages.h"
 #include "GraphicsRegistry.h"
 #include "Renderer.h"
@@ -47,7 +48,8 @@ class Game
         std::stop_token stopToken = stopSource.get_token();
 
         aion::ThreadSynchronizer<aion::FrameData> simulatorRendererSynchronizer;
-        aion::GraphicsLoaderFromImages graphicsLoader;
+        // game::GraphicsLoaderFromImages graphicsLoader;
+        game::GraphicsLoaderFromDRS graphicsLoader;
 
         auto eventLoop = std::make_shared<aion::EventLoop>(&stopToken);
         auto simulator =

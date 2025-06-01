@@ -14,6 +14,7 @@ target_include_directories(game PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(game 
     PUBLIC 
         aion
+        drs
         EnTT::EnTT
         SDL3::SDL3
         $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image-shared>,SDL3_image::SDL3_image-shared,SDL3_image::SDL3_image-static>

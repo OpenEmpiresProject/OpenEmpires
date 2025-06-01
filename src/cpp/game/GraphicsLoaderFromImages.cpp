@@ -19,6 +19,7 @@
 #include <utility>
 #include <vector>
 
+using namespace game;
 using namespace aion;
 namespace fs = std::filesystem;
 using namespace std;
