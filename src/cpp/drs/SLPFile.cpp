@@ -18,7 +18,8 @@ struct SLPHeader
 
 #pragma pack(pop)
 
-SLPFile::SLPFile(const std::span<const uint8_t>& slpData) : m_slpData(slpData)
+SLPFile::SLPFile(uint32_t id, const std::span<const uint8_t>& slpData)
+    : m_slpData(slpData), m_id(id)
 {
     init();
 }
@@ -28,10 +29,10 @@ size_t SLPFile::getFrameCount() const
     return m_frameInfos.size();
 }
 
-Frame SLPFile::getFrame(size_t index) const
+Frame SLPFile::getFrame(uint32_t id) const
 {
-    const FrameInfo& fi = m_frameInfos[index];
-    Frame frame(fi);
+    const FrameInfo& fi = m_frameInfos[id - 1];
+    Frame frame(m_id, id, fi);
     frame.load(m_slpData);
     return frame;
 }
@@ -40,7 +41,7 @@ std::vector<Frame> SLPFile::getFrames() const
 {
     std::vector<Frame> frames;
 
-    for (int i = 0; i < getFrameCount(); ++i)
+    for (int i = 1; i <= getFrameCount(); ++i)
     {
         frames.push_back(getFrame(i));
     }

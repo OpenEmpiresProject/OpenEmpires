@@ -4,6 +4,7 @@
 #include "internal/Palettes.h"
 #include "internal/libbmp.h"
 
+#include <format>
 #include <functional>
 #include <iostream>
 
@@ -34,7 +35,8 @@ void decodeSLPRow(const uint8_t* cmdStream,
                   const std::function<Color(uint8_t index)>& playerColorLookup,
                   const Outline& outlineEntry);
 
-Frame::Frame(const FrameInfo& fi) : m_frameInfo(fi)
+Frame::Frame(uint32_t parentId, uint32_t id, const FrameInfo& fi)
+    : m_frameInfo(fi), m_id(id), m_parentId(parentId), m_fqid(std::format("{}_{:02}", parentId, id))
 {
 }
 
@@ -51,6 +53,11 @@ std::pair<int, int> Frame::getAnchor() const
 std::pair<int, int> Frame::getDimensions() const
 {
     return std::pair<int, int>(m_frameInfo.width, m_frameInfo.height);
+}
+
+const std::string& drs::Frame::getFQID() const
+{
+    return m_fqid;
 }
 
 void Frame::load(std::span<const uint8_t> data)

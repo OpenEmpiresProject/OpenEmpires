@@ -13,7 +13,7 @@ class DRSTester
     void load()
     {
         DRSFile drs;
-        if (drs.load("graphics.drs"))
+        if (drs.load("terrain.drs"))
         {
             auto ids = drs.listResources();
             for (uint32_t id : ids)
@@ -23,10 +23,10 @@ class DRSTester
                 // std::cout << "Loaded resource " << id << " (" << data.size() << " bytes)\n";
             }
 
-            auto slp = drs.getSLPFile(1388);
-            // auto frame = slp.getFrame(0);
-            // frame.writeToBMP("test.bmp");
-            slp.writeAllFramesToBMP("2_");
+            auto slp = drs.getSLPFile(15001);
+            // // auto frame = slp.getFrame(0);
+            // // frame.writeToBMP("test.bmp");
+            slp.writeAllFramesToBMP("15001_");
         }
     }
 };
