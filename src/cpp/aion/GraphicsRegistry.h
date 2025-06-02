@@ -114,6 +114,11 @@ class GraphicsRegistry
   private:
     std::unordered_map<int64_t, Texture> m_textureMap;
     std::unordered_map<int64_t, Animation> m_animationMap;
+
+#ifndef NDEBUG
+    std::unordered_map<int64_t, GraphicsID> m_graphicIds;
+    std::unordered_map<int, std::vector<GraphicsID>> m_graphicIdsByEntityType;
+#endif
 };
 } // namespace aion
 

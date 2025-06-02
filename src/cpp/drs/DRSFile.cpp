@@ -69,9 +69,6 @@ bool DRSFile::load(const std::string& filename)
             {
                 throw std::runtime_error("Failed to m_file info.");
             }
-            // cout << "File ID: " << fileInfo.id << ", Offset: " << fileInfo.offset
-            //      << ", Size: " << fileInfo.size << endl;
-
             auto resourceData = make_shared<DRSResourceData>();
 
             resourceData->entry.id = fileInfo.fileId;

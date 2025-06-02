@@ -227,7 +227,7 @@ void Simulator::updateGraphicComponents()
         if (state.hasComponent<CompAction>(entity))
         {
             auto action = state.getComponent<CompAction>(entity);
-            gc.frame = action.action;
+            gc.action = action.action;
         }
 
         if (state.hasComponent<CompBuilding>(entity))

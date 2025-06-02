@@ -20,6 +20,16 @@ void GraphicsRegistry::registerTexture(const GraphicsID& graphicID, const Textur
     {
         m_textureMap[graphicID.hash()] = entry;
     }
+
+#ifndef NDEBUG
+    m_graphicIds[graphicID.hash()] = graphicID;
+    auto itEntityType = m_graphicIdsByEntityType.find(graphicID.entityType);
+    if (itEntityType == m_graphicIdsByEntityType.end())
+    {
+        m_graphicIdsByEntityType[graphicID.entityType] = std::vector<GraphicsID>();
+    }
+    m_graphicIdsByEntityType[graphicID.entityType].push_back(graphicID);
+#endif
 }
 
 const Texture& GraphicsRegistry::getTexture(const GraphicsID& graphicID) const

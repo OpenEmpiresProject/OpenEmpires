@@ -19,7 +19,7 @@ We use milestone versions for planning. Early versions are experimental. Feature
 - [x] Unit selection (click and box)
 - [x] Command system for units with move and idle commands
 - [x] Basic unit movement (click-to-move with path preview)
-- [ ] DRS reader
+- [x] DRS reader
 - [x] Building placement system
 - [x] Basic building construction (mill)
 - [x] Frustum culling

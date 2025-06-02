@@ -82,9 +82,6 @@ void Frame::load(std::span<const uint8_t> data)
         throw std::runtime_error("Frame size is out of bounds.");
     }
 
-    std::cout << m_frameInfo.width << "," << m_frameInfo.height << "; " << m_frameInfo.hotspot_x
-              << "," << m_frameInfo.hotspot_y << std::endl;
-
     // Outline Table
     size_t outlineTableSize = m_frameInfo.height * sizeof(Outline);
     if (m_frameInfo.outlineTableOffset + outlineTableSize > data.size())

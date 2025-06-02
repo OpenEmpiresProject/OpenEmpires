@@ -21,6 +21,7 @@ void loadSLP(shared_ptr<DRSFile> drs,
              GraphicsRegistry& graphicsRegistry,
              AtlasGenerator& atlasGenerator);
 shared_ptr<DRSFile> loadDRSFile(const string& drsFilename);
+void adjustDirections(GraphicsRegistry& graphicsRegistry);
 
 void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
                                             aion::GraphicsRegistry& graphicsRegistry,
@@ -42,6 +43,10 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
     loadSLP(graphicsDRS, 1268, 4, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
     loadSLP(graphicsDRS, 1270, 4, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
     loadSLP(graphicsDRS, 1272, 4, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 3483, 5, 0, renderer, graphicsRegistry, atlasGenerator); // Mill
+    loadSLP(graphicsDRS, 2278, 6, 0, renderer, graphicsRegistry, atlasGenerator); // Marketplace
+
+    adjustDirections(graphicsRegistry);
 }
 
 SDL_Surface* frameToSurface(const Frame& frame)
@@ -152,7 +157,7 @@ void loadSLP(shared_ptr<DRSFile> drs,
                 direction animation contains 15 frames. 1-15 for south, 16-30 for southwest, 31-45
                for west, 46-60 for northwest, and so on. implement this logic to manipulate frame
                number and direction of id (type of GraphicsID) */
-            auto index = frames[i].getId();
+            auto index = frames[i].getId() - 1;
             id.frame = index % 15;               // 0-14
             auto direction = (int) (index / 15); // 0-3
             if (direction == 0)
@@ -193,5 +198,55 @@ void loadSLP(shared_ptr<DRSFile> drs,
 
         Texture entry{atlasTexture, srcRectF, anchor, imageSize, false};
         graphicsRegistry.registerTexture(id, entry);
+    }
+}
+
+
+bool isTextureFlippingNeededEntity(int entityType)
+{
+    return entityType == 3;
+}
+
+bool isTextureFlippingNeededDirection(Direction direction)
+{
+    return direction == Direction::SOUTHWEST || direction == Direction::NORTHWEST ||
+           direction == Direction::WEST;
+}
+
+Direction getFlippedDirection(Direction direction)
+{
+    switch (direction)
+    {
+    case Direction::SOUTHWEST:
+        return Direction::SOUTHEAST;
+    case Direction::NORTHWEST:
+        return Direction::NORTHEAST;
+    case Direction::WEST:
+        return Direction::EAST;
+    default:
+        return direction; // No flipping needed
+    }
+}
+
+void adjustDirections(GraphicsRegistry& graphicsRegistry)
+{
+    std::list<std::pair<GraphicsID, Texture>> graphicsToFlip;
+    for (const auto& [id, texture] : graphicsRegistry.getTextures())
+    {
+        GraphicsID idFull = GraphicsID::fromHash(id);
+        if (isTextureFlippingNeededEntity(idFull.entityType) &&
+            isTextureFlippingNeededDirection(idFull.direction))
+        {
+            graphicsToFlip.push_back(std::make_pair(idFull, texture));
+        }
+    }
+
+    for (auto& [id, texture] : graphicsToFlip)
+    {
+        texture.flip = true; // Mark the texture for flipping
+        id.direction =
+            static_cast<Direction>(getFlippedDirection(id.direction)); // Flip the direction
+
+        graphicsRegistry.registerTexture(id, texture);
     }
 }
