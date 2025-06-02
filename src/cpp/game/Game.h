@@ -32,7 +32,7 @@ class Game
     {
         std::cout << "Starting the game1\n";
 
-        aion::initLogger("build/logs/game.log");
+        aion::initLogger("logs/game.log");
         std::cout << "Starting the game2\n";
 
         spdlog::info("Game started");

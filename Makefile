@@ -18,6 +18,12 @@ configure:
 #   Following requires -G "Visual Studio 17 2022", otherwise ninja will fail to locate standard include files
 	cmake --preset=vcpkg -G "Visual Studio 17 2022" -A x64 -B $(BUILD_DIR) -S . -DCMAKE_BUILD_TYPE=Debug
 
+# Configure Release build
+configure-release:
+	@echo "Configuring project (Release)..."
+# Using static libraries for the releases 
+	cmake --preset=vcpkg -G "Visual Studio 17 2022" -A x64 -B $(BUILD_DIR) -S . -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=x64-windows-static
+
 # Build the project
 build:
 	@echo "Building project..."
@@ -26,6 +32,11 @@ build:
 build-verbose:
 	@echo "Building project..."
 	cmake --build $(BUILD_DIR) --verbose
+
+# Build Release
+release: configure-release
+	@echo "Building project (Release)..."
+	cmake --build $(BUILD_DIR) --config Release
 
 # Format the source code using clang-format
 format:

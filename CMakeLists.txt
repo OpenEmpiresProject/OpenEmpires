@@ -5,13 +5,14 @@ include(MacroOutOfSourceBuild)
 MacroOutOfSourceBuild()
 
 cmake_minimum_required(VERSION 3.10)
-project(openEmpires)
+project(openEmpires CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(MSVC)
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /W1") #  Temporarilty lowering to make the build faster
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /W4")
+# Explicitly setting the flags to force static runtime. CMAKE_MSVC_RUNTIME_LIBRARY didn't work.
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd /W1") #  Temporarilty lowering to make the build faster
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT /W4")
 endif()
 
 # Outputs will be in build/bin directory
