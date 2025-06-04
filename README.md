@@ -74,6 +74,10 @@ $env:VCPKG_ROOT = $vcpkgPath
 
 ### Running the Game
 
+> ⚠️ **Note:** You must have the original `graphics.drs` and `terrain.drs` files from the *Age of Conquerors* (AoC) data folder.  
+Place these files inside a folder named **assets** in the same directory as the `openEmpires` executable.
+
+
    ```
    make run
    ```
