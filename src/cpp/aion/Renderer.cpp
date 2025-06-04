@@ -617,13 +617,14 @@ std::list<CompRendering*> aion::Renderer::slice(CompRendering& rc)
 
     if (rc.landSize.width > 0 && rc.landSize.height > 0)
     {
+        // Slice at the original image's anchor
         auto slice = ObjectPool<CompRendering>::acquire();
         *slice = rc;
         slice->srcRect.w = Constants::TILE_PIXEL_WIDTH;
-        slice->srcRect.x += rc.srcRect.w / 2 - (Constants::TILE_PIXEL_WIDTH / 2);
+        slice->srcRect.x = rc.srcRect.x + rc.anchor.x - (Constants::TILE_PIXEL_WIDTH / 2);
         slice->anchor.y = slice->srcRect.h;
-        slice->anchor.x = slice->srcRect.w / 2;
-        slice->additionalZOffset += -1 * Constants::FEET_PER_TILE;
+         slice->anchor.x = slice->srcRect.w / 2;
+        slice->additionalZOffset += Constants::FEET_PER_TILE;
 
         subComponentsToReturn.push_back(slice);
 
@@ -632,6 +633,7 @@ std::list<CompRendering*> aion::Renderer::slice(CompRendering& rc)
         {
             auto slice = ObjectPool<CompRendering>::acquire();
             *slice = rc;
+            slice->anchor.y = rc.srcRect.h;
 
             // DEBUG: Slice coloring
             // slice->shading = colors[i - 1];
@@ -642,10 +644,10 @@ std::list<CompRendering*> aion::Renderer::slice(CompRendering& rc)
             if (i == (rc.landSize.width - 1))
             {
                 // Set the source texture width to capture everything to left in the left-most slice
-                slice->srcRect.w = rc.srcRect.w / 2 - (Constants::TILE_PIXEL_WIDTH / 2 * i);
+                slice->srcRect.w = rc.anchor.x - (Constants::TILE_PIXEL_WIDTH / 2 * i);
 
                 // Left most sclice's left edge is image-half-width left from image-center.
-                slice->anchor.x = rc.srcRect.w / 2;
+                // slice->anchor.x = rc.anchor.x;
             }
             else
             {
@@ -656,12 +658,12 @@ std::list<CompRendering*> aion::Renderer::slice(CompRendering& rc)
                 slice->srcRect.w = Constants::TILE_PIXEL_WIDTH / 2;
 
                 // Move the source texture selection to right
-                slice->srcRect.x = rc.srcRect.x + rc.srcRect.w / 2 - slice->anchor.x;
+                slice->srcRect.x = rc.srcRect.x + rc.anchor.x - slice->anchor.x;
             }
 
             // auto sliceZOrder = slice->positionInFeet.y + slice->positionInFeet.x -
             //                     Constants::FEET_PER_TILE * (i + 1);
-            slice->additionalZOffset += -1 * Constants::FEET_PER_TILE * (i + 1);
+            slice->additionalZOffset += -1 * Constants::FEET_PER_TILE * (i);
             subComponentsToReturn.push_back(slice);
         }
 
@@ -670,6 +672,7 @@ std::list<CompRendering*> aion::Renderer::slice(CompRendering& rc)
         {
             auto slice = ObjectPool<CompRendering>::acquire();
             *slice = rc;
+            slice->anchor.y = rc.srcRect.h;
 
             // DEBUG: Slice coloring
             // slice->shading = colors[i - 1];
@@ -679,13 +682,13 @@ std::list<CompRendering*> aion::Renderer::slice(CompRendering& rc)
             {
                 // Set the source texture width to capture everything to right in the right-most
                 // slice
-                slice->srcRect.w = rc.srcRect.w / 2 - (Constants::TILE_PIXEL_WIDTH / 2 * i);
+                slice->srcRect.w = (rc.srcRect.w - rc.anchor.x) - (Constants::TILE_PIXEL_WIDTH / 2 * i);
 
                 // Right most sclice's left edge is image-half-width left from image-center.
-                slice->anchor.x = -1 * (rc.srcRect.w / 2 - slice->srcRect.w);
+                slice->anchor.x = -1 * (rc.srcRect.w - rc.anchor.x - slice->srcRect.w);
 
                 // Move the source texture selection to right
-                slice->srcRect.x = rc.srcRect.x + rc.srcRect.w / 2 - slice->anchor.x;
+                slice->srcRect.x = rc.srcRect.x + rc.anchor.x - slice->anchor.x;
             }
             else
             {
@@ -698,7 +701,7 @@ std::list<CompRendering*> aion::Renderer::slice(CompRendering& rc)
                 // Move the source texture selection to right
                 slice->srcRect.x = rc.srcRect.x + rc.srcRect.w / 2 - slice->anchor.x;
             }
-            slice->additionalZOffset += -1 * Constants::FEET_PER_TILE * (i + 1);
+            slice->additionalZOffset += -1 * Constants::FEET_PER_TILE * (i);
             subComponentsToReturn.push_back(slice);
         }
     }

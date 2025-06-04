@@ -156,7 +156,7 @@ void Simulator::onMouseMove(const Event& e)
             // place buildings at the bottom corner of a tile
             tile += Vec2d(1, 1);
             feet = m_coordinates.tilesToFeet(tile);
-            transform.position = feet;
+            transform.position = feet - Vec2d(10, 10);
         }
 
         auto& dirty =

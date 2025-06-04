@@ -58,6 +58,10 @@ run: build
 	@echo "Running the game..."
 	$(BUILD_DIR)/bin/Debug/$(GAME_EXEC)
 
+run-release: release
+	@echo "Running the game..."
+	$(BUILD_DIR)/bin/Release/$(GAME_EXEC)
+
 # Clean the build directory
 clean:
 	@echo "Cleaning build directory..."
