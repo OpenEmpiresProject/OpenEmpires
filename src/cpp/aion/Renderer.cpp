@@ -14,6 +14,7 @@
 #include "components/CompTransform.h"
 #include "utils/Logger.h"
 #include "utils/ObjectPool.h"
+#include "Version.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_video.h>
@@ -365,6 +366,8 @@ void Renderer::renderDebugInfo(FPSCounter& counter)
         SDL_RenderDebugText(m_renderer, 10, y, line.c_str());
         y += 20;
     }
+
+    SDL_RenderDebugText(m_renderer, 10, m_settings->getWindowDimensions().height - 20, OPENEMPIRES_VERSION_STRING);
 
     clearDebugTexts();
 }

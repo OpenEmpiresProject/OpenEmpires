@@ -6,6 +6,10 @@ MacroOutOfSourceBuild()
 
 cmake_minimum_required(VERSION 3.10)
 project(openEmpires CXX)
+
+set(PROJECT_VERSION_MAJOR 0)
+set(PROJECT_VERSION_MINOR 1)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -73,3 +77,14 @@ if(CPPCHECK_EXECUTABLE)
 else()
   message(WARNING "Cppcheck not found!")
 endif()
+
+
+string(TIMESTAMP PROJECT_VERSION_BUILD "%Y%m%d")
+# Configure Version.h
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/generated)
+configure_file(
+    ${CMAKE_SOURCE_DIR}/src/cpp/Version.h.in
+    ${CMAKE_BINARY_DIR}/generated/Version.h
+    @ONLY
+)
+set(GENERATED_DIR ${CMAKE_BINARY_DIR}/generated CACHE INTERNAL "")

@@ -50,6 +50,7 @@ file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
 
 add_library(aion STATIC ${SOURCES})
 
+target_include_directories(aion PUBLIC ${GENERATED_DIR})
 target_include_directories(aion PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(aion PUBLIC 
     readerwriterqueue
