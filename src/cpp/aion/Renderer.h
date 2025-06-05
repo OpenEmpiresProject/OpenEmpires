@@ -10,6 +10,7 @@
 #include "SubSystem.h"
 #include "ThreadQueue.h"
 #include "ThreadSynchronizer.h"
+#include "ZOrderStrategyBase.h"
 
 #include <SDL3/SDL.h>
 #include <atomic>
@@ -58,9 +59,6 @@ class Renderer : public SubSystem
     void generateTicks();
     void onTick();
     void handleViewportMovement();
-    void addComponentToZBucket(CompRendering* comp, int zOrder);
-    std::list<CompRendering*> slice(CompRendering& rc);
-    void addRenderingCompToZBuckets(CompRendering* rc);
 
     struct ZBucketVersion
     {
@@ -89,10 +87,6 @@ class Renderer : public SubSystem
     Vec2d m_lastMouseClickPosInFeet;
     Vec2d m_lastMouseClickPosInTiles;
 
-    std::vector<ZBucketVersion> m_zBuckets;
-    const size_t m_zBucketsSize = 0;
-    int64_t m_zBucketVersion = 0;
-
     int64_t m_tickCount = 0;
 
     bool m_showStaticEntities = true;
@@ -113,6 +107,8 @@ class Renderer : public SubSystem
     size_t m_texturesDrew = 0;
 
     GraphicsLoader& m_graphicsLoader;
+
+    std::unique_ptr<ZOrderStrategyBase> m_zOrderStrategy;
 };
 } // namespace aion
 

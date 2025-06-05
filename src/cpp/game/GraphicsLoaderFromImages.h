@@ -41,7 +41,6 @@ class GraphicsLoaderFromImages : public aion::GraphicsLoader
     SDL_Renderer* m_renderer;
     int m_variation = 0;
     std::unordered_map<int, SDL_Cursor*> m_cursors;
-
 };
 } // namespace game
 

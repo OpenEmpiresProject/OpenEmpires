@@ -3,6 +3,7 @@
 
 #include "CompGraphics.h"
 #include "GraphicsRegistry.h"
+#include "utils/Logger.h"
 #include "utils/Size.h"
 
 #include <SDL3/SDL.h>

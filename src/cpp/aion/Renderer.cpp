@@ -7,6 +7,8 @@
 #include "Renderer.h"
 #include "SDL3_gfxPrimitives.h"
 #include "ServiceRegistry.h"
+#include "Version.h"
+#include "ZOrderStrategyWithSlicing.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
 #include "components/CompEntityInfo.h"
@@ -14,7 +16,6 @@
 #include "components/CompTransform.h"
 #include "utils/Logger.h"
 #include "utils/ObjectPool.h"
-#include "Version.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_video.h>
@@ -36,13 +37,8 @@ Renderer::Renderer(std::stop_source* stopSource,
     : SubSystem(stopSource), m_settings(ServiceRegistry::getInstance().getService<GameSettings>()),
       m_graphicsRegistry(graphicsRegistry),
       m_coordinates(ServiceRegistry::getInstance().getService<GameSettings>()),
-      m_zBucketsSize(
-          ServiceRegistry::getInstance().getService<GameSettings>()->getWorldSizeInTiles().height *
-          Constants::FEET_PER_TILE * 3),
-      m_zBuckets(
-          ServiceRegistry::getInstance().getService<GameSettings>()->getWorldSizeInTiles().height *
-          Constants::FEET_PER_TILE * 3),
-      m_synchronizer(synchronizer), m_graphicsLoader(graphicsLoader)
+      m_synchronizer(synchronizer), m_graphicsLoader(graphicsLoader),
+      m_zOrderStrategy(std::move(std::make_unique<ZOrderStrategyWithSlicing>()))
 {
     m_running = false;
     m_lastTickTime = steady_clock::now();
@@ -300,45 +296,8 @@ void Renderer::updateRenderingComponents()
 
         rc.updateTextureDetails(m_graphicsRegistry);
 
-        if (rc.isBig())
-        {
-            if (rc.isDestroyed)
-            {
-                auto existingSubComponents = m_subRenderingByEntityId.find(rc.entityID);
+        m_zOrderStrategy->preProcess(rc);
 
-                if (existingSubComponents != m_subRenderingByEntityId.end())
-                {
-                    for (auto& existing : existingSubComponents->second)
-                    {
-                        m_subRenderingComponents.remove(existing);
-                        ObjectPool<CompRendering>::release(existing);
-                    }
-                    existingSubComponents->second.clear();
-                    m_subRenderingByEntityId.erase(existingSubComponents);
-                }
-            }
-            else
-            {
-                auto subComponents = slice(rc);
-                auto existingSubComponents = m_subRenderingByEntityId.find(rc.entityID);
-
-                if (existingSubComponents != m_subRenderingByEntityId.end())
-                {
-                    for (auto& existing : existingSubComponents->second)
-                    {
-                        m_subRenderingComponents.remove(existing);
-                        ObjectPool<CompRendering>::release(existing);
-                    }
-                    existingSubComponents->second.clear();
-                    existingSubComponents->second = subComponents;
-                }
-                else
-                {
-                    m_subRenderingByEntityId[rc.entityID] = subComponents;
-                }
-                m_subRenderingComponents.splice(m_subRenderingComponents.end(), subComponents);
-            }
-        }
         ObjectPool<CompGraphics>::release(instruction);
     }
     frameData.clear();
@@ -367,7 +326,8 @@ void Renderer::renderDebugInfo(FPSCounter& counter)
         y += 20;
     }
 
-    SDL_RenderDebugText(m_renderer, 10, m_settings->getWindowDimensions().height - 20, OPENEMPIRES_VERSION_STRING);
+    SDL_RenderDebugText(m_renderer, 10, m_settings->getWindowDimensions().height - 20,
+                        OPENEMPIRES_VERSION_STRING);
 
     clearDebugTexts();
 }
@@ -431,100 +391,73 @@ void renderCirlceInIsometric(SDL_Renderer* renderer,
 
 void Renderer::renderGameEntities()
 {
-    ++m_zBucketVersion; // it will take 4 trillion years to overflow this
-
-    // Following z ordering cost around 60ms for 2500 entities.
-
-    GameState::getInstance().getEntities<CompRendering>().each(
-        [this](CompRendering& rc)
-        {
-            if (!rc.isBig())
-            {
-                addRenderingCompToZBuckets(&rc);
-            }
-        });
-
-    for (auto& sub : m_subRenderingComponents)
-    {
-        addRenderingCompToZBuckets(sub);
-    }
-
     SDL_FRect dstRect = {0, 0, 0, 0};
+    auto& objectsToRender = m_zOrderStrategy->zOrder(m_coordinates);
 
-    for (int z = 0; z < m_zBucketsSize; ++z)
+    for (auto& rc : objectsToRender)
     {
-        if (m_zBuckets[z].version != m_zBucketVersion)
+        auto screenPos = m_coordinates.feetToScreenUnits(rc->positionInFeet) - rc->anchor;
+
+        dstRect.x = screenPos.x;
+        dstRect.y = screenPos.y;
+        dstRect.w = rc->srcRect.w;
+        dstRect.h = rc->srcRect.h;
+
+        if (!rc->isStatic || m_showStaticEntities)
         {
-            continue; // Skip if the version doesn't match
+            for (auto& addon : rc->addons)
+            {
+                switch (addon.type)
+                {
+                case GraphicAddon::Type::CIRCLE:
+                {
+                    const auto& circle = addon.getData<GraphicAddon::Circle>();
+                    auto circleScreenPos = screenPos + rc->anchor + circle.center;
+
+                    // TODO: Support colors if required
+                    renderCirlceInIsometric(m_renderer, circleScreenPos.x, circleScreenPos.y,
+                                            circle.radius, 255, 255, 255, 255);
+                }
+                break;
+                case GraphicAddon::Type::SQUARE:
+                    /* code */
+                    break;
+                default:
+                    break;
+                }
+            }
+            SDL_SetTextureColorMod(rc->texture, rc->shading.r, rc->shading.g, rc->shading.b);
+            SDL_RenderTextureRotated(m_renderer, rc->texture, &(rc->srcRect), &dstRect, 0, nullptr,
+                                     rc->flip);
+            ++m_texturesDrew;
         }
 
-        for (auto& rc : m_zBuckets[z].graphicsComponents)
+        if (m_showDebugInfo)
         {
-            auto screenPos = m_coordinates.feetToScreenUnits(rc->positionInFeet) - rc->anchor;
-
-            dstRect.x = screenPos.x;
-            dstRect.y = screenPos.y;
-            dstRect.w = rc->srcRect.w;
-            dstRect.h = rc->srcRect.h;
-
-            if (!rc->isStatic || m_showStaticEntities)
+            for (auto& overlay : rc->debugOverlays)
             {
-                for (auto& addon : rc->addons)
-                {
-                    switch (addon.type)
-                    {
-                    case GraphicAddon::Type::CIRCLE:
-                    {
-                        const auto& circle = addon.getData<GraphicAddon::Circle>();
-                        auto circleScreenPos = screenPos + rc->anchor + circle.center;
+                auto pos = getDebugOverlayPosition(overlay.anchor, dstRect);
 
-                        // TODO: Support colors if required
-                        renderCirlceInIsometric(m_renderer, circleScreenPos.x, circleScreenPos.y,
-                                                circle.radius, 255, 255, 255, 255);
-                    }
+                switch (overlay.type)
+                {
+                case DebugOverlay::Type::CIRCLE:
+                    ellipseRGBA(m_renderer, pos.x, pos.y, 30, 15, 255, 0, 0,
+                                255); // green circle
                     break;
-                    case GraphicAddon::Type::SQUARE:
-                        /* code */
-                        break;
-                    default:
-                        break;
-                    }
+                case DebugOverlay::Type::FILLED_CIRCLE:
+                    filledEllipseRGBA(m_renderer, pos.x, pos.y, 20, 10, 0, 0, 255,
+                                      100); // blue ellipse
+                case DebugOverlay::Type::RHOMBUS:
+                {
+                    auto end1 = getDebugOverlayPosition(overlay.customPos1, dstRect);
+                    auto end2 = getDebugOverlayPosition(overlay.customPos2, dstRect);
+
+                    // Lifting the lines by a single pixel to avoid the next tile overriding
+                    // these
+                    lineRGBA(m_renderer, pos.x, pos.y - 1, end1.x, end1.y - 1, 180, 180, 180, 255);
+                    lineRGBA(m_renderer, pos.x, pos.y - 1, end2.x, end2.y - 1, 180, 180, 180, 255);
                 }
-                SDL_SetTextureColorMod(rc->texture, rc->shading.r, rc->shading.g, rc->shading.b);
-                SDL_RenderTextureRotated(m_renderer, rc->texture, &(rc->srcRect), &dstRect, 0,
-                                         nullptr, rc->flip);
-                ++m_texturesDrew;
-            }
-
-            if (m_showDebugInfo)
-            {
-                for (auto& overlay : rc->debugOverlays)
-                {
-                    auto pos = getDebugOverlayPosition(overlay.anchor, dstRect);
-
-                    switch (overlay.type)
-                    {
-                    case DebugOverlay::Type::CIRCLE:
-                        ellipseRGBA(m_renderer, pos.x, pos.y, 30, 15, 255, 0, 0,
-                                    255); // green circle
-                        break;
-                    case DebugOverlay::Type::FILLED_CIRCLE:
-                        filledEllipseRGBA(m_renderer, pos.x, pos.y, 20, 10, 0, 0, 255,
-                                          100); // blue ellipse
-                    case DebugOverlay::Type::RHOMBUS:
-                    {
-                        auto end1 = getDebugOverlayPosition(overlay.customPos1, dstRect);
-                        auto end2 = getDebugOverlayPosition(overlay.customPos2, dstRect);
-
-                        // Lifting the lines by a single pixel to avoid the next tile overriding
-                        // these
-                        lineRGBA(m_renderer, pos.x, pos.y - 1, end1.x, end1.y - 1, 180, 180, 180,
-                                 255);
-                        lineRGBA(m_renderer, pos.x, pos.y - 1, end2.x, end2.y - 1, 180, 180, 180,
-                                 255);
-                    }
-                    break;
-                    }
+                break;
                 }
             }
         }
@@ -597,151 +530,4 @@ void Renderer::handleViewportMovement()
             m_coordinates.getViewportPositionInPixels() +
             Vec2d(m_settings->getViewportMovingSpeed(), 0));
     }
-}
-
-void aion::Renderer::addComponentToZBucket(CompRendering* comp, int zOrder)
-{
-    if (m_zBucketVersion != m_zBuckets[zOrder].version)
-    {
-        m_zBuckets[zOrder].version = m_zBucketVersion;
-        m_zBuckets[zOrder].graphicsComponents.clear();
-    }
-
-    m_zBuckets[zOrder].graphicsComponents.push_back(comp);
-}
-
-std::list<CompRendering*> aion::Renderer::slice(CompRendering& rc)
-{
-    static Color colors[] = {Color::RED, Color::GREEN, Color::BLUE, Color::PURPLE, Color::YELLOW};
-    std::list<CompRendering*> subComponentsToReturn;
-
-    if (rc.landSize.width > 0 && rc.landSize.height > 0)
-    {
-        // Slice at the original image's anchor
-        auto slice = ObjectPool<CompRendering>::acquire();
-        *slice = rc;
-        slice->srcRect.w = Constants::TILE_PIXEL_WIDTH;
-        slice->srcRect.x = rc.srcRect.x + rc.anchor.x - (Constants::TILE_PIXEL_WIDTH / 2);
-        slice->anchor.y = slice->srcRect.h;
-         slice->anchor.x = slice->srcRect.w / 2;
-        slice->additionalZOffset += Constants::FEET_PER_TILE;
-
-        subComponentsToReturn.push_back(slice);
-
-        // Slice left
-        for (size_t i = 1; i < rc.landSize.width; i++)
-        {
-            auto slice = ObjectPool<CompRendering>::acquire();
-            *slice = rc;
-            slice->anchor.y = rc.srcRect.h;
-
-            // DEBUG: Slice coloring
-            // slice->shading = colors[i - 1];
-
-            // For the left-most slice, we need to capture everything to left, but not only
-            // a tile width. Because there can be small details (like shadow) just outside the
-            // tile width.
-            if (i == (rc.landSize.width - 1))
-            {
-                // Set the source texture width to capture everything to left in the left-most slice
-                slice->srcRect.w = rc.anchor.x - (Constants::TILE_PIXEL_WIDTH / 2 * i);
-
-                // Left most sclice's left edge is image-half-width left from image-center.
-                // slice->anchor.x = rc.anchor.x;
-            }
-            else
-            {
-                // Distance from the center of the original texture
-                slice->anchor.x = Constants::TILE_PIXEL_WIDTH / 2 * (i + 1);
-
-                // Intermediate slices are always half of a tile width
-                slice->srcRect.w = Constants::TILE_PIXEL_WIDTH / 2;
-
-                // Move the source texture selection to right
-                slice->srcRect.x = rc.srcRect.x + rc.anchor.x - slice->anchor.x;
-            }
-
-            // auto sliceZOrder = slice->positionInFeet.y + slice->positionInFeet.x -
-            //                     Constants::FEET_PER_TILE * (i + 1);
-            slice->additionalZOffset += -1 * Constants::FEET_PER_TILE * (i);
-            subComponentsToReturn.push_back(slice);
-        }
-
-        // Slice right
-        for (size_t i = 1; i < rc.landSize.height; i++)
-        {
-            auto slice = ObjectPool<CompRendering>::acquire();
-            *slice = rc;
-            slice->anchor.y = rc.srcRect.h;
-
-            // DEBUG: Slice coloring
-            // slice->shading = colors[i - 1];
-
-            // For the right-most slice, we need to capture everything to right just like left
-            if (i == (rc.landSize.height - 1))
-            {
-                // Set the source texture width to capture everything to right in the right-most
-                // slice
-                slice->srcRect.w = (rc.srcRect.w - rc.anchor.x) - (Constants::TILE_PIXEL_WIDTH / 2 * i);
-
-                // Right most sclice's left edge is image-half-width left from image-center.
-                slice->anchor.x = -1 * (rc.srcRect.w - rc.anchor.x - slice->srcRect.w);
-
-                // Move the source texture selection to right
-                slice->srcRect.x = rc.srcRect.x + rc.anchor.x - slice->anchor.x;
-            }
-            else
-            {
-                // Distance from the center of the original texture
-                slice->anchor.x = -1 * Constants::TILE_PIXEL_WIDTH / 2 * i;
-
-                // Intermediate slices are always half of a tile width
-                slice->srcRect.w = Constants::TILE_PIXEL_WIDTH / 2;
-
-                // Move the source texture selection to right
-                slice->srcRect.x = rc.srcRect.x + rc.srcRect.w / 2 - slice->anchor.x;
-            }
-            slice->additionalZOffset += -1 * Constants::FEET_PER_TILE * (i);
-            subComponentsToReturn.push_back(slice);
-        }
-    }
-    return subComponentsToReturn;
-}
-
-void Renderer::addRenderingCompToZBuckets(CompRendering* rc)
-{
-    if (rc->isDestroyed)
-    {
-        return;
-    }
-
-    int zOrder = rc->positionInFeet.y + rc->positionInFeet.x + rc->additionalZOffset;
-
-    if (zOrder < 0 || zOrder >= m_zBucketsSize)
-    {
-        spdlog::error("Z-order out of bounds: {}", zOrder);
-        return;
-    }
-
-    SDL_Rect viewportRect = {0, 0, m_settings->getWindowDimensions().width,
-                             m_settings->getWindowDimensions().height};
-
-    auto screenPos = m_coordinates.feetToScreenUnits(rc->positionInFeet) - rc->anchor;
-
-    SDL_Rect dstRectInt = {screenPos.x, screenPos.y, rc->srcRect.w, rc->srcRect.h};
-
-    // Skip any texture that doesn't overlap with viewport (i.e. outside of screen)
-    // This has reduced frame rendering time from 6ms to 3ms for 1366x768 window on the
-    // development setup for 50x50 map in debug mode on Windows.
-    if (!SDL_HasRectIntersection(&viewportRect, &dstRectInt))
-    {
-        return;
-    }
-
-    if (m_zBucketVersion != m_zBuckets[zOrder].version)
-    {
-        m_zBuckets[zOrder].version = m_zBucketVersion;
-        m_zBuckets[zOrder].graphicsComponents.clear();
-    }
-    m_zBuckets[zOrder].graphicsComponents.push_back(rc);
 }

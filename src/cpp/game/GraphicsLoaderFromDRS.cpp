@@ -201,7 +201,6 @@ void loadSLP(shared_ptr<DRSFile> drs,
     }
 }
 
-
 bool isTextureFlippingNeededEntity(int entityType)
 {
     return entityType == 3;
