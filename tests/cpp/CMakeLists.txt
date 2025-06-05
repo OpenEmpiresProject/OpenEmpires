@@ -6,7 +6,7 @@ file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS
 )
 
 add_executable(openEmpiresTests ${TEST_SOURCES})
-target_link_libraries(openEmpiresTests PRIVATE game aion GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
+target_link_libraries(openEmpiresTests PRIVATE game ion GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
 
 # Include directories for the C++ source files
 include_directories(${CMAKE_SOURCE_DIR}/src/cpp)

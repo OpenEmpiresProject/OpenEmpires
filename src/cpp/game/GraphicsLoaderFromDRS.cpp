@@ -10,7 +10,7 @@
 
 using namespace game;
 using namespace std;
-using namespace aion;
+using namespace ion;
 using namespace drs;
 
 void loadSLP(shared_ptr<DRSFile> drs,
@@ -24,8 +24,8 @@ shared_ptr<DRSFile> loadDRSFile(const string& drsFilename);
 void adjustDirections(GraphicsRegistry& graphicsRegistry);
 
 void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
-                                            aion::GraphicsRegistry& graphicsRegistry,
-                                            aion::AtlasGenerator& atlasGenerator)
+                                            ion::GraphicsRegistry& graphicsRegistry,
+                                            ion::AtlasGenerator& atlasGenerator)
 {
     auto terrainDRS = loadDRSFile("assets/terrain.drs");
     auto graphicsDRS = loadDRSFile("assets/graphics.drs");

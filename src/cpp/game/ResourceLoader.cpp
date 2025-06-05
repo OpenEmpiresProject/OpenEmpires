@@ -22,7 +22,7 @@
 
 namespace fs = std::filesystem;
 using namespace game;
-using namespace aion;
+using namespace ion;
 
 ResourceLoader::ResourceLoader(std::stop_token* stopToken,
                                std::shared_ptr<GameSettings> settings,

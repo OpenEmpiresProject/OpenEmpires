@@ -32,34 +32,33 @@ class Game
     {
         std::cout << "Starting the game1\n";
 
-        aion::initLogger("logs/game.log");
+        ion::initLogger("logs/game.log");
         std::cout << "Starting the game2\n";
 
         spdlog::info("Game started");
         spdlog::info("Initializing subsystems...");
 
-        aion::GraphicsRegistry graphicsRegistry;
+        ion::GraphicsRegistry graphicsRegistry;
 
-        auto settings = std::make_shared<aion::GameSettings>();
+        auto settings = std::make_shared<ion::GameSettings>();
         settings->setWindowDimensions(1366, 768);
-        aion::ServiceRegistry::getInstance().registerService(settings);
+        ion::ServiceRegistry::getInstance().registerService(settings);
 
         std::stop_source stopSource;
         std::stop_token stopToken = stopSource.get_token();
 
-        aion::ThreadSynchronizer<aion::FrameData> simulatorRendererSynchronizer;
+        ion::ThreadSynchronizer<ion::FrameData> simulatorRendererSynchronizer;
         // game::GraphicsLoaderFromImages graphicsLoader;
         game::GraphicsLoaderFromDRS graphicsLoader;
 
-        auto eventLoop = std::make_shared<aion::EventLoop>(&stopToken);
-        auto simulator =
-            std::make_shared<aion::Simulator>(simulatorRendererSynchronizer, eventLoop);
-        auto renderer = std::make_shared<aion::Renderer>(
+        auto eventLoop = std::make_shared<ion::EventLoop>(&stopToken);
+        auto simulator = std::make_shared<ion::Simulator>(simulatorRendererSynchronizer, eventLoop);
+        auto renderer = std::make_shared<ion::Renderer>(
             &stopSource, graphicsRegistry, simulatorRendererSynchronizer, graphicsLoader);
-        auto cc = std::make_shared<aion::CommandCenter>();
+        auto cc = std::make_shared<ion::CommandCenter>();
 
-        aion::ServiceRegistry::getInstance().registerService(cc);
-        aion::ServiceRegistry::getInstance().registerService(simulator);
+        ion::ServiceRegistry::getInstance().registerService(cc);
+        ion::ServiceRegistry::getInstance().registerService(simulator);
 
         eventLoop->registerListener(std::move(simulator));
         eventLoop->registerListener(std::move(cc));
@@ -67,13 +66,13 @@ class Game
         auto resourceLoader =
             std::make_shared<ResourceLoader>(&stopToken, settings, graphicsRegistry, renderer);
 
-        aion::SubSystemRegistry::getInstance().registerSubSystem("Renderer", std::move(renderer));
-        aion::SubSystemRegistry::getInstance().registerSubSystem("ResourceLoader",
-                                                                 std::move(resourceLoader));
-        aion::SubSystemRegistry::getInstance().registerSubSystem("EventLoop", std::move(eventLoop));
+        ion::SubSystemRegistry::getInstance().registerSubSystem("Renderer", std::move(renderer));
+        ion::SubSystemRegistry::getInstance().registerSubSystem("ResourceLoader",
+                                                                std::move(resourceLoader));
+        ion::SubSystemRegistry::getInstance().registerSubSystem("EventLoop", std::move(eventLoop));
 
-        aion::SubSystemRegistry::getInstance().initAll();
-        aion::SubSystemRegistry::getInstance().shutdownAll();
+        ion::SubSystemRegistry::getInstance().initAll();
+        ion::SubSystemRegistry::getInstance().shutdownAll();
 
         spdlog::shutdown();
         spdlog::drop_all();

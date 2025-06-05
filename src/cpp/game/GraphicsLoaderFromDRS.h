@@ -5,12 +5,12 @@
 
 namespace game
 {
-class GraphicsLoaderFromDRS : public aion::GraphicsLoader
+class GraphicsLoaderFromDRS : public ion::GraphicsLoader
 {
   private:
     void loadAllGraphics(SDL_Renderer* renderer,
-                         aion::GraphicsRegistry& graphicsRegistry,
-                         aion::AtlasGenerator& atlasGenerator) override;
+                         ion::GraphicsRegistry& graphicsRegistry,
+                         ion::AtlasGenerator& atlasGenerator) override;
 };
 
 } // namespace game

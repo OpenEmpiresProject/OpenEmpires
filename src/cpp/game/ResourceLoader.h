@@ -10,13 +10,13 @@
 #include <memory>
 namespace game
 {
-class ResourceLoader : public aion::SubSystem
+class ResourceLoader : public ion::SubSystem
 {
   public:
     ResourceLoader(std::stop_token* stopToken,
-                   std::shared_ptr<aion::GameSettings> settings,
-                   aion::GraphicsRegistry& graphicsRegistry,
-                   std::shared_ptr<aion::Renderer> renderer);
+                   std::shared_ptr<ion::GameSettings> settings,
+                   ion::GraphicsRegistry& graphicsRegistry,
+                   std::shared_ptr<ion::Renderer> renderer);
     ~ResourceLoader() = default;
 
   private:
@@ -26,9 +26,9 @@ class ResourceLoader : public aion::SubSystem
 
     void loadEntities();
 
-    std::shared_ptr<aion::GameSettings> m_settings;
-    aion::GraphicsRegistry& m_graphicsRegistry;
-    std::shared_ptr<aion::Renderer> m_renderer;
+    std::shared_ptr<ion::GameSettings> m_settings;
+    ion::GraphicsRegistry& m_graphicsRegistry;
+    std::shared_ptr<ion::Renderer> m_renderer;
 };
 } // namespace game
 

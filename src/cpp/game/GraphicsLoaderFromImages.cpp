@@ -20,7 +20,7 @@
 #include <vector>
 
 using namespace game;
-using namespace aion;
+using namespace ion;
 namespace fs = std::filesystem;
 using namespace std;
 

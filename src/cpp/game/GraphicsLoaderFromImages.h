@@ -12,31 +12,30 @@
 
 namespace game
 {
-class GraphicsLoaderFromImages : public aion::GraphicsLoader
+class GraphicsLoaderFromImages : public ion::GraphicsLoader
 {
   public:
     void loadAllGraphics(SDL_Renderer* renderer,
-                         aion::GraphicsRegistry& graphicsRegistry,
-                         aion::AtlasGenerator& atlasGenerator) override;
+                         ion::GraphicsRegistry& graphicsRegistry,
+                         ion::AtlasGenerator& atlasGenerator) override;
     void loadTexture(const std::filesystem::path& path);
     void unloadGraphics(const std::string& graphicsPath);
-    void loadAnimations(aion::GraphicsRegistry& graphicsRegistry);
+    void loadAnimations(ion::GraphicsRegistry& graphicsRegistry);
     void loadCursors();
     void setCursor(int variation);
 
   private:
-    void loadTextures(aion::GraphicsRegistry& graphicsRegistry,
-                      aion::AtlasGenerator& atlasGenerator);
-    void adjustDirections(aion::GraphicsRegistry& graphicsRegistry);
+    void loadTextures(ion::GraphicsRegistry& graphicsRegistry, ion::AtlasGenerator& atlasGenerator);
+    void adjustDirections(ion::GraphicsRegistry& graphicsRegistry);
     bool isTextureFlippingNeededEntity(int entityType) const;
-    bool isTextureFlippingNeededDirection(aion::Direction direction) const;
-    aion::Direction getFlippedDirection(aion::Direction direction) const;
+    bool isTextureFlippingNeededDirection(ion::Direction direction) const;
+    ion::Direction getFlippedDirection(ion::Direction direction) const;
     int determineEntityType(const std::filesystem::path& path);
     void createAtlasForEntityType(int entityType,
                                   const std::vector<std::filesystem::path>& paths,
-                                  const std::map<std::string, aion::Vec2d>& anchors,
-                                  aion::GraphicsRegistry& graphicsRegistry,
-                                  aion::AtlasGenerator& atlasGenerator);
+                                  const std::map<std::string, ion::Vec2d>& anchors,
+                                  ion::GraphicsRegistry& graphicsRegistry,
+                                  ion::AtlasGenerator& atlasGenerator);
 
     SDL_Renderer* m_renderer;
     int m_variation = 0;
