@@ -13,6 +13,8 @@ class Constants
     static const int TILE_PIXEL_HEIGHT = 48;
     static const int MAX_ANIMATIONS = 10;
     static const int MAX_UNIT_SELECTION = 30;
+    static const int MIN_SELECTION_BOX_MOUSE_MOVEMENT =
+        25; // Mouse should move at least 5 pixels to consider as a selection box
 };
 } // namespace ion
 

@@ -93,35 +93,11 @@ void Simulator::onMouseButtonUp(const Event& e)
 
     if (e.getData<MouseClickData>().button == MouseClickData::Button::LEFT)
     {
-        // spdlog::debug("Mouse clicked at tile position: {}", tilePos.toString());
-        if (m_currentBuildingOnPlacement != entt::null)
-        {
-            auto& building =
-                GameState::getInstance().getComponent<CompBuilding>(m_currentBuildingOnPlacement);
-
-            if (!building.validPlacement)
-            {
-                GameState::getInstance().destroyEntity(m_currentBuildingOnPlacement);
-            }
-            // Building is permanent now, no need to track for placement
-            m_currentBuildingOnPlacement = entt::null;
-        }
+        resolveSelection(mousePos);
     }
     else if (e.getData<MouseClickData>().button == MouseClickData::Button::RIGHT)
     {
-        // spdlog::debug("Right mouse clicked at tile position: {}", tilePos.toString());
         resolveAction(worldPos);
-    }
-
-    if (m_isSelecting)
-    {
-        if (e.getData<MouseClickData>().button == MouseClickData::Button::LEFT)
-        {
-            m_selectionEndPosScreenUnits = e.getData<MouseClickData>().screenPosition;
-            // TODO: we want on the fly selection instead of mouse button up
-            onSelectingUnits(m_selectionStartPosScreenUnits, m_selectionEndPosScreenUnits);
-            m_isSelecting = false;
-        }
     }
 }
 
@@ -131,7 +107,6 @@ void Simulator::onMouseButtonDown(const Event& e)
     {
         m_isSelecting = true;
         m_selectionStartPosScreenUnits = e.getData<MouseClickData>().screenPosition;
-        m_selectionEndPosScreenUnits = e.getData<MouseClickData>().screenPosition;
     }
 }
 
@@ -287,6 +262,51 @@ void Simulator::onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endSc
     {
         Event event(Event::Type::UNIT_SELECTION, UnitSelectionData{m_currentUnitSelection});
         m_publisher->publish(event);
+    }
+}
+
+void Simulator::resolveSelection(const Vec2d& screenPos)
+{
+    // auto worldPos = m_coordinates.screenUnitsToFeet(screenPos);
+
+    // Invalidate in-progress selection if mouse hasn't moved much
+    if (m_isSelecting)
+    {
+        spdlog::info("mouse moved by {}",
+                     (screenPos - m_selectionStartPosScreenUnits).lengthSquared());
+        if ((screenPos - m_selectionStartPosScreenUnits).lengthSquared() <
+            Constants::MIN_SELECTION_BOX_MOUSE_MOVEMENT)
+        {
+            m_isSelecting = false;
+        }
+    }
+
+    // Click priorities are;
+    // 1. Any building placement (you can't select anything if there is planned building)
+    // 2. Complete selection box
+    // 3. Individual selection click
+
+    if (m_currentBuildingOnPlacement != entt::null)
+    {
+        auto& building =
+            GameState::getInstance().getComponent<CompBuilding>(m_currentBuildingOnPlacement);
+
+        if (!building.validPlacement)
+        {
+            GameState::getInstance().destroyEntity(m_currentBuildingOnPlacement);
+        }
+        // Building is permanent now, no need to track for placement
+        m_currentBuildingOnPlacement = entt::null;
+    }
+    else if (m_isSelecting)
+    {
+        // TODO: we want on the fly selection instead of mouse button up
+        onSelectingUnits(m_selectionStartPosScreenUnits, screenPos);
+        m_isSelecting = false;
+    }
+    else
+    {
+        spdlog::info("=============== selection click");
     }
 }
 

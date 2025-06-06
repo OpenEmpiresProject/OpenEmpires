@@ -38,6 +38,7 @@ class Simulator : public EventHandler
     void testPathFinding(const Vec2d& end);
     void updateGraphicComponents();
     void onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endScreenPos);
+    void resolveSelection(const Vec2d& screenPos);
     void resolveAction(const Vec2d& targetFeetPos);
     void testBuild(const Vec2d& targetFeetPos, int buildingType, Size size);
     bool canPlaceBuildingAt(const CompBuilding& building, const Vec2d& feet, bool& outOfMap);
@@ -46,7 +47,6 @@ class Simulator : public EventHandler
     ThreadSynchronizer<FrameData>& m_synchronizer;
     int m_frame = 0;
     Vec2d m_selectionStartPosScreenUnits;
-    Vec2d m_selectionEndPosScreenUnits;
     bool m_isSelecting = false;
     std::shared_ptr<EventPublisher> m_publisher;
     UnitSelection m_currentUnitSelection;
