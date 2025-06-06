@@ -20,15 +20,15 @@ double heuristic(const Vec2d& a, const Vec2d& b)
     return std::sqrt(std::pow(a.x - b.x, 2) + std::pow(a.y - b.y, 2));
 }
 
-bool isBlocked(const StaticEntityMap& map, const Vec2d& pos)
+bool isBlocked(const GridMap& map, const Vec2d& pos)
 {
     if (pos.x < 0 || pos.x >= map.width || pos.y < 0 || pos.y >= map.height ||
-        map.map[pos.x][pos.y] != 0)
+        map.layers[MapLayerType::STATIC].cells[pos.x][pos.y].isOccupied())
         return true;
     return false;
 }
 
-bool isWalkable(const StaticEntityMap& map, const Vec2d& from, const Vec2d& to)
+bool isWalkable(const GridMap& map, const Vec2d& from, const Vec2d& to)
 {
     if (isBlocked(map, to))
         return false;
@@ -66,7 +66,7 @@ Path reconstructPath(const std::unordered_map<Vec2d, Vec2d>& cameFrom, Vec2d cur
     return path;
 }
 
-Path PathFinderAStar::findPath(const StaticEntityMap& map, const Vec2d& start, const Vec2d& goal)
+Path PathFinderAStar::findPath(const GridMap& map, const Vec2d& start, const Vec2d& goal)
 {
     using PQNode = std::pair<int, Vec2d>; // cost, position
     std::priority_queue<PQNode, std::vector<PQNode>, std::greater<>> open;

@@ -4,6 +4,7 @@
 #include "GameSettings.h"
 #include "GameState.h"
 #include "GraphicsRegistry.h"
+#include "GridMap.h"
 #include "Renderer.h"
 #include "SubSystem.h"
 
@@ -25,6 +26,8 @@ class ResourceLoader : public ion::SubSystem
     void shutdown() override;
 
     void loadEntities();
+    void generateMap(ion::GridMap& gameMap);
+    void createTree(ion::GridMap& gameMap, uint32_t x, uint32_t y);
 
     std::shared_ptr<ion::GameSettings> m_settings;
     ion::GraphicsRegistry& m_graphicsRegistry;

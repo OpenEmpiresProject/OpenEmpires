@@ -44,6 +44,9 @@ class Game
         settings->setWindowDimensions(1366, 768);
         ion::ServiceRegistry::getInstance().registerService(settings);
 
+        ion::GameState::getInstance().gameMap.init(settings->getWorldSizeInTiles().width,
+                                                   settings->getWorldSizeInTiles().height);
+
         std::stop_source stopSource;
         std::stop_token stopToken = stopSource.get_token();
 

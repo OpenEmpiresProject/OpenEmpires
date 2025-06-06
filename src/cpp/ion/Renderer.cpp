@@ -558,13 +558,6 @@ class RendererImpl
         ellipseRGBA(renderer, cx, cy, rx, ry, red, green, blue, alpha);
     }
 
-    struct ZBucketVersion
-    {
-        int64_t version = 0;
-        std::vector<CompRendering*> graphicsComponents;
-        std::list<CompRendering*> newGraphicsComponents;
-    };
-
     SDL_Window* m_window = nullptr;
     SDL_Renderer* m_renderer = nullptr;
     SDL_Texture* m_texture = nullptr;

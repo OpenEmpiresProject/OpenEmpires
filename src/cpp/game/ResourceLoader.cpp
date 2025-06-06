@@ -19,6 +19,7 @@
 #include <SDL3/SDL_surface.h>
 #include <SDL3_image/SDL_image.h>
 #include <filesystem>
+#include <random>
 
 namespace fs = std::filesystem;
 using namespace game;
@@ -33,16 +34,13 @@ ResourceLoader::ResourceLoader(std::stop_token* stopToken,
 {
 }
 
-void game::ResourceLoader::loadEntities()
+void ResourceLoader::loadEntities()
 {
     spdlog::info("Loading entities...");
 
     auto& gameState = GameState::getInstance();
 
     auto size = m_settings->getWorldSizeInTiles();
-    gameState.initializeStaticEntityMap(size.width, size.height);
-    gameState.generateMap();
-    // gameState.generateDebugMap();
 
     for (size_t i = 0; i < size.width; i++)
     {
@@ -61,8 +59,8 @@ void game::ResourceLoader::loadEntities()
             gameState.addComponent(tile, CompEntityInfo(2, tileVariation));
             gameState.addComponent(tile, CompDirty());
 
-            auto map = gameState.staticEntityMap;
-            map.entityMap[i][j] = tile;
+            auto map = gameState.gameMap;
+            map.layers[MapLayerType::GROUND].cells[i][j].addEntity(tile);
 
             CompGraphics gc;
             gc.entityID = tile;
@@ -111,31 +109,96 @@ void game::ResourceLoader::loadEntities()
         gameState.addComponent(villager, gc);
     }
 
-    for (size_t i = 0; i < size.width; i++)
+    generateMap(gameState.gameMap);
+
+    spdlog::info("Entity loaded successfully.");
+}
+
+void ResourceLoader::createTree(GridMap& map, uint32_t x, uint32_t y)
+{
+    auto& gameState = GameState::getInstance();
+
+    auto tree = gameState.createEntity();
+    auto transform = CompTransform(x * 256 + 128, y * 256 + 128);
+    transform.face(Direction::NORTHWEST);
+    gameState.addComponent(tree, transform);
+    gameState.addComponent(tree, CompRendering());
+    CompGraphics gc;
+    gc.debugOverlays.push_back({DebugOverlay::Type::CIRCLE, DebugOverlay::Color::RED,
+                                DebugOverlay::FixedPosition::BOTTOM_CENTER});
+    gc.isStatic = true;
+    gc.entityID = tree;
+    gc.entityType = 4; // tree
+    gameState.addComponent(tree, gc);
+    gameState.addComponent(tree, CompEntityInfo(4, rand() % 10));
+    gameState.addComponent(tree, CompDirty());
+
+    map.layers[MapLayerType::STATIC].cells[x][y].addEntity(tree);
+}
+
+void ResourceLoader::generateMap(GridMap& gameMap)
+{
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    std::uniform_int_distribution<int> posX(0, gameMap.width - 1);
+    std::uniform_int_distribution<int> posY(0, gameMap.height - 1);
+
+    int totalTiles = gameMap.width * gameMap.height;
+    int targetTreeTiles = totalTiles / 6; // 25% of map should have trees
+    int treesPlaced = 0;
+
+    // Define the middle 5x5 area boundaries
+    int midXStart = gameMap.width / 2 - 10;
+    int midXEnd = gameMap.width / 2 + 10;
+    int midYStart = gameMap.height / 2 - 10;
+    int midYEnd = gameMap.height / 2 + 10;
+
+    // 1. Place tree clusters (forests)
+    while (treesPlaced < targetTreeTiles * 0.95) // Majority in forests
     {
-        for (size_t j = 0; j < size.height; j++)
+        int clusterSize = 5 + rng() % 20; // Random cluster size: 5~25
+        int centerX = posX(rng);
+        int centerY = posY(rng);
+
+        for (int i = 0; i < clusterSize; ++i)
         {
-            if (gameState.staticEntityMap.map[i][j] == 1)
+            int dx = (rng() % 5) - 2; // Random offset -2..+2
+            int dy = (rng() % 5) - 2;
+
+            int x = centerX + dx;
+            int y = centerY + dy;
+
+            if (x >= 0 && x < gameMap.width && y >= 0 && y < gameMap.height)
             {
-                auto tree = gameState.createEntity();
-                auto transform = CompTransform(i * 256 + 128, j * 256 + 128);
-                transform.face(Direction::NORTHWEST);
-                gameState.addComponent(tree, transform);
-                gameState.addComponent(tree, CompRendering());
-                CompGraphics gc;
-                gc.debugOverlays.push_back({DebugOverlay::Type::CIRCLE, DebugOverlay::Color::RED,
-                                            DebugOverlay::FixedPosition::BOTTOM_CENTER});
-                gc.isStatic = true;
-                gc.entityID = tree;
-                gc.entityType = 4; // tree
-                gameState.addComponent(tree, gc);
-                gameState.addComponent(tree, CompEntityInfo(4, rand() % 10));
-                gameState.addComponent(tree, CompDirty());
+                // Skip the middle 5x5 area
+                if (x >= midXStart && x <= midXEnd && y >= midYStart && y <= midYEnd)
+                    continue;
+
+                if (gameMap.layers[MapLayerType::STATIC].cells[x][y].isOccupied() == false)
+                {
+                    createTree(gameMap, x, y);
+                    ++treesPlaced;
+                }
             }
         }
     }
 
-    spdlog::info("Entity loaded successfully.");
+    // 2. Place isolated trees
+    while (treesPlaced < targetTreeTiles)
+    {
+        int x = posX(rng);
+        int y = posY(rng);
+
+        // Skip the middle 5x5 area
+        if (x >= midXStart && x <= midXEnd && y >= midYStart && y <= midYEnd)
+            continue;
+
+        if (gameMap.layers[MapLayerType::STATIC].cells[x][y].isOccupied() == false)
+        {
+            createTree(gameMap, x, y);
+            ++treesPlaced;
+        }
+    }
 }
 
 void ResourceLoader::init()

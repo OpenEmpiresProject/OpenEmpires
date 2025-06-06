@@ -1,8 +1,8 @@
 #ifndef GAMESTATE_H
 #define GAMESTATE_H
 
+#include "GridMap.h"
 #include "PathFinderBase.h"
-#include "StaticEntityMap.h"
 #include "SubSystem.h"
 
 #include <entt/entity/registry.hpp>
@@ -65,11 +65,7 @@ class GameState
 
     void clearAll();
 
-    StaticEntityMap initializeStaticEntityMap(int width, int height);
-    StaticEntityMap generateMap();
-    StaticEntityMap generateDebugMap();
-
-    StaticEntityMap staticEntityMap;
+    GridMap gameMap;
 
     PathFinderBase* getPathFinder() const
     {

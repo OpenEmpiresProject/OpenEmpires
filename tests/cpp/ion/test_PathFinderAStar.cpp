@@ -6,13 +6,13 @@ using namespace ion;
 class PathFinderAStarTest : public ::testing::Test {
 protected:
     PathFinderAStar pathFinder;
-    StaticEntityMap map;
+    GridMap map;
 
     void SetUp() override {
+        map.init(5, 5);
+
         // Initialize a simple 5x5 map for testing
-        map.width = 5;
-        map.height = 5;
-        int predefined[5][5] = {
+        uint32_t predefined[5][5] = {
             {0, 0, 0, 0, 0},
             {0, 1, 1, 1, 0},
             {0, 0, 0, 1, 0},
@@ -20,11 +20,9 @@ protected:
             {0, 0, 0, 0, 0},
         };
 
-        map.map = new int*[5];
         for (int i = 0; i < 5; ++i) {
-            map.map[i] = new int[5];
             for (int j = 0; j < 5; ++j) {
-                map.map[i][j] = predefined[i][j];
+                map.getStaticMap()[i][j].addEntity(predefined[i][j]);
             }
         }
     }
@@ -51,12 +49,12 @@ TEST_F(PathFinderAStarTest, FindPath_AroundObstacle) {
 
     // Ensure the path avoids obstacles
     for (const Vec2d& pos : path) {
-        EXPECT_TRUE(map.map[pos.x][pos.y] == 0) << "Path crosses an obstacle at " << pos.x << ", " << pos.y;
+        EXPECT_TRUE(map.getStaticMap()[pos.x][pos.y].isOccupied() == false) << "Path crosses an obstacle at " << pos.x << ", " << pos.y;
     }
 }
 
 TEST_F(PathFinderAStarTest, FindPath_CornersBlocked) {
-    int predefined[5][5] = {
+    uint32_t predefined[5][5] = {
         {0, 0, 0, 0, 0},
         {0, 0, 1, 0, 0},
         {0, 1, 0, 1, 0},
@@ -66,7 +64,7 @@ TEST_F(PathFinderAStarTest, FindPath_CornersBlocked) {
 
     for (int i = 0; i < 5; ++i) {
         for (int j = 0; j < 5; ++j) {
-            map.map[i][j] = predefined[i][j];
+            map.getStaticMap()[i][j].addEntity(predefined[i][j]);
         }
     }
 
@@ -78,7 +76,7 @@ TEST_F(PathFinderAStarTest, FindPath_CornersBlocked) {
 }
 
 TEST_F(PathFinderAStarTest, FindPath_OnlyOneCornerBlocked) {
-    int predefined[5][5] = {
+    uint32_t predefined[5][5] = {
         {0, 1, 0, 0, 0},
         {0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0},
@@ -88,7 +86,7 @@ TEST_F(PathFinderAStarTest, FindPath_OnlyOneCornerBlocked) {
 
     for (int i = 0; i < 5; ++i) {
         for (int j = 0; j < 5; ++j) {
-            map.map[i][j] = predefined[i][j];
+            map.getStaticMap()[i][j].addEntity(predefined[i][j]);
         }
     }
 
@@ -100,7 +98,7 @@ TEST_F(PathFinderAStarTest, FindPath_OnlyOneCornerBlocked) {
 }
 
 TEST_F(PathFinderAStarTest, FindPath_StraightLinesUnblocked) {
-    int predefined[5][5] = {
+    uint32_t predefined[5][5] = {
         {0, 0, 0, 0, 0},
         {0, 1, 0, 1, 0},
         {0, 0, 0, 0, 0},
@@ -110,7 +108,7 @@ TEST_F(PathFinderAStarTest, FindPath_StraightLinesUnblocked) {
 
     for (int i = 0; i < 5; ++i) {
         for (int j = 0; j < 5; ++j) {
-            map.map[i][j] = predefined[i][j];
+            map.getStaticMap()[i][j].addEntity(predefined[i][j]);
         }
     }
 
@@ -123,9 +121,9 @@ TEST_F(PathFinderAStarTest, FindPath_StraightLinesUnblocked) {
 
 TEST_F(PathFinderAStarTest, FindPath_NoPathAvailable) {
     // Block the goal completely
-    map.map[3][3] = 1;
-    map.map[3][4] = 1;
-    map.map[4][3] = 1;
+    map.getStaticMap()[3][3].addEntity(1);
+    map.getStaticMap()[3][4].addEntity(1);
+    map.getStaticMap()[4][3].addEntity(1);
 
     Vec2d start = {0, 0};
     Vec2d goal = {4, 4};
@@ -146,15 +144,7 @@ TEST_F(PathFinderAStarTest, FindPath_StartEqualsGoal) {
 
 TEST_F(PathFinderAStarTest, FindPath_LargeMap_StraightLine) {
     // Initialize a 50x50 map with no obstacles
-    map.width = 50;
-    map.height = 50;
-    map.map = new int*[50];
-    for (int i = 0; i < 50; ++i) {
-        map.map[i] = new int[50];
-        for (int j = 0; j < 50; ++j) {
-            map.map[i][j] = 0;
-        }
-    }
+    map.init(50, 50);
 
     Vec2d start = {0, 0};
     Vec2d goal = {49, 0};
@@ -167,18 +157,16 @@ TEST_F(PathFinderAStarTest, FindPath_LargeMap_StraightLine) {
 
 TEST_F(PathFinderAStarTest, FindPath_LargeMap_WithObstacles) {
     // Initialize a 50x50 map with a diagonal wall of obstacles
-    map.width = 50;
-    map.height = 50;
-    map.map = new int*[50];
+    map.init(50, 50);
+
     for (int i = 0; i < 50; ++i) {
-        map.map[i] = new int[50];
         for (int j = 0; j < 50; ++j) {
-            map.map[i][j] = (i == j) ? 1 : 0; // Diagonal wall
+            map.getStaticMap()[i][j].addEntity((i == j) ? 1 : 0);
         }
     }
-    map.map[0][0] = 0; 
-    map.map[49][49] = 0;
 
+    map.getStaticMap()[0][0].removeAllEntities(); 
+    map.getStaticMap()[49][49].removeAllEntities();
     Vec2d start = {0, 49};
     Vec2d goal = {49, 0};
     Path path = pathFinder.findPath(map, start, goal);
@@ -189,27 +177,19 @@ TEST_F(PathFinderAStarTest, FindPath_LargeMap_WithObstacles) {
 
     // Ensure the path avoids obstacles
     for (const Vec2d& pos : path) {
-        EXPECT_TRUE(map.map[pos.y][pos.x] == 0) << "Path crosses an obstacle at " << pos.x << ", " << pos.y;
+        EXPECT_TRUE(map.getStaticMap()[pos.y][pos.x].isOccupied() == false) << "Path crosses an obstacle at " << pos.x << ", " << pos.y;
     }
 }
 
 TEST_F(PathFinderAStarTest, FindPath_LargeMap_NoPathAvailable) {
     // Initialize a 50x50 map with a completely blocked goal
-    map.width = 50;
-    map.height = 50;
-    map.map = new int*[50];
-    for (int i = 0; i < 50; ++i) {
-        map.map[i] = new int[50];
-        for (int j = 0; j < 50; ++j) {
-            map.map[i][j] = 0;
-        }
-    }
+    map.init(50, 50);
 
     // Block the goal completely
-    map.map[48][48] = 1;
-    map.map[48][49] = 1;
-    map.map[49][48] = 1;
-    map.map[49][49] = 1;
+    map.getStaticMap()[48][48].addEntity(1);
+    map.getStaticMap()[48][49].addEntity(1);
+    map.getStaticMap()[49][48].addEntity(1);
+    map.getStaticMap()[49][49].addEntity(1);
 
     Vec2d start = {0, 0};
     Vec2d goal = {49, 49};
@@ -220,15 +200,7 @@ TEST_F(PathFinderAStarTest, FindPath_LargeMap_NoPathAvailable) {
 
 TEST_F(PathFinderAStarTest, FindPath_LargeMap_StartEqualsGoal) {
     // Initialize a 50x50 map with no obstacles
-    map.width = 50;
-    map.height = 50;
-    map.map = new int*[50];
-    for (int i = 0; i < 50; ++i) {
-        map.map[i] = new int[50];
-        for (int j = 0; j < 50; ++j) {
-            map.map[i][j] = 0;
-        }
-    }
+    map.init(50, 50);
 
     Vec2d start = {25, 25};
     Vec2d goal = {25, 25};

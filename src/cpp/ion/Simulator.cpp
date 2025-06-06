@@ -347,7 +347,7 @@ bool Simulator::canPlaceBuildingAt(const CompBuilding& building, const Vec2d& fe
 {
     auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
     auto tile = m_coordinates.feetToTiles(feet);
-    auto& staticMap = GameState::getInstance().staticEntityMap;
+    auto staticMap = GameState::getInstance().gameMap.getMap(MapLayerType::STATIC);
 
     auto isValidTile = [&](const Vec2d& tile)
     {
@@ -366,7 +366,7 @@ bool Simulator::canPlaceBuildingAt(const CompBuilding& building, const Vec2d& fe
                 outOfMap = true;
                 return false;
             }
-            if (staticMap.map[tile.x - i][tile.y - j] != 0)
+            if (staticMap[tile.x - i][tile.y - j].isOccupied())
             {
                 return false;
             }
@@ -394,22 +394,22 @@ void Simulator::testPathFinding(const Vec2d& end)
 
     startPos = m_coordinates.feetToTiles(startPos);
 
-    StaticEntityMap map = GameState::getInstance().staticEntityMap;
+    GridMap map = GameState::getInstance().gameMap;
     std::vector<Vec2d> path =
         GameState::getInstance().getPathFinder()->findPath(map, startPos, end);
 
     if (path.empty())
     {
         spdlog::error("No path found from {} to {}", startPos.toString(), end.toString());
-        map.map[startPos.x][startPos.y] = 2;
-        map.map[end.x][end.y] = 2;
+        // map.map[startPos.x][startPos.y] = 2;
+        // map.map[end.x][end.y] = 2;
     }
     else
     {
         for (Vec2d node : path)
         {
             // map.map[node.x][node.y] = 2;
-            auto entity = map.entityMap[node.x][node.y];
+            auto entity = map.layers[MapLayerType::GROUND].cells[node.x][node.y].getEntity();
             if (entity != entt::null)
             {
                 auto [dirty, gc] =
