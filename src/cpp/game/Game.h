@@ -30,12 +30,9 @@ class Game
   public:
     int run()
     {
-        std::cout << "Starting the game1\n";
-
         ion::initLogger("logs/game.log");
-        std::cout << "Starting the game2\n";
 
-        spdlog::info("Game started");
+        spdlog::info("Game starting");
         spdlog::info("Initializing subsystems...");
 
         ion::GraphicsRegistry graphicsRegistry;

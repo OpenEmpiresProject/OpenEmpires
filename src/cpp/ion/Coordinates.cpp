@@ -7,7 +7,10 @@
 
 using namespace ion;
 
-Coordinates::Coordinates(std::shared_ptr<GameSettings> settings) : m_settings(std::move(settings))
+Coordinates::Coordinates(std::shared_ptr<GameSettings> settings) 
+    : 
+    m_settings(std::move(settings)), m_windowMiddle(m_settings->getWindowDimensions().width / 2,
+                                                      m_settings->getWindowDimensions().height / 2)
 {
 }
 
@@ -116,21 +119,65 @@ Vec2d Coordinates::getMapCenterInFeet() const
     return Vec2d(m_settings->getWorldSize().width / 2, m_settings->getWorldSize().height / 2);
 }
 
-void Coordinates::setViewportPositionInPixelsWithBounryChecking(const Vec2d& pixels)
+/**
+ * @brief Sets the viewport position in pixels with boundary checking.
+ *
+ * Attempts to set the viewport position to the specified pixel position, ensuring that the the center of window
+ * for the proposed new position remains inside the map boundaries. If the center for the requested position is outside
+ * the map, the function tries to adjust the position along the x or y axis to find the nearest valid position
+ * within the map. The adjustment is performed by iterating in both positive and negative directions for each axis.
+ * This essentially does the edge scrolling. For instance, if the viewport already shows themap's right-top edge, and
+ * player press right-arrow (or any equivalent key) with the idea of moving viewport further to right beyond the map's
+ * edge, this would prevent that and slide the viewport along the right-top edge achiving smooth scrolling.
+ *
+ * @param pixelPos The desired viewport position in pixel coordinates.
+ */
+void Coordinates::setViewportPositionInPixelsWithBounryChecking(const Vec2d& pixelPos)
 {
-    auto originalPos = m_viewportPositionInPixels;
-    setViewportPositionInPixels(pixels);
-
-    if (!isViewportCenterInsideMap())
+    if (isInsideMap(pixelPos + m_windowMiddle))
     {
-        setViewportPositionInPixels(originalPos);
+        setViewportPositionInPixels(pixelPos);
+    }
+    else
+    {
+        auto delta = pixelPos - m_viewportPositionInPixels;
+        // If the original movement is horizontal and couldn't scroll (i.e. was outside of the map)
+        // try moving viewport along the edge of the map. To do that, try adjusting delta y in both
+        // directions (i.e. up and down).
+        if (delta.x != 0)
+        {
+            for (auto direction : {1, -1})
+            {
+                auto newPos = m_viewportPositionInPixels + Vec2d(delta.x, delta.x / 2 * direction);
+
+                if (isInsideMap(newPos + m_windowMiddle))
+                {
+                    setViewportPositionInPixels(newPos);
+                    return;
+                }
+            }
+        }
+
+        // Same approach as above, but for vertical movement failures. 
+        if (delta.y != 0)
+        {
+            for (auto direction : {1, -1})
+            {
+                auto newPos = m_viewportPositionInPixels + Vec2d(delta.y * 2 * direction, delta.y);
+
+                if (isInsideMap(newPos + m_windowMiddle))
+                {
+                    setViewportPositionInPixels(newPos);
+                    return;
+                }
+            }
+        }
     }
 }
 
 Vec2d Coordinates::getViewportCenterInPixels() const
 {
-    return m_viewportPositionInPixels + Vec2d(m_settings->getWindowDimensions().width / 2,
-                                              m_settings->getWindowDimensions().height / 2);
+    return m_viewportPositionInPixels + m_windowMiddle;
 }
 
 bool Coordinates::isInsideMap(const Vec2d& pixelPos) const
@@ -138,8 +185,10 @@ bool Coordinates::isInsideMap(const Vec2d& pixelPos) const
     auto gameWorldSize = m_settings->getWorldSize();
     auto feetPos = pixelsToFeet(pixelPos);
 
-    return feetPos.x >= 0 && feetPos.x < gameWorldSize.width && feetPos.y >= 0 &&
-           feetPos.y < gameWorldSize.height;
+    // NOTE: While typically less than comparison should not contain the equal sign 
+    // in zero base index system, this is important to have map's edge scrolling work.
+    return feetPos.x >= 0 && feetPos.x <= gameWorldSize.width && feetPos.y >= 0 &&
+           feetPos.y <= gameWorldSize.height;
 }
 
 bool Coordinates::isViewportCenterInsideMap() const

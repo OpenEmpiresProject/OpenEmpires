@@ -39,6 +39,7 @@ class Coordinates
   private:
     Vec2d m_viewportPositionInPixels;
     std::shared_ptr<GameSettings> m_settings;
+    const Vec2d m_windowMiddle;
 };
 
 } // namespace ion

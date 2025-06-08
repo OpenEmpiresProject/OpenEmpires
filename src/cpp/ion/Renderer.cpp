@@ -422,6 +422,19 @@ class RendererImpl
                 }
             }
         }
+
+        if (m_showDebugInfo)
+        {
+            auto windowSize = m_settings->getWindowDimensions();
+            Vec2d center(windowSize.width / 2, windowSize.height / 2);
+            auto horiLineStart = center - Vec2d(5, 0);
+            auto vertLineStart = center - Vec2d(0, 5);
+
+            lineRGBA(m_renderer, horiLineStart.x, horiLineStart.y, horiLineStart.x + 10, horiLineStart.y, 255, 255, 255,
+                                 255);
+            lineRGBA(m_renderer, vertLineStart.x, vertLineStart.y, vertLineStart.x, vertLineStart.y + 10, 255, 255, 255,
+                                 255);
+        }
     }
 
     void renderBackground()
