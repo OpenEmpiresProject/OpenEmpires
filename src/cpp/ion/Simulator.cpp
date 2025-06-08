@@ -380,7 +380,6 @@ void ion::Simulator::testBuild(const Vec2d& targetFeetPos, int buildingType, Siz
     gameState.addComponent(mill, transform);
     gameState.addComponent(mill, CompRendering());
     CompGraphics gc;
-    gc.isStatic = true;
     gc.entityID = mill;
     gc.entityType = buildingType;
     gameState.addComponent(mill, gc);

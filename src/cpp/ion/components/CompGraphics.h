@@ -8,6 +8,7 @@
 #include <entt/entity/registry.hpp>
 #include <variant>
 #include <vector>
+#include <array>
 
 namespace ion
 {
@@ -95,18 +96,35 @@ struct Color
     static const Color NONE;
 };
 
+enum class GraphicLayer
+{
+    NONE,
+    GROUND,
+    SELECTIONS,
+    ENTITIES,
+    SKY,
+    FOG
+};
+
+inline constexpr std::array<GraphicLayer, 5> GraphicLayersOrder{
+    GraphicLayer::GROUND,
+    GraphicLayer::SELECTIONS,
+    GraphicLayer::ENTITIES,
+    GraphicLayer::SKY,
+    GraphicLayer::FOG
+};
 // Component will be owned by the Simulator
 class CompGraphics : public GraphicsID
 {
   public:
     uint32_t entityID = entt::null;
     Vec2d positionInFeet = {0, 0};
-    bool isStatic = false;
     std::vector<DebugOverlay> debugOverlays;
     std::vector<GraphicAddon> addons;
     Color shading;
     Size landSize{0, 0};
     bool isDestroyed = false;
+    GraphicLayer layer = GraphicLayer::NONE;
 
     CompGraphics()
     {

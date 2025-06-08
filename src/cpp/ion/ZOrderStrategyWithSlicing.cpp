@@ -68,30 +68,40 @@ const std::vector<CompRendering*>& ZOrderStrategyWithSlicing::zOrder(const Coord
     ++m_zBucketVersion; // it will take 4 trillion years to overflow this
     m_finalListToRender.clear();
 
-    GameState::getInstance().getEntities<CompRendering>().each(
-        [this, &coordinates](CompRendering& rc)
-        {
-            if (!rc.isBig())
+    for (auto layer : GraphicLayersOrder)
+    {
+        GameState::getInstance().getEntities<CompRendering>().each(
+            [this, &coordinates, layer](CompRendering& rc)
             {
-                addRenderingCompToZBuckets(&rc, coordinates);
-            }
-        });
+                if (rc.layer == layer)
+                {
+                    if (!rc.isBig())
+                    {
+                        addRenderingCompToZBuckets(&rc, coordinates);
+                    }
+                }
+                
+            });
 
-    for (auto& sub : m_subRenderingComponents)
-    {
-        addRenderingCompToZBuckets(sub, coordinates);
-    }
-
-    for (int z = 0; z < m_zBucketsSize; ++z)
-    {
-        if (m_zBuckets[z].version != m_zBucketVersion)
+        for (auto& sub : m_subRenderingComponents)
         {
-            continue; // Skip if the version doesn't match
+            if (sub->layer == layer)
+            {
+                addRenderingCompToZBuckets(sub, coordinates);
+            }
         }
 
-        for (auto& rc : m_zBuckets[z].graphicsComponents)
+        for (int z = 0; z < m_zBucketsSize; ++z)
         {
-            m_finalListToRender.emplace_back(rc);
+            if (m_zBuckets[z].version != m_zBucketVersion)
+            {
+                continue; // Skip if the version doesn't match
+            }
+
+            for (auto& rc : m_zBuckets[z].graphicsComponents)
+            {
+                m_finalListToRender.emplace_back(rc);
+            }
         }
     }
     return m_finalListToRender;

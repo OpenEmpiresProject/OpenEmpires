@@ -77,6 +77,7 @@ void ResourceLoader::loadEntities()
             CompGraphics gc;
             gc.entityID = tile;
             gc.entityType = 2; // Tile
+            gc.layer = GraphicLayer::GROUND;
             DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, DebugOverlay::Color::GREY,
                                  DebugOverlay::FixedPosition::BOTTOM_CENTER};
             overlay.customPos1 = DebugOverlay::FixedPosition::CENTER_LEFT;
@@ -118,6 +119,7 @@ void ResourceLoader::loadEntities()
         CompGraphics gc;
         gc.entityID = villager;
         gc.entityType = 3; // Villager
+        gc.layer = GraphicLayer::ENTITIES;
         gameState.addComponent(villager, gc);
     }
 
@@ -139,9 +141,10 @@ void ResourceLoader::createTree(GridMap& map, uint32_t x, uint32_t y)
     CompGraphics gc;
     gc.debugOverlays.push_back({DebugOverlay::Type::CIRCLE, DebugOverlay::Color::RED,
                                 DebugOverlay::FixedPosition::BOTTOM_CENTER});
-    gc.isStatic = true;
     gc.entityID = tree;
     gc.entityType = 4; // tree
+    gc.layer = GraphicLayer::ENTITIES;
+
     gameState.addComponent(tree, gc);
     gameState.addComponent(tree, CompEntityInfo(4, rand() % 10));
     gameState.addComponent(tree, CompDirty());

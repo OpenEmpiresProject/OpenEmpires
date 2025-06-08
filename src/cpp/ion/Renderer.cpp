@@ -253,7 +253,6 @@ class RendererImpl
             {
                 if (event.key.scancode == SDL_SCANCODE_1)
                 {
-                    m_showStaticEntities = !m_showStaticEntities;
                 }
                 else if (event.key.scancode == SDL_SCANCODE_2)
                 {
@@ -350,6 +349,7 @@ class RendererImpl
     void renderGameEntities()
     {
         SDL_FRect dstRect = {0, 0, 0, 0};
+
         auto& objectsToRender = m_zOrderStrategy->zOrder(m_coordinates);
 
         for (auto& rc : objectsToRender)
@@ -361,34 +361,31 @@ class RendererImpl
             dstRect.w = rc->srcRect.w;
             dstRect.h = rc->srcRect.h;
 
-            if (!rc->isStatic || m_showStaticEntities)
+            for (auto& addon : rc->addons)
             {
-                for (auto& addon : rc->addons)
+                switch (addon.type)
                 {
-                    switch (addon.type)
-                    {
-                    case GraphicAddon::Type::CIRCLE:
-                    {
-                        const auto& circle = addon.getData<GraphicAddon::Circle>();
-                        auto circleScreenPos = screenPos + rc->anchor + circle.center;
+                case GraphicAddon::Type::CIRCLE:
+                {
+                    const auto& circle = addon.getData<GraphicAddon::Circle>();
+                    auto circleScreenPos = screenPos + rc->anchor + circle.center;
 
-                        // TODO: Support colors if required
-                        renderCirlceInIsometric(m_renderer, circleScreenPos.x, circleScreenPos.y,
-                                                circle.radius, 255, 255, 255, 255);
-                    }
-                    break;
-                    case GraphicAddon::Type::SQUARE:
-                        /* code */
-                        break;
-                    default:
-                        break;
-                    }
+                    // TODO: Support colors if required
+                    renderCirlceInIsometric(m_renderer, circleScreenPos.x, circleScreenPos.y,
+                                            circle.radius, 255, 255, 255, 255);
                 }
-                SDL_SetTextureColorMod(rc->texture, rc->shading.r, rc->shading.g, rc->shading.b);
-                SDL_RenderTextureRotated(m_renderer, rc->texture, &(rc->srcRect), &dstRect, 0,
-                                         nullptr, rc->flip);
-                ++m_texturesDrew;
+                break;
+                case GraphicAddon::Type::SQUARE:
+                    /* code */
+                    break;
+                default:
+                    break;
+                }
             }
+            SDL_SetTextureColorMod(rc->texture, rc->shading.r, rc->shading.g, rc->shading.b);
+            SDL_RenderTextureRotated(m_renderer, rc->texture, &(rc->srcRect), &dstRect, 0,
+                                    nullptr, rc->flip);
+            ++m_texturesDrew;
 
             if (m_showDebugInfo)
             {
@@ -404,7 +401,7 @@ class RendererImpl
                         break;
                     case DebugOverlay::Type::FILLED_CIRCLE:
                         filledEllipseRGBA(m_renderer, pos.x, pos.y, 20, 10, 0, 0, 255,
-                                          100); // blue ellipse
+                                        100); // blue ellipse
                     case DebugOverlay::Type::RHOMBUS:
                     {
                         auto end1 = getDebugOverlayPosition(overlay.customPos1, dstRect);
@@ -413,16 +410,18 @@ class RendererImpl
                         // Lifting the lines by a single pixel to avoid the next tile overriding
                         // these
                         lineRGBA(m_renderer, pos.x, pos.y - 1, end1.x, end1.y - 1, 180, 180, 180,
-                                 255);
+                                255);
                         lineRGBA(m_renderer, pos.x, pos.y - 1, end2.x, end2.y - 1, 180, 180, 180,
-                                 255);
+                                255);
                     }
                     break;
                     }
                 }
             }
         }
+        
 
+        // Show a small cross at center of the screen.
         if (m_showDebugInfo)
         {
             auto windowSize = m_settings->getWindowDimensions();
@@ -593,7 +592,6 @@ class RendererImpl
 
     int64_t m_tickCount = 0;
 
-    bool m_showStaticEntities = true;
     bool m_showDebugInfo = false;
 
     ThreadSynchronizer<FrameData>& m_synchronizer;
