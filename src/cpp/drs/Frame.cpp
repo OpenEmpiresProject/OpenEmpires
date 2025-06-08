@@ -1,6 +1,6 @@
 #include "Frame.h"
 
-#include "internal/FrameInfo.h"
+#include "FrameInfo.h"
 #include "internal/Palettes.h"
 #include "internal/libbmp.h"
 

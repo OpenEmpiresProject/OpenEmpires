@@ -10,6 +10,7 @@
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
 #include "components/CompRendering.h"
+#include "components/CompSelectible.h"
 #include "components/CompTransform.h"
 #include "components/CompUnit.h"
 #include "utils/Logger.h"
@@ -19,11 +20,20 @@
 #include <SDL3/SDL_surface.h>
 #include <SDL3_image/SDL_image.h>
 #include <filesystem>
+#include <memory>
 #include <random>
+#include <string>
 
 namespace fs = std::filesystem;
 using namespace game;
 using namespace ion;
+using namespace drs;
+using namespace std;
+
+// TODO: This is a duplication of GraphicsLoaderFromDRS. Need to refactor to consolidate
+shared_ptr<DRSFile> loadDRSFile(const string& drsFilename);
+// frameId is 1 based but not 0 based
+Rect<int> getBoundingBox(shared_ptr<DRSFile> drs, uint32_t slpId, uint32_t frameId);
 
 ResourceLoader::ResourceLoader(std::stop_token* stopToken,
                                std::shared_ptr<GameSettings> settings,
@@ -37,6 +47,8 @@ ResourceLoader::ResourceLoader(std::stop_token* stopToken,
 void ResourceLoader::loadEntities()
 {
     spdlog::info("Loading entities...");
+
+    m_drs = loadDRSFile("assets/graphics.drs");
 
     auto& gameState = GameState::getInstance();
 
@@ -110,6 +122,7 @@ void ResourceLoader::loadEntities()
     }
 
     generateMap(gameState.gameMap);
+    // createTree(gameState.gameMap, 5, 5);
 
     spdlog::info("Entity loaded successfully.");
 }
@@ -132,6 +145,13 @@ void ResourceLoader::createTree(GridMap& map, uint32_t x, uint32_t y)
     gameState.addComponent(tree, gc);
     gameState.addComponent(tree, CompEntityInfo(4, rand() % 10));
     gameState.addComponent(tree, CompDirty());
+
+    // TODO: This doesn't work. Need to conslidate resource and graphic loading and handle this
+    auto box = getBoundingBox(m_drs, 1254, 1);
+    CompSelectible sc;
+    sc.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
+
+    gameState.addComponent(tree, sc);
 
     map.layers[MapLayerType::STATIC].cells[x][y].addEntity(tree);
 }
@@ -209,4 +229,22 @@ void ResourceLoader::init()
 void ResourceLoader::shutdown()
 {
     // Cleanup code for resource loading
+}
+
+// shared_ptr<DRSFile> loadDRSFile2(const string& drsFilename)
+// {
+//     auto drs = make_shared<DRSFile>();
+//     if (!drs->load(drsFilename))
+//     {
+//         throw runtime_error("Failed to load DRS file: " + drsFilename);
+//     }
+//     return std::move(drs);
+// }
+
+Rect<int> getBoundingBox(shared_ptr<DRSFile> drs, uint32_t slpId, uint32_t frameId)
+{
+    auto frameInfos = drs->getSLPFile(slpId).getFrameInfos();
+    auto frame = frameInfos[frameId - 1];
+    Rect<int> box(frame.hotspot_x, frame.hotspot_y, frame.width, frame.height);
+    return box;
 }

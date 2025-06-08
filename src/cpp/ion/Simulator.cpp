@@ -12,10 +12,12 @@
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
 #include "components/CompRendering.h"
+#include "components/CompSelectible.h"
 #include "components/CompTransform.h"
 #include "components/CompUnit.h"
 #include "utils/ObjectPool.h"
 
+#include <algorithm>
 #include <entt/entity/registry.hpp>
 
 using namespace ion;
@@ -265,6 +267,58 @@ void Simulator::onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endSc
     }
 }
 
+void ion::Simulator::onClickToSelect(const Vec2d& screenPos)
+{
+    auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
+    auto& gameState = GameState::getInstance();
+
+    auto clickedCellPos = m_coordinates.screenUnitsToTiles(screenPos);
+
+    spdlog::debug("Clicking at grid pos {} to select", clickedCellPos.toString());
+
+    Vec2d gridStartPos = clickedCellPos + Constants::MAX_SELECTION_LOOKUP_HEIGHT;
+    gridStartPos.limitTo(settings->getWorldSizeInTiles().width - 1,
+                         settings->getWorldSizeInTiles().height - 1);
+
+    Vec2d pos;
+
+    for (pos.y = gridStartPos.y; pos.y >= clickedCellPos.y; pos.y--)
+    {
+        for (pos.x = gridStartPos.x; pos.x >= clickedCellPos.x; pos.x--)
+        {
+            if (gameState.gameMap.isOccupied(MapLayerType::STATIC, pos))
+            {
+                auto entity = gameState.gameMap.getEntity(MapLayerType::STATIC, pos);
+                if (entity != entt::null)
+                {
+                    if (gameState.hasComponent<CompSelectible>(entity)) [[likely]]
+                    {
+                        auto [select, transform] =
+                            gameState.getComponents<CompSelectible, CompTransform>(entity);
+                        auto entityScreenPos = m_coordinates.feetToScreenUnits(transform.position);
+
+                        const auto& boundingBox = select.getBoundingBox(transform.getDirection());
+                        auto screenRect = Rect<int>(entityScreenPos.x - boundingBox.x,
+                                                    entityScreenPos.y - boundingBox.y,
+                                                    boundingBox.w, boundingBox.h);
+
+                        if (screenRect.contains(screenPos))
+                        {
+                            spdlog::info("Entity {} selected", entity);
+                            return;
+                        }
+                    }
+                    else [[unlikely]]
+                    {
+                        spdlog::error("Static entity {} at {} is not selectable", entity,
+                                      pos.toString());
+                    }
+                }
+            }
+        }
+    }
+}
+
 void Simulator::resolveSelection(const Vec2d& screenPos)
 {
     // auto worldPos = m_coordinates.screenUnitsToFeet(screenPos);
@@ -306,7 +360,7 @@ void Simulator::resolveSelection(const Vec2d& screenPos)
     }
     else
     {
-        spdlog::info("=============== selection click");
+        onClickToSelect(screenPos);
     }
 }
 

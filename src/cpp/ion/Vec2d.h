@@ -49,9 +49,19 @@ class Vec2d
         return {x + other.x, y + other.y};
     }
 
+    constexpr Vec2d operator+(int delta) const noexcept
+    {
+        return {x + delta, y + delta};
+    }
+
     constexpr Vec2d operator-(const Vec2d& other) const noexcept
     {
         return Vec2d(x - other.x, y - other.y);
+    }
+
+    constexpr Vec2d operator-(int delta) const noexcept
+    {
+        return Vec2d(x - delta, y - delta);
     }
 
     constexpr Vec2d operator*(int scalar) const noexcept
@@ -68,6 +78,13 @@ class Vec2d
     {
         x += other.x;
         y += other.y;
+        return *this;
+    }
+
+    constexpr Vec2d& operator+=(int delta) noexcept
+    {
+        x += delta;
+        y += delta;
         return *this;
     }
 
@@ -118,6 +135,14 @@ class Vec2d
     std::string toString() const
     {
         return std::format("({}, {})", x, y);
+    }
+
+    constexpr void limitTo(int xLimit, int yLimit) noexcept
+    {
+        if (x > xLimit)
+            x = xLimit;
+        if (y > yLimit)
+            y = yLimit;
     }
 };
 

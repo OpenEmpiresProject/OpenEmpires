@@ -1,7 +1,7 @@
 #include "SLPFile.h"
 
 #include "DRSFile.h"
-#include "internal/FrameInfo.h"
+#include "FrameInfo.h"
 
 #include <iostream>
 #include <string>

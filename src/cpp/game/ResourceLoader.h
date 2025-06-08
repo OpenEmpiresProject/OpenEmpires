@@ -1,6 +1,7 @@
 #ifndef RESOURCELOADER_H
 #define RESOURCELOADER_H
 
+#include "DRSFile.h"
 #include "GameSettings.h"
 #include "GameState.h"
 #include "GraphicsRegistry.h"
@@ -32,6 +33,7 @@ class ResourceLoader : public ion::SubSystem
     std::shared_ptr<ion::GameSettings> m_settings;
     ion::GraphicsRegistry& m_graphicsRegistry;
     std::shared_ptr<ion::Renderer> m_renderer;
+    std::shared_ptr<drs::DRSFile> m_drs;
 };
 } // namespace game
 

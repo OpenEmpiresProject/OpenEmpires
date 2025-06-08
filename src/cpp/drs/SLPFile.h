@@ -2,13 +2,13 @@
 #define SLPFILE_H
 
 #include "Frame.h"
+#include "FrameInfo.h"
 
 #include <fstream>
 #include <vector>
 
 namespace drs
 {
-class FrameInfo;
 class DRSFile;
 class SLPFile
 {
@@ -20,6 +20,11 @@ class SLPFile
     uint32_t getId() const
     {
         return m_id;
+    }
+
+    std::span<const FrameInfo> getFrameInfos() const
+    {
+        return m_frameInfos;
     }
 
   private:

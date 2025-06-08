@@ -18,6 +18,7 @@ class Coordinates
     Vec2d pixelsToScreenUnits(const Vec2d& pixels) const;
     Vec2d screenUnitsToPixels(const Vec2d& screenUnits) const;
     Vec2d screenUnitsToFeet(const Vec2d& screenUnits) const;
+    Vec2d screenUnitsToTiles(const Vec2d& screenUnits) const;
     Vec2d feetToScreenUnits(const Vec2d& feet) const;
     Vec2d feetToTiles(const Vec2d& feet) const;
     Vec2d tilesToFeet(const Vec2d& tiles) const;

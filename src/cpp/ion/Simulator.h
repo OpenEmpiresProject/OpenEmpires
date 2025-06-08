@@ -38,6 +38,7 @@ class Simulator : public EventHandler
     void testPathFinding(const Vec2d& end);
     void updateGraphicComponents();
     void onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endScreenPos);
+    void onClickToSelect(const Vec2d& screenPos);
     void resolveSelection(const Vec2d& screenPos);
     void resolveAction(const Vec2d& targetFeetPos);
     void testBuild(const Vec2d& targetFeetPos, int buildingType, Size size);

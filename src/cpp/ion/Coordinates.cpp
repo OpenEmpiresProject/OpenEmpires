@@ -97,6 +97,11 @@ Vec2d Coordinates::screenUnitsToFeet(const Vec2d& screenUnits) const
     return pixelsToFeet(screenUnitsToPixels(screenUnits));
 }
 
+Vec2d ion::Coordinates::screenUnitsToTiles(const Vec2d& screenUnits) const
+{
+    return feetToTiles(screenUnitsToFeet(screenUnits));
+}
+
 const Vec2d& Coordinates::getViewportPositionInPixels() const
 {
     return m_viewportPositionInPixels;
