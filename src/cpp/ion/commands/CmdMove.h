@@ -1,6 +1,7 @@
 #ifndef CMDMOVE_H
 #define CMDMOVE_H
 
+#include "GameState.h"
 #include "Vec2d.h"
 #include "commands/Command.h"
 #include "components/CompAction.h"

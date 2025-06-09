@@ -55,4 +55,21 @@ void CommandCenter::onEvent(const Event& e)
                 }
             });
     }
+    else if (e.type == Event::Type::COMMAND_REQUEST)
+    {
+        auto data = e.getData<CommandRequestData>();
+        auto move = data.command;
+        auto entity = data.entity;
+
+        CompUnit& unit = GameState::getInstance().getComponent<CompUnit>(entity);
+
+        if (unit.commandQueue.empty() == false)
+        {
+            if (move->getPriority() == unit.commandQueue.top()->getPriority())
+            {
+                unit.commandQueue.pop();
+            }
+        }
+        unit.commandQueue.push(move);
+    }
 }

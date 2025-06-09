@@ -8,6 +8,7 @@
 #include "ThreadQueue.h"
 #include "ThreadSynchronizer.h"
 #include "UnitSelection.h"
+#include "commands/CmdMove.h"
 #include "components/CompBuilding.h"
 #include "components/CompGraphics.h"
 
@@ -35,16 +36,17 @@ class Simulator : public EventHandler
     void onSynchorizedBlock();
     void sendGraphicsInstructions();
     void sendGraphiInstruction(CompGraphics* instruction);
-    void testPathFinding(const Vec2d& end);
+    CmdMove* findPath(const Vec2d& end);
     void updateGraphicComponents();
     void onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endScreenPos);
     void onClickToSelect(const Vec2d& screenPos);
     void resolveSelection(const Vec2d& screenPos);
-    void resolveAction(const Vec2d& targetFeetPos);
+    void resolveAction(const Vec2d& screenPos);
     void testBuild(const Vec2d& targetFeetPos, int buildingType, Size size);
     bool canPlaceBuildingAt(const CompBuilding& building, const Vec2d& feet, bool& outOfMap);
     void addEntitiesToSelection(const std::vector<uint32_t>& selectedEntities);
     void clearSelection();
+    uint32_t whatIsAt(const Vec2d& screenPos);
 
     Coordinates m_coordinates;
     ThreadSynchronizer<FrameData>& m_synchronizer;

@@ -12,6 +12,7 @@
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
 #include "components/CompRendering.h"
+#include "components/CompResource.h"
 #include "components/CompSelectible.h"
 #include "components/CompTransform.h"
 #include "components/CompUnit.h"
@@ -91,7 +92,6 @@ void Simulator::onKeyDown(const Event& e)
 void Simulator::onMouseButtonUp(const Event& e)
 {
     auto mousePos = e.getData<MouseClickData>().screenPosition;
-    auto worldPos = m_coordinates.screenUnitsToFeet(mousePos);
 
     if (e.getData<MouseClickData>().button == MouseClickData::Button::LEFT)
     {
@@ -99,7 +99,7 @@ void Simulator::onMouseButtonUp(const Event& e)
     }
     else if (e.getData<MouseClickData>().button == MouseClickData::Button::RIGHT)
     {
-        resolveAction(worldPos);
+        resolveAction(mousePos);
     }
 }
 
@@ -262,54 +262,11 @@ void Simulator::onClickToSelect(const Vec2d& screenPos)
 {
     clearSelection();
 
-    auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
-    auto& gameState = GameState::getInstance();
+    auto entity = whatIsAt(screenPos);
 
-    auto clickedCellPos = m_coordinates.screenUnitsToTiles(screenPos);
-
-    spdlog::debug("Clicking at grid pos {} to select", clickedCellPos.toString());
-
-    Vec2d gridStartPos = clickedCellPos + Constants::MAX_SELECTION_LOOKUP_HEIGHT;
-    gridStartPos.limitTo(settings->getWorldSizeInTiles().width - 1,
-                         settings->getWorldSizeInTiles().height - 1);
-
-    Vec2d pos;
-
-    for (pos.y = gridStartPos.y; pos.y >= clickedCellPos.y; pos.y--)
+    if (entity != entt::null)
     {
-        for (pos.x = gridStartPos.x; pos.x >= clickedCellPos.x; pos.x--)
-        {
-            if (gameState.gameMap.isOccupied(MapLayerType::STATIC, pos))
-            {
-                auto entity = gameState.gameMap.getEntity(MapLayerType::STATIC, pos);
-                if (entity != entt::null)
-                {
-                    if (gameState.hasComponent<CompSelectible>(entity)) [[likely]]
-                    {
-                        auto [select, transform] =
-                            gameState.getComponents<CompSelectible, CompTransform>(entity);
-                        auto entityScreenPos = m_coordinates.feetToScreenUnits(transform.position);
-
-                        const auto& boundingBox = select.getBoundingBox(transform.getDirection());
-                        auto screenRect = Rect<int>(entityScreenPos.x - boundingBox.x,
-                                                    entityScreenPos.y - boundingBox.y,
-                                                    boundingBox.w, boundingBox.h);
-
-                        if (screenRect.contains(screenPos))
-                        {
-                            spdlog::info("Entity {} selected", entity);
-                            addEntitiesToSelection({entity});
-                            return;
-                        }
-                    }
-                    else [[unlikely]]
-                    {
-                        spdlog::error("Static entity {} at {} is not selectable", entity,
-                                      pos.toString());
-                    }
-                }
-            }
-        }
+        addEntitiesToSelection({entity});
     }
 }
 
@@ -354,11 +311,35 @@ void Simulator::resolveSelection(const Vec2d& screenPos)
     }
 }
 
-void Simulator::resolveAction(const Vec2d& targetFeetPos)
+void Simulator::resolveAction(const Vec2d& screenPos)
 {
-    auto tilePos = m_coordinates.feetToTiles(targetFeetPos);
-    // TODO: Resolve the common action based on the unit selection here. Assuming movement for now
-    testPathFinding(tilePos);
+    auto target = whatIsAt(screenPos);
+    bool gatherable = GameState::getInstance().hasComponent<CompResource>(target);
+
+    for (auto entity : m_currentUnitSelection.selectedEntities)
+    {
+        if (target == entt::null)
+        {
+            // Nothing at destination, probably request to move
+            // TODO: Ensure target is within the map
+            // TODO: Ensure we have control over this unit
+
+            if (GameState::getInstance().hasComponent<CompUnit>(entity))
+            {
+                auto worldPos = m_coordinates.screenUnitsToFeet(screenPos);
+                auto cmd = findPath(worldPos);
+
+                Event event(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, entity});
+                m_publisher->publish(event);
+            }
+        }
+        else if (gatherable)
+        {
+            // It is a request to gather the resource at target
+            // TODO: Check selected entity's capability to gather, if it isn't doable, fall back to
+            // move
+        }
+    }
 }
 
 void ion::Simulator::testBuild(const Vec2d& targetFeetPos, int buildingType, Size size)
@@ -452,12 +433,65 @@ void Simulator::clearSelection()
     m_currentUnitSelection.selectedEntities.clear();
 }
 
+uint32_t Simulator::whatIsAt(const Vec2d& screenPos)
+{
+    auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
+    auto& gameState = GameState::getInstance();
+
+    auto clickedCellPos = m_coordinates.screenUnitsToTiles(screenPos);
+
+    spdlog::debug("Clicking at grid pos {} to select", clickedCellPos.toString());
+
+    Vec2d gridStartPos = clickedCellPos + Constants::MAX_SELECTION_LOOKUP_HEIGHT;
+    gridStartPos.limitTo(settings->getWorldSizeInTiles().width - 1,
+                         settings->getWorldSizeInTiles().height - 1);
+
+    Vec2d pos;
+
+    for (pos.y = gridStartPos.y; pos.y >= clickedCellPos.y; pos.y--)
+    {
+        for (pos.x = gridStartPos.x; pos.x >= clickedCellPos.x; pos.x--)
+        {
+            if (gameState.gameMap.isOccupied(MapLayerType::STATIC, pos))
+            {
+                auto entity = gameState.gameMap.getEntity(MapLayerType::STATIC, pos);
+                if (entity != entt::null)
+                {
+                    if (gameState.hasComponent<CompSelectible>(entity)) [[likely]]
+                    {
+                        auto [select, transform] =
+                            gameState.getComponents<CompSelectible, CompTransform>(entity);
+                        auto entityScreenPos = m_coordinates.feetToScreenUnits(transform.position);
+
+                        const auto& boundingBox = select.getBoundingBox(transform.getDirection());
+                        auto screenRect = Rect<int>(entityScreenPos.x - boundingBox.x,
+                                                    entityScreenPos.y - boundingBox.y,
+                                                    boundingBox.w, boundingBox.h);
+
+                        if (screenRect.contains(screenPos))
+                        {
+                            return entity;
+                        }
+                    }
+                    else [[unlikely]]
+                    {
+                        spdlog::error("Static entity {} at {} is not selectable", entity,
+                                      pos.toString());
+                    }
+                }
+            }
+            // TODO: Check entity layer as well
+        }
+    }
+    return entt::null;
+}
+
 void Simulator::sendGraphiInstruction(CompGraphics* instruction)
 {
     m_synchronizer.getSenderFrameData().graphicUpdates.push_back(instruction);
 }
 
-void Simulator::testPathFinding(const Vec2d& end)
+CmdMove* Simulator::findPath(const Vec2d& end)
 {
     Vec2d startPos;
     if (!m_currentUnitSelection.selectedEntities.empty())
@@ -467,17 +501,18 @@ void Simulator::testPathFinding(const Vec2d& end)
         startPos = transform.position;
     }
     else
-        return;
+        return nullptr;
 
     startPos = m_coordinates.feetToTiles(startPos);
+    auto endPos = m_coordinates.feetToTiles(end);
 
     GridMap map = GameState::getInstance().gameMap;
     std::vector<Vec2d> path =
-        GameState::getInstance().getPathFinder()->findPath(map, startPos, end);
+        GameState::getInstance().getPathFinder()->findPath(map, startPos, endPos);
 
     if (path.empty())
     {
-        spdlog::error("No path found from {} to {}", startPos.toString(), end.toString());
+        spdlog::error("No path found from {} to {}", startPos.toString(), endPos.toString());
         // map.map[startPos.x][startPos.y] = 2;
         // map.map[end.x][end.y] = 2;
     }
@@ -503,23 +538,15 @@ void Simulator::testPathFinding(const Vec2d& end)
         {
             pathList.push_back(m_coordinates.getTileCenterInFeet(path[i]));
         }
+        pathList.push_back(end);
 
         auto move = ObjectPool<CmdMove>::acquire();
         move->path = pathList;
         move->setPriority(10); // TODO: Need a better way
 
-        CompUnit& unit = GameState::getInstance().getComponent<CompUnit>(
-            m_currentUnitSelection.selectedEntities[0]);
-
-        if (unit.commandQueue.empty() == false)
-        {
-            if (move->getPriority() == unit.commandQueue.top()->getPriority())
-            {
-                unit.commandQueue.pop();
-            }
-        }
-        unit.commandQueue.push(move);
+        return move;
     }
+    return nullptr;
 }
 
 char scancodeToChar(SDL_Scancode scancode, bool shiftPressed)

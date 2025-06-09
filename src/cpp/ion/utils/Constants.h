@@ -19,6 +19,8 @@ class Constants
     // with reverse Zordering to find the object with clicked position is within the
     //  object's image boundaries
     static const int MAX_SELECTION_LOOKUP_HEIGHT = 4;
+    static const int MAX_RESOURCE_TYPES = 8;
+    static const int RESOURCE_TYPE_NONE = 0;
 };
 } // namespace ion
 

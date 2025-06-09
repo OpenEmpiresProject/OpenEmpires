@@ -3,7 +3,9 @@
 
 #include "UnitSelection.h"
 #include "Vec2d.h"
+#include "commands/Command.h"
 
+#include <entt/entity/registry.hpp>
 #include <variant>
 
 namespace ion
@@ -40,6 +42,12 @@ struct UnitSelectionData
     UnitSelection selection;
 };
 
+struct CommandRequestData
+{
+    Command* command = nullptr;
+    uint32_t entity = entt::null;
+};
+
 struct Event
 {
     enum class Type
@@ -52,6 +60,7 @@ struct Event
         MOUSE_BTN_DOWN,
         MOUSE_BTN_UP,
         UNIT_SELECTION,
+        COMMAND_REQUEST,
         MAX_TYPE_MARKER,
     };
 
@@ -60,7 +69,8 @@ struct Event
                               MouseClickData,
                               KeyboardData,
                               MouseMoveData,
-                              UnitSelectionData>;
+                              UnitSelectionData,
+                              CommandRequestData>;
 
     const Type type = Type::NONE;
     const Data data = std::monostate{};

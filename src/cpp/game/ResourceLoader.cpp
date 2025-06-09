@@ -2,6 +2,7 @@
 
 #include "GameState.h"
 #include "Renderer.h"
+#include "ResourceTypes.h"
 #include "SubSystemRegistry.h"
 #include "commands/CmdIdle.h"
 #include "components/CompAction.h"
@@ -10,6 +11,7 @@
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
 #include "components/CompRendering.h"
+#include "components/CompResource.h"
 #include "components/CompSelectible.h"
 #include "components/CompTransform.h"
 #include "components/CompUnit.h"
@@ -165,6 +167,7 @@ void ResourceLoader::createTree(GridMap& map, uint32_t x, uint32_t y)
         GraphicAddon::Rhombus{Constants::TILE_PIXEL_WIDTH, Constants::TILE_PIXEL_HEIGHT}};
 
     gameState.addComponent(tree, sc);
+    gameState.addComponent(tree, CompResource(Resource(ResourceType::WOOD, 100)));
 
     map.layers[MapLayerType::STATIC].cells[x][y].addEntity(tree);
 }
@@ -236,6 +239,7 @@ void ResourceLoader::generateMap(GridMap& gameMap)
 
 void ResourceLoader::init()
 {
+    Resource::registerResourceType(ResourceType::WOOD);
     loadEntities();
 }
 
