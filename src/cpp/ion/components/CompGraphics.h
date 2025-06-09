@@ -1,14 +1,15 @@
 #ifndef COMPGRAPHICS_H
 #define COMPGRAPHICS_H
 
+#include "GraphicAddon.h"
 #include "GraphicsRegistry.h" // For GraphicsID
 #include "Vec2d.h"
 #include "utils/Size.h"
 
+#include <array>
 #include <entt/entity/registry.hpp>
 #include <variant>
 #include <vector>
-#include <array>
 
 namespace ion
 {
@@ -49,39 +50,6 @@ struct DebugOverlay
     FixedPosition customPos2;
 };
 
-struct GraphicAddon
-{
-    enum class Type : uint8_t
-    {
-        NONE = 0,
-        CIRCLE,
-        SQUARE
-    };
-
-    struct Circle
-    {
-        int radius = 0;
-        Vec2d center = {0, 0}; // Relative to anchor. i.e. actual unit position
-    };
-
-    struct Square
-    {
-        int width = 0;
-        int height = 0;
-        Vec2d center = {0, 0};
-    };
-
-    using Data = std::variant<std::monostate, Circle, Square>;
-
-    Type type = Type::NONE;
-    Data data = std::monostate{};
-
-    template <typename T> T getData() const
-    {
-        return std::get<T>(data);
-    }
-};
-
 struct Color
 {
     uint8_t r = 255;
@@ -100,19 +68,13 @@ enum class GraphicLayer
 {
     NONE,
     GROUND,
-    SELECTIONS,
     ENTITIES,
     SKY,
     FOG
 };
 
-inline constexpr std::array<GraphicLayer, 5> GraphicLayersOrder{
-    GraphicLayer::GROUND,
-    GraphicLayer::SELECTIONS,
-    GraphicLayer::ENTITIES,
-    GraphicLayer::SKY,
-    GraphicLayer::FOG
-};
+inline constexpr std::array<GraphicLayer, 4> GraphicLayersOrder{
+    GraphicLayer::GROUND, GraphicLayer::ENTITIES, GraphicLayer::SKY, GraphicLayer::FOG};
 // Component will be owned by the Simulator
 class CompGraphics : public GraphicsID
 {

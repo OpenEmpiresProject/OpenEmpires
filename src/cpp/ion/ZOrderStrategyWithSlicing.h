@@ -32,6 +32,7 @@ class ZOrderStrategyWithSlicing : public ZOrderStrategyBase
     int64_t m_zBucketVersion = 0;
     std::shared_ptr<GameSettings> m_settings;
     std::vector<CompRendering*> m_finalListToRender;
+    std::vector<CompRendering*> m_objectsToRenderByLayer[GraphicLayersOrder.size()];
 };
 
 } // namespace ion

@@ -222,19 +222,12 @@ void Simulator::updateGraphicComponents()
 
 void Simulator::onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endScreenPos)
 {
+    clearSelection();
+
     int selectionLeft = std::min(startScreenPos.x, endScreenPos.x);
     int selectionRight = std::max(startScreenPos.x, endScreenPos.x);
     int selectionTop = std::min(startScreenPos.y, endScreenPos.y);
     int selectionBottom = std::max(startScreenPos.y, endScreenPos.y);
-
-    // Clear any existing selections' addons
-    for (auto& entity : m_currentUnitSelection.selectedEntities)
-    {
-        auto& graphics = GameState::getInstance().getComponent<CompGraphics>(entity);
-        graphics.addons.clear(); // TODO: We might want to selectively remove the addons
-        GameState::getInstance().getComponents<CompDirty>(entity).markDirty(entity);
-    }
-    m_currentUnitSelection.selectedEntities.clear();
 
     GameState::getInstance().getEntities<CompUnit, CompTransform, CompGraphics, CompDirty>().each(
         [this, selectionLeft, selectionRight, selectionTop,
@@ -253,10 +246,8 @@ void Simulator::onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endSc
             if (intersects)
             {
                 spdlog::info("Unit {} is selected", entity);
-                m_currentUnitSelection.selectedEntities.push_back(entity);
-                graphics.addons.push_back(GraphicAddon{
-                    GraphicAddon::Type::CIRCLE, GraphicAddon::Circle{transform.collisionRadius}});
-                dirty.markDirty(entity);
+
+                addEntitiesToSelection({entity});
             }
         });
 
@@ -267,8 +258,10 @@ void Simulator::onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endSc
     }
 }
 
-void ion::Simulator::onClickToSelect(const Vec2d& screenPos)
+void Simulator::onClickToSelect(const Vec2d& screenPos)
 {
+    clearSelection();
+
     auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
     auto& gameState = GameState::getInstance();
 
@@ -305,6 +298,7 @@ void ion::Simulator::onClickToSelect(const Vec2d& screenPos)
                         if (screenRect.contains(screenPos))
                         {
                             spdlog::info("Entity {} selected", entity);
+                            addEntitiesToSelection({entity});
                             return;
                         }
                     }
@@ -321,13 +315,9 @@ void ion::Simulator::onClickToSelect(const Vec2d& screenPos)
 
 void Simulator::resolveSelection(const Vec2d& screenPos)
 {
-    // auto worldPos = m_coordinates.screenUnitsToFeet(screenPos);
-
     // Invalidate in-progress selection if mouse hasn't moved much
     if (m_isSelecting)
     {
-        spdlog::info("mouse moved by {}",
-                     (screenPos - m_selectionStartPosScreenUnits).lengthSquared());
         if ((screenPos - m_selectionStartPosScreenUnits).lengthSquared() <
             Constants::MIN_SELECTION_BOX_MOUSE_MOVEMENT)
         {
@@ -426,6 +416,40 @@ bool Simulator::canPlaceBuildingAt(const CompBuilding& building, const Vec2d& fe
         }
     }
     return true;
+}
+
+void Simulator::addEntitiesToSelection(const std::vector<uint32_t>& selectedEntities)
+{
+    auto& gameState = GameState::getInstance();
+    for (auto entity : selectedEntities)
+    {
+        if (gameState.hasComponent<CompSelectible>(entity)) [[likely]]
+        {
+            auto [graphics, dirty, select] =
+                GameState::getInstance().getComponents<CompGraphics, CompDirty, CompSelectible>(
+                    entity);
+
+            m_currentUnitSelection.selectedEntities.push_back(entity);
+            graphics.addons.push_back(select.selectionIndicator);
+            dirty.markDirty(entity);
+        }
+        else [[unlikely]]
+        {
+            spdlog::error("Failed to select entity {}, entity is not selectible", entity);
+        }
+    }
+}
+
+void Simulator::clearSelection()
+{
+    // Clear any existing selections' addons
+    for (auto& entity : m_currentUnitSelection.selectedEntities)
+    {
+        auto& graphics = GameState::getInstance().getComponent<CompGraphics>(entity);
+        graphics.addons.clear(); // TODO: We might want to selectively remove the addons
+        GameState::getInstance().getComponents<CompDirty>(entity).markDirty(entity);
+    }
+    m_currentUnitSelection.selectedEntities.clear();
 }
 
 void Simulator::sendGraphiInstruction(CompGraphics* instruction)

@@ -43,6 +43,8 @@ class Simulator : public EventHandler
     void resolveAction(const Vec2d& targetFeetPos);
     void testBuild(const Vec2d& targetFeetPos, int buildingType, Size size);
     bool canPlaceBuildingAt(const CompBuilding& building, const Vec2d& feet, bool& outOfMap);
+    void addEntitiesToSelection(const std::vector<uint32_t>& selectedEntities);
+    void clearSelection();
 
     Coordinates m_coordinates;
     ThreadSynchronizer<FrameData>& m_synchronizer;

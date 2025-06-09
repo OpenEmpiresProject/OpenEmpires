@@ -375,16 +375,28 @@ class RendererImpl
                                             circle.radius, 255, 255, 255, 255);
                 }
                 break;
-                case GraphicAddon::Type::SQUARE:
-                    /* code */
-                    break;
+                case GraphicAddon::Type::RHOMBUS:
+                {
+                    const auto& rhombus = addon.getData<GraphicAddon::Rhombus>();
+                    auto center = screenPos + rc->anchor;
+
+                    lineRGBA(m_renderer, center.x - rhombus.width / 2, center.y, center.x,
+                             center.y - rhombus.height / 2, 255, 255, 255, 255);
+                    lineRGBA(m_renderer, center.x, center.y - rhombus.height / 2,
+                             center.x + rhombus.width / 2, center.y, 255, 255, 255, 255);
+                    lineRGBA(m_renderer, center.x + rhombus.width / 2, center.y, center.x,
+                             center.y + rhombus.height / 2, 255, 255, 255, 255);
+                    lineRGBA(m_renderer, center.x, center.y + rhombus.height / 2,
+                             center.x - rhombus.width / 2, center.y, 255, 255, 255, 255);
+                }
+                break;
                 default:
                     break;
                 }
             }
             SDL_SetTextureColorMod(rc->texture, rc->shading.r, rc->shading.g, rc->shading.b);
-            SDL_RenderTextureRotated(m_renderer, rc->texture, &(rc->srcRect), &dstRect, 0,
-                                    nullptr, rc->flip);
+            SDL_RenderTextureRotated(m_renderer, rc->texture, &(rc->srcRect), &dstRect, 0, nullptr,
+                                     rc->flip);
             ++m_texturesDrew;
 
             if (m_showDebugInfo)
@@ -401,7 +413,7 @@ class RendererImpl
                         break;
                     case DebugOverlay::Type::FILLED_CIRCLE:
                         filledEllipseRGBA(m_renderer, pos.x, pos.y, 20, 10, 0, 0, 255,
-                                        100); // blue ellipse
+                                          100); // blue ellipse
                     case DebugOverlay::Type::RHOMBUS:
                     {
                         auto end1 = getDebugOverlayPosition(overlay.customPos1, dstRect);
@@ -410,16 +422,15 @@ class RendererImpl
                         // Lifting the lines by a single pixel to avoid the next tile overriding
                         // these
                         lineRGBA(m_renderer, pos.x, pos.y - 1, end1.x, end1.y - 1, 180, 180, 180,
-                                255);
+                                 255);
                         lineRGBA(m_renderer, pos.x, pos.y - 1, end2.x, end2.y - 1, 180, 180, 180,
-                                255);
+                                 255);
                     }
                     break;
                     }
                 }
             }
         }
-        
 
         // Show a small cross at center of the screen.
         if (m_showDebugInfo)
@@ -429,10 +440,10 @@ class RendererImpl
             auto horiLineStart = center - Vec2d(5, 0);
             auto vertLineStart = center - Vec2d(0, 5);
 
-            lineRGBA(m_renderer, horiLineStart.x, horiLineStart.y, horiLineStart.x + 10, horiLineStart.y, 255, 255, 255,
-                                 255);
-            lineRGBA(m_renderer, vertLineStart.x, vertLineStart.y, vertLineStart.x, vertLineStart.y + 10, 255, 255, 255,
-                                 255);
+            lineRGBA(m_renderer, horiLineStart.x, horiLineStart.y, horiLineStart.x + 10,
+                     horiLineStart.y, 255, 255, 255, 255);
+            lineRGBA(m_renderer, vertLineStart.x, vertLineStart.y, vertLineStart.x,
+                     vertLineStart.y + 10, 255, 255, 255, 255);
         }
     }
 

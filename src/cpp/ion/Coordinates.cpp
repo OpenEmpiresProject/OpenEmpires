@@ -7,9 +7,8 @@
 
 using namespace ion;
 
-Coordinates::Coordinates(std::shared_ptr<GameSettings> settings) 
-    : 
-    m_settings(std::move(settings)), m_windowMiddle(m_settings->getWindowDimensions().width / 2,
+Coordinates::Coordinates(std::shared_ptr<GameSettings> settings)
+    : m_settings(std::move(settings)), m_windowMiddle(m_settings->getWindowDimensions().width / 2,
                                                       m_settings->getWindowDimensions().height / 2)
 {
 }
@@ -122,13 +121,15 @@ Vec2d Coordinates::getMapCenterInFeet() const
 /**
  * @brief Sets the viewport position in pixels with boundary checking.
  *
- * Attempts to set the viewport position to the specified pixel position, ensuring that the the center of window
- * for the proposed new position remains inside the map boundaries. If the center for the requested position is outside
- * the map, the function tries to adjust the position along the x or y axis to find the nearest valid position
- * within the map. The adjustment is performed by iterating in both positive and negative directions for each axis.
- * This essentially does the edge scrolling. For instance, if the viewport already shows themap's right-top edge, and
- * player press right-arrow (or any equivalent key) with the idea of moving viewport further to right beyond the map's
- * edge, this would prevent that and slide the viewport along the right-top edge achiving smooth scrolling.
+ * Attempts to set the viewport position to the specified pixel position, ensuring that the the
+ * center of window for the proposed new position remains inside the map boundaries. If the center
+ * for the requested position is outside the map, the function tries to adjust the position along
+ * the x or y axis to find the nearest valid position within the map. The adjustment is performed by
+ * iterating in both positive and negative directions for each axis. This essentially does the edge
+ * scrolling. For instance, if the viewport already shows themap's right-top edge, and player press
+ * right-arrow (or any equivalent key) with the idea of moving viewport further to right beyond the
+ * map's edge, this would prevent that and slide the viewport along the right-top edge achiving
+ * smooth scrolling.
  *
  * @param pixelPos The desired viewport position in pixel coordinates.
  */
@@ -158,7 +159,7 @@ void Coordinates::setViewportPositionInPixelsWithBounryChecking(const Vec2d& pix
             }
         }
 
-        // Same approach as above, but for vertical movement failures. 
+        // Same approach as above, but for vertical movement failures.
         if (delta.y != 0)
         {
             for (auto direction : {1, -1})
@@ -185,7 +186,7 @@ bool Coordinates::isInsideMap(const Vec2d& pixelPos) const
     auto gameWorldSize = m_settings->getWorldSize();
     auto feetPos = pixelsToFeet(pixelPos);
 
-    // NOTE: While typically less than comparison should not contain the equal sign 
+    // NOTE: While typically less than comparison should not contain the equal sign
     // in zero base index system, this is important to have map's edge scrolling work.
     return feetPos.x >= 0 && feetPos.x <= gameWorldSize.width && feetPos.y >= 0 &&
            feetPos.y <= gameWorldSize.height;

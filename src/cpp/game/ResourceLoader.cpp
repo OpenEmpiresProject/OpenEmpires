@@ -121,6 +121,13 @@ void ResourceLoader::loadEntities()
         gc.entityType = 3; // Villager
         gc.layer = GraphicLayer::ENTITIES;
         gameState.addComponent(villager, gc);
+
+        CompSelectible sc;
+        auto box = getBoundingBox(m_drs, 1388, 1);
+        sc.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
+        sc.selectionIndicator = {GraphicAddon::Type::CIRCLE, GraphicAddon::Circle{10, Vec2d{0, 0}}};
+
+        gameState.addComponent(villager, sc);
     }
 
     generateMap(gameState.gameMap);
@@ -153,6 +160,9 @@ void ResourceLoader::createTree(GridMap& map, uint32_t x, uint32_t y)
     auto box = getBoundingBox(m_drs, 1254, 1);
     CompSelectible sc;
     sc.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
+    sc.selectionIndicator = {
+        GraphicAddon::Type::RHOMBUS,
+        GraphicAddon::Rhombus{Constants::TILE_PIXEL_WIDTH, Constants::TILE_PIXEL_HEIGHT}};
 
     gameState.addComponent(tree, sc);
 

@@ -18,6 +18,10 @@ ion::ZOrderStrategyWithSlicing::ZOrderStrategyWithSlicing()
           Constants::FEET_PER_TILE * 3)
 {
     m_finalListToRender.reserve(10000);
+    for (size_t i = 0; i < GraphicLayersOrder.size(); i++)
+    {
+        m_objectsToRenderByLayer[i].reserve(2000);
+    }
 }
 
 void ZOrderStrategyWithSlicing::preProcess(CompRendering& cr)
@@ -68,41 +72,49 @@ const std::vector<CompRendering*>& ZOrderStrategyWithSlicing::zOrder(const Coord
     ++m_zBucketVersion; // it will take 4 trillion years to overflow this
     m_finalListToRender.clear();
 
-    for (auto layer : GraphicLayersOrder)
+    for (size_t i = 0; i < GraphicLayersOrder.size(); i++)
     {
-        GameState::getInstance().getEntities<CompRendering>().each(
-            [this, &coordinates, layer](CompRendering& rc)
-            {
-                if (rc.layer == layer)
-                {
-                    if (!rc.isBig())
-                    {
-                        addRenderingCompToZBuckets(&rc, coordinates);
-                    }
-                }
-                
-            });
+        m_objectsToRenderByLayer[i].clear();
+    }
 
-        for (auto& sub : m_subRenderingComponents)
+    GameState::getInstance().getEntities<CompRendering>().each(
+        [this, &coordinates](CompRendering& rc)
         {
-            if (sub->layer == layer)
+            if (!rc.isBig())
             {
-                addRenderingCompToZBuckets(sub, coordinates);
+                addRenderingCompToZBuckets(&rc, coordinates);
             }
+        });
+
+    for (auto& sub : m_subRenderingComponents)
+    {
+        addRenderingCompToZBuckets(sub, coordinates);
+    }
+
+    for (int z = 0; z < m_zBucketsSize; ++z)
+    {
+        if (m_zBuckets[z].version != m_zBucketVersion)
+        {
+            continue; // Skip if the version doesn't match
         }
 
-        for (int z = 0; z < m_zBucketsSize; ++z)
+        for (auto& rc : m_zBuckets[z].graphicsComponents)
         {
-            if (m_zBuckets[z].version != m_zBucketVersion)
+            if (rc->layer != GraphicLayer::NONE)
             {
-                continue; // Skip if the version doesn't match
+                m_objectsToRenderByLayer[static_cast<int>(rc->layer)].emplace_back(rc);
             }
-
-            for (auto& rc : m_zBuckets[z].graphicsComponents)
+            else
             {
-                m_finalListToRender.emplace_back(rc);
+                // ERROR
             }
         }
+    }
+
+    for (size_t i = 0; i < GraphicLayersOrder.size(); i++)
+    {
+        m_finalListToRender.insert(m_finalListToRender.end(), m_objectsToRenderByLayer[i].begin(),
+                                   m_objectsToRenderByLayer[i].end());
     }
     return m_finalListToRender;
 }
