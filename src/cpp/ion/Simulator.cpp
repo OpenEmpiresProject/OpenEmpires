@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <entt/entity/registry.hpp>
+#include <algorithm>
 
 using namespace ion;
 
@@ -40,6 +41,7 @@ Simulator::Simulator(ThreadSynchronizer<FrameData>& synchronizer,
     registerCallback(Event::Type::MOUSE_BTN_UP, this, &Simulator::onMouseButtonUp);
     registerCallback(Event::Type::MOUSE_BTN_DOWN, this, &Simulator::onMouseButtonDown);
     registerCallback(Event::Type::MOUSE_MOVE, this, &Simulator::onMouseMove);
+    registerCallback(Event::Type::UNIT_SELECTION, this, &Simulator::onUnitSelection);
 }
 
 void Simulator::onInit(EventLoop* eventLoop)
@@ -76,12 +78,16 @@ void Simulator::onKeyUp(const Event& e)
     else if (scancode == SDL_SCANCODE_ESCAPE)
     {
         // TODO: Not the ideal way to delete an entity
-        auto [gc, dirty] = GameState::getInstance().getComponents<CompGraphics, CompDirty>(
+        auto [info, dirty] = GameState::getInstance().getComponents<CompEntityInfo, CompDirty>(
             m_currentBuildingOnPlacement);
-        gc.isDestroyed = true;
+        info.isDestroyed = true;
         dirty.markDirty(m_currentBuildingOnPlacement);
         GameState::getInstance().destroyEntity(m_currentBuildingOnPlacement);
         m_currentBuildingOnPlacement = entt::null;
+    }
+    else if (scancode == SDL_SCANCODE_KP_MINUS)
+    {
+        cutTreeTest(10);
     }
 }
 
@@ -170,6 +176,21 @@ void Simulator::onSynchorizedBlock()
     // GameState::getInstance().destroyAllPendingEntities();
 }
 
+void ion::Simulator::onUnitSelection(const Event& e)
+{
+    auto selectedEntities = e.getData<UnitSelectionData>().selection.selectedEntities;
+    if (selectedEntities.size() == 1)
+    {
+        auto tree = selectedEntities[0];
+
+        if (GameState::getInstance().hasComponent<CompResource>(tree))
+        {
+            auto resource = GameState::getInstance().getComponent<CompResource>(tree);
+            spdlog::info("Tree has {} resources", resource.resource.amount);
+        }
+    }
+}
+
 void Simulator::sendGraphicsInstructions()
 {
     auto& state = GameState::getInstance();
@@ -194,6 +215,23 @@ void Simulator::updateGraphicComponents()
         gc.positionInFeet = transform.position;
         gc.direction = transform.getIsometricDirection();
         gc.variation = entityInfo.variation;
+        gc.entitySubType = entityInfo.entitySubType;
+        gc.entityType = entityInfo.entityType;
+        gc.isDestroyed = entityInfo.isDestroyed;
+
+        if (state.hasComponent<CompSelectible>(entity))
+        {
+            auto select = state.getComponent<CompSelectible>(entity);
+            if (select.isSelected)
+            {
+                // TODO: Respect other addons
+                gc.addons = {select.selectionIndicator};
+            }
+            else
+            {
+                gc.addons.clear();
+            }
+        }
 
         if (state.hasComponent<CompAnimation>(entity))
         {
@@ -229,10 +267,9 @@ void Simulator::onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endSc
     int selectionTop = std::min(startScreenPos.y, endScreenPos.y);
     int selectionBottom = std::max(startScreenPos.y, endScreenPos.y);
 
-    GameState::getInstance().getEntities<CompUnit, CompTransform, CompGraphics, CompDirty>().each(
+    GameState::getInstance().getEntities<CompUnit, CompTransform, CompDirty>().each(
         [this, selectionLeft, selectionRight, selectionTop,
-         selectionBottom](uint32_t entity, CompUnit& unit, CompTransform& transform,
-                          CompGraphics& graphics, CompDirty& dirty)
+         selectionBottom](uint32_t entity, CompUnit& unit, CompTransform& transform, CompDirty& dirty)
         {
             auto screenPos = m_coordinates.feetToScreenUnits(transform.position);
             int unitRight = screenPos.x + transform.selectionBoxWidth / 2;
@@ -406,12 +443,12 @@ void Simulator::addEntitiesToSelection(const std::vector<uint32_t>& selectedEnti
     {
         if (gameState.hasComponent<CompSelectible>(entity)) [[likely]]
         {
-            auto [graphics, dirty, select] =
-                GameState::getInstance().getComponents<CompGraphics, CompDirty, CompSelectible>(
+            auto [dirty, select] =
+                GameState::getInstance().getComponents<CompDirty, CompSelectible>(
                     entity);
 
             m_currentUnitSelection.selectedEntities.push_back(entity);
-            graphics.addons.push_back(select.selectionIndicator);
+            select.isSelected = true;
             dirty.markDirty(entity);
         }
         else [[unlikely]]
@@ -419,6 +456,9 @@ void Simulator::addEntitiesToSelection(const std::vector<uint32_t>& selectedEnti
             spdlog::error("Failed to select entity {}, entity is not selectible", entity);
         }
     }
+    // TODO: Might be able to optimize this
+    Event event(Event::Type::UNIT_SELECTION, UnitSelectionData{m_currentUnitSelection});
+        m_publisher->publish(event);
 }
 
 void Simulator::clearSelection()
@@ -426,8 +466,7 @@ void Simulator::clearSelection()
     // Clear any existing selections' addons
     for (auto& entity : m_currentUnitSelection.selectedEntities)
     {
-        auto& graphics = GameState::getInstance().getComponent<CompGraphics>(entity);
-        graphics.addons.clear(); // TODO: We might want to selectively remove the addons
+        GameState::getInstance().getComponent<CompSelectible>(entity).isSelected = false;
         GameState::getInstance().getComponents<CompDirty>(entity).markDirty(entity);
     }
     m_currentUnitSelection.selectedEntities.clear();
@@ -486,6 +525,39 @@ uint32_t Simulator::whatIsAt(const Vec2d& screenPos)
     return entt::null;
 }
 
+void ion::Simulator::cutTreeTest(uint16_t delta)
+{
+    // It isn't possible to select multiple trees at once, so if the current selection
+    // has more than 1 entity, then there can't be a tree in it.
+    if (m_currentUnitSelection.selectedEntities.size() == 1)
+    {
+        auto tree = m_currentUnitSelection.selectedEntities[0];
+
+        if (GameState::getInstance().hasComponent<CompResource>(tree))
+        {
+            auto [resource, dirty, info, select] =
+            GameState::getInstance().getComponents<CompResource, CompDirty, CompEntityInfo, CompSelectible>(tree);
+            resource.resource.amount = resource.resource.amount < delta ? 0 :
+                resource.resource.amount - delta;
+            if (resource.resource.amount == 0)
+            {
+                info.isDestroyed = true;
+            }
+            else
+            {
+                info.entitySubType = 1;
+                info.variation = 0; //  regardless of the tree type, this is the chopped version
+                // TODO: Might not be the most optimal way to bring down the bounding box a chopped tree
+                auto tw = Constants::TILE_PIXEL_WIDTH;
+                auto th = Constants::TILE_PIXEL_HEIGHT;
+                select.boundingBoxes[static_cast<int>(Direction::NONE)] = Rect<int>(tw/2, th/2, tw, th);
+            }
+            dirty.markDirty(tree);
+            spdlog::info("Tree has {} resources", resource.resource.amount);
+        }
+    }
+}
+
 void Simulator::sendGraphiInstruction(CompGraphics* instruction)
 {
     m_synchronizer.getSenderFrameData().graphicUpdates.push_back(instruction);
@@ -524,6 +596,7 @@ CmdMove* Simulator::findPath(const Vec2d& end)
             auto entity = map.layers[MapLayerType::GROUND].cells[node.x][node.y].getEntity();
             if (entity != entt::null)
             {
+                // TODO: Should avoid manipulating CompGraphics directly
                 auto [dirty, gc] =
                     GameState::getInstance().getComponents<CompDirty, CompGraphics>(entity);
                 gc.debugOverlays.push_back({DebugOverlay::Type::FILLED_CIRCLE,

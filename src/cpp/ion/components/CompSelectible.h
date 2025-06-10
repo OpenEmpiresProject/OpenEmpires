@@ -18,6 +18,8 @@ struct CompSelectible
 
     GraphicAddon selectionIndicator;
 
+    bool isSelected = false;
+
     const Rect<int>& getBoundingBox(Direction direction) const
     {
         return boundingBoxes[static_cast<int>(direction)];

@@ -34,6 +34,8 @@ class Simulator : public EventHandler
     void onTickStart();
     void onTickEnd();
     void onSynchorizedBlock();
+    void onUnitSelection(const Event& e);
+
     void sendGraphicsInstructions();
     void sendGraphiInstruction(CompGraphics* instruction);
     CmdMove* findPath(const Vec2d& end);
@@ -47,6 +49,7 @@ class Simulator : public EventHandler
     void addEntitiesToSelection(const std::vector<uint32_t>& selectedEntities);
     void clearSelection();
     uint32_t whatIsAt(const Vec2d& screenPos);
+    void cutTreeTest(uint16_t delta);
 
     Coordinates m_coordinates;
     ThreadSynchronizer<FrameData>& m_synchronizer;

@@ -70,7 +70,7 @@ void ResourceLoader::loadEntities()
             int newY = i;
             // AOE2 standard tiling rule. From OpenAge documentation
             int tileVariation = (newX % tc) + ((newY % tc) * tc) + 1;
-            gameState.addComponent(tile, CompEntityInfo(2, tileVariation));
+            gameState.addComponent(tile, CompEntityInfo(2, 0, tileVariation));
             gameState.addComponent(tile, CompDirty());
 
             auto map = gameState.gameMap;
@@ -152,10 +152,11 @@ void ResourceLoader::createTree(GridMap& map, uint32_t x, uint32_t y)
                                 DebugOverlay::FixedPosition::BOTTOM_CENTER});
     gc.entityID = tree;
     gc.entityType = 4; // tree
+    gc.entitySubType = 0; // 0=main tree, 1=chopped
     gc.layer = GraphicLayer::ENTITIES;
 
     gameState.addComponent(tree, gc);
-    gameState.addComponent(tree, CompEntityInfo(4, rand() % 10));
+    gameState.addComponent(tree, CompEntityInfo(4, 0, rand() % 10));
     gameState.addComponent(tree, CompDirty());
 
     // TODO: This doesn't work. Need to conslidate resource and graphic loading and handle this

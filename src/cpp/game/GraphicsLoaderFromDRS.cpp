@@ -16,6 +16,7 @@ using namespace drs;
 void loadSLP(shared_ptr<DRSFile> drs,
              uint32_t slpId,
              uint32_t entityType,
+             uint32_t entitySubType,
              uint32_t action,
              SDL_Renderer* renderer,
              GraphicsRegistry& graphicsRegistry,
@@ -30,21 +31,22 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
     auto terrainDRS = loadDRSFile("assets/terrain.drs");
     auto graphicsDRS = loadDRSFile("assets/graphics.drs");
 
-    loadSLP(terrainDRS, 15001, 2, 0, renderer, graphicsRegistry, atlasGenerator); // Grass tiles
-    loadSLP(graphicsDRS, 1388, 3, 0, renderer, graphicsRegistry, atlasGenerator); // Villager idle
-    loadSLP(graphicsDRS, 1392, 3, 1, renderer, graphicsRegistry, atlasGenerator); // Villager walk
-    loadSLP(graphicsDRS, 1254, 4, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1256, 4, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1258, 4, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1260, 4, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1262, 4, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1264, 4, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1266, 4, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1268, 4, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1270, 4, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1272, 4, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 3483, 5, 0, renderer, graphicsRegistry, atlasGenerator); // Mill
-    loadSLP(graphicsDRS, 2278, 6, 0, renderer, graphicsRegistry, atlasGenerator); // Marketplace
+    loadSLP(terrainDRS, 15001, 2, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Grass tiles
+    loadSLP(graphicsDRS, 1388, 3, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Villager idle
+    loadSLP(graphicsDRS, 1392, 3, 0, 1, renderer, graphicsRegistry, atlasGenerator); // Villager walk
+    loadSLP(graphicsDRS, 1254, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 1256, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 1258, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 1260, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 1262, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 1264, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 1266, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 1268, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 1270, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 1272, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 3483, 5, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Mill
+    loadSLP(graphicsDRS, 2278, 6, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Marketplace
+    loadSLP(graphicsDRS, 1252, 4, 1, 0, renderer, graphicsRegistry, atlasGenerator); // Chopped tree
 
     adjustDirections(graphicsRegistry);
 }
@@ -109,6 +111,7 @@ shared_ptr<DRSFile> loadDRSFile(const string& drsFilename)
 void loadSLP(shared_ptr<DRSFile> drs,
              uint32_t slpId,
              uint32_t entityType,
+             uint32_t entitySubType,
              uint32_t action,
              SDL_Renderer* renderer,
              GraphicsRegistry& graphicsRegistry,
@@ -141,6 +144,7 @@ void loadSLP(shared_ptr<DRSFile> drs,
 
         GraphicsID id;
         id.entityType = entityType;
+        id.entitySubType = entitySubType;
         id.action = action;
         auto anchorPair = frames[i].getAnchor();
         Vec2d anchor = {anchorPair.first, anchorPair.second};
