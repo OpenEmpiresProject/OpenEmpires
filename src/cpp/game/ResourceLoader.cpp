@@ -106,6 +106,10 @@ void ResourceLoader::loadEntities()
         anim.animations[1].repeatable = true;
         anim.animations[1].speed = 15;
 
+        anim.animations[2].frames = 15;
+        anim.animations[2].repeatable = true;
+        anim.animations[2].speed = 15;
+
         gameState.addComponent(villager, transform);
         gameState.addComponent(villager, CompRendering());
         gameState.addComponent(villager, CompEntityInfo(3));

@@ -42,6 +42,12 @@ void CommandCenter::onEvent(const Event& e)
                         spdlog::debug("Entity {}'s command {} completed.", entity, cmd->toString());
                         unit.commandQueue.pop();
                         cmd->destroy();
+
+                        if (!unit.commandQueue.empty())
+                        {
+                            auto nextCmd = unit.commandQueue.top();
+                            nextCmd->onStart();
+                        }
                     }
 
                     if (cmd->onCreateSubCommands(newCommands))
@@ -59,6 +65,7 @@ void CommandCenter::onEvent(const Event& e)
     else if (e.type == Event::Type::COMMAND_REQUEST)
     {
         auto data = e.getData<CommandRequestData>();
+        data.command->setPriority(Command::DEFAULT_PRIORITY);
 
         CompUnit& unit = GameState::getInstance().getComponent<CompUnit>(data.entity);
         unit.commandQueue = CommandQueueType();

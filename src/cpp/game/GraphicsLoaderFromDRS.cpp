@@ -36,6 +36,8 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
             atlasGenerator); // Villager idle
     loadSLP(graphicsDRS, 1392, 3, 0, 1, renderer, graphicsRegistry,
             atlasGenerator); // Villager walk
+    loadSLP(graphicsDRS, 1434, 3, 0, 2, renderer, graphicsRegistry,
+            atlasGenerator); // Villager tree chopping
     loadSLP(graphicsDRS, 1254, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
     loadSLP(graphicsDRS, 1256, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
     loadSLP(graphicsDRS, 1258, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree

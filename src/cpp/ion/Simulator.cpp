@@ -5,6 +5,7 @@
 #include "ServiceRegistry.h"
 #include "commands/CmdIdle.h"
 #include "commands/CmdMove.h"
+#include "commands/CmdGatherResource.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
 #include "components/CompBuilding.h"
@@ -375,6 +376,11 @@ void Simulator::resolveAction(const Vec2d& screenPos)
             // It is a request to gather the resource at target
             // TODO: Check selected entity's capability to gather, if it isn't doable, fall back to
             // move
+            auto cmd = ObjectPool<CmdGatherResource>::acquire();
+            cmd->target = target;
+
+            Event event(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, entity});
+                m_publisher->publish(event);
         }
     }
 }

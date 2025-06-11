@@ -12,6 +12,9 @@ namespace ion
 class Command
 {
   public:
+    static inline constexpr int DEFAULT_PRIORITY = 1000;
+    static inline constexpr int CHILD_PRIORITY_OFFSET = 1000;
+
     Command()
     {
         m_settings = ServiceRegistry::getInstance().getService<GameSettings>();

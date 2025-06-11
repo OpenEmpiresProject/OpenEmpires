@@ -20,7 +20,7 @@ namespace ion
 class CmdMove : public Command
 {
   public:
-    Vec2d goal;
+    Vec2d goal; // In Feet
     // TODO: this is temporary. need flow-field and goal position only.
     std::list<Vec2d> path;
 
@@ -95,14 +95,14 @@ class CmdMove : public Command
         return path.empty();
     }
 
-    std::list<Vec2d> findPath(const Vec2d& end, uint32_t entity)
+    std::list<Vec2d> findPath(const Vec2d& endPosInFeet, uint32_t entity)
     {
         auto coordinateSystem = ServiceRegistry::getInstance().getService<Coordinates>();
         auto& transform = GameState::getInstance().getComponent<CompTransform>(entity);
         Vec2d startPos = transform.position;
 
         startPos = coordinateSystem->feetToTiles(startPos);
-        auto endPos = coordinateSystem->feetToTiles(end);
+        auto endPos = coordinateSystem->feetToTiles(endPosInFeet);
 
         GridMap map = GameState::getInstance().gameMap;
         std::vector<Vec2d> path =
@@ -135,7 +135,7 @@ class CmdMove : public Command
             {
                 pathList.push_back(coordinateSystem->getTileCenterInFeet(path[i]));
             }
-            pathList.push_back(end);
+            pathList.push_back(endPosInFeet);
 
             return pathList;
         }

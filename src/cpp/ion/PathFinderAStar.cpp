@@ -77,6 +77,9 @@ Path PathFinderAStar::findPath(const GridMap& map, const Vec2d& start, const Vec
     open.emplace(0, start);
     gScore[start] = 0.0;
 
+    Vec2d closestToGoal = start;
+    double minHeuristic = heuristic(start, goal);
+
     while (!open.empty())
     {
         Vec2d current = open.top().second;
@@ -84,6 +87,13 @@ Path PathFinderAStar::findPath(const GridMap& map, const Vec2d& start, const Vec
 
         if (current == goal)
             return reconstructPath(cameFrom, current);
+
+        double h = heuristic(current, goal);
+        if (h < minHeuristic)
+        {
+            minHeuristic = h;
+            closestToGoal = current;
+        }
 
         for (const Vec2d& neighbor : getNeighbors(current))
         {
@@ -106,5 +116,5 @@ Path PathFinderAStar::findPath(const GridMap& map, const Vec2d& start, const Vec
         }
     }
 
-    return {}; // No path found
+    return reconstructPath(cameFrom, closestToGoal); // Return partial path to nearest point
 }
