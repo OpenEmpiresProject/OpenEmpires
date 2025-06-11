@@ -51,14 +51,17 @@ class Game
         // game::GraphicsLoaderFromImages graphicsLoader;
         game::GraphicsLoaderFromDRS graphicsLoader;
 
+        auto coordinates = std::make_shared<ion::Coordinates>(settings);
+        ion::ServiceRegistry::getInstance().registerService(coordinates);
+
         auto eventLoop = std::make_shared<ion::EventLoop>(&stopToken);
         auto simulator = std::make_shared<ion::Simulator>(simulatorRendererSynchronizer, eventLoop);
+        ion::ServiceRegistry::getInstance().registerService(simulator);
+
         auto renderer = std::make_shared<ion::Renderer>(
             &stopSource, graphicsRegistry, simulatorRendererSynchronizer, graphicsLoader);
         auto cc = std::make_shared<ion::CommandCenter>();
-
         ion::ServiceRegistry::getInstance().registerService(cc);
-        ion::ServiceRegistry::getInstance().registerService(simulator);
 
         eventLoop->registerListener(std::move(simulator));
         eventLoop->registerListener(std::move(cc));

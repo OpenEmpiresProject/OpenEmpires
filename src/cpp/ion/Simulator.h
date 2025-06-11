@@ -38,7 +38,6 @@ class Simulator : public EventHandler
 
     void sendGraphicsInstructions();
     void sendGraphiInstruction(CompGraphics* instruction);
-    CmdMove* findPath(const Vec2d& end);
     void updateGraphicComponents();
     void onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endScreenPos);
     void onClickToSelect(const Vec2d& screenPos);
@@ -51,7 +50,7 @@ class Simulator : public EventHandler
     uint32_t whatIsAt(const Vec2d& screenPos);
     void cutTreeTest(uint16_t delta);
 
-    Coordinates m_coordinates;
+    std::shared_ptr<Coordinates> m_coordinates;
     ThreadSynchronizer<FrameData>& m_synchronizer;
     int m_frame = 0;
     Vec2d m_selectionStartPosScreenUnits;

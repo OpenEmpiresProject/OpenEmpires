@@ -20,7 +20,6 @@
 
 #include <algorithm>
 #include <entt/entity/registry.hpp>
-#include <algorithm>
 
 using namespace ion;
 
@@ -29,7 +28,7 @@ char scancodeToChar(SDL_Scancode scancode, bool shiftPressed);
 Simulator::Simulator(ThreadSynchronizer<FrameData>& synchronizer,
                      std::shared_ptr<EventPublisher> publisher)
     : m_synchronizer(synchronizer),
-      m_coordinates(ServiceRegistry::getInstance().getService<GameSettings>()),
+      m_coordinates(ServiceRegistry::getInstance().getService<Coordinates>()),
       m_publisher(std::move(publisher))
 {
     m_currentBuildingOnPlacement = entt::null;
@@ -65,13 +64,13 @@ void Simulator::onKeyUp(const Event& e)
     // TODO: temporary
     if (scancode == SDL_SCANCODE_B)
     {
-        auto worldPos = m_coordinates.screenUnitsToFeet(m_lastMouseScreenPos);
+        auto worldPos = m_coordinates->screenUnitsToFeet(m_lastMouseScreenPos);
 
         testBuild(worldPos, 5, Size(2, 2));
     }
     else if (scancode == SDL_SCANCODE_N)
     {
-        auto worldPos = m_coordinates.screenUnitsToFeet(m_lastMouseScreenPos);
+        auto worldPos = m_coordinates->screenUnitsToFeet(m_lastMouseScreenPos);
 
         testBuild(worldPos, 6, Size(4, 4));
     }
@@ -125,8 +124,8 @@ void Simulator::onMouseMove(const Event& e)
     {
         auto& transform =
             GameState::getInstance().getComponent<CompTransform>(m_currentBuildingOnPlacement);
-        auto feet = m_coordinates.screenUnitsToFeet(m_lastMouseScreenPos);
-        auto tile = m_coordinates.feetToTiles(feet);
+        auto feet = m_coordinates->screenUnitsToFeet(m_lastMouseScreenPos);
+        auto tile = m_coordinates->feetToTiles(feet);
 
         auto& building =
             GameState::getInstance().getComponent<CompBuilding>(m_currentBuildingOnPlacement);
@@ -138,7 +137,7 @@ void Simulator::onMouseMove(const Event& e)
         {
             // place buildings at the bottom corner of a tile
             tile += Vec2d(1, 1);
-            feet = m_coordinates.tilesToFeet(tile);
+            feet = m_coordinates->tilesToFeet(tile);
             transform.position = feet - Vec2d(10, 10);
         }
 
@@ -151,7 +150,7 @@ void Simulator::onMouseMove(const Event& e)
 void Simulator::onTickStart()
 {
     m_synchronizer.getSenderFrameData().frameNumber = m_frame;
-    m_coordinates.setViewportPositionInPixels(
+    m_coordinates->setViewportPositionInPixels(
         m_synchronizer.getSenderFrameData().viewportPositionInPixels);
 
     if (!m_initialized)
@@ -268,10 +267,10 @@ void Simulator::onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endSc
     int selectionBottom = std::max(startScreenPos.y, endScreenPos.y);
 
     GameState::getInstance().getEntities<CompUnit, CompTransform, CompDirty>().each(
-        [this, selectionLeft, selectionRight, selectionTop,
-         selectionBottom](uint32_t entity, CompUnit& unit, CompTransform& transform, CompDirty& dirty)
+        [this, selectionLeft, selectionRight, selectionTop, selectionBottom](
+            uint32_t entity, CompUnit& unit, CompTransform& transform, CompDirty& dirty)
         {
-            auto screenPos = m_coordinates.feetToScreenUnits(transform.position);
+            auto screenPos = m_coordinates->feetToScreenUnits(transform.position);
             int unitRight = screenPos.x + transform.selectionBoxWidth / 2;
             int unitBottom = screenPos.y;
             int unitLeft = screenPos.x - transform.selectionBoxWidth / 2;
@@ -363,8 +362,9 @@ void Simulator::resolveAction(const Vec2d& screenPos)
 
             if (GameState::getInstance().hasComponent<CompUnit>(entity))
             {
-                auto worldPos = m_coordinates.screenUnitsToFeet(screenPos);
-                auto cmd = findPath(worldPos);
+                auto worldPos = m_coordinates->screenUnitsToFeet(screenPos);
+                auto cmd = ObjectPool<CmdMove>::acquire();
+                cmd->goal = worldPos;
 
                 Event event(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, entity});
                 m_publisher->publish(event);
@@ -407,7 +407,7 @@ void ion::Simulator::testBuild(const Vec2d& targetFeetPos, int buildingType, Siz
 bool Simulator::canPlaceBuildingAt(const CompBuilding& building, const Vec2d& feet, bool& outOfMap)
 {
     auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
-    auto tile = m_coordinates.feetToTiles(feet);
+    auto tile = m_coordinates->feetToTiles(feet);
     auto staticMap = GameState::getInstance().gameMap.getMap(MapLayerType::STATIC);
 
     auto isValidTile = [&](const Vec2d& tile)
@@ -444,8 +444,7 @@ void Simulator::addEntitiesToSelection(const std::vector<uint32_t>& selectedEnti
         if (gameState.hasComponent<CompSelectible>(entity)) [[likely]]
         {
             auto [dirty, select] =
-                GameState::getInstance().getComponents<CompDirty, CompSelectible>(
-                    entity);
+                GameState::getInstance().getComponents<CompDirty, CompSelectible>(entity);
 
             m_currentUnitSelection.selectedEntities.push_back(entity);
             select.isSelected = true;
@@ -458,7 +457,7 @@ void Simulator::addEntitiesToSelection(const std::vector<uint32_t>& selectedEnti
     }
     // TODO: Might be able to optimize this
     Event event(Event::Type::UNIT_SELECTION, UnitSelectionData{m_currentUnitSelection});
-        m_publisher->publish(event);
+    m_publisher->publish(event);
 }
 
 void Simulator::clearSelection()
@@ -477,7 +476,7 @@ uint32_t Simulator::whatIsAt(const Vec2d& screenPos)
     auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
     auto& gameState = GameState::getInstance();
 
-    auto clickedCellPos = m_coordinates.screenUnitsToTiles(screenPos);
+    auto clickedCellPos = m_coordinates->screenUnitsToTiles(screenPos);
 
     spdlog::debug("Clicking at grid pos {} to select", clickedCellPos.toString());
 
@@ -500,7 +499,7 @@ uint32_t Simulator::whatIsAt(const Vec2d& screenPos)
                     {
                         auto [select, transform] =
                             gameState.getComponents<CompSelectible, CompTransform>(entity);
-                        auto entityScreenPos = m_coordinates.feetToScreenUnits(transform.position);
+                        auto entityScreenPos = m_coordinates->feetToScreenUnits(transform.position);
 
                         const auto& boundingBox = select.getBoundingBox(transform.getDirection());
                         auto screenRect = Rect<int>(entityScreenPos.x - boundingBox.x,
@@ -525,7 +524,7 @@ uint32_t Simulator::whatIsAt(const Vec2d& screenPos)
     return entt::null;
 }
 
-void ion::Simulator::cutTreeTest(uint16_t delta)
+void Simulator::cutTreeTest(uint16_t delta)
 {
     // It isn't possible to select multiple trees at once, so if the current selection
     // has more than 1 entity, then there can't be a tree in it.
@@ -536,9 +535,10 @@ void ion::Simulator::cutTreeTest(uint16_t delta)
         if (GameState::getInstance().hasComponent<CompResource>(tree))
         {
             auto [resource, dirty, info, select] =
-            GameState::getInstance().getComponents<CompResource, CompDirty, CompEntityInfo, CompSelectible>(tree);
-            resource.resource.amount = resource.resource.amount < delta ? 0 :
-                resource.resource.amount - delta;
+                GameState::getInstance()
+                    .getComponents<CompResource, CompDirty, CompEntityInfo, CompSelectible>(tree);
+            resource.resource.amount =
+                resource.resource.amount < delta ? 0 : resource.resource.amount - delta;
             if (resource.resource.amount == 0)
             {
                 info.isDestroyed = true;
@@ -547,10 +547,12 @@ void ion::Simulator::cutTreeTest(uint16_t delta)
             {
                 info.entitySubType = 1;
                 info.variation = 0; //  regardless of the tree type, this is the chopped version
-                // TODO: Might not be the most optimal way to bring down the bounding box a chopped tree
+                // TODO: Might not be the most optimal way to bring down the bounding box a chopped
+                // tree
                 auto tw = Constants::TILE_PIXEL_WIDTH;
                 auto th = Constants::TILE_PIXEL_HEIGHT;
-                select.boundingBoxes[static_cast<int>(Direction::NONE)] = Rect<int>(tw/2, th/2, tw, th);
+                select.boundingBoxes[static_cast<int>(Direction::NONE)] =
+                    Rect<int>(tw / 2, th / 2, tw, th);
             }
             dirty.markDirty(tree);
             spdlog::info("Tree has {} resources", resource.resource.amount);
@@ -561,65 +563,6 @@ void ion::Simulator::cutTreeTest(uint16_t delta)
 void Simulator::sendGraphiInstruction(CompGraphics* instruction)
 {
     m_synchronizer.getSenderFrameData().graphicUpdates.push_back(instruction);
-}
-
-CmdMove* Simulator::findPath(const Vec2d& end)
-{
-    Vec2d startPos;
-    if (!m_currentUnitSelection.selectedEntities.empty())
-    {
-        auto& transform = GameState::getInstance().getComponent<CompTransform>(
-            m_currentUnitSelection.selectedEntities[0]);
-        startPos = transform.position;
-    }
-    else
-        return nullptr;
-
-    startPos = m_coordinates.feetToTiles(startPos);
-    auto endPos = m_coordinates.feetToTiles(end);
-
-    GridMap map = GameState::getInstance().gameMap;
-    std::vector<Vec2d> path =
-        GameState::getInstance().getPathFinder()->findPath(map, startPos, endPos);
-
-    if (path.empty())
-    {
-        spdlog::error("No path found from {} to {}", startPos.toString(), endPos.toString());
-        // map.map[startPos.x][startPos.y] = 2;
-        // map.map[end.x][end.y] = 2;
-    }
-    else
-    {
-        for (Vec2d node : path)
-        {
-            // map.map[node.x][node.y] = 2;
-            auto entity = map.layers[MapLayerType::GROUND].cells[node.x][node.y].getEntity();
-            if (entity != entt::null)
-            {
-                // TODO: Should avoid manipulating CompGraphics directly
-                auto [dirty, gc] =
-                    GameState::getInstance().getComponents<CompDirty, CompGraphics>(entity);
-                gc.debugOverlays.push_back({DebugOverlay::Type::FILLED_CIRCLE,
-                                            DebugOverlay::Color::BLUE,
-                                            DebugOverlay::FixedPosition::CENTER});
-                dirty.markDirty(entity);
-            }
-        }
-
-        std::list<Vec2d> pathList;
-        for (size_t i = 0; i < path.size(); i++)
-        {
-            pathList.push_back(m_coordinates.getTileCenterInFeet(path[i]));
-        }
-        pathList.push_back(end);
-
-        auto move = ObjectPool<CmdMove>::acquire();
-        move->path = pathList;
-        move->setPriority(10); // TODO: Need a better way
-
-        return move;
-    }
-    return nullptr;
 }
 
 char scancodeToChar(SDL_Scancode scancode, bool shiftPressed)

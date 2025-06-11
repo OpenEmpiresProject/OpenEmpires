@@ -1,13 +1,16 @@
 #ifndef CMDMOVE_H
 #define CMDMOVE_H
 
+#include "Coordinates.h"
 #include "GameState.h"
+#include "ServiceRegistry.h"
 #include "Vec2d.h"
 #include "commands/Command.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
 #include "components/CompDirty.h"
 #include "components/CompTransform.h"
+#include "utils/Logger.h"
 #include "utils/ObjectPool.h"
 
 #include <list>
@@ -17,6 +20,7 @@ namespace ion
 class CmdMove : public Command
 {
   public:
+    Vec2d goal;
     // TODO: this is temporary. need flow-field and goal position only.
     std::list<Vec2d> path;
 
@@ -27,6 +31,7 @@ class CmdMove : public Command
 
     void onQueue(uint32_t entityID) override
     {
+        path = findPath(goal, entityID);
     }
 
     bool onExecute(uint32_t entityID, int deltaTimeMs) override
@@ -88,6 +93,53 @@ class CmdMove : public Command
             }
         }
         return path.empty();
+    }
+
+    std::list<Vec2d> findPath(const Vec2d& end, uint32_t entity)
+    {
+        auto coordinateSystem = ServiceRegistry::getInstance().getService<Coordinates>();
+        auto& transform = GameState::getInstance().getComponent<CompTransform>(entity);
+        Vec2d startPos = transform.position;
+
+        startPos = coordinateSystem->feetToTiles(startPos);
+        auto endPos = coordinateSystem->feetToTiles(end);
+
+        GridMap map = GameState::getInstance().gameMap;
+        std::vector<Vec2d> path =
+            GameState::getInstance().getPathFinder()->findPath(map, startPos, endPos);
+
+        if (path.empty())
+        {
+            spdlog::error("No path found from {} to {}", startPos.toString(), endPos.toString());
+        }
+        else
+        {
+            for (Vec2d node : path)
+            {
+                // map.map[node.x][node.y] = 2;
+                auto entity = map.layers[MapLayerType::GROUND].cells[node.x][node.y].getEntity();
+                if (entity != entt::null)
+                {
+                    // TODO: Should avoid manipulating CompGraphics directly
+                    auto [dirty, gc] =
+                        GameState::getInstance().getComponents<CompDirty, CompGraphics>(entity);
+                    gc.debugOverlays.push_back({DebugOverlay::Type::FILLED_CIRCLE,
+                                                DebugOverlay::Color::BLUE,
+                                                DebugOverlay::FixedPosition::CENTER});
+                    dirty.markDirty(entity);
+                }
+            }
+
+            std::list<Vec2d> pathList;
+            for (size_t i = 0; i < path.size(); i++)
+            {
+                pathList.push_back(coordinateSystem->getTileCenterInFeet(path[i]));
+            }
+            pathList.push_back(end);
+
+            return pathList;
+        }
+        return std::list<Vec2d>();
     }
 };
 } // namespace ion

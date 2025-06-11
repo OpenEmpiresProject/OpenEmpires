@@ -151,7 +151,7 @@ void ResourceLoader::createTree(GridMap& map, uint32_t x, uint32_t y)
     gc.debugOverlays.push_back({DebugOverlay::Type::CIRCLE, DebugOverlay::Color::RED,
                                 DebugOverlay::FixedPosition::BOTTOM_CENTER});
     gc.entityID = tree;
-    gc.entityType = 4; // tree
+    gc.entityType = 4;    // tree
     gc.entitySubType = 0; // 0=main tree, 1=chopped
     gc.layer = GraphicLayer::ENTITIES;
 

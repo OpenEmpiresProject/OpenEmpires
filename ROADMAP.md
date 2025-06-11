@@ -30,7 +30,7 @@ We use milestone versions for planning. Early versions are experimental. Feature
 > Goal: Create a basic economy with villagers and buildings.
 
 ### Features:
-- [ ] Trees as gatherable resources
+- [x] Trees as gatherable resources
 - [ ] Resource collection (wood)
 - [ ] Resource UI panel
 - [ ] Resource drop-off points
