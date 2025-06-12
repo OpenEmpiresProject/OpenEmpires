@@ -150,7 +150,12 @@ struct GridMap
 
         if (gridPos.x >= 0 && gridPos.y >= 0 && gridPos.x < width && gridPos.y < height) [[likely]]
         {
-            return layers[layerType].cells[gridPos.x][gridPos.y].getEntity();
+            auto& cell = layers[layerType].cells[gridPos.x][gridPos.y];
+            if (cell.isOccupied())
+            {
+                return cell.getEntity();
+            }
+            return entt::null;
         }
         else [[unlikely]]
         {

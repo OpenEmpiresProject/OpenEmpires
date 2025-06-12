@@ -3,9 +3,9 @@
 #include "Event.h"
 #include "GameState.h"
 #include "ServiceRegistry.h"
+#include "commands/CmdGatherResource.h"
 #include "commands/CmdIdle.h"
 #include "commands/CmdMove.h"
-#include "commands/CmdGatherResource.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
 #include "components/CompBuilding.h"
@@ -380,7 +380,7 @@ void Simulator::resolveAction(const Vec2d& screenPos)
             cmd->target = target;
 
             Event event(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, entity});
-                m_publisher->publish(event);
+            m_publisher->publish(event);
         }
     }
 }

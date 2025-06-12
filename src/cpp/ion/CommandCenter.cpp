@@ -65,10 +65,18 @@ void CommandCenter::onEvent(const Event& e)
     else if (e.type == Event::Type::COMMAND_REQUEST)
     {
         auto data = e.getData<CommandRequestData>();
-        data.command->setPriority(Command::DEFAULT_PRIORITY);
+        data.command->setPriority(Command::DEFAULT_PRIORITY + Command::CHILD_PRIORITY_OFFSET);
 
         CompUnit& unit = GameState::getInstance().getComponent<CompUnit>(data.entity);
-        unit.commandQueue = CommandQueueType();
+
+        // Remove all the components except the default one (i.e. idle)
+        while (unit.commandQueue.size() > 1)
+        {
+            if (unit.commandQueue.top()->getPriority() > Command::DEFAULT_PRIORITY)
+            {
+                unit.commandQueue.pop();
+            }
+        }
         unit.commandQueue.push(data.command);
         data.command->onQueue(data.entity);
     }

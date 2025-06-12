@@ -15,12 +15,15 @@ class Constants
     static const int MAX_UNIT_SELECTION = 30;
     // Mouse should move at least 5 pixels to consider as a selection box
     static const int MIN_SELECTION_BOX_MOUSE_MOVEMENT = 25;
-    // Engine will lookup MAX_SELECTION_LOOKUP_HEIGHTxMAX_SELECTION_LOOKUP_HEIGHT area
+    // Engine will lookup MAX_SELECTION_LOOKUP_HEIGHT*MAX_SELECTION_LOOKUP_HEIGHT area
     // with reverse Zordering to find the object with clicked position is within the
     //  object's image boundaries
     static const int MAX_SELECTION_LOOKUP_HEIGHT = 4;
     static const int MAX_RESOURCE_TYPES = 8;
     static const int RESOURCE_TYPE_NONE = 0;
+    // The villager will look MAX_RESOURCE_LOOKUP_RADIUS*MAX_RESOURCE_LOOKUP_RADIUS square for
+    // similar resource once the current resource exhausted
+    static const int MAX_RESOURCE_LOOKUP_RADIUS = 4;
 };
 } // namespace ion
 

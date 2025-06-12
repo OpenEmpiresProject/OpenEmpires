@@ -82,7 +82,12 @@ class CmdMove : public Command
         if (!path.empty())
         {
             auto& nextPos = path.front();
-            if (transform.position.distanceSquared(nextPos) < transform.goalRadiusSquared)
+            if (transform.position.distanceSquared(goal) < transform.goalRadiusSquared)
+            {
+                spdlog::debug("Reached goal before hopping all points");
+                return true;
+            }
+            else if (transform.position.distanceSquared(nextPos) < transform.goalRadiusSquared)
             {
                 path.pop_front();
             }
