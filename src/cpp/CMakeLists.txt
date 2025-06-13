@@ -17,6 +17,7 @@ target_link_libraries(openEmpires
         game
         ion
         sdl3_gfx
+        microui
 )
 
 target_include_directories(openEmpires
