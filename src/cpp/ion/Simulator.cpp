@@ -55,21 +55,9 @@ void Simulator::onInit(EventLoop* eventLoop)
 void Simulator::onTick(const Event& e)
 {
     onTickStart();
-    for (auto window : ui::Window::g_windows)
-    {
-        window->updateGraphicCommand();
-    }
     updateGraphicComponents();
     sendGraphicsInstructions();
     onTickEnd();
-}
-
-void Simulator::onEvent(const Event& e)
-{
-    for (auto window : ui::Window::g_windows)
-    {
-        window->feedInput(e);
-    }
 }
 
 void Simulator::onKeyUp(const Event& e)

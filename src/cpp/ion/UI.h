@@ -46,10 +46,7 @@ struct Label : public Element
 {
     std::string text;
 
-    Label(const GraphicsID& id, Ref<Element> parent) : Element(id, parent)
-    {
-    }
-
+    Label(const GraphicsID& id, Ref<Element> parent);
     void updateGraphicCommand() override;
 };
 
@@ -60,32 +57,13 @@ struct Button : public Element
 
     std::function<void()> onClick;
 
-    Button(const GraphicsID& id, Ref<Element> parent) : Element(id, parent)
-    {
-    }
-
-    void feedInput(const Event& e) override
-    {
-        if (e.type == Event::Type::MOUSE_BTN_DOWN && hot)
-        {
-            active = true;
-        }
-        else if (e.type == Event::Type::MOUSE_BTN_UP)
-        {
-            if (active)
-            {
-                active = false;
-                onClick();
-            }
-        }
-    }
+    Button(const GraphicsID& id, Ref<Element> parent);
+    void feedInput(const Event& e) override;
 };
 
 struct Window : public Element
 {
     Window(const GraphicsID& id);
-
-    static std::vector<Ref<Element>> g_windows;
 };
 } // namespace ui
 

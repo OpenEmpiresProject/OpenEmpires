@@ -4,8 +4,10 @@
 #include "GameTypes.h"
 #include "Renderer.h"
 #include "ResourceTypes.h"
+#include "ServiceRegistry.h"
 #include "SubSystemRegistry.h"
 #include "UI.h"
+#include "UIManager.h"
 #include "commands/CmdIdle.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
@@ -143,16 +145,18 @@ void ResourceLoader::loadEntities()
     generateMap(gameState.gameMap);
     // createTree(gameState.gameMap, 5, 5);
 
-    GraphicsID resourcePanelBackground;
-    resourcePanelBackground.entityType = BaseEntityTypes::UI_ELEMENT;
-    resourcePanelBackground.entitySubType = BaseEntitySubTypes::UI_WINDOW;
+    GraphicsID resourcePanelBackground{
+        .entityType = BaseEntityTypes::UI_ELEMENT,
+        .entitySubType = BaseEntitySubTypes::UI_WINDOW,
+    };
 
     auto window = CreateRef<ui::Window>(resourcePanelBackground);
-    ui::Window::g_windows.push_back(window);
+    ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(window);
 
-    GraphicsID woodAmountLabel;
-    woodAmountLabel.entityType = BaseEntityTypes::UI_ELEMENT;
-    woodAmountLabel.entitySubType = BaseEntitySubTypes::UI_LABEL;
+    GraphicsID woodAmountLabel{
+        .entityType = BaseEntityTypes::UI_ELEMENT,
+        .entitySubType = BaseEntitySubTypes::UI_LABEL,
+    };
     auto label = window->createChild<ui::Label>(woodAmountLabel);
     label->text = "1,000";
     label->rect = Rect<int>(35, 5, 50, 20);

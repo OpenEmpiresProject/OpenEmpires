@@ -15,6 +15,7 @@
 #include "SubSystemRegistry.h"
 #include "ThreadQueue.h"
 #include "ThreadSynchronizer.h"
+#include "UIManager.h"
 #include "utils/Logger.h"
 #include "utils/Types.h"
 
@@ -58,6 +59,9 @@ class Game
         auto simulator = std::make_shared<ion::Simulator>(simulatorRendererSynchronizer, eventLoop);
         ion::ServiceRegistry::getInstance().registerService(simulator);
 
+        auto uiManager = std::make_shared<ion::UIManager>();
+        ion::ServiceRegistry::getInstance().registerService(uiManager);
+
         auto renderer = std::make_shared<ion::Renderer>(
             &stopSource, graphicsRegistry, simulatorRendererSynchronizer, graphicsLoader);
         auto cc = std::make_shared<ion::CommandCenter>();
@@ -65,6 +69,7 @@ class Game
 
         eventLoop->registerListener(std::move(simulator));
         eventLoop->registerListener(std::move(cc));
+        eventLoop->registerListener(std::move(uiManager));
 
         auto resourceLoader =
             std::make_shared<ResourceLoader>(&stopToken, settings, graphicsRegistry, renderer);

@@ -3,6 +3,7 @@
 #include "Coordinates.h"
 #include "GameState.h"
 #include "ServiceRegistry.h"
+#include "UIManager.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
@@ -81,6 +82,10 @@ bool Element::inside(const Vec2d& pos) const
     return getAbsoluteRect().contains(pos);
 }
 
+Label::Label(const GraphicsID& id, Ref<Element> parent) : Element(id, parent)
+{
+}
+
 void Label::updateGraphicCommand()
 {
     Element::updateGraphicCommand();
@@ -90,7 +95,25 @@ void Label::updateGraphicCommand()
     ui.type = UIRenderingType::TEXT;
 }
 
-std::vector<Ref<Element>> Window::g_windows;
+Button::Button(const GraphicsID& id, Ref<Element> parent) : Element(id, parent)
+{
+}
+
+void Button::feedInput(const Event& e)
+{
+    if (e.type == Event::Type::MOUSE_BTN_DOWN && hot)
+    {
+        active = true;
+    }
+    else if (e.type == Event::Type::MOUSE_BTN_UP)
+    {
+        if (active)
+        {
+            active = false;
+            onClick();
+        }
+    }
+}
 
 Window::Window(const GraphicsID& id) : Element(id, nullptr)
 {
