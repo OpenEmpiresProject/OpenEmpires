@@ -52,6 +52,8 @@ bool DRSFile::load(const std::string& filename)
         throw std::runtime_error("Failed to read DRS header.");
     }
 
+    std::vector<DRSTableInfo> tables(header.tableCount);
+
     for (size_t i = 0; i < header.tableCount; i++)
     {
         DRSTableInfo tableInfo;
@@ -60,6 +62,13 @@ bool DRSFile::load(const std::string& filename)
         {
             throw std::runtime_error("Failed to read table info.");
         }
+        tables[i] = tableInfo;
+    }
+
+    for (size_t i = 0; i < header.tableCount; i++)
+    {
+        DRSTableInfo tableInfo = tables[i];
+        m_file.seekg(tableInfo.fileInfoOffset);
 
         for (size_t i = 0; i < tableInfo.numOfFiles; i++)
         {
@@ -67,10 +76,18 @@ bool DRSFile::load(const std::string& filename)
             m_file.read(reinterpret_cast<char*>(&fileInfo), sizeof(fileInfo));
             if (!m_file)
             {
-                throw std::runtime_error("Failed to m_file info.");
+                throw std::runtime_error("Failed to read file info.");
             }
             auto resourceData = make_shared<DRSResourceData>();
 
+            char nullTerminatedFileExt[5] = {'\0', '\0', '\0', '\0', '\0'};
+            memcpy(nullTerminatedFileExt, tableInfo.fileExtension, 4);
+            resourceData->entry.type = string(nullTerminatedFileExt);
+            std::reverse(resourceData->entry.type.begin(), resourceData->entry.type.end());
+            if (resourceData->entry.type[3] == ' ')
+            {
+                resourceData->entry.type.replace(3, 1, "");
+            }
             resourceData->entry.id = fileInfo.fileId;
             resourceData->entry.offset = fileInfo.fileDataOffset;
             resourceData->entry.size = fileInfo.fileSize;
@@ -105,6 +122,8 @@ std::shared_ptr<DRSResourceData> DRSFile::getResource(uint32_t resourceId)
 SLPFile drs::DRSFile::getSLPFile(uint32_t resourceId)
 {
     auto resourceData = getResource(resourceId);
+
+    assert(resourceData->entry.type == "slp" && "Resource size is zero");
 
     return SLPFile(resourceId,
                    std::span<const uint8_t>(resourceData->data, resourceData->entry.size));

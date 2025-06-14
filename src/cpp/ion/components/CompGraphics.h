@@ -1,6 +1,7 @@
 #ifndef COMPGRAPHICS_H
 #define COMPGRAPHICS_H
 
+#include "Color.h"
 #include "GraphicAddon.h"
 #include "GraphicsRegistry.h" // For GraphicsID
 #include "Vec2d.h"
@@ -20,14 +21,6 @@ struct DebugOverlay
         CIRCLE,
         FILLED_CIRCLE,
         RHOMBUS
-    };
-
-    enum class Color : uint8_t
-    {
-        RED,
-        GREEN,
-        BLUE,
-        GREY
     };
 
     enum class FixedPosition : uint8_t
@@ -50,37 +43,26 @@ struct DebugOverlay
     FixedPosition customPos2;
 };
 
-struct Color
-{
-    uint8_t r = 255;
-    uint8_t g = 255;
-    uint8_t b = 255;
-
-    static const Color RED;
-    static const Color GREEN;
-    static const Color BLUE;
-    static const Color PURPLE;
-    static const Color YELLOW;
-    static const Color NONE;
-};
-
 enum class GraphicLayer
 {
-    NONE,
+    NONE = -1,
     GROUND,
     ENTITIES,
     SKY,
-    FOG
+    FOG,
+    UI
 };
 
-inline constexpr std::array<GraphicLayer, 4> GraphicLayersOrder{
-    GraphicLayer::GROUND, GraphicLayer::ENTITIES, GraphicLayer::SKY, GraphicLayer::FOG};
+inline constexpr std::array<GraphicLayer, 5> GraphicLayersOrder{
+    GraphicLayer::GROUND, GraphicLayer::ENTITIES, GraphicLayer::SKY, GraphicLayer::FOG,
+    GraphicLayer::UI};
 // Component will be owned by the Simulator
 class CompGraphics : public GraphicsID
 {
   public:
     uint32_t entityID = entt::null;
     Vec2d positionInFeet = {0, 0};
+    Vec2d positionInScreenUnits = Vec2d::null;
     std::vector<DebugOverlay> debugOverlays;
     std::vector<GraphicAddon> addons;
     Color shading;

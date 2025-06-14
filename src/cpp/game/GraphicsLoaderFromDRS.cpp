@@ -1,8 +1,10 @@
 #include "GraphicsLoaderFromDRS.h"
 
 #include "DRSFile.h"
+#include "GameTypes.h"
 #include "SLPFile.h"
 #include "utils/Logger.h"
+#include "utils/Types.h"
 
 #include <memory>
 #include <string>
@@ -20,14 +22,17 @@ void loadSLP(shared_ptr<DRSFile> drs,
              uint32_t action,
              SDL_Renderer* renderer,
              GraphicsRegistry& graphicsRegistry,
-             AtlasGenerator& atlasGenerator);
+             AtlasGenerator& atlasGenerator,
+             Size clipSize = Size());
 shared_ptr<DRSFile> loadDRSFile(const string& drsFilename);
 void adjustDirections(GraphicsRegistry& graphicsRegistry);
+void registerDummyTexture(int entityType, int entitySubType, GraphicsRegistry& graphicsRegistry);
 
 void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
                                             ion::GraphicsRegistry& graphicsRegistry,
                                             ion::AtlasGenerator& atlasGenerator)
 {
+    auto interfaceDRS = loadDRSFile("assets/interfac.drs");
     auto terrainDRS = loadDRSFile("assets/terrain.drs");
     auto graphicsDRS = loadDRSFile("assets/graphics.drs");
 
@@ -51,8 +56,25 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
     loadSLP(graphicsDRS, 3483, 5, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Mill
     loadSLP(graphicsDRS, 2278, 6, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Marketplace
     loadSLP(graphicsDRS, 1252, 4, 1, 0, renderer, graphicsRegistry, atlasGenerator); // Chopped tree
+    loadSLP(interfaceDRS, 51101, BaseEntityTypes::UI_ELEMENT, BaseEntitySubTypes::UI_WINDOW, 0,
+            renderer, graphicsRegistry, atlasGenerator, Size(400, 25)); // Resource HUD
+
+    registerDummyTexture(BaseEntityTypes::UI_ELEMENT, BaseEntitySubTypes::UI_LABEL,
+                         graphicsRegistry);
+    registerDummyTexture(BaseEntityTypes::UI_ELEMENT, BaseEntitySubTypes::UI_BUTTON,
+                         graphicsRegistry);
 
     adjustDirections(graphicsRegistry);
+}
+
+void registerDummyTexture(int entityType, int entitySubType, GraphicsRegistry& graphicsRegistry)
+{
+    GraphicsID id;
+    id.entityType = entityType;
+    id.entitySubType = entitySubType;
+    SDL_FRect* srcRectF = new SDL_FRect{0, 0, 0, 0};
+    Texture entry{nullptr, srcRectF, Vec2d::null, Size(), false};
+    graphicsRegistry.registerTexture(id, entry);
 }
 
 SDL_Surface* frameToSurface(const Frame& frame)
@@ -93,7 +115,7 @@ SDL_Surface* frameToSurface(const Frame& frame)
         uint32_t* row = reinterpret_cast<uint32_t*>(pixels + y * pitch);
         for (int x = 0; x < width; ++x)
         {
-            const Color& c = image[y][x];
+            const drs::Color& c = image[y][x];
             row[x] = SDL_MapRGB(formatDetails, palette, c.r, c.g, c.b);
         }
     }
@@ -119,7 +141,8 @@ void loadSLP(shared_ptr<DRSFile> drs,
              uint32_t action,
              SDL_Renderer* renderer,
              GraphicsRegistry& graphicsRegistry,
-             AtlasGenerator& atlasGenerator)
+             AtlasGenerator& atlasGenerator,
+             Size clipSize)
 {
     auto slp = drs->getSLPFile(slpId);
 
@@ -143,7 +166,14 @@ void loadSLP(shared_ptr<DRSFile> drs,
 
     for (size_t i = 0; i < surfaces.size(); ++i)
     {
-        const auto& srcRect = srcRects[i];
+        auto& srcRect = srcRects[i];
+
+        if (clipSize.width != 0 && clipSize.height != 0)
+        {
+            srcRect.w = min(clipSize.width, srcRect.w);
+            srcRect.h = min(clipSize.height, srcRect.h);
+        }
+
         Size imageSize = {srcRect.w, srcRect.h};
 
         GraphicsID id;

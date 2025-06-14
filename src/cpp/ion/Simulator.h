@@ -31,6 +31,8 @@ class Simulator : public EventHandler
     void onMouseButtonUp(const Event& e);
     void onMouseButtonDown(const Event& e);
     void onMouseMove(const Event& e);
+    void onEvent(const Event& e);
+
     void onTickStart();
     void onTickEnd();
     void onSynchorizedBlock();

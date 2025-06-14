@@ -39,7 +39,7 @@ class Frame
     const uint32_t m_parentId = 0;
     const std::string m_fqid;
 
-    static inline const int MAX_IMAGE_SIZE = 500;
+    static inline const int MAX_IMAGE_SIZE = 2000;
 };
 } // namespace drs
 

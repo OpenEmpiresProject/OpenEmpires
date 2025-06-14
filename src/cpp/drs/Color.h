@@ -1,5 +1,5 @@
-#ifndef COLOR_H
-#define COLOR_H
+#ifndef DRSCOLOR_H
+#define DRSCOLOR_H
 
 #include <cstdint>
 

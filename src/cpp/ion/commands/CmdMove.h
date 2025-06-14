@@ -128,8 +128,7 @@ class CmdMove : public Command
                     // TODO: Should avoid manipulating CompGraphics directly
                     auto [dirty, gc] =
                         GameState::getInstance().getComponents<CompDirty, CompGraphics>(entity);
-                    gc.debugOverlays.push_back({DebugOverlay::Type::FILLED_CIRCLE,
-                                                DebugOverlay::Color::BLUE,
+                    gc.debugOverlays.push_back({DebugOverlay::Type::FILLED_CIRCLE, Color::BLUE,
                                                 DebugOverlay::FixedPosition::CENTER});
                     dirty.markDirty(entity);
                 }

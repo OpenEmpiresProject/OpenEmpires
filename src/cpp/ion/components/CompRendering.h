@@ -23,23 +23,16 @@ class CompRendering : public CompGraphics
     void updateTextureDetails(const GraphicsRegistry& graphicsRegistry)
     {
         auto& entry = graphicsRegistry.getTexture(*this);
-        if (entry.image != nullptr)
+        texture = entry.image; // Image can be null, which is valid
+        anchor = entry.anchor;
+        srcRect = *(entry.srcRect);
+        if (entry.flip)
         {
-            texture = entry.image;
-            anchor = entry.anchor;
-            srcRect = *(entry.srcRect);
-            if (entry.flip)
-            {
-                flip = SDL_FLIP_HORIZONTAL;
-            }
-            else
-            {
-                flip = SDL_FLIP_NONE;
-            }
+            flip = SDL_FLIP_HORIZONTAL;
         }
         else
         {
-            spdlog::error("Texture not found for entity: {}", GraphicsID::toString());
+            flip = SDL_FLIP_NONE;
         }
     }
 };

@@ -3,6 +3,7 @@
 #include "Event.h"
 #include "GameState.h"
 #include "ServiceRegistry.h"
+#include "UI.h"
 #include "commands/CmdGatherResource.h"
 #include "commands/CmdIdle.h"
 #include "commands/CmdMove.h"
@@ -16,6 +17,7 @@
 #include "components/CompResource.h"
 #include "components/CompSelectible.h"
 #include "components/CompTransform.h"
+#include "components/CompUIElement.h"
 #include "components/CompUnit.h"
 #include "utils/ObjectPool.h"
 
@@ -53,9 +55,21 @@ void Simulator::onInit(EventLoop* eventLoop)
 void Simulator::onTick(const Event& e)
 {
     onTickStart();
+    for (auto window : ui::Window::g_windows)
+    {
+        window->updateGraphicCommand();
+    }
     updateGraphicComponents();
     sendGraphicsInstructions();
     onTickEnd();
+}
+
+void Simulator::onEvent(const Event& e)
+{
+    for (auto window : ui::Window::g_windows)
+    {
+        window->feedInput(e);
+    }
 }
 
 void Simulator::onKeyUp(const Event& e)
@@ -254,6 +268,19 @@ void Simulator::updateGraphicComponents()
                 gc.shading = Color::RED;
 
             gc.landSize = building.size;
+        }
+
+        if (state.hasComponent<CompUIElement>(entity))
+        {
+            gc.positionInFeet = Vec2d::null;
+            gc.positionInScreenUnits = transform.position;
+
+            auto ui = state.getComponent<CompUIElement>(entity);
+            if (ui.type == UIRenderingType::TEXT)
+            {
+                GraphicAddon addon{GraphicAddon::Type::TEXT, GraphicAddon::Text{ui.text}};
+                gc.addons = {addon};
+            }
         }
     }
 }

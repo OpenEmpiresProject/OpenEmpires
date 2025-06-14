@@ -16,6 +16,8 @@ class Vec2d
     int x;
     int y;
 
+    static const Vec2d null;
+
     // Constructors
     constexpr Vec2d() noexcept : x(0), y(0)
     {
@@ -29,6 +31,11 @@ class Vec2d
     constexpr Vec2d(Vec2d&&) noexcept = default;
     constexpr Vec2d& operator=(const Vec2d&) noexcept = default;
     constexpr Vec2d& operator=(Vec2d&&) noexcept = default;
+
+    bool isNull() const
+    {
+        return (*this) == Vec2d::null;
+    }
 
     // Comparison operators
     constexpr auto operator<=>(const Vec2d&) const = default;

@@ -1,9 +1,11 @@
 #include "ResourceLoader.h"
 
 #include "GameState.h"
+#include "GameTypes.h"
 #include "Renderer.h"
 #include "ResourceTypes.h"
 #include "SubSystemRegistry.h"
+#include "UI.h"
 #include "commands/CmdIdle.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
@@ -17,6 +19,7 @@
 #include "components/CompUnit.h"
 #include "utils/Logger.h"
 #include "utils/ObjectPool.h"
+#include "utils/Types.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_surface.h>
@@ -80,7 +83,7 @@ void ResourceLoader::loadEntities()
             gc.entityID = tile;
             gc.entityType = 2; // Tile
             gc.layer = GraphicLayer::GROUND;
-            DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, DebugOverlay::Color::GREY,
+            DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, ion::Color::GREY,
                                  DebugOverlay::FixedPosition::BOTTOM_CENTER};
             overlay.customPos1 = DebugOverlay::FixedPosition::CENTER_LEFT;
             overlay.customPos2 = DebugOverlay::FixedPosition::CENTER_RIGHT;
@@ -131,7 +134,8 @@ void ResourceLoader::loadEntities()
         CompSelectible sc;
         auto box = getBoundingBox(m_drs, 1388, 1);
         sc.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
-        sc.selectionIndicator = {GraphicAddon::Type::CIRCLE, GraphicAddon::Circle{10, Vec2d{0, 0}}};
+        sc.selectionIndicator = {GraphicAddon::Type::ISO_CIRCLE,
+                                 GraphicAddon::IsoCircle{10, Vec2d{0, 0}}};
 
         gameState.addComponent(villager, sc);
     }
@@ -139,7 +143,21 @@ void ResourceLoader::loadEntities()
     generateMap(gameState.gameMap);
     // createTree(gameState.gameMap, 5, 5);
 
-    spdlog::info("Entity loaded successfully.");
+    GraphicsID resourcePanelBackground;
+    resourcePanelBackground.entityType = BaseEntityTypes::UI_ELEMENT;
+    resourcePanelBackground.entitySubType = BaseEntitySubTypes::UI_WINDOW;
+
+    auto window = CreateRef<ui::Window>(resourcePanelBackground);
+    ui::Window::g_windows.push_back(window);
+
+    GraphicsID woodAmountLabel;
+    woodAmountLabel.entityType = BaseEntityTypes::UI_ELEMENT;
+    woodAmountLabel.entitySubType = BaseEntitySubTypes::UI_LABEL;
+    auto label = window->createChild<ui::Label>(woodAmountLabel);
+    label->text = "1,000";
+    label->rect = Rect<int>(35, 5, 50, 20);
+
+    spdlog::info("Entity loading successfully.");
 }
 
 void ResourceLoader::createTree(GridMap& map, uint32_t x, uint32_t y)
@@ -152,8 +170,8 @@ void ResourceLoader::createTree(GridMap& map, uint32_t x, uint32_t y)
     gameState.addComponent(tree, transform);
     gameState.addComponent(tree, CompRendering());
     CompGraphics gc;
-    gc.debugOverlays.push_back({DebugOverlay::Type::CIRCLE, DebugOverlay::Color::RED,
-                                DebugOverlay::FixedPosition::BOTTOM_CENTER});
+    gc.debugOverlays.push_back(
+        {DebugOverlay::Type::CIRCLE, ion::Color::RED, DebugOverlay::FixedPosition::BOTTOM_CENTER});
     gc.entityID = tree;
     gc.entityType = 4;    // tree
     gc.entitySubType = 0; // 0=main tree, 1=chopped

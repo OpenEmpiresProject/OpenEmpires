@@ -10,6 +10,7 @@ struct DRSResourceEntry
     int32_t id = 0;
     int32_t offset = 0; // Abosulte
     int32_t size = 0;
+    std::string type;
 };
 
 struct DRSResourceData

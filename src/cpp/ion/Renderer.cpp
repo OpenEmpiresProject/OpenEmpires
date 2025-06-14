@@ -24,8 +24,8 @@
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_video.h>
-#include <SDL3_ttf/SDL_ttf.h>
 #include <SDL3_image/SDL_image.h> // Ensure SDL_image is included
+#include <SDL3_ttf/SDL_ttf.h>
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -35,262 +35,27 @@
 #include <list>
 #include <memory>
 #include <readerwriterqueue.h>
+#include <stdio.h>
 #include <string>
 #include <thread>
-#include <vector>
-#include <stdio.h>
 #include <unordered_map>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include <microui.h>
-#ifdef __cplusplus
-}
-#endif
+#include <vector>
 
 namespace fs = std::filesystem;
 using namespace ion;
 using namespace std::chrono;
 using namespace std;
 
-static  char logbuf[64000];
-static   int logbuf_updated = 0;
-static float bg[3] = { 90, 95, 100 };
-
-extern void mu_init(struct mu_Context*);
-static auto* _force_link_mu_init = (void*)&mu_init;
-
-static void write_log(const char *text) {
-  spdlog::debug(text);
-}
-
-
-static void test_window(mu_Context *ctx) {
-  /* do window */
-  if (mu_begin_window(ctx, "Demo Window", mu_rect(40, 40, 300, 450))) {
-    mu_Container *win = mu_get_current_container(ctx);
-    win->rect.w = mu_max(win->rect.w, 240);
-    win->rect.h = mu_max(win->rect.h, 300);
-
-    /* window info */
-    if (mu_header(ctx, "Window Info")) {
-      mu_Container *win = mu_get_current_container(ctx);
-      char buf[64];
-      int widths[] = { 54, -1 };
-      mu_layout_row(ctx, 2, widths, 0);
-      mu_label(ctx,"Position:");
-      sprintf(buf, "%d, %d", win->rect.x, win->rect.y); mu_label(ctx, buf);
-      mu_label(ctx, "Size:");
-      sprintf(buf, "%d, %d", win->rect.w, win->rect.h); mu_label(ctx, buf);
-    }
-
-    /* labels + buttons */
-    if (mu_header_ex(ctx, "Test Buttons", MU_OPT_EXPANDED)) {
-        int widths[] = { 86, -110, -1 };
-      mu_layout_row(ctx, 3, widths, 0);
-      mu_label(ctx, "Test buttons 1:");
-      if (mu_button(ctx, "Button 1")) { write_log("Pressed button 1"); }
-      if (mu_button(ctx, "Button 2")) { write_log("Pressed button 2"); }
-      mu_label(ctx, "Test buttons 2:");
-      if (mu_button(ctx, "Button 3")) { write_log("Pressed button 3"); }
-      if (mu_button(ctx, "Popup")) { mu_open_popup(ctx, "Test Popup"); }
-      if (mu_begin_popup(ctx, "Test Popup")) {
-        mu_button(ctx, "Hello");
-        mu_button(ctx, "World");
-        mu_end_popup(ctx);
-      }
-    }
-
-    /* tree */
-    if (mu_header_ex(ctx, "Tree and Text", MU_OPT_EXPANDED)) {
-        int widths[] = { 140, -1 };
-      mu_layout_row(ctx, 2, widths, 0);
-      mu_layout_begin_column(ctx);
-      if (mu_begin_treenode(ctx, "Test 1")) {
-        if (mu_begin_treenode(ctx, "Test 1a")) {
-          mu_label(ctx, "Hello");
-          mu_label(ctx, "world");
-          mu_end_treenode(ctx);
-        }
-        if (mu_begin_treenode(ctx, "Test 1b")) {
-          if (mu_button(ctx, "Button 1")) { write_log("Pressed button 1"); }
-          if (mu_button(ctx, "Button 2")) { write_log("Pressed button 2"); }
-          mu_end_treenode(ctx);
-        }
-        mu_end_treenode(ctx);
-      }
-      if (mu_begin_treenode(ctx, "Test 2")) {
-        int widths[] = { 54, 54};
-        mu_layout_row(ctx, 2, widths, 0);
-        if (mu_button(ctx, "Button 3")) { write_log("Pressed button 3"); }
-        if (mu_button(ctx, "Button 4")) { write_log("Pressed button 4"); }
-        if (mu_button(ctx, "Button 5")) { write_log("Pressed button 5"); }
-        if (mu_button(ctx, "Button 6")) { write_log("Pressed button 6"); }
-        mu_end_treenode(ctx);
-      }
-      if (mu_begin_treenode(ctx, "Test 3")) {
-        static int checks[3] = { 1, 0, 1 };
-        mu_checkbox(ctx, "Checkbox 1", &checks[0]);
-        mu_checkbox(ctx, "Checkbox 2", &checks[1]);
-        mu_checkbox(ctx, "Checkbox 3", &checks[2]);
-        mu_end_treenode(ctx);
-      }
-      mu_layout_end_column(ctx);
-
-      mu_layout_begin_column(ctx);
-      int widths2[] = {-1};
-      mu_layout_row(ctx, 1, widths2, 0);
-      mu_text(ctx, "Lorem ipsum dolor sit amet, consectetur adipiscing "
-        "elit. Maecenas lacinia, sem eu lacinia molestie, mi risus faucibus "
-        "ipsum, eu varius magna felis a nulla.");
-      mu_layout_end_column(ctx);
-    }
-
-    /* background color sliders */
-    if (mu_header_ex(ctx, "Background Color", MU_OPT_EXPANDED)) {
-      int widths[] = { -78, -1 };
-
-      mu_layout_row(ctx, 2, widths, 74);
-      /* sliders */
-      mu_layout_begin_column(ctx);
-      int widths2[] = { 46, -1 };
-
-      mu_layout_row(ctx, 2, widths2, 0);
-      mu_label(ctx, "Red:");   mu_slider(ctx, &bg[0], 0, 255);
-      mu_label(ctx, "Green:"); mu_slider(ctx, &bg[1], 0, 255);
-      mu_label(ctx, "Blue:");  mu_slider(ctx, &bg[2], 0, 255);
-      mu_layout_end_column(ctx);
-      /* color preview */
-      mu_Rect r = mu_layout_next(ctx);
-      mu_draw_rect(ctx, r, mu_color(bg[0], bg[1], bg[2], 255));
-      char buf[32];
-      sprintf(buf, "#%02X%02X%02X", (int) bg[0], (int) bg[1], (int) bg[2]);
-      mu_draw_control_text(ctx, buf, r, MU_COLOR_TEXT, MU_OPT_ALIGNCENTER);
-    }
-
-    mu_end_window(ctx);
-  }
-}
-
-
-
-static int uint8_slider(mu_Context *ctx, unsigned char *value, int low, int high) {
-  static float tmp;
-  mu_push_id(ctx, &value, sizeof(value));
-  tmp = *value;
-  int res = mu_slider_ex(ctx, &tmp, low, high, 0, "%.0f", MU_OPT_ALIGNCENTER);
-  *value = tmp;
-  mu_pop_id(ctx);
-  return res;
-}
-
-
-static void style_window(mu_Context *ctx) {
-  static struct { const char *label; int idx; } colors[] = {
-    { "text:",         MU_COLOR_TEXT        },
-    { "border:",       MU_COLOR_BORDER      },
-    { "windowbg:",     MU_COLOR_WINDOWBG    },
-    { "titlebg:",      MU_COLOR_TITLEBG     },
-    { "titletext:",    MU_COLOR_TITLETEXT   },
-    { "panelbg:",      MU_COLOR_PANELBG     },
-    { "button:",       MU_COLOR_BUTTON      },
-    { "buttonhover:",  MU_COLOR_BUTTONHOVER },
-    { "buttonfocus:",  MU_COLOR_BUTTONFOCUS },
-    { "base:",         MU_COLOR_BASE        },
-    { "basehover:",    MU_COLOR_BASEHOVER   },
-    { "basefocus:",    MU_COLOR_BASEFOCUS   },
-    { "scrollbase:",   MU_COLOR_SCROLLBASE  },
-    { "scrollthumb:",  MU_COLOR_SCROLLTHUMB },
-    { NULL }
-  };
-
-  if (mu_begin_window(ctx, "Style Editor", mu_rect(350, 250, 300, 240))) {
-    int sw = mu_get_current_container(ctx)->body.w * 0.14;
-    int widths[] = { 80, sw, sw, sw, sw, -1 };
-    mu_layout_row(ctx, 6, widths, 0);
-    for (int i = 0; colors[i].label; i++) {
-      mu_label(ctx, colors[i].label);
-      uint8_slider(ctx, &ctx->style->colors[i].r, 0, 255);
-      uint8_slider(ctx, &ctx->style->colors[i].g, 0, 255);
-      uint8_slider(ctx, &ctx->style->colors[i].b, 0, 255);
-      uint8_slider(ctx, &ctx->style->colors[i].a, 0, 255);
-      mu_draw_rect(ctx, mu_layout_next(ctx), ctx->style->colors[i]);
-    }
-    mu_end_window(ctx);
-  }
-}
-
-
-static void process_frame(mu_Context *ctx) {
-  mu_begin(ctx);
-  style_window(ctx);
-  test_window(ctx);
-  mu_end(ctx);
-}
-
-char getMUButon(int sdlButton)
+struct FontAtlas
 {
-    if (sdlButton == SDL_BUTTON_LEFT)
-    {
-        return MU_MOUSE_LEFT;
-    }
-    else if (sdlButton == SDL_BUTTON_RIGHT)
-    {
-        return MU_MOUSE_RIGHT;
-    }
-    else if (sdlButton == SDL_BUTTON_MIDDLE)
-    {
-        return MU_MOUSE_MIDDLE;
-    }
-    return 0;
-}
-
-char getMUKey(int sdlKey)
-{
-    if (sdlKey == SDLK_LSHIFT)
-    {
-        return MU_KEY_SHIFT;
-    }
-    else if (sdlKey == SDLK_RSHIFT)
-    {
-        return MU_KEY_SHIFT;
-    }
-    else if (sdlKey == SDLK_LCTRL)
-    {
-        return MU_KEY_CTRL;
-    }
-    else if (sdlKey == SDLK_RCTRL)
-    {
-        return MU_KEY_CTRL;
-    }
-    else if (sdlKey == SDLK_LALT)
-    {
-        return MU_KEY_ALT;
-    }
-    else if (sdlKey == SDLK_RALT)
-    {
-        return MU_KEY_ALT;
-    }
-    else if (sdlKey == SDLK_RETURN)
-    {
-        return MU_KEY_RETURN;
-    }
-    else if (sdlKey == SDLK_BACKSPACE)
-    {
-        return MU_KEY_BACKSPACE;
-    }
-    return 0;
-}
-
-struct FontAtlas {
-    SDL_Texture* texture = nullptr; // final atlas texture
+    SDL_Texture* texture = nullptr;                // final atlas texture
     std::unordered_map<char, SDL_Rect> glyphRects; // source rects per glyph
     int atlasWidth = 0;
     int atlasHeight = 0;
 };
 
-FontAtlas createFontAtlas(SDL_Renderer* renderer, TTF_Font* font, int padding = 2) {
+FontAtlas createFontAtlas(SDL_Renderer* renderer, TTF_Font* font, int padding = 2)
+{
     const int startChar = 32;
     const int endChar = 126;
 
@@ -299,12 +64,14 @@ FontAtlas createFontAtlas(SDL_Renderer* renderer, TTF_Font* font, int padding = 
     int maxGlyphHeight = 0, totalWidth = 0;
 
     // Step 1: Render each character to individual surfaces
-    for (char c = startChar; c <= endChar; ++c) {
+    for (char c = startChar; c <= endChar; ++c)
+    {
         // if (!TTF_GlyphIsProvided(font, c)) continue;
 
         SDL_Color white = {255, 255, 255, 255};
         SDL_Surface* glyphSurface = TTF_RenderGlyph_Blended(font, c, white);
-        if (!glyphSurface) continue;
+        if (!glyphSurface)
+            continue;
 
         someSurface = glyphSurface;
         glyphSurfaces[c] = glyphSurface;
@@ -326,20 +93,25 @@ FontAtlas createFontAtlas(SDL_Renderer* renderer, TTF_Font* font, int padding = 
     //     spdlog::warn("Failed to set palette for atlas surface: {}", SDL_GetError());
     //     return;
     // }
-    
-    // SDL_Surface* atlasSurface = SDL_CreateRGBSurfaceWithFormat(0, totalWidth, maxGlyphHeight, 32, SDL_PIXELFORMAT_RGBA32);
-    if (!atlasSurface) {
+
+    // SDL_Surface* atlasSurface = SDL_CreateRGBSurfaceWithFormat(0, totalWidth, maxGlyphHeight, 32,
+    // SDL_PIXELFORMAT_RGBA32);
+    if (!atlasSurface)
+    {
         // Cleanup before early return
-        for (auto& [c, s] : glyphSurfaces) SDL_DestroySurface(s);
+        for (auto& [c, s] : glyphSurfaces)
+            SDL_DestroySurface(s);
         return {};
     }
 
     // Step 3: Blit each glyph onto the atlas surface
     std::unordered_map<char, SDL_Rect> srcRects;
     int xOffset = 0;
-    for (char c = startChar; c <= endChar; ++c) {
+    for (char c = startChar; c <= endChar; ++c)
+    {
         auto it = glyphSurfaces.find(c);
-        if (it == glyphSurfaces.end()) continue;
+        if (it == glyphSurfaces.end())
+            continue;
 
         SDL_Surface* glyphSurface = it->second;
 
@@ -353,47 +125,14 @@ FontAtlas createFontAtlas(SDL_Renderer* renderer, TTF_Font* font, int padding = 
 
     // Step 4: Convert atlas surface to texture
     SDL_Texture* atlasTexture = SDL_CreateTextureFromSurface(renderer, atlasSurface);
-    FontAtlas result = {
-        .texture = atlasTexture,
-        .glyphRects = std::move(srcRects),
-        .atlasWidth = atlasSurface->w,
-        .atlasHeight = atlasSurface->h
-    };
+    FontAtlas result = {.texture = atlasTexture,
+                        .glyphRects = std::move(srcRects),
+                        .atlasWidth = atlasSurface->w,
+                        .atlasHeight = atlasSurface->h};
 
     SDL_DestroySurface(atlasSurface);
     return result;
 }
-
-
-// static const char button_map[256] = {
-//   [ SDL_BUTTON_LEFT   & 0xff ] =  MU_MOUSE_LEFT,
-//   [ SDL_BUTTON_RIGHT  & 0xff ] =  MU_MOUSE_RIGHT,
-//   [ SDL_BUTTON_MIDDLE & 0xff ] =  MU_MOUSE_MIDDLE,
-// };
-
-// static const char key_map[256] = {
-//   [ SDLK_LSHIFT       & 0xff ] = MU_KEY_SHIFT,
-//   [ SDLK_RSHIFT       & 0xff ] = MU_KEY_SHIFT,
-//   [ SDLK_LCTRL        & 0xff ] = MU_KEY_CTRL,
-//   [ SDLK_RCTRL        & 0xff ] = MU_KEY_CTRL,
-//   [ SDLK_LALT         & 0xff ] = MU_KEY_ALT,
-//   [ SDLK_RALT         & 0xff ] = MU_KEY_ALT,
-//   [ SDLK_RETURN       & 0xff ] = MU_KEY_RETURN,
-//   [ SDLK_BACKSPACE    & 0xff ] = MU_KEY_BACKSPACE,
-// };
-
-
-static int text_width(mu_Font font, const char *text, int len) {
-//   if (len == -1) { len = strlen(text); }
-//   return r_get_text_width(text, len);
-    return 100;
-}
-
-static int text_height(mu_Font font) {
-//   return r_get_text_height();
-    return 20;
-}
-
 
 namespace ion
 {
@@ -412,13 +151,14 @@ class RendererImpl
     void shutdown();
     void initSDL();
     void threadEntry();
-    void r_set_clip_rect(mu_Rect rect);
     void renderingLoop();
     void cleanup();
     bool handleEvents();
     void updateRenderingComponents();
     void renderDebugInfo(FPSCounter& counter);
     void renderGameEntities();
+    void renderText(const Vec2d& screenPos, const std::string& text, const Color& color);
+    void renderGraphicAddons(const Vec2d& screenPos, CompRendering* rc);
     void renderBackground();
     void renderSelectionBox();
     void addDebugText(const std::string& text);
@@ -481,21 +221,20 @@ class RendererImpl
 
     std::stop_source* m_stopSource = nullptr;
 
-    mu_Context *ctx = nullptr;
     FontAtlas m_fontAtlas;
 };
 } // namespace ion
 
 RendererImpl::RendererImpl(std::stop_source* stopSource,
-                GraphicsRegistry& graphicsRegistry,
-                ThreadSynchronizer<FrameData>& synchronizer,
-                GraphicsLoader& graphicsLoader)
+                           GraphicsRegistry& graphicsRegistry,
+                           ThreadSynchronizer<FrameData>& synchronizer,
+                           GraphicsLoader& graphicsLoader)
     : m_stopSource(stopSource),
-        m_settings(ServiceRegistry::getInstance().getService<GameSettings>()),
-        m_graphicsRegistry(graphicsRegistry),
-        m_coordinates(ServiceRegistry::getInstance().getService<GameSettings>()),
-        m_synchronizer(synchronizer), m_graphicsLoader(graphicsLoader),
-        m_zOrderStrategy(std::move(std::make_unique<ZOrderStrategyWithSlicing>()))
+      m_settings(ServiceRegistry::getInstance().getService<GameSettings>()),
+      m_graphicsRegistry(graphicsRegistry),
+      m_coordinates(ServiceRegistry::getInstance().getService<GameSettings>()),
+      m_synchronizer(synchronizer), m_graphicsLoader(graphicsLoader),
+      m_zOrderStrategy(std::move(std::make_unique<ZOrderStrategyWithSlicing>()))
 {
     m_running = false;
     m_lastTickTime = steady_clock::now();
@@ -504,7 +243,7 @@ RendererImpl::RendererImpl(std::stop_source* stopSource,
     auto center = m_coordinates.getMapCenterInFeet();
     auto centerPixels = m_coordinates.feetToPixels(center);
     centerPixels -= Vec2d(m_settings->getWindowDimensions().width / 2,
-                            m_settings->getWindowDimensions().height / 2);
+                          m_settings->getWindowDimensions().height / 2);
     m_coordinates.setViewportPositionInPixels(centerPixels);
 }
 
@@ -550,9 +289,9 @@ void RendererImpl::initSDL()
         throw std::runtime_error("SDL_Init failed");
     }
 
-    m_window = SDL_CreateWindow(m_settings->getTitle().c_str(),
-                                m_settings->getWindowDimensions().width,
-                                m_settings->getWindowDimensions().height, SDL_WINDOW_OPENGL);
+    m_window =
+        SDL_CreateWindow(m_settings->getTitle().c_str(), m_settings->getWindowDimensions().width,
+                         m_settings->getWindowDimensions().height, SDL_WINDOW_OPENGL);
     if (!m_window)
     {
         spdlog::error("SDL_CreateWindow failed: {}", SDL_GetError());
@@ -574,12 +313,6 @@ void RendererImpl::initSDL()
 
     m_sdlInitCV.notify_all();
     spdlog::info("SDL initialized successfully");
-
-    /* init microui */
-    ctx = (mu_Context*)malloc(sizeof(mu_Context));
-    mu_init(ctx);
-    ctx->text_width = text_width;
-    ctx->text_height = text_height;
 }
 
 void RendererImpl::threadEntry()
@@ -588,14 +321,6 @@ void RendererImpl::threadEntry()
     AtlasGeneratorBasic atlasGenerator;
     m_graphicsLoader.loadAllGraphics(m_renderer, m_graphicsRegistry, atlasGenerator);
     renderingLoop();
-}
-
-void RendererImpl::r_set_clip_rect(mu_Rect rect) {
-    SDL_Rect sdl_clip_rect;
-    sdl_clip_rect.x = rect.x;
-    sdl_clip_rect.w = rect.w;
-    sdl_clip_rect.h = rect.h;
-    SDL_SetRenderClipRect(m_renderer, &sdl_clip_rect);
 }
 
 void RendererImpl::renderingLoop()
@@ -619,56 +344,12 @@ void RendererImpl::renderingLoop()
             break;
         }
         generateTicks();
-        process_frame(ctx);
 
         updateRenderingComponents();
         renderBackground();
         renderGameEntities();
         renderSelectionBox();
         renderDebugInfo(fpsCounter);
-
-        mu_Command *cmd = NULL;
-        while (mu_next_command(ctx, &cmd)) {
-        switch (cmd->type) {
-            case MU_COMMAND_TEXT: 
-            {
-                SDL_RenderDebugText(m_renderer, cmd->text.pos.x, cmd->text.pos.y, cmd->text.str);
-            }
-            break;
-            case MU_COMMAND_RECT: 
-            {
-                SDL_SetRenderDrawColor(m_renderer, cmd->rect.color.r, cmd->rect.color.g, cmd->rect.color.b, cmd->rect.color.a);
-                SDL_FRect sdl_rect_f = { (float)cmd->rect.rect.x, (float)cmd->rect.rect.y, (float)cmd->rect.rect.w, (float)cmd->rect.rect.h };
-                SDL_RenderFillRect(m_renderer, &sdl_rect_f);
-            }
-            break;
-            case MU_COMMAND_ICON: 
-            {
-                // r_draw_icon(cmd->icon.id, cmd->icon.rect, cmd->icon.color); 
-            }
-            break;
-            case MU_COMMAND_CLIP: 
-            {
-                // r_set_clip_rect(cmd->clip.rect); 
-            }
-            break;
-        }
-        }
-
-        char arr[] = "Maleesh";
-        int x = 100;
-        for (char c : arr)
-        {
-            SDL_Rect src = m_fontAtlas.glyphRects[c];
-
-            SDL_FRect srcRect = {src.x, src.y, src.w, src.h};
-            SDL_FRect dstRect = {x, 100, src.w, src.h};
-            x += src.w + 2;
-
-            SDL_RenderTextureRotated(m_renderer, m_fontAtlas.texture, &srcRect, &dstRect, 0, nullptr,
-                                        SDL_FLIP_NONE);
-
-        }
 
         SDL_RenderPresent(m_renderer);
 
@@ -719,29 +400,6 @@ bool RendererImpl::handleEvents()
 
     while (SDL_PollEvent(&event))
     {
-        switch (event.type) {
-            case SDL_EVENT_QUIT: exit(EXIT_SUCCESS); break;
-            case SDL_EVENT_MOUSE_MOTION: mu_input_mousemove(ctx, event.motion.x, event.motion.y); break;
-            // case SDL_MOUSEWHEEL: mu_input_scroll(ctx, 0, event.wheel.y * -30); break;
-            // case SDL_TEXTINPUT: mu_input_text(ctx, e.text.text); break;
-
-            case SDL_EVENT_MOUSE_BUTTON_DOWN:
-            case SDL_EVENT_MOUSE_BUTTON_UP: {
-            int b = getMUButon(event.button.button);
-            if (b && event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) { mu_input_mousedown(ctx, event.button.x, event.button.y, b); }
-            if (b && event.type ==   SDL_EVENT_MOUSE_BUTTON_UP) { mu_input_mouseup(ctx, event.button.x, event.button.y, b);   }
-            break;
-            }
-
-            case SDL_EVENT_KEY_DOWN:
-            case SDL_EVENT_KEY_UP: {
-            int c = getMUKey(event.key.key);
-            if (c && event.type == SDL_EVENT_KEY_DOWN) { mu_input_keydown(ctx, c); }
-            if (c && event.type ==   SDL_EVENT_KEY_UP) { mu_input_keyup(ctx, c);   }
-            break;
-            }
-        }
-        
         if (event.type == SDL_EVENT_QUIT || event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
         {
             return false;
@@ -752,10 +410,8 @@ bool RendererImpl::handleEvents()
             if (event.button.button == SDL_BUTTON_LEFT)
             {
                 Vec2d mousePosScreenUnits(event.button.x, event.button.y);
-                m_lastMouseClickPosInFeet =
-                    m_coordinates.screenUnitsToFeet(mousePosScreenUnits);
-                m_lastMouseClickPosInTiles =
-                    m_coordinates.feetToTiles(m_lastMouseClickPosInFeet);
+                m_lastMouseClickPosInFeet = m_coordinates.screenUnitsToFeet(mousePosScreenUnits);
+                m_lastMouseClickPosInTiles = m_coordinates.feetToTiles(m_lastMouseClickPosInFeet);
 
                 Event clickEvent(
                     Event::Type::MOUSE_BTN_UP,
@@ -821,7 +477,7 @@ void RendererImpl::updateRenderingComponents()
         {
             switch (addon.type)
             {
-            case GraphicAddon::Type::CIRCLE:
+            case GraphicAddon::Type::ISO_CIRCLE:
                 rc.additionalZOffset = Constants::FEET_PER_TILE + 1;
                 break;
             }
@@ -845,16 +501,14 @@ void RendererImpl::renderDebugInfo(FPSCounter& counter)
     addDebugText("Avg frame time     : " + std::to_string(m_frameTime.average()));
     addDebugText("Avg wait time      : " + std::to_string(m_waitTime.average()));
     addDebugText("Textures Drew      : " + std::to_string(m_texturesDrew));
-    addDebugText("Viewport           : " +
-                    m_coordinates.getViewportPositionInPixels().toString());
+    addDebugText("Viewport           : " + m_coordinates.getViewportPositionInPixels().toString());
     addDebugText("Mouse clicked feet : " + m_lastMouseClickPosInFeet.toString());
     addDebugText("Mouse clicked tile : " + m_lastMouseClickPosInTiles.toString());
-    addDebugText("Graphics loaded    : " +
-                    std::to_string(m_graphicsRegistry.getTextureCount()));
+    addDebugText("Graphics loaded    : " + std::to_string(m_graphicsRegistry.getTextureCount()));
 
     SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, SDL_ALPHA_OPAQUE); /* white, full alpha */
 
-    int y = 10;
+    int y = 30;
     for (const auto& line : m_debugTexts)
     {
         SDL_RenderDebugText(m_renderer, 10, y, line.c_str());
@@ -875,50 +529,25 @@ void RendererImpl::renderGameEntities()
 
     for (auto& rc : objectsToRender)
     {
-        auto screenPos = m_coordinates.feetToScreenUnits(rc->positionInFeet) - rc->anchor;
+        Vec2d screenPos = rc->positionInScreenUnits - rc->anchor;
+
+        if (rc->positionInFeet.isNull() == false)
+            screenPos = m_coordinates.feetToScreenUnits(rc->positionInFeet) - rc->anchor;
 
         dstRect.x = screenPos.x;
         dstRect.y = screenPos.y;
         dstRect.w = rc->srcRect.w;
         dstRect.h = rc->srcRect.h;
 
-        for (auto& addon : rc->addons)
+        renderGraphicAddons(screenPos, rc);
+
+        if (dstRect.w > 0 && dstRect.h > 0 && rc->texture != nullptr)
         {
-            switch (addon.type)
-            {
-            case GraphicAddon::Type::CIRCLE:
-            {
-                const auto& circle = addon.getData<GraphicAddon::Circle>();
-                auto circleScreenPos = screenPos + rc->anchor + circle.center;
-
-                // TODO: Support colors if required
-                renderCirlceInIsometric(m_renderer, circleScreenPos.x, circleScreenPos.y,
-                                        circle.radius, 255, 255, 255, 255);
-            }
-            break;
-            case GraphicAddon::Type::RHOMBUS:
-            {
-                const auto& rhombus = addon.getData<GraphicAddon::Rhombus>();
-                auto center = screenPos + rc->anchor;
-
-                lineRGBA(m_renderer, center.x - rhombus.width / 2, center.y, center.x,
-                            center.y - rhombus.height / 2, 255, 255, 255, 255);
-                lineRGBA(m_renderer, center.x, center.y - rhombus.height / 2,
-                            center.x + rhombus.width / 2, center.y, 255, 255, 255, 255);
-                lineRGBA(m_renderer, center.x + rhombus.width / 2, center.y, center.x,
-                            center.y + rhombus.height / 2, 255, 255, 255, 255);
-                lineRGBA(m_renderer, center.x, center.y + rhombus.height / 2,
-                            center.x - rhombus.width / 2, center.y, 255, 255, 255, 255);
-            }
-            break;
-            default:
-                break;
-            }
+            SDL_SetTextureColorMod(rc->texture, rc->shading.r, rc->shading.g, rc->shading.b);
+            SDL_RenderTextureRotated(m_renderer, rc->texture, &(rc->srcRect), &dstRect, 0, nullptr,
+                                     rc->flip);
+            ++m_texturesDrew;
         }
-        SDL_SetTextureColorMod(rc->texture, rc->shading.r, rc->shading.g, rc->shading.b);
-        SDL_RenderTextureRotated(m_renderer, rc->texture, &(rc->srcRect), &dstRect, 0, nullptr,
-                                    rc->flip);
-        ++m_texturesDrew;
 
         if (m_showDebugInfo)
         {
@@ -934,7 +563,7 @@ void RendererImpl::renderGameEntities()
                     break;
                 case DebugOverlay::Type::FILLED_CIRCLE:
                     filledEllipseRGBA(m_renderer, pos.x, pos.y, 20, 10, 0, 0, 255,
-                                        100); // blue ellipse
+                                      100); // blue ellipse
                 case DebugOverlay::Type::RHOMBUS:
                 {
                     auto end1 = getDebugOverlayPosition(overlay.customPos1, dstRect);
@@ -942,10 +571,8 @@ void RendererImpl::renderGameEntities()
 
                     // Lifting the lines by a single pixel to avoid the next tile overriding
                     // these
-                    lineRGBA(m_renderer, pos.x, pos.y - 1, end1.x, end1.y - 1, 180, 180, 180,
-                                255);
-                    lineRGBA(m_renderer, pos.x, pos.y - 1, end2.x, end2.y - 1, 180, 180, 180,
-                                255);
+                    lineRGBA(m_renderer, pos.x, pos.y - 1, end1.x, end1.y - 1, 180, 180, 180, 255);
+                    lineRGBA(m_renderer, pos.x, pos.y - 1, end2.x, end2.y - 1, 180, 180, 180, 255);
                 }
                 break;
                 }
@@ -962,9 +589,69 @@ void RendererImpl::renderGameEntities()
         auto vertLineStart = center - Vec2d(0, 5);
 
         lineRGBA(m_renderer, horiLineStart.x, horiLineStart.y, horiLineStart.x + 10,
-                    horiLineStart.y, 255, 255, 255, 255);
+                 horiLineStart.y, 255, 255, 255, 255);
         lineRGBA(m_renderer, vertLineStart.x, vertLineStart.y, vertLineStart.x,
-                    vertLineStart.y + 10, 255, 255, 255, 255);
+                 vertLineStart.y + 10, 255, 255, 255, 255);
+    }
+}
+
+void RendererImpl::renderText(const Vec2d& screenPos, const std::string& text, const Color& color)
+{
+    int x = screenPos.x;
+    for (char c : text)
+    {
+        SDL_Rect src = m_fontAtlas.glyphRects[c];
+
+        SDL_FRect srcRect = {src.x, src.y, src.w, src.h};
+        SDL_FRect dstRect = {x, screenPos.y, src.w, src.h};
+        x += src.w + 1;
+
+        // TODO Handle color
+        SDL_RenderTextureRotated(m_renderer, m_fontAtlas.texture, &srcRect, &dstRect, 0, nullptr,
+                                 SDL_FLIP_NONE);
+    }
+}
+
+void RendererImpl::renderGraphicAddons(const Vec2d& screenPos, CompRendering* rc)
+{
+    for (auto& addon : rc->addons)
+    {
+        switch (addon.type)
+        {
+        case GraphicAddon::Type::ISO_CIRCLE:
+        {
+            const auto& circle = addon.getData<GraphicAddon::IsoCircle>();
+            auto circleScreenPos = screenPos + rc->anchor + circle.center;
+
+            // TODO: Support colors if required
+            renderCirlceInIsometric(m_renderer, circleScreenPos.x, circleScreenPos.y, circle.radius,
+                                    255, 255, 255, 255);
+        }
+        break;
+        case GraphicAddon::Type::RHOMBUS:
+        {
+            const auto& rhombus = addon.getData<GraphicAddon::Rhombus>();
+            auto center = screenPos + rc->anchor;
+
+            lineRGBA(m_renderer, center.x - rhombus.width / 2, center.y, center.x,
+                     center.y - rhombus.height / 2, 255, 255, 255, 255);
+            lineRGBA(m_renderer, center.x, center.y - rhombus.height / 2,
+                     center.x + rhombus.width / 2, center.y, 255, 255, 255, 255);
+            lineRGBA(m_renderer, center.x + rhombus.width / 2, center.y, center.x,
+                     center.y + rhombus.height / 2, 255, 255, 255, 255);
+            lineRGBA(m_renderer, center.x, center.y + rhombus.height / 2,
+                     center.x - rhombus.width / 2, center.y, 255, 255, 255, 255);
+        }
+        break;
+        case GraphicAddon::Type::TEXT:
+        {
+            const auto& textAddon = addon.getData<GraphicAddon::Text>();
+            renderText(screenPos + rc->anchor, textAddon.text, textAddon.color);
+        }
+        break;
+        default:
+            break;
+        }
     }
 }
 
@@ -1045,7 +732,8 @@ void RendererImpl::handleViewportMovement()
     }
 }
 
-Vec2d RendererImpl::getDebugOverlayPosition(DebugOverlay::FixedPosition anchor, const SDL_FRect& rect)
+Vec2d RendererImpl::getDebugOverlayPosition(DebugOverlay::FixedPosition anchor,
+                                            const SDL_FRect& rect)
 {
     int x = rect.x;
     int y = rect.y;
@@ -1086,13 +774,13 @@ Vec2d RendererImpl::getDebugOverlayPosition(DebugOverlay::FixedPosition anchor, 
 }
 
 void RendererImpl::renderCirlceInIsometric(SDL_Renderer* renderer,
-                                Sint16 cx,
-                                Sint16 cy,
-                                Sint16 r,
-                                Uint8 red,
-                                Uint8 green,
-                                Uint8 blue,
-                                Uint8 alpha)
+                                           Sint16 cx,
+                                           Sint16 cy,
+                                           Sint16 r,
+                                           Uint8 red,
+                                           Uint8 green,
+                                           Uint8 blue,
+                                           Uint8 alpha)
 {
     // Isometric ellipse radius
     Sint16 rx = r * 2; // Horizontal radius (diameter of the circle)
@@ -1104,14 +792,14 @@ void RendererImpl::renderCirlceInIsometric(SDL_Renderer* renderer,
 
 void RendererImpl::loadFonts()
 {
-    if (TTF_Init() == -1) 
+    if (TTF_Init() == -1)
     {
         spdlog::error("Failed to initialize TTF: {}", SDL_GetError());
         throw std::runtime_error("TTF_Init failed");
     }
 
-    TTF_Font* font = TTF_OpenFont("assets/fonts/lucida-bright-regular.ttf", 12); // 24 pt font
-    if (!font) 
+    TTF_Font* font = TTF_OpenFont("assets/fonts/Roboto-Bold.ttf", 14); // 24 pt font
+    if (!font)
     {
         spdlog::error("Failed to open the font: {}", SDL_GetError());
         throw std::runtime_error("TTF_OpenFont failed");

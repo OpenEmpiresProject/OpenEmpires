@@ -36,6 +36,11 @@ template <std::integral T> class Rect
     }
 
     // Utility
+    constexpr Vec2d position() const
+    {
+        return Vec2d(x, y);
+    }
+
     constexpr T left() const
     {
         return x;
@@ -94,6 +99,11 @@ template <std::integral T> class Rect
             return Rect(nx, ny, nr - nx, nb - ny);
         }
         return std::nullopt;
+    }
+
+    constexpr Rect translated(const Rect<T>& rhs) const
+    {
+        return Rect(x + rhs.x, y + rhs.y, w, h);
     }
 
     constexpr Rect translated(T dx, T dy) const

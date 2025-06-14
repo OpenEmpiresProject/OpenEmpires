@@ -131,27 +131,36 @@ void ZOrderStrategyWithSlicing::addRenderingCompToZBuckets(CompRendering* rc,
         return;
     }
 
-    int zOrder = rc->positionInFeet.y + rc->positionInFeet.x + rc->additionalZOffset;
+    int zOrder = 0;
 
-    if (zOrder < 0 || zOrder >= m_zBucketsSize)
+    if (rc->positionInFeet.isNull() == false)
     {
-        spdlog::error("Z-order out of bounds: {}", zOrder);
-        return;
+        zOrder = rc->positionInFeet.y + rc->positionInFeet.x + rc->additionalZOffset;
+
+        if (zOrder < 0 || zOrder >= m_zBucketsSize)
+        {
+            spdlog::error("Z-order out of bounds: {}", zOrder);
+            return;
+        }
+
+        SDL_Rect viewportRect = {0, 0, m_settings->getWindowDimensions().width,
+                                 m_settings->getWindowDimensions().height};
+
+        auto screenPos = coordinates.feetToScreenUnits(rc->positionInFeet) - rc->anchor;
+
+        SDL_Rect dstRectInt = {screenPos.x, screenPos.y, rc->srcRect.w, rc->srcRect.h};
+
+        // Skip any texture that doesn't overlap with viewport (i.e. outside of screen)
+        // This has reduced frame rendering time from 6ms to 3ms for 1366x768 window on the
+        // development setup for 50x50 map in debug mode on Windows.
+        if (!SDL_HasRectIntersection(&viewportRect, &dstRectInt))
+        {
+            return;
+        }
     }
-
-    SDL_Rect viewportRect = {0, 0, m_settings->getWindowDimensions().width,
-                             m_settings->getWindowDimensions().height};
-
-    auto screenPos = coordinates.feetToScreenUnits(rc->positionInFeet) - rc->anchor;
-
-    SDL_Rect dstRectInt = {screenPos.x, screenPos.y, rc->srcRect.w, rc->srcRect.h};
-
-    // Skip any texture that doesn't overlap with viewport (i.e. outside of screen)
-    // This has reduced frame rendering time from 6ms to 3ms for 1366x768 window on the
-    // development setup for 50x50 map in debug mode on Windows.
-    if (!SDL_HasRectIntersection(&viewportRect, &dstRectInt))
+    else
     {
-        return;
+        zOrder = rc->positionInScreenUnits.y;
     }
 
     if (m_zBucketVersion != m_zBuckets[zOrder].version)
