@@ -19,6 +19,7 @@ struct Element : std::enable_shared_from_this<Element>
     const uint32_t id = 0;
     const Ref<Element> parent;
     Rect<int> rect;
+    std::string name;
     bool enabled = true;
     bool visible = true;
     bool hot = false;

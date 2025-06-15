@@ -8,8 +8,11 @@
 #include "GraphicsLoaderFromDRS.h"
 #include "GraphicsLoaderFromImages.h"
 #include "GraphicsRegistry.h"
+#include "HUD.h"
+#include "PlayerManager.h"
 #include "Renderer.h"
 #include "ResourceLoader.h"
+#include "ResourceManager.h"
 #include "ServiceRegistry.h"
 #include "Simulator.h"
 #include "SubSystemRegistry.h"
@@ -62,6 +65,15 @@ class Game
         auto uiManager = std::make_shared<ion::UIManager>();
         ion::ServiceRegistry::getInstance().registerService(uiManager);
 
+        auto playerManager = std::make_shared<ion::PlayerManager>();
+        ion::ServiceRegistry::getInstance().registerService(playerManager);
+
+        auto resourceManager = std::make_shared<ResourceManager>();
+        ion::ServiceRegistry::getInstance().registerService(resourceManager);
+
+        auto hud = std::make_shared<HUD>();
+        ion::ServiceRegistry::getInstance().registerService(hud);
+
         auto renderer = std::make_shared<ion::Renderer>(
             &stopSource, graphicsRegistry, simulatorRendererSynchronizer, graphicsLoader);
         auto cc = std::make_shared<ion::CommandCenter>();
@@ -70,6 +82,9 @@ class Game
         eventLoop->registerListener(std::move(simulator));
         eventLoop->registerListener(std::move(cc));
         eventLoop->registerListener(std::move(uiManager));
+        eventLoop->registerListener(std::move(playerManager));
+        eventLoop->registerListener(std::move(resourceManager));
+        eventLoop->registerListener(std::move(hud));
 
         auto resourceLoader =
             std::make_shared<ResourceLoader>(&stopToken, settings, graphicsRegistry, renderer);

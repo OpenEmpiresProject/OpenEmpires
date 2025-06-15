@@ -2,6 +2,8 @@
 
 #include "GameState.h"
 #include "GameTypes.h"
+#include "Player.h"
+#include "PlayerManager.h"
 #include "Renderer.h"
 #include "ResourceTypes.h"
 #include "ServiceRegistry.h"
@@ -14,6 +16,7 @@
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
+#include "components/CompPlayer.h"
 #include "components/CompRendering.h"
 #include "components/CompResource.h"
 #include "components/CompSelectible.h"
@@ -56,6 +59,9 @@ void ResourceLoader::loadEntities()
     spdlog::info("Loading entities...");
 
     m_drs = loadDRSFile("assets/graphics.drs");
+
+    auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
+    auto player = playerManager->createPlayer();
 
     auto& gameState = GameState::getInstance();
 
@@ -140,6 +146,7 @@ void ResourceLoader::loadEntities()
                                  GraphicAddon::IsoCircle{10, Vec2d{0, 0}}};
 
         gameState.addComponent(villager, sc);
+        gameState.addComponent(villager, CompPlayer{player});
     }
 
     generateMap(gameState.gameMap);
@@ -151,6 +158,7 @@ void ResourceLoader::loadEntities()
     };
 
     auto window = CreateRef<ui::Window>(resourcePanelBackground);
+    window->name = "resourcePanel";
     ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(window);
 
     GraphicsID woodAmountLabel{
@@ -158,8 +166,9 @@ void ResourceLoader::loadEntities()
         .entitySubType = BaseEntitySubTypes::UI_LABEL,
     };
     auto label = window->createChild<ui::Label>(woodAmountLabel);
-    label->text = "1,000";
+    label->text = "0";
     label->rect = Rect<int>(35, 5, 50, 20);
+    label->name = "wood";
 
     spdlog::info("Entity loading successfully.");
 }

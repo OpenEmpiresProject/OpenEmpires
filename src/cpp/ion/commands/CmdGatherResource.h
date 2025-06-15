@@ -3,16 +3,19 @@
 
 #include "Coordinates.h"
 #include "GameState.h"
+#include "Player.h"
 #include "ServiceRegistry.h"
 #include "Vec2d.h"
 #include "commands/CmdMove.h"
 #include "commands/Command.h"
 #include "components/CompEntityInfo.h"
+#include "components/CompPlayer.h"
 #include "components/CompResource.h"
 #include "components/CompSelectible.h"
 #include "components/CompTransform.h"
 #include "utils/ObjectPool.h"
 
+#include <algorithm>
 #include <queue>
 #include <unordered_set>
 
@@ -29,6 +32,7 @@ class CmdGatherResource : public Command
     const int choppingSpeed = 10; // 10 wood per second
     float collectedWood = 0;
     std::shared_ptr<Coordinates> coordinateSystem;
+    Ref<Player> player;
 
     void onStart() override
     {
@@ -42,15 +46,18 @@ class CmdGatherResource : public Command
         entity = entityID;
         auto& transformTarget = GameState::getInstance().getComponent<CompTransform>(target);
         targetPosition = transformTarget.position;
+
+        auto& playerComp = GameState::getInstance().getComponent<CompPlayer>(entity);
+        player = playerComp.player;
     }
 
     bool onExecute(uint32_t entityID, int deltaTimeMs) override
     {
         if (!isResourceAvailable())
         {
-            if (!lookForAnotherTree())
+            if (!lookForAnotherSimilarResource())
             {
-                // Could not find another tree, nothing to gather, done with the command
+                // Could not find another resource, nothing to gather, done with the command
                 return true;
             }
         }
@@ -129,23 +136,38 @@ class CmdGatherResource : public Command
     void gather(CompTransform& transform, int deltaTimeMs)
     {
         collectedWood += float(choppingSpeed) * deltaTimeMs / 1000.0f;
-        int rounded = collectedWood;
-        ;
+        uint32_t rounded = collectedWood;
         collectedWood -= rounded;
 
         if (rounded != 0)
         {
-            cutTree(rounded);
+            if (GameState::getInstance().hasComponent<CompResource>(target))
+            {
+                auto [resource, dirty] =
+                    GameState::getInstance().getComponents<CompResource, CompDirty>(target);
+
+                auto actualDelta = std::min(resource.resource.amount, rounded);
+                resource.resource.amount -= actualDelta;
+                player->grantResource(resource.resource.type, actualDelta);
+                dirty.markDirty(target);
+            }
+            else
+            {
+                spdlog::error("Target entity {} is not a resouce", target);
+            }
         }
     }
 
-    bool lookForAnotherTree()
+    bool lookForAnotherSimilarResource()
     {
-        spdlog::debug("Looking for another tree...");
+        spdlog::debug("Looking for another resource...");
         auto& transformMy = GameState::getInstance().getComponent<CompTransform>(entity);
         auto tilePos = coordinateSystem->feetToTiles(transformMy.position);
 
-        auto otherResource = findClosestResource(tilePos, Constants::MAX_RESOURCE_LOOKUP_RADIUS);
+        auto& resource = GameState::getInstance().getComponent<CompResource>(target);
+
+        auto otherResource = findClosestResource(resource.resource.type, tilePos,
+                                                 Constants::MAX_RESOURCE_LOOKUP_RADIUS);
 
         if (otherResource != entt::null)
         {
@@ -157,7 +179,7 @@ class CmdGatherResource : public Command
         return otherResource != entt::null;
     }
 
-    bool hasResource(const Vec2d& posTile, uint32_t& resourceEntity)
+    bool hasResource(uint8_t resourceType, const Vec2d& posTile, uint32_t& resourceEntity)
     {
         resourceEntity = entt::null;
         auto& map = GameState::getInstance().gameMap;
@@ -169,15 +191,19 @@ class CmdGatherResource : public Command
             {
                 if (GameState::getInstance().hasComponent<CompResource>(e))
                 {
-                    resourceEntity = e;
-                    return true;
+                    CompResource resource = GameState::getInstance().getComponent<CompResource>(e);
+                    if (resource.resource.type == resourceType)
+                    {
+                        resourceEntity = e;
+                        return true;
+                    }
                 }
             }
         }
         return false;
     }
 
-    uint32_t findClosestResource(const Vec2d& startTile, int maxRadius)
+    uint32_t findClosestResource(uint8_t resourceType, const Vec2d& startTile, int maxRadius)
     {
         std::queue<std::pair<Vec2d, int>> toVisit; // Pair: position, current distance
         std::unordered_set<Vec2d> visited;
@@ -195,7 +221,7 @@ class CmdGatherResource : public Command
             auto [current, distance] = toVisit.front();
             toVisit.pop();
 
-            if (hasResource(current, resourceEntity))
+            if (hasResource(resourceType, current, resourceEntity))
             {
                 return resourceEntity;
             }
@@ -218,45 +244,6 @@ class CmdGatherResource : public Command
         }
 
         return entt::null; // Not found within radius
-    }
-
-    bool cutTree(uint16_t delta)
-    {
-        auto tree = target;
-
-        if (GameState::getInstance().hasComponent<CompResource>(tree))
-        {
-            auto [resource, dirty, info, select] =
-                GameState::getInstance()
-                    .getComponents<CompResource, CompDirty, CompEntityInfo, CompSelectible>(tree);
-            resource.resource.amount =
-                resource.resource.amount < delta ? 0 : resource.resource.amount - delta;
-            if (resource.resource.amount == 0)
-            {
-                info.isDestroyed = true;
-            }
-            else
-            {
-                info.entitySubType = 1;
-                info.variation = 0; //  regardless of the tree type, this is the chopped version
-                // TODO: Might not be the most optimal way to bring down the bounding box a chopped
-                // tree
-                auto tw = Constants::TILE_PIXEL_WIDTH;
-                auto th = Constants::TILE_PIXEL_HEIGHT;
-                select.boundingBoxes[static_cast<int>(Direction::NONE)] =
-                    Rect<int>(tw / 2, th / 2, tw, th);
-            }
-            spdlog::info("Tree has {} resources", resource.resource.amount);
-
-            dirty.markDirty(tree);
-            return info.isDestroyed;
-        }
-        else
-        {
-            spdlog::error("Target entity {} is not a resouce", target);
-            return true;
-        }
-        return false;
     }
 };
 

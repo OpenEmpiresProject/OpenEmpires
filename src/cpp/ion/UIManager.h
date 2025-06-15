@@ -14,6 +14,10 @@ class UIManager : public EventHandler
   public:
     UIManager();
     void registerWindow(Ref<ui::Window> window);
+    const std::vector<Ref<ui::Window>>& getWindows() const
+    {
+        return m_windows;
+    }
 
   private:
     void onEvent(const Event& e) override;

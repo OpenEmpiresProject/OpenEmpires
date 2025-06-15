@@ -32,7 +32,7 @@ We use milestone versions for planning. Early versions are experimental. Feature
 ### Features:
 - [x] Trees as gatherable resources
 - [x] Resource collection (wood)
-- [ ] Resource UI panel
+- [x] Resource UI panel
 - [ ] Resource drop-off points
 - [ ] Group path finding (with flow fields)
 - [ ] Stone and gold mines as gatherable resources
