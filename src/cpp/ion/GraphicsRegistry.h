@@ -110,6 +110,7 @@ class GraphicsRegistry
     const Animation& getAnimation(const GraphicsID& graphicID) const;
     bool hasAnimation(const GraphicsID& graphicID) const;
     size_t getAnimationCount() const;
+    size_t getVariationCount(const GraphicsID& graphicID) const;
 
   private:
     std::unordered_map<int64_t, Texture> m_textureMap;

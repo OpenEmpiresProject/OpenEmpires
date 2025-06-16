@@ -179,12 +179,12 @@ void ion::Simulator::onUnitSelection(const Event& e)
     auto selectedEntities = e.getData<UnitSelectionData>().selection.selectedEntities;
     if (selectedEntities.size() == 1)
     {
-        auto tree = selectedEntities[0];
+        auto resourceEntity = selectedEntities[0];
 
-        if (GameState::getInstance().hasComponent<CompResource>(tree))
+        if (GameState::getInstance().hasComponent<CompResource>(resourceEntity))
         {
-            auto resource = GameState::getInstance().getComponent<CompResource>(tree);
-            spdlog::info("Tree has {} resources", resource.resource.amount);
+            auto resource = GameState::getInstance().getComponent<CompResource>(resourceEntity);
+            spdlog::info("Selected entity has {} resources", resource.resource.amount);
         }
     }
 }

@@ -15,8 +15,10 @@ class HUD : public ion::EventHandler
 
   private:
     void onTick(const ion::Event& e);
+    void updateLabelRef(ion::Ref<ion::ui::Label>& label, const std::string& text);
 
     ion::Ref<ion::ui::Label> m_woodLabel;
+    ion::Ref<ion::ui::Label> m_stoneabel;
 };
 
 } // namespace game

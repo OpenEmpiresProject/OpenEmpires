@@ -3,12 +3,20 @@
 
 namespace game
 {
-enum BaseEntityTypes
+enum EntityTypes
 {
-    UI_ELEMENT = 10000
+    ET_UNKNOWN = 0,
+
+    ET_TILE = 2,
+    ET_VILLAGER = 3,
+    ET_TREE = 4,
+    ET_MILL = 5,
+    ET_MARKETPLACE = 6,
+    ET_STONE = 7,
+    ET_UI_ELEMENT = 10000
 };
 
-enum BaseEntitySubTypes
+enum EntitySubTypes
 {
     UI_WINDOW = 0,
     UI_BUTTON = 1,
@@ -17,7 +25,8 @@ enum BaseEntitySubTypes
 
 enum ResourceType : uint8_t
 {
-    WOOD = 0
+    WOOD = 0,
+    STONE = 1
 };
 
 } // namespace game

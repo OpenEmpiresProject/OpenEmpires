@@ -1,5 +1,6 @@
 #include "GraphicsLoaderFromImages.h"
 
+#include "GameTypes.h"
 #include "GraphicsRegistry.h"
 #include "utils/Logger.h"
 #include "utils/Size.h"
@@ -111,7 +112,7 @@ void GraphicsLoaderFromImages::loadTextures(GraphicsRegistry& graphicsRegistry,
 
         const auto& path = entry.path();
         int entityType = determineEntityType(path); // Implement a helper to determine entityType
-        if (entityType == 0)
+        if (entityType == EntityTypes::ET_UNKNOWN)
             continue; // Skip unknown entity types
         entityTypeToPaths[entityType].push_back(path);
     }
@@ -130,7 +131,7 @@ void GraphicsLoaderFromImages::loadTextures(GraphicsRegistry& graphicsRegistry,
 int GraphicsLoaderFromImages::determineEntityType(const std::filesystem::path& path)
 {
     if (path.string().find("terrain") != std::string::npos)
-        return 2; // Tile
+        return EntityTypes::ET_TILE; // Tile
     if (path.string().find("villager") != std::string::npos)
         return 3; // Villager
     if (path.string().find("trees") != std::string::npos)
@@ -189,14 +190,14 @@ void GraphicsLoaderFromImages::createAtlasForEntityType(
         Vec2d anchor = {imageSize.width / 2 + 1, imageSize.height};
         std::string pathStr = path.string();
 
-        if (entityType == 2)
+        if (entityType == EntityTypes::ET_TILE)
         {
             auto imageName = path.stem().string();
             auto frameId = std::stoi(imageName.substr(imageName.find_last_of('_') + 1, 3));
             id.variation = frameId;
             anchor = {imageSize.width / 2 + 1, 0};
         }
-        else if (entityType == 3)
+        else if (entityType == EntityTypes::ET_VILLAGER)
         {
             // get anchor from anchors based on filename
             auto imageName = path.stem().string();
@@ -237,7 +238,7 @@ void GraphicsLoaderFromImages::createAtlasForEntityType(
                 id.direction = Direction::NORTH;
             }
         }
-        else if (entityType == 4) // Trees
+        else if (entityType == EntityTypes::ET_TREE) // Trees
         {
             for (size_t i = 0; i < 100; i++)
             {
@@ -247,9 +248,6 @@ void GraphicsLoaderFromImages::createAtlasForEntityType(
                     break;
                 }
             }
-        }
-        else if (entityType == 5)
-        {
         }
 
         SDL_FRect* srcRectF = new SDL_FRect{(float) srcRect.x, (float) srcRect.y, (float) srcRect.w,
@@ -364,7 +362,7 @@ void GraphicsLoaderFromImages::adjustDirections(GraphicsRegistry& graphicsRegist
 
 bool GraphicsLoaderFromImages::isTextureFlippingNeededEntity(int entityType) const
 {
-    return entityType == 3;
+    return entityType == EntityTypes::ET_VILLAGER;
 }
 
 bool GraphicsLoaderFromImages::isTextureFlippingNeededDirection(Direction direction) const

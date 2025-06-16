@@ -37,12 +37,14 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
     auto graphicsDRS = loadDRSFile("assets/graphics.drs");
 
     loadSLP(terrainDRS, 15001, 2, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Grass tiles
-    loadSLP(graphicsDRS, 1388, 3, 0, 0, renderer, graphicsRegistry,
+    loadSLP(graphicsDRS, 1388, 3, 0, Actions::IDLE, renderer, graphicsRegistry,
             atlasGenerator); // Villager idle
-    loadSLP(graphicsDRS, 1392, 3, 0, 1, renderer, graphicsRegistry,
+    loadSLP(graphicsDRS, 1392, 3, 0, Actions::MOVE, renderer, graphicsRegistry,
             atlasGenerator); // Villager walk
-    loadSLP(graphicsDRS, 1434, 3, 0, 2, renderer, graphicsRegistry,
+    loadSLP(graphicsDRS, 1434, 3, 0, Actions::CHOPPING, renderer, graphicsRegistry,
             atlasGenerator); // Villager tree chopping
+    loadSLP(graphicsDRS, 1880, 3, 0, Actions::MINING, renderer, graphicsRegistry,
+            atlasGenerator); // Villager mining
     loadSLP(graphicsDRS, 1254, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
     loadSLP(graphicsDRS, 1256, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
     loadSLP(graphicsDRS, 1258, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
@@ -53,16 +55,16 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
     loadSLP(graphicsDRS, 1268, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
     loadSLP(graphicsDRS, 1270, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
     loadSLP(graphicsDRS, 1272, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 1034, EntityTypes::ET_STONE, 0, 0, renderer, graphicsRegistry,
+            atlasGenerator);
     loadSLP(graphicsDRS, 3483, 5, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Mill
     loadSLP(graphicsDRS, 2278, 6, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Marketplace
     loadSLP(graphicsDRS, 1252, 4, 1, 0, renderer, graphicsRegistry, atlasGenerator); // Chopped tree
-    loadSLP(interfaceDRS, 51101, BaseEntityTypes::UI_ELEMENT, BaseEntitySubTypes::UI_WINDOW, 0,
-            renderer, graphicsRegistry, atlasGenerator, Size(400, 25)); // Resource HUD
+    loadSLP(interfaceDRS, 51101, EntityTypes::ET_UI_ELEMENT, EntitySubTypes::UI_WINDOW, 0, renderer,
+            graphicsRegistry, atlasGenerator, Size(400, 25)); // Resource HUD
 
-    registerDummyTexture(BaseEntityTypes::UI_ELEMENT, BaseEntitySubTypes::UI_LABEL,
-                         graphicsRegistry);
-    registerDummyTexture(BaseEntityTypes::UI_ELEMENT, BaseEntitySubTypes::UI_BUTTON,
-                         graphicsRegistry);
+    registerDummyTexture(EntityTypes::ET_UI_ELEMENT, EntitySubTypes::UI_LABEL, graphicsRegistry);
+    registerDummyTexture(EntityTypes::ET_UI_ELEMENT, EntitySubTypes::UI_BUTTON, graphicsRegistry);
 
     adjustDirections(graphicsRegistry);
 }
@@ -183,13 +185,13 @@ void loadSLP(shared_ptr<DRSFile> drs,
         auto anchorPair = frames[i].getAnchor();
         Vec2d anchor = {anchorPair.first, anchorPair.second};
 
-        if (entityType == 2)
+        if (entityType == EntityTypes::ET_TILE)
         {
             id.variation = frames[i].getId();
             anchor = {imageSize.width / 2 + 1,
                       0}; // Must override tile anchoring since their anchors don't work here
         }
-        else if (entityType == 3)
+        else if (entityType == EntityTypes::ET_VILLAGER)
         {
             /* if the file name is 1388_01.bmp pattern last two digit represents the frame. each
                 direction animation contains 15 frames. 1-15 for south, 16-30 for southwest, 31-45
@@ -219,7 +221,7 @@ void loadSLP(shared_ptr<DRSFile> drs,
                 id.direction = Direction::NORTH;
             }
         }
-        else if (entityType == 4) // Trees
+        else if (entityType == EntityTypes::ET_TREE || entityType == EntityTypes::ET_STONE)
         {
             for (size_t i = 0; i < 100; i++)
             {
@@ -241,7 +243,7 @@ void loadSLP(shared_ptr<DRSFile> drs,
 
 bool isTextureFlippingNeededEntity(int entityType)
 {
-    return entityType == 3;
+    return entityType == EntityTypes::ET_VILLAGER;
 }
 
 bool isTextureFlippingNeededDirection(Direction direction)

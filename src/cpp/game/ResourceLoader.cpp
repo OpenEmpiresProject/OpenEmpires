@@ -89,7 +89,7 @@ void ResourceLoader::loadEntities()
 
             CompGraphics gc;
             gc.entityID = tile;
-            gc.entityType = 2; // Tile
+            gc.entityType = EntityTypes::ET_TILE;
             gc.layer = GraphicLayer::GROUND;
             DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, ion::Color::GREY,
                                  DebugOverlay::FixedPosition::BOTTOM_CENTER};
@@ -121,6 +121,10 @@ void ResourceLoader::loadEntities()
         anim.animations[Actions::CHOPPING].repeatable = true;
         anim.animations[Actions::CHOPPING].speed = 15;
 
+        anim.animations[Actions::MINING].frames = 15;
+        anim.animations[Actions::MINING].repeatable = true;
+        anim.animations[Actions::MINING].speed = 15;
+
         gameState.addComponent(villager, transform);
         gameState.addComponent(villager, CompRendering());
         gameState.addComponent(villager, CompEntityInfo(3));
@@ -135,7 +139,7 @@ void ResourceLoader::loadEntities()
 
         CompGraphics gc;
         gc.entityID = villager;
-        gc.entityType = 3; // Villager
+        gc.entityType = EntityTypes::ET_VILLAGER;
         gc.layer = GraphicLayer::ENTITIES;
         gameState.addComponent(villager, gc);
 
@@ -149,17 +153,19 @@ void ResourceLoader::loadEntities()
         gameState.addComponent(villager, CompPlayer{player});
 
         CompResourceGatherer gatherer{
-            .gatheringAction = {{ResourceType::WOOD, Actions::CHOPPING}},
+            .gatheringAction = {{ResourceType::WOOD, Actions::CHOPPING},
+                                {ResourceType::STONE, Actions::MINING}},
         };
         gameState.addComponent(villager, gatherer);
     }
 
     generateMap(gameState.gameMap);
+    createStoneCluster(gameState.gameMap, 30, 30, 4);
     // createTree(gameState.gameMap, 5, 5);
 
     GraphicsID resourcePanelBackground{
-        .entityType = BaseEntityTypes::UI_ELEMENT,
-        .entitySubType = BaseEntitySubTypes::UI_WINDOW,
+        .entityType = EntityTypes::ET_UI_ELEMENT,
+        .entitySubType = EntitySubTypes::UI_WINDOW,
     };
 
     auto window = CreateRef<ui::Window>(resourcePanelBackground);
@@ -167,13 +173,22 @@ void ResourceLoader::loadEntities()
     ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(window);
 
     GraphicsID woodAmountLabel{
-        .entityType = BaseEntityTypes::UI_ELEMENT,
-        .entitySubType = BaseEntitySubTypes::UI_LABEL,
+        .entityType = EntityTypes::ET_UI_ELEMENT,
+        .entitySubType = EntitySubTypes::UI_LABEL,
     };
-    auto label = window->createChild<ui::Label>(woodAmountLabel);
-    label->text = "0";
-    label->rect = Rect<int>(35, 5, 50, 20);
-    label->name = "wood";
+    auto woodLabel = window->createChild<ui::Label>(woodAmountLabel);
+    woodLabel->text = "0";
+    woodLabel->rect = Rect<int>(35, 5, 50, 20);
+    woodLabel->name = "wood";
+
+    GraphicsID stoneAmountLabel{
+        .entityType = EntityTypes::ET_UI_ELEMENT,
+        .entitySubType = EntitySubTypes::UI_LABEL,
+    };
+    auto stoneLabel = window->createChild<ui::Label>(stoneAmountLabel);
+    stoneLabel->text = "0";
+    stoneLabel->rect = Rect<int>(265, 5, 50, 20);
+    stoneLabel->name = "stone";
 
     spdlog::info("Entity loading successfully.");
 }
@@ -191,12 +206,13 @@ void ResourceLoader::createTree(GridMap& map, uint32_t x, uint32_t y)
     gc.debugOverlays.push_back(
         {DebugOverlay::Type::CIRCLE, ion::Color::RED, DebugOverlay::FixedPosition::BOTTOM_CENTER});
     gc.entityID = tree;
-    gc.entityType = 4;    // tree
+    gc.entityType = EntityTypes::ET_TREE;
     gc.entitySubType = 0; // 0=main tree, 1=chopped
     gc.layer = GraphicLayer::ENTITIES;
 
     gameState.addComponent(tree, gc);
-    gameState.addComponent(tree, CompEntityInfo(4, 0, rand() % 10));
+    // TODO: Should not hard code
+    gameState.addComponent(tree, CompEntityInfo(EntityTypes::ET_TREE, 0, rand() % 10));
     gameState.addComponent(tree, CompDirty());
 
     // TODO: This doesn't work. Need to conslidate resource and graphic loading and handle this
@@ -211,6 +227,119 @@ void ResourceLoader::createTree(GridMap& map, uint32_t x, uint32_t y)
     gameState.addComponent(tree, CompResource(Resource(ResourceType::WOOD, 100)));
 
     map.layers[MapLayerType::STATIC].cells[x][y].addEntity(tree);
+}
+
+void ResourceLoader::createStone(ion::GridMap& gameMap, uint32_t x, uint32_t y)
+{
+    auto& gameState = GameState::getInstance();
+
+    auto stone = gameState.createEntity();
+    auto transform = CompTransform(x * 256 + 128, y * 256 + 128);
+    transform.face(Direction::NORTHWEST);
+    gameState.addComponent(stone, transform);
+    gameState.addComponent(stone, CompRendering());
+    CompGraphics gc;
+    gc.debugOverlays.push_back(
+        {DebugOverlay::Type::CIRCLE, ion::Color::RED, DebugOverlay::FixedPosition::BOTTOM_CENTER});
+    gc.entityID = stone;
+    gc.entityType = EntityTypes::ET_STONE;
+    gc.entitySubType = 0;
+    gc.layer = GraphicLayer::ENTITIES;
+
+    gameState.addComponent(stone, gc);
+    gameState.addComponent(stone, CompEntityInfo(EntityTypes::ET_STONE, 0, rand() % 7));
+    gameState.addComponent(stone, CompDirty());
+
+    // TODO: This doesn't work. Need to conslidate resource and graphic loading and handle this
+    auto box = getBoundingBox(m_drs, 1034, 1);
+    CompSelectible sc;
+    sc.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
+    sc.selectionIndicator = {
+        GraphicAddon::Type::RHOMBUS,
+        GraphicAddon::Rhombus{Constants::TILE_PIXEL_WIDTH, Constants::TILE_PIXEL_HEIGHT}};
+
+    gameState.addComponent(stone, sc);
+    gameState.addComponent(stone, CompResource(Resource(ResourceType::STONE, 1000)));
+
+    gameMap.layers[MapLayerType::STATIC].cells[x][y].addEntity(stone);
+}
+
+void ResourceLoader::createStoneCluster(ion::GridMap& gameMap,
+                                        uint32_t xHint,
+                                        uint32_t yHint,
+                                        uint8_t amount)
+{
+    if (amount == 0)
+        return;
+
+    const auto width = gameMap.width;
+    const auto height = gameMap.height;
+    auto& layer = gameMap.layers[MapLayerType::STATIC];
+
+    std::vector<std::pair<uint32_t, uint32_t>> cluster;
+    std::vector<std::pair<uint32_t, uint32_t>> frontier;
+
+    auto isValid = [&](uint32_t x, uint32_t y)
+    { return x < width && y < height && !layer.cells[x][y].isOccupied(); };
+
+    // Try to start from the hint or nearby
+    if (!isValid(xHint, yHint))
+    {
+        bool found = false;
+        for (int dx = -5; dx <= 5 && !found; ++dx)
+        {
+            for (int dy = -5; dy <= 5 && !found; ++dy)
+            {
+                uint32_t nx = xHint + dx;
+                uint32_t ny = yHint + dy;
+                if (isValid(nx, ny))
+                {
+                    xHint = nx;
+                    yHint = ny;
+                    found = true;
+                }
+            }
+        }
+        if (!isValid(xHint, yHint))
+            return; // Failed to find starting point
+    }
+
+    std::mt19937 rng(std::random_device{}());
+
+    cluster.emplace_back(xHint, yHint);
+    frontier.emplace_back(xHint, yHint);
+
+    size_t placed = 0;
+    while (!frontier.empty() && placed < amount)
+    {
+        // Pick random tile from the frontier
+        std::uniform_int_distribution<size_t> dist(0, frontier.size() - 1);
+        size_t idx = dist(rng);
+        auto [cx, cy] = frontier[idx];
+        std::swap(frontier[idx], frontier.back());
+        frontier.pop_back();
+
+        if (!isValid(cx, cy))
+            continue;
+
+        // Place a stone here
+        createStone(gameMap, cx, cy);
+        ++placed;
+
+        cluster.emplace_back(cx, cy);
+
+        // Add neighbors to frontier
+        std::vector<std::pair<uint32_t, uint32_t>> neighbors = {
+            {cx + 1, cy}, {cx - 1, cy}, {cx, cy + 1}, {cx, cy - 1}};
+
+        for (auto [nx, ny] : neighbors)
+        {
+            if (isValid(nx, ny))
+            {
+                frontier.emplace_back(nx, ny);
+            }
+        }
+    }
 }
 
 void ResourceLoader::generateMap(GridMap& gameMap)
@@ -281,6 +410,7 @@ void ResourceLoader::generateMap(GridMap& gameMap)
 void ResourceLoader::init()
 {
     Resource::registerResourceType(ResourceType::WOOD);
+    Resource::registerResourceType(ResourceType::STONE);
     loadEntities();
 }
 

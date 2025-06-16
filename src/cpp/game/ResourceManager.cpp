@@ -1,6 +1,7 @@
 #include "ResourceManager.h"
 
 #include "GameState.h"
+#include "GameTypes.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompResource.h"
@@ -38,14 +39,17 @@ void ResourceManager::onTick(const Event& e)
             }
             else
             {
-                info.entitySubType = 1;
-                info.variation = 0; //  regardless of the tree type, this is the chopped version
-                // TODO: Might not be the most optimal way to bring down the bounding box a chopped
-                // tree
-                auto tw = Constants::TILE_PIXEL_WIDTH;
-                auto th = Constants::TILE_PIXEL_HEIGHT;
-                select.boundingBoxes[static_cast<int>(Direction::NONE)] =
-                    Rect<int>(tw / 2, th / 2, tw, th);
+                if (info.entityType == EntityTypes::ET_TREE)
+                {
+                    info.entitySubType = 1;
+                    info.variation = 0; //  regardless of the tree type, this is the chopped version
+                    // TODO: Might not be the most optimal way to bring down the bounding box a
+                    // chopped tree
+                    auto tw = Constants::TILE_PIXEL_WIDTH;
+                    auto th = Constants::TILE_PIXEL_HEIGHT;
+                    select.boundingBoxes[static_cast<int>(Direction::NONE)] =
+                        Rect<int>(tw / 2, th / 2, tw, th);
+                }
             }
         }
     }

@@ -105,3 +105,18 @@ size_t GraphicsRegistry::getAnimationCount() const
 {
     return m_animationMap.size();
 }
+
+size_t GraphicsRegistry::getVariationCount(const GraphicsID& graphicID) const
+{
+    GraphicsID id = graphicID;
+
+    for (int i = 0; i < 100; i++)
+    {
+        id.variation = i;
+        if (!hasTexture(id))
+        {
+            return i;
+        }
+    }
+    return 0;
+}
