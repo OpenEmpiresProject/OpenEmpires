@@ -11,8 +11,10 @@
 #include "components/CompEntityInfo.h"
 #include "components/CompPlayer.h"
 #include "components/CompResource.h"
+#include "components/CompResourceGatherer.h"
 #include "components/CompSelectible.h"
 #include "components/CompTransform.h"
+#include "debug.h"
 #include "utils/ObjectPool.h"
 
 #include <algorithm>
@@ -27,28 +29,42 @@ class CmdGatherResource : public Command
     uint32_t target = entt::null;
 
   private:
-    uint32_t entity = entt::null;
-    Vec2d targetPosition; // TODO: Use when target is absent by the time this command execute
     const int choppingSpeed = 10; // 10 wood per second
-    float collectedWood = 0;
+    // Cached values
+    uint32_t entity = entt::null;
+    Vec2d targetPosition; // Use when target is absent by the time this command execute
+    float collectedResourceAmount = 0;
     std::shared_ptr<Coordinates> coordinateSystem;
     Ref<Player> player;
+    Resource* targetResource = nullptr;
 
     void onStart() override
     {
         spdlog::debug("Start gathering resource...");
-        coordinateSystem = ServiceRegistry::getInstance().getService<Coordinates>();
     }
 
     void onQueue(uint32_t entityID) override
     {
         // TODO: Reset frame to zero (since this is a new command)
         entity = entityID;
-        auto& transformTarget = GameState::getInstance().getComponent<CompTransform>(target);
-        targetPosition = transformTarget.position;
+        setTarget(target);
 
         auto& playerComp = GameState::getInstance().getComponent<CompPlayer>(entity);
         player = playerComp.player;
+        coordinateSystem = ServiceRegistry::getInstance().getService<Coordinates>();
+        collectedResourceAmount = 0;
+    }
+
+    void setTarget(uint32_t targetEntity)
+    {
+        target = targetEntity;
+        auto& transformTarget = GameState::getInstance().getComponent<CompTransform>(target);
+        targetPosition = transformTarget.position;
+
+        debug_assert(GameState::getInstance().hasComponent<CompResource>(target),
+                     "Target entity is not a resource");
+
+        targetResource = &GameState::getInstance().getComponent<CompResource>(target).resource;
     }
 
     bool onExecute(uint32_t entityID, int deltaTimeMs) override
@@ -63,11 +79,12 @@ class CmdGatherResource : public Command
         }
         if (isCloseEnough())
         {
-            auto [transform, action, animation, dirty] =
+            auto [transform, action, animation, dirty, gatherer] =
                 GameState::getInstance()
-                    .getComponents<CompTransform, CompAction, CompAnimation, CompDirty>(entityID);
+                    .getComponents<CompTransform, CompAction, CompAnimation, CompDirty,
+                                   CompResourceGatherer>(entityID);
 
-            animate(action, animation, dirty, deltaTimeMs, entityID);
+            animate(action, gatherer, animation, dirty);
             gather(transform, deltaTimeMs);
         }
         return false;
@@ -109,25 +126,22 @@ class CmdGatherResource : public Command
 
     bool isCloseEnough()
     {
-        auto& transformTarget = GameState::getInstance().getComponent<CompTransform>(target);
         auto& transformMy = GameState::getInstance().getComponent<CompTransform>(entity);
-        return transformMy.position.distanceSquared(transformTarget.position) <
-               transformTarget.goalRadiusSquared;
+        return transformMy.position.distanceSquared(targetPosition) < transformMy.goalRadiusSquared;
     }
 
     void animate(CompAction& action,
+                 CompResourceGatherer& gatherer,
                  CompAnimation& animation,
-                 CompDirty& dirty,
-                 int deltaTimeMs,
-                 uint32_t entityId)
+                 CompDirty& dirty)
     {
-        action.action = 2; // TODO: Not good
+        action.action = gatherer.getGatheringAction(targetResource->type);
         auto& actionAnimation = animation.animations[action.action];
 
         auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.speed;
         if (s_totalTicks % ticksPerFrame == 0)
         {
-            dirty.markDirty(entityId);
+            dirty.markDirty(entity);
             animation.frame++;
             animation.frame %= actionAnimation.frames;
         }
@@ -135,26 +149,18 @@ class CmdGatherResource : public Command
 
     void gather(CompTransform& transform, int deltaTimeMs)
     {
-        collectedWood += float(choppingSpeed) * deltaTimeMs / 1000.0f;
-        uint32_t rounded = collectedWood;
-        collectedWood -= rounded;
+        collectedResourceAmount += float(choppingSpeed) * deltaTimeMs / 1000.0f;
+        uint32_t rounded = collectedResourceAmount;
+        collectedResourceAmount -= rounded;
 
         if (rounded != 0)
         {
-            if (GameState::getInstance().hasComponent<CompResource>(target))
-            {
-                auto [resource, dirty] =
-                    GameState::getInstance().getComponents<CompResource, CompDirty>(target);
+            auto& dirty = GameState::getInstance().getComponent<CompDirty>(target);
 
-                auto actualDelta = std::min(resource.resource.amount, rounded);
-                resource.resource.amount -= actualDelta;
-                player->grantResource(resource.resource.type, actualDelta);
-                dirty.markDirty(target);
-            }
-            else
-            {
-                spdlog::error("Target entity {} is not a resouce", target);
-            }
+            auto actualDelta = std::min(targetResource->amount, rounded);
+            targetResource->amount -= actualDelta;
+            player->grantResource(targetResource->type, actualDelta);
+            dirty.markDirty(target);
         }
     }
 
@@ -164,19 +170,15 @@ class CmdGatherResource : public Command
         auto& transformMy = GameState::getInstance().getComponent<CompTransform>(entity);
         auto tilePos = coordinateSystem->feetToTiles(transformMy.position);
 
-        auto& resource = GameState::getInstance().getComponent<CompResource>(target);
+        auto newResource = findClosestResource(targetResource->type, tilePos,
+                                               Constants::MAX_RESOURCE_LOOKUP_RADIUS);
 
-        auto otherResource = findClosestResource(resource.resource.type, tilePos,
-                                                 Constants::MAX_RESOURCE_LOOKUP_RADIUS);
-
-        if (otherResource != entt::null)
+        if (newResource != entt::null)
         {
-            spdlog::debug("Found resource {}", otherResource);
-            target = otherResource;
-            auto& transformTarget = GameState::getInstance().getComponent<CompTransform>(target);
-            targetPosition = transformTarget.position;
+            spdlog::debug("Found resource {}", newResource);
+            setTarget(newResource);
         }
-        return otherResource != entt::null;
+        return newResource != entt::null;
     }
 
     bool hasResource(uint8_t resourceType, const Vec2d& posTile, uint32_t& resourceEntity)

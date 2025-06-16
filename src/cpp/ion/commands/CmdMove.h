@@ -65,7 +65,7 @@ class CmdMove : public Command
                  int deltaTimeMs,
                  uint32_t entityId)
     {
-        action.action = 1; // TODO: Not good
+        action.action = Actions::MOVE;
         auto& actionAnimation = animation.animations[action.action];
 
         auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.speed;

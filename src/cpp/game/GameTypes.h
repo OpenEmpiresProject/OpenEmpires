@@ -15,6 +15,11 @@ enum BaseEntitySubTypes
     UI_LABEL = 2
 };
 
+enum ResourceType : uint8_t
+{
+    WOOD = 0
+};
+
 } // namespace game
 
 #endif

@@ -87,10 +87,6 @@ void Simulator::onKeyUp(const Event& e)
         GameState::getInstance().destroyEntity(m_currentBuildingOnPlacement);
         m_currentBuildingOnPlacement = entt::null;
     }
-    else if (scancode == SDL_SCANCODE_KP_MINUS)
-    {
-        cutTreeTest(10);
-    }
 }
 
 void Simulator::onKeyDown(const Event& e)
@@ -400,7 +396,7 @@ void Simulator::resolveAction(const Vec2d& screenPos)
     }
 }
 
-void ion::Simulator::testBuild(const Vec2d& targetFeetPos, int buildingType, Size size)
+void Simulator::testBuild(const Vec2d& targetFeetPos, int buildingType, Size size)
 {
     auto& gameState = GameState::getInstance();
     auto mill = gameState.createEntity();
@@ -543,42 +539,6 @@ uint32_t Simulator::whatIsAt(const Vec2d& screenPos)
         }
     }
     return entt::null;
-}
-
-void Simulator::cutTreeTest(uint16_t delta)
-{
-    // It isn't possible to select multiple trees at once, so if the current selection
-    // has more than 1 entity, then there can't be a tree in it.
-    if (m_currentUnitSelection.selectedEntities.size() == 1)
-    {
-        auto tree = m_currentUnitSelection.selectedEntities[0];
-
-        if (GameState::getInstance().hasComponent<CompResource>(tree))
-        {
-            auto [resource, dirty, info, select] =
-                GameState::getInstance()
-                    .getComponents<CompResource, CompDirty, CompEntityInfo, CompSelectible>(tree);
-            resource.resource.amount =
-                resource.resource.amount < delta ? 0 : resource.resource.amount - delta;
-            if (resource.resource.amount == 0)
-            {
-                info.isDestroyed = true;
-            }
-            else
-            {
-                info.entitySubType = 1;
-                info.variation = 0; //  regardless of the tree type, this is the chopped version
-                // TODO: Might not be the most optimal way to bring down the bounding box a chopped
-                // tree
-                auto tw = Constants::TILE_PIXEL_WIDTH;
-                auto th = Constants::TILE_PIXEL_HEIGHT;
-                select.boundingBoxes[static_cast<int>(Direction::NONE)] =
-                    Rect<int>(tw / 2, th / 2, tw, th);
-            }
-            dirty.markDirty(tree);
-            spdlog::info("Tree has {} resources", resource.resource.amount);
-        }
-    }
 }
 
 void Simulator::sendGraphiInstruction(CompGraphics* instruction)

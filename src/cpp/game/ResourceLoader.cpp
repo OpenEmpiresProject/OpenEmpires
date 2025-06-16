@@ -5,7 +5,6 @@
 #include "Player.h"
 #include "PlayerManager.h"
 #include "Renderer.h"
-#include "ResourceTypes.h"
 #include "ServiceRegistry.h"
 #include "SubSystemRegistry.h"
 #include "UI.h"
@@ -19,6 +18,7 @@
 #include "components/CompPlayer.h"
 #include "components/CompRendering.h"
 #include "components/CompResource.h"
+#include "components/CompResourceGatherer.h"
 #include "components/CompSelectible.h"
 #include "components/CompTransform.h"
 #include "components/CompUnit.h"
@@ -109,17 +109,17 @@ void ResourceLoader::loadEntities()
         transform.speed = 256;
 
         CompAnimation anim;
-        anim.animations[0].frames = 15;
-        anim.animations[0].repeatable = true;
-        anim.animations[0].speed = 10;
+        anim.animations[Actions::IDLE].frames = 15;
+        anim.animations[Actions::IDLE].repeatable = true;
+        anim.animations[Actions::IDLE].speed = 10;
 
-        anim.animations[1].frames = 15;
-        anim.animations[1].repeatable = true;
-        anim.animations[1].speed = 15;
+        anim.animations[Actions::MOVE].frames = 15;
+        anim.animations[Actions::MOVE].repeatable = true;
+        anim.animations[Actions::MOVE].speed = 15;
 
-        anim.animations[2].frames = 15;
-        anim.animations[2].repeatable = true;
-        anim.animations[2].speed = 15;
+        anim.animations[Actions::CHOPPING].frames = 15;
+        anim.animations[Actions::CHOPPING].repeatable = true;
+        anim.animations[Actions::CHOPPING].speed = 15;
 
         gameState.addComponent(villager, transform);
         gameState.addComponent(villager, CompRendering());
@@ -147,6 +147,11 @@ void ResourceLoader::loadEntities()
 
         gameState.addComponent(villager, sc);
         gameState.addComponent(villager, CompPlayer{player});
+
+        CompResourceGatherer gatherer{
+            .gatheringAction = {{ResourceType::WOOD, Actions::CHOPPING}},
+        };
+        gameState.addComponent(villager, gatherer);
     }
 
     generateMap(gameState.gameMap);

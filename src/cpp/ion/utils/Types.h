@@ -65,6 +65,15 @@ static std::string directionToString(Direction direction)
     }
 }
 
+enum Actions
+{
+    IDLE = 0,
+    MOVE = 1,
+    CHOPPING = 2,
+    MINING = 3,
+    BUILDING = 4
+};
+
 } // namespace ion
 
 #endif

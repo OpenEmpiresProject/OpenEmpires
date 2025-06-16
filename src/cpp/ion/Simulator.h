@@ -49,7 +49,6 @@ class Simulator : public EventHandler
     void addEntitiesToSelection(const std::vector<uint32_t>& selectedEntities);
     void clearSelection();
     uint32_t whatIsAt(const Vec2d& screenPos);
-    void cutTreeTest(uint16_t delta);
 
     std::shared_ptr<Coordinates> m_coordinates;
     ThreadSynchronizer<FrameData>& m_synchronizer;

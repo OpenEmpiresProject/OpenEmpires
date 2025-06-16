@@ -1,7 +1,7 @@
 #include "HUD.h"
 
+#include "GameTypes.h"
 #include "PlayerManager.h"
-#include "ResourceTypes.h"
 #include "ServiceRegistry.h"
 #include "UIManager.h"
 #include "utils/Logger.h"
