@@ -15,7 +15,8 @@ class CompTransform
     int rotation = 0;     // Rotation in degrees from feet North (0 degrees is up)
     bool hasRotation = false;
     int speed = 0; // Speed in feet per second
-    int goalRadiusSquared = 100;
+    int goalRadiusSquared = 1000;
+    int goalRadius = 100;
     int selectionBoxWidth = 15;
     int selectionBoxHeight = 30;
     int collisionRadius = 10; // TODO: not every entity would be circular

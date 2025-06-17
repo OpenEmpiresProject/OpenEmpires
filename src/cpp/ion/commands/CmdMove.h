@@ -94,7 +94,28 @@ class CmdMove : public Command
             else
             {
                 transform.face(nextPos);
-                transform.move(deltaTimeMs);
+
+                auto beforePos = transform.position;
+                auto coordinateSystem = ServiceRegistry::getInstance().getService<Coordinates>();
+
+                // Perform 3 attempts to move towards the goal with decreasing delta
+                // distances
+                for (size_t i = 1; i < 4; i++)
+                {
+                    transform.move(deltaTimeMs / i);
+                    auto newTilePos = coordinateSystem->feetToTiles(transform.position);
+
+                    // TODO: Might need a better obstacle avoidance system
+                    if (GameState::getInstance().gameMap.isOccupied(MapLayerType::STATIC, newTilePos) == false)
+                    {
+                        return path.empty();
+                    }
+                    transform.position = beforePos;
+                }
+                // If the unit couldn't move after 3 attempts, it is the end of movement. Can't move forward
+                // as it is blocked.
+                transform.position = beforePos;
+                return true;
             }
         }
         return path.empty();
