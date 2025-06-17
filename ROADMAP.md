@@ -35,8 +35,8 @@ We use milestone versions for planning. Early versions are experimental. Feature
 - [x] Resource UI panel
 - [ ] Resource drop-off points
 - [ ] Group path finding (with flow fields)
-- [ ] Stone and gold mines as gatherable resources
-- [ ] Resource collection (stone, gold)
+- [x] Stone and gold mines as gatherable resources
+- [x] Resource collection (stone, gold)
 - [ ] LOS (Line of Sight) 
 - [ ] Fog of war
 
