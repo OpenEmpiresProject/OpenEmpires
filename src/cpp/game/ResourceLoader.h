@@ -4,6 +4,7 @@
 #include "DRSFile.h"
 #include "GameSettings.h"
 #include "GameState.h"
+#include "GameTypes.h"
 #include "GraphicsRegistry.h"
 #include "GridMap.h"
 #include "Renderer.h"
@@ -29,8 +30,12 @@ class ResourceLoader : public ion::SubSystem
     void loadEntities();
     void generateMap(ion::GridMap& gameMap);
     void createTree(ion::GridMap& gameMap, uint32_t x, uint32_t y);
-    void createStoneCluster(ion::GridMap& gameMap, uint32_t xHint, uint32_t yHint, uint8_t amount);
-    void createStone(ion::GridMap& gameMap, uint32_t x, uint32_t y);
+    void createStoneOrGoldCluster(EntityTypes entityType,
+                                  ion::GridMap& gameMap,
+                                  uint32_t xHint,
+                                  uint32_t yHint,
+                                  uint8_t amount);
+    void createStoneOrGold(EntityTypes entityType, ion::GridMap& gameMap, uint32_t x, uint32_t y);
 
     std::shared_ptr<ion::GameSettings> m_settings;
     ion::GraphicsRegistry& m_graphicsRegistry;

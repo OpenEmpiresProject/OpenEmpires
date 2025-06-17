@@ -154,13 +154,15 @@ void ResourceLoader::loadEntities()
 
         CompResourceGatherer gatherer{
             .gatheringAction = {{ResourceType::WOOD, Actions::CHOPPING},
-                                {ResourceType::STONE, Actions::MINING}},
+                                {ResourceType::STONE, Actions::MINING},
+                                {ResourceType::GOLD, Actions::MINING}},
         };
         gameState.addComponent(villager, gatherer);
     }
 
     generateMap(gameState.gameMap);
-    createStoneCluster(gameState.gameMap, 30, 30, 4);
+    createStoneOrGoldCluster(EntityTypes::ET_STONE, gameState.gameMap, 30, 30, 4);
+    createStoneOrGoldCluster(EntityTypes::ET_GOLD, gameState.gameMap, 20, 30, 4);
     // createTree(gameState.gameMap, 5, 5);
 
     GraphicsID resourcePanelBackground{
@@ -189,6 +191,15 @@ void ResourceLoader::loadEntities()
     stoneLabel->text = "0";
     stoneLabel->rect = Rect<int>(265, 5, 50, 20);
     stoneLabel->name = "stone";
+
+    GraphicsID goldAmountLabel{
+        .entityType = EntityTypes::ET_UI_ELEMENT,
+        .entitySubType = EntitySubTypes::UI_LABEL,
+    };
+    auto goldLabel = window->createChild<ui::Label>(goldAmountLabel);
+    goldLabel->text = "0";
+    goldLabel->rect = Rect<int>(195, 5, 50, 20);
+    goldLabel->name = "gold";
 
     spdlog::info("Entity loading successfully.");
 }
@@ -229,7 +240,10 @@ void ResourceLoader::createTree(GridMap& map, uint32_t x, uint32_t y)
     map.layers[MapLayerType::STATIC].cells[x][y].addEntity(tree);
 }
 
-void ResourceLoader::createStone(ion::GridMap& gameMap, uint32_t x, uint32_t y)
+void ResourceLoader::createStoneOrGold(EntityTypes entityType,
+                                       ion::GridMap& gameMap,
+                                       uint32_t x,
+                                       uint32_t y)
 {
     auto& gameState = GameState::getInstance();
 
@@ -242,12 +256,12 @@ void ResourceLoader::createStone(ion::GridMap& gameMap, uint32_t x, uint32_t y)
     gc.debugOverlays.push_back(
         {DebugOverlay::Type::CIRCLE, ion::Color::RED, DebugOverlay::FixedPosition::BOTTOM_CENTER});
     gc.entityID = stone;
-    gc.entityType = EntityTypes::ET_STONE;
+    gc.entityType = entityType;
     gc.entitySubType = 0;
     gc.layer = GraphicLayer::ENTITIES;
 
     gameState.addComponent(stone, gc);
-    gameState.addComponent(stone, CompEntityInfo(EntityTypes::ET_STONE, 0, rand() % 7));
+    gameState.addComponent(stone, CompEntityInfo(entityType, 0, rand() % 7));
     gameState.addComponent(stone, CompDirty());
 
     // TODO: This doesn't work. Need to conslidate resource and graphic loading and handle this
@@ -259,15 +273,17 @@ void ResourceLoader::createStone(ion::GridMap& gameMap, uint32_t x, uint32_t y)
         GraphicAddon::Rhombus{Constants::TILE_PIXEL_WIDTH, Constants::TILE_PIXEL_HEIGHT}};
 
     gameState.addComponent(stone, sc);
-    gameState.addComponent(stone, CompResource(Resource(ResourceType::STONE, 1000)));
+
+    ResourceType resourceType = ResourceType::STONE;
+    if (entityType == EntityTypes::ET_GOLD)
+        resourceType = ResourceType::GOLD;
+    gameState.addComponent(stone, CompResource(Resource(resourceType, 1000)));
 
     gameMap.layers[MapLayerType::STATIC].cells[x][y].addEntity(stone);
 }
 
-void ResourceLoader::createStoneCluster(ion::GridMap& gameMap,
-                                        uint32_t xHint,
-                                        uint32_t yHint,
-                                        uint8_t amount)
+void ResourceLoader::createStoneOrGoldCluster(
+    EntityTypes entityType, ion::GridMap& gameMap, uint32_t xHint, uint32_t yHint, uint8_t amount)
 {
     if (amount == 0)
         return;
@@ -323,7 +339,7 @@ void ResourceLoader::createStoneCluster(ion::GridMap& gameMap,
             continue;
 
         // Place a stone here
-        createStone(gameMap, cx, cy);
+        createStoneOrGold(entityType, gameMap, cx, cy);
         ++placed;
 
         cluster.emplace_back(cx, cy);
@@ -411,6 +427,7 @@ void ResourceLoader::init()
 {
     Resource::registerResourceType(ResourceType::WOOD);
     Resource::registerResourceType(ResourceType::STONE);
+    Resource::registerResourceType(ResourceType::GOLD);
     loadEntities();
 }
 

@@ -57,6 +57,8 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
     loadSLP(graphicsDRS, 1272, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
     loadSLP(graphicsDRS, 1034, EntityTypes::ET_STONE, 0, 0, renderer, graphicsRegistry,
             atlasGenerator);
+    loadSLP(graphicsDRS, 4479, EntityTypes::ET_GOLD, 0, 0, renderer, graphicsRegistry,
+            atlasGenerator);
     loadSLP(graphicsDRS, 3483, 5, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Mill
     loadSLP(graphicsDRS, 2278, 6, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Marketplace
     loadSLP(graphicsDRS, 1252, 4, 1, 0, renderer, graphicsRegistry, atlasGenerator); // Chopped tree
@@ -221,7 +223,8 @@ void loadSLP(shared_ptr<DRSFile> drs,
                 id.direction = Direction::NORTH;
             }
         }
-        else if (entityType == EntityTypes::ET_TREE || entityType == EntityTypes::ET_STONE)
+        else if (entityType == EntityTypes::ET_TREE || entityType == EntityTypes::ET_STONE ||
+                 entityType == EntityTypes::ET_GOLD)
         {
             for (size_t i = 0; i < 100; i++)
             {

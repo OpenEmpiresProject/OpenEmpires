@@ -13,6 +13,7 @@ enum EntityTypes
     ET_MILL = 5,
     ET_MARKETPLACE = 6,
     ET_STONE = 7,
+    ET_GOLD = 8,
     ET_UI_ELEMENT = 10000
 };
 
@@ -26,7 +27,8 @@ enum EntitySubTypes
 enum ResourceType : uint8_t
 {
     WOOD = 0,
-    STONE = 1
+    STONE = 1,
+    GOLD = 2
 };
 
 } // namespace game
