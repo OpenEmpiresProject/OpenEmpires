@@ -129,8 +129,9 @@ class CmdGatherResource : public Command
         auto& transformMy = GameState::getInstance().getComponent<CompTransform>(entity);
         auto threshold = transformMy.goalRadius + Constants::FEET_PER_TILE / 2;
         auto distanceSquared = transformMy.position.distanceSquared(targetPosition);
-        // spdlog::debug("Check closeness. my {}, target {}", transformMy.position.toString(), targetPosition.toString());
-        // spdlog::debug("Check closeness. distance {}, threshold {}", distanceSquared, threshold * threshold);
+        // spdlog::debug("Check closeness. my {}, target {}", transformMy.position.toString(),
+        // targetPosition.toString()); spdlog::debug("Check closeness. distance {}, threshold {}",
+        // distanceSquared, threshold * threshold);
         return transformMy.position.distanceSquared(targetPosition) < (threshold * threshold);
     }
 

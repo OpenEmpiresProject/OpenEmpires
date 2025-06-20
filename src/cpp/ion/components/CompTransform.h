@@ -4,6 +4,7 @@
 #include "Vec2d.h"
 #include "utils/Types.h"
 
+#include <cassert>
 #include <numbers>
 
 namespace ion
@@ -43,24 +44,20 @@ class CompTransform
         {
             rotation += 360.0;
         }
-
-        // if (prevRotation != rotation)
-        // {
-        //     spdlog::debug("current rotation: {}, current pos {}, target {}", rotation,
-        //     position.toString(), target.toString()); auto dir = getIsometricDirection();
-        //     spdlog::debug("rotation: {}, dir: {}", rotation, static_cast<int>(dir));
-        //     prevRotation = rotation;
-        // }
     }
 
-    void move(int timeMs)
+    void face(const Vec2d& relativeTo, const Vec2d& target)
     {
-        assert(speed > 0 && "Speed must be greater than zero");
-        // Update the position based on speed and time
-        auto rad = (std::numbers::pi * rotation) / 180;
-        auto timeS = (double) timeMs / 1000.0;
-        position.y -= speed * std::cos(rad) * timeS;
-        position.x += speed * std::sin(rad) * timeS;
+        // Calculate the angle to face the target position relative to the
+        // provided position rather than our own position
+        int deltaX = target.x - relativeTo.x;
+        int deltaY = target.y - relativeTo.y;
+        rotation = static_cast<int>(std::atan2(deltaX, -deltaY) * 180 / std::numbers::pi);
+
+        if (rotation < 0)
+        {
+            rotation += 360.0;
+        }
     }
 
     Direction getIsometricDirection() const

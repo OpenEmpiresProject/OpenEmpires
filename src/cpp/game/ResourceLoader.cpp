@@ -1,8 +1,8 @@
 #include "ResourceLoader.h"
 
+#include "Coordinates.h"
 #include "GameState.h"
 #include "GameTypes.h"
-#include "Player.h"
 #include "PlayerManager.h"
 #include "Renderer.h"
 #include "ServiceRegistry.h"
@@ -101,64 +101,8 @@ void ResourceLoader::loadEntities()
         }
     }
 
-    {
-        auto villager = gameState.createEntity();
-        auto transform = CompTransform(20 * 256 + 128, 20 * 256 + 50);
-        transform.face(Direction::SOUTH);
-        transform.hasRotation = true;
-        transform.speed = 256;
-
-        CompAnimation anim;
-        anim.animations[Actions::IDLE].frames = 15;
-        anim.animations[Actions::IDLE].repeatable = true;
-        anim.animations[Actions::IDLE].speed = 10;
-
-        anim.animations[Actions::MOVE].frames = 15;
-        anim.animations[Actions::MOVE].repeatable = true;
-        anim.animations[Actions::MOVE].speed = 15;
-
-        anim.animations[Actions::CHOPPING].frames = 15;
-        anim.animations[Actions::CHOPPING].repeatable = true;
-        anim.animations[Actions::CHOPPING].speed = 15;
-
-        anim.animations[Actions::MINING].frames = 15;
-        anim.animations[Actions::MINING].repeatable = true;
-        anim.animations[Actions::MINING].speed = 15;
-
-        gameState.addComponent(villager, transform);
-        gameState.addComponent(villager, CompRendering());
-        gameState.addComponent(villager, CompEntityInfo(3));
-        gameState.addComponent(villager, CompAction(0));
-        gameState.addComponent(villager, anim);
-        gameState.addComponent(villager, CompDirty());
-
-        // villager goes idle by default
-        CompUnit unit;
-        unit.commandQueue.push(ObjectPool<CmdIdle>::acquire());
-        gameState.addComponent(villager, unit);
-
-        CompGraphics gc;
-        gc.entityID = villager;
-        gc.entityType = EntityTypes::ET_VILLAGER;
-        gc.layer = GraphicLayer::ENTITIES;
-        gameState.addComponent(villager, gc);
-
-        CompSelectible sc;
-        auto box = getBoundingBox(m_drs, 1388, 1);
-        sc.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
-        sc.selectionIndicator = {GraphicAddon::Type::ISO_CIRCLE,
-                                 GraphicAddon::IsoCircle{10, Vec2d{0, 0}}};
-
-        gameState.addComponent(villager, sc);
-        gameState.addComponent(villager, CompPlayer{player});
-
-        CompResourceGatherer gatherer{
-            .gatheringAction = {{ResourceType::WOOD, Actions::CHOPPING},
-                                {ResourceType::STONE, Actions::MINING},
-                                {ResourceType::GOLD, Actions::MINING}},
-        };
-        gameState.addComponent(villager, gatherer);
-    }
+    createVillager(player, Vec2d{20, 20});
+    // createVillager(player, Vec2d{22, 20});
 
     generateMap(gameState.gameMap);
     createStoneOrGoldCluster(EntityTypes::ET_STONE, gameState.gameMap, 30, 30, 4);
@@ -280,6 +224,71 @@ void ResourceLoader::createStoneOrGold(EntityTypes entityType,
     gameState.addComponent(stone, CompResource(Resource(resourceType, 1000)));
 
     gameMap.layers[MapLayerType::STATIC].cells[x][y].addEntity(stone);
+}
+
+void ResourceLoader::createVillager(Ref<ion::Player> player, const Vec2d& tilePos)
+{
+    auto& gameState = GameState::getInstance();
+    auto villager = gameState.createEntity();
+    auto transform = CompTransform(tilePos.x * 256 + 128, tilePos.x * 256 + 50);
+    transform.face(Direction::SOUTH);
+    transform.hasRotation = true;
+    transform.speed = 256;
+
+    CompAnimation anim;
+    anim.animations[Actions::IDLE].frames = 15;
+    anim.animations[Actions::IDLE].repeatable = true;
+    anim.animations[Actions::IDLE].speed = 10;
+
+    anim.animations[Actions::MOVE].frames = 15;
+    anim.animations[Actions::MOVE].repeatable = true;
+    anim.animations[Actions::MOVE].speed = 15;
+
+    anim.animations[Actions::CHOPPING].frames = 15;
+    anim.animations[Actions::CHOPPING].repeatable = true;
+    anim.animations[Actions::CHOPPING].speed = 15;
+
+    anim.animations[Actions::MINING].frames = 15;
+    anim.animations[Actions::MINING].repeatable = true;
+    anim.animations[Actions::MINING].speed = 15;
+
+    gameState.addComponent(villager, transform);
+    gameState.addComponent(villager, CompRendering());
+    gameState.addComponent(villager, CompEntityInfo(3));
+    gameState.addComponent(villager, CompAction(0));
+    gameState.addComponent(villager, anim);
+    gameState.addComponent(villager, CompDirty());
+
+    // villager goes idle by default
+    CompUnit unit;
+    unit.commandQueue.push(ObjectPool<CmdIdle>::acquire());
+    gameState.addComponent(villager, unit);
+
+    CompGraphics gc;
+    gc.entityID = villager;
+    gc.entityType = EntityTypes::ET_VILLAGER;
+    gc.layer = GraphicLayer::ENTITIES;
+    gameState.addComponent(villager, gc);
+
+    CompSelectible sc;
+    auto box = getBoundingBox(m_drs, 1388, 1);
+    sc.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
+    sc.selectionIndicator = {GraphicAddon::Type::ISO_CIRCLE,
+                             GraphicAddon::IsoCircle{10, Vec2d{0, 0}}};
+
+    gameState.addComponent(villager, sc);
+    gameState.addComponent(villager, CompPlayer{player});
+
+    CompResourceGatherer gatherer{
+        .gatheringAction = {{ResourceType::WOOD, Actions::CHOPPING},
+                            {ResourceType::STONE, Actions::MINING},
+                            {ResourceType::GOLD, Actions::MINING}},
+    };
+    gameState.addComponent(villager, gatherer);
+
+    auto coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
+    auto newTile = coordinates->feetToTiles(transform.position);
+    gameState.gameMap.addEntity(MapLayerType::UNITS, newTile, villager);
 }
 
 void ResourceLoader::createStoneOrGoldCluster(

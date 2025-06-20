@@ -5,14 +5,15 @@
 #include "debug.h"
 #include "utils/Logger.h"
 
+#include <algorithm>
 #include <entt/entity/registry.hpp>
-#include <vector>
+#include <list>
 
 namespace ion
 {
 struct MapCell
 {
-    std::vector<uint32_t> entities; // List of entities occupying this cell
+    std::list<uint32_t> entities; // List of entities occupying this cell
 
     inline bool isOccupied() const
     {
@@ -31,7 +32,7 @@ struct MapCell
 
     void removeEntity(uint32_t entity)
     {
-        entities.erase(std::remove(entities.begin(), entities.end(), entity), entities.end());
+        entities.remove(entity);
     }
 
     void removeAllEntities()
@@ -106,6 +107,31 @@ struct GridMap
         }
     }
 
+    inline bool isOccupiedByAnother(MapLayerType layerType,
+                                    const Vec2d& gridPos,
+                                    uint32_t myEntity) const
+    {
+        debug_assert(layerType < MapLayerType::MAX_LAYERS, "Invalid layer type {}",
+                     (int) layerType);
+
+        if (gridPos.x >= 0 && gridPos.y >= 0 && gridPos.x < width && gridPos.y < height) [[likely]]
+        {
+            if (layers[layerType].cells[gridPos.x][gridPos.y].isOccupied())
+            {
+                auto& entities = layers[layerType].cells[gridPos.x][gridPos.y].entities;
+
+                // Check if a value other than myEntity exist in the entities list
+                return std::any_of(entities.begin(), entities.end(),
+                                   [myEntity](uint32_t entity) { return entity != myEntity; });
+            }
+        }
+        else [[unlikely]]
+        {
+            spdlog::error("Invalid grid position: ({}, {})", gridPos.x, gridPos.y);
+            return false;
+        }
+    }
+
     /**
      * @brief Adds an entity to the specified map layer at the given grid position.
      *
@@ -130,6 +156,21 @@ struct GridMap
         {
             spdlog::error("Invalid grid position: ({}, {}) to add entity {}", gridPos.x, gridPos.y,
                           entity);
+        }
+    }
+
+    void removeEntity(MapLayerType layerType, const Vec2d& gridPos, uint32_t entity)
+    {
+        // debug_assert(layerType < MapLayerType::MAX_LAYERS, "Invalid layer type {}", layerType);
+
+        if (gridPos.x >= 0 && gridPos.y >= 0 && gridPos.x < width && gridPos.y < height) [[likely]]
+        {
+            layers[layerType].cells[gridPos.x][gridPos.y].removeEntity(entity);
+        }
+        else [[unlikely]]
+        {
+            spdlog::error("Invalid grid position: ({}, {}) to remove entity {}", gridPos.x,
+                          gridPos.y, entity);
         }
     }
 
@@ -161,6 +202,23 @@ struct GridMap
         {
             spdlog::error("Invalid grid position: ({}, {})", gridPos.x, gridPos.y);
             return entt::null;
+        }
+    }
+
+    const std::list<uint32_t>& getEntities(MapLayerType layerType, const Vec2d& gridPos) const
+    {
+        // debug_assert(layerType < MapLayerType::MAX_LAYERS, "Invalid layer type {}", layerType);
+        static const std::list<uint32_t> empty;
+
+        if (gridPos.x >= 0 && gridPos.y >= 0 && gridPos.x < width && gridPos.y < height) [[likely]]
+        {
+            auto& cell = layers[layerType].cells[gridPos.x][gridPos.y];
+            return cell.entities;
+        }
+        else [[unlikely]]
+        {
+            spdlog::error("Invalid grid position: ({}, {})", gridPos.x, gridPos.y);
+            return empty;
         }
     }
 

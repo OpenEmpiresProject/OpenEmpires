@@ -7,6 +7,7 @@
 #include "GameTypes.h"
 #include "GraphicsRegistry.h"
 #include "GridMap.h"
+#include "Player.h"
 #include "Renderer.h"
 #include "SubSystem.h"
 
@@ -36,6 +37,7 @@ class ResourceLoader : public ion::SubSystem
                                   uint32_t yHint,
                                   uint8_t amount);
     void createStoneOrGold(EntityTypes entityType, ion::GridMap& gameMap, uint32_t x, uint32_t y);
+    void createVillager(ion::Ref<ion::Player> player, const ion::Vec2d& pos);
 
     std::shared_ptr<ion::GameSettings> m_settings;
     ion::GraphicsRegistry& m_graphicsRegistry;
