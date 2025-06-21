@@ -657,7 +657,7 @@ void RendererImpl::renderGraphicAddons(const Vec2d& screenPos, CompRendering* rc
 
 void RendererImpl::renderBackground()
 {
-    SDL_SetRenderDrawColor(m_renderer, 30, 30, 30, 255);
+    SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
     SDL_RenderClear(m_renderer);
 }
 

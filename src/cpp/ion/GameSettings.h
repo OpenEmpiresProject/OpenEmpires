@@ -150,6 +150,16 @@ class GameSettings
         return m_targetFPS;
     }
 
+    RevealStatus getFOWRevealStatus() const
+    {
+        return m_fowTRevealStatus;
+    }
+
+    void setFOWRevealStatus(RevealStatus mode)
+    {
+        m_fowTRevealStatus = mode;
+    }
+
   private:
     Size m_resolution{800, 600};
     Size m_windowDimensions{800, 600};
@@ -162,6 +172,7 @@ class GameSettings
     int m_viewportMovingSpeed = 100;
     int m_ticksPerSecond = 60;
     int m_targetFPS = 60;
+    RevealStatus m_fowTRevealStatus = RevealStatus::UNEXPLORED;
 };
 } // namespace ion
 

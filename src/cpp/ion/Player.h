@@ -1,6 +1,7 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
+#include "FogOfWar.h"
 #include "Resource.h"
 
 #include <limits>
@@ -34,12 +35,18 @@ class Player
     void removeEntity(uint32_t entityId);
     bool isOwned(uint32_t entityId);
 
+    Ref<FogOfWar> getFOW() const
+    {
+        return m_fow;
+    }
+
     static constexpr uint8_t INVALID_ID = std::numeric_limits<uint8_t>::max();
 
   private:
     uint8_t m_id = INVALID_ID;
     std::vector<Resource> m_resources;
     std::unordered_set<uint8_t> m_ownedEntities;
+    Ref<FogOfWar> m_fow;
 };
 
 } // namespace ion

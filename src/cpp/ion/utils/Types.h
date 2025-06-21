@@ -74,6 +74,19 @@ enum Actions
     BUILDING = 4
 };
 
+enum class RevealStatus
+{
+    NONE = 0,
+    UNEXPLORED,
+    EXPLORED,
+    VISIBLE
+};
+
+template <typename T> inline int toInt(const T& t)
+{
+    return static_cast<int>(t);
+}
+
 } // namespace ion
 
 #endif

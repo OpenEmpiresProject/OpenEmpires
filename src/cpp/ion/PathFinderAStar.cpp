@@ -23,7 +23,7 @@ double heuristic(const Vec2d& a, const Vec2d& b)
 bool isBlocked(const GridMap& map, const Vec2d& pos)
 {
     if (pos.x < 0 || pos.x >= map.width || pos.y < 0 || pos.y >= map.height ||
-        map.layers[MapLayerType::STATIC].cells[pos.x][pos.y].isOccupied())
+        map.isOccupied(MapLayerType::STATIC, pos))
         return true;
     return false;
 }

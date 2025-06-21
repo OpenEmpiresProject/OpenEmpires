@@ -7,6 +7,7 @@ enum EntityTypes
 {
     ET_UNKNOWN = 0,
 
+    ET_BLACK_TILE = 1,
     ET_TILE = 2,
     ET_VILLAGER = 3,
     ET_TREE = 4,

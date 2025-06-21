@@ -48,6 +48,13 @@ struct CommandRequestData
     uint32_t entity = entt::null;
 };
 
+struct UnitTileMovementData
+{
+    uint32_t unit;
+    Vec2d tile;
+    Vec2d positionFeet;
+};
+
 struct Event
 {
     enum class Type
@@ -60,6 +67,7 @@ struct Event
         MOUSE_BTN_DOWN,
         MOUSE_BTN_UP,
         UNIT_SELECTION,
+        UNIT_TILE_MOVEMENT,
         COMMAND_REQUEST,
         MAX_TYPE_MARKER,
     };
@@ -70,7 +78,8 @@ struct Event
                               KeyboardData,
                               MouseMoveData,
                               UnitSelectionData,
-                              CommandRequestData>;
+                              CommandRequestData,
+                              UnitTileMovementData>;
 
     const Type type = Type::NONE;
     const Data data = std::monostate{};

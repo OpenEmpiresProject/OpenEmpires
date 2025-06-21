@@ -4,6 +4,7 @@
 #include "Vec2d.h"
 #include "debug.h"
 #include "utils/Logger.h"
+#include "utils/Types.h"
 
 #include <algorithm>
 #include <entt/entity/registry.hpp>
@@ -46,12 +47,12 @@ struct MapLayer
     MapCell** cells = nullptr;
 };
 
-enum MapLayerType
+enum class MapLayerType
 {
     GROUND = 0,
     STATIC,
     UNITS,
-
+    FOG_OF_WAR,
     // Add more layers here
 
     MAX_LAYERS
@@ -65,17 +66,17 @@ struct GridMap
 
     MapCell** getMap(MapLayerType layerType)
     {
-        return layers[layerType].cells;
+        return layers[toInt(layerType)].cells;
     }
 
     MapCell** getStaticMap()
     {
-        return layers[MapLayerType::STATIC].cells;
+        return layers[toInt(MapLayerType::STATIC)].cells;
     }
 
     MapCell** getGroundMap()
     {
-        return layers[MapLayerType::GROUND].cells;
+        return layers[toInt(MapLayerType::GROUND)].cells;
     }
 
     /**
@@ -93,12 +94,11 @@ struct GridMap
      */
     inline bool isOccupied(MapLayerType layerType, const Vec2d& gridPos) const
     {
-        debug_assert(layerType < MapLayerType::MAX_LAYERS, "Invalid layer type {}",
-                     (int) layerType);
+        auto layerTypeInt = toInt(layerType);
 
         if (gridPos.x >= 0 && gridPos.y >= 0 && gridPos.x < width && gridPos.y < height) [[likely]]
         {
-            return layers[layerType].cells[gridPos.x][gridPos.y].isOccupied();
+            return layers[layerTypeInt].cells[gridPos.x][gridPos.y].isOccupied();
         }
         else [[unlikely]]
         {
@@ -111,14 +111,13 @@ struct GridMap
                                     const Vec2d& gridPos,
                                     uint32_t myEntity) const
     {
-        debug_assert(layerType < MapLayerType::MAX_LAYERS, "Invalid layer type {}",
-                     (int) layerType);
+        auto layerTypeInt = toInt(layerType);
 
         if (gridPos.x >= 0 && gridPos.y >= 0 && gridPos.x < width && gridPos.y < height) [[likely]]
         {
-            if (layers[layerType].cells[gridPos.x][gridPos.y].isOccupied())
+            if (layers[layerTypeInt].cells[gridPos.x][gridPos.y].isOccupied())
             {
-                auto& entities = layers[layerType].cells[gridPos.x][gridPos.y].entities;
+                auto& entities = layers[layerTypeInt].cells[gridPos.x][gridPos.y].entities;
 
                 // Check if a value other than myEntity exist in the entities list
                 return std::any_of(entities.begin(), entities.end(),
@@ -146,11 +145,11 @@ struct GridMap
      */
     void addEntity(MapLayerType layerType, const Vec2d& gridPos, uint32_t entity)
     {
-        // debug_assert(layerType < MapLayerType::MAX_LAYERS, "Invalid layer type {}", layerType);
+        auto layerTypeInt = toInt(layerType);
 
         if (gridPos.x >= 0 && gridPos.y >= 0 && gridPos.x < width && gridPos.y < height) [[likely]]
         {
-            layers[layerType].cells[gridPos.x][gridPos.y].addEntity(entity);
+            layers[layerTypeInt].cells[gridPos.x][gridPos.y].addEntity(entity);
         }
         else [[unlikely]]
         {
@@ -161,16 +160,31 @@ struct GridMap
 
     void removeEntity(MapLayerType layerType, const Vec2d& gridPos, uint32_t entity)
     {
-        // debug_assert(layerType < MapLayerType::MAX_LAYERS, "Invalid layer type {}", layerType);
+        auto layerTypeInt = toInt(layerType);
 
         if (gridPos.x >= 0 && gridPos.y >= 0 && gridPos.x < width && gridPos.y < height) [[likely]]
         {
-            layers[layerType].cells[gridPos.x][gridPos.y].removeEntity(entity);
+            layers[layerTypeInt].cells[gridPos.x][gridPos.y].removeEntity(entity);
         }
         else [[unlikely]]
         {
             spdlog::error("Invalid grid position: ({}, {}) to remove entity {}", gridPos.x,
                           gridPos.y, entity);
+        }
+    }
+
+    void removeAllEntities(MapLayerType layerType, const Vec2d& gridPos)
+    {
+        auto layerTypeInt = toInt(layerType);
+
+        if (gridPos.x >= 0 && gridPos.y >= 0 && gridPos.x < width && gridPos.y < height) [[likely]]
+        {
+            layers[layerTypeInt].cells[gridPos.x][gridPos.y].removeAllEntities();
+        }
+        else [[unlikely]]
+        {
+            spdlog::error("Invalid grid position: ({}, {}) to remove all entities", gridPos.x,
+                          gridPos.y);
         }
     }
 
@@ -187,11 +201,11 @@ struct GridMap
      */
     uint32_t getEntity(MapLayerType layerType, const Vec2d& gridPos) const
     {
-        // debug_assert(layerType < MapLayerType::MAX_LAYERS, "Invalid layer type {}", layerType);
+        auto layerTypeInt = toInt(layerType);
 
         if (gridPos.x >= 0 && gridPos.y >= 0 && gridPos.x < width && gridPos.y < height) [[likely]]
         {
-            auto& cell = layers[layerType].cells[gridPos.x][gridPos.y];
+            auto& cell = layers[layerTypeInt].cells[gridPos.x][gridPos.y];
             if (cell.isOccupied())
             {
                 return cell.getEntity();
@@ -207,12 +221,12 @@ struct GridMap
 
     const std::list<uint32_t>& getEntities(MapLayerType layerType, const Vec2d& gridPos) const
     {
-        // debug_assert(layerType < MapLayerType::MAX_LAYERS, "Invalid layer type {}", layerType);
+        auto layerTypeInt = toInt(layerType);
         static const std::list<uint32_t> empty;
 
         if (gridPos.x >= 0 && gridPos.y >= 0 && gridPos.x < width && gridPos.y < height) [[likely]]
         {
-            auto& cell = layers[layerType].cells[gridPos.x][gridPos.y];
+            auto& cell = layers[layerTypeInt].cells[gridPos.x][gridPos.y];
             return cell.entities;
         }
         else [[unlikely]]
@@ -238,8 +252,9 @@ struct GridMap
     {
         this->width = width;
         this->height = height;
-        layers = new MapLayer[static_cast<size_t>(MapLayerType::MAX_LAYERS)];
-        for (size_t i = 0; i < static_cast<size_t>(MapLayerType::MAX_LAYERS); i++)
+        int maxLayers = toInt(MapLayerType::MAX_LAYERS) + 1;
+        layers = new MapLayer[maxLayers];
+        for (size_t i = 0; i < maxLayers; i++)
         {
             auto& layer = layers[i];
 

@@ -25,11 +25,12 @@ class PlayerManager : public EventHandler
 
   private:
     uint8_t getNextPlayerId() const;
-    void onEvent(const Event& e) override;
-    void onTick(const Event& e);
+    void onUnitTileMovement(const Event& e);
+    void onToggleFOW(const Event& e);
 
     std::vector<Ref<Player>> m_players;
     std::unordered_map<uint8_t, Ref<Player>> m_playersById;
+    bool m_fowEnabled = true;
 };
 
 } // namespace ion

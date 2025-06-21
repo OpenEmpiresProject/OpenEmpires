@@ -71,43 +71,19 @@ void ResourceLoader::loadEntities()
     {
         for (size_t j = 0; j < size.height; j++)
         {
-            auto tile = gameState.createEntity();
-            gameState.addComponent(tile, CompTransform(i * 256, j * 256));
-            gameState.addComponent(tile, CompRendering());
-            // tc = sqrt(total_tile_frame_count)
-            int tc = 10;
-            // Convet our top corner based coordinate to left corner based coordinate
-            int newX = size.height - j;
-            int newY = i;
-            // AOE2 standard tiling rule. From OpenAge documentation
-            int tileVariation = (newX % tc) + ((newY % tc) * tc) + 1;
-            gameState.addComponent(tile, CompEntityInfo(2, 0, tileVariation));
-            gameState.addComponent(tile, CompDirty());
-
-            auto map = gameState.gameMap;
-            map.layers[MapLayerType::GROUND].cells[i][j].addEntity(tile);
-
-            CompGraphics gc;
-            gc.entityID = tile;
-            gc.entityType = EntityTypes::ET_TILE;
-            gc.layer = GraphicLayer::GROUND;
-            DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, ion::Color::GREY,
-                                 DebugOverlay::FixedPosition::BOTTOM_CENTER};
-            overlay.customPos1 = DebugOverlay::FixedPosition::CENTER_LEFT;
-            overlay.customPos2 = DebugOverlay::FixedPosition::CENTER_RIGHT;
-            gc.debugOverlays.push_back(overlay);
-
-            gameState.addComponent(tile, gc);
+            createTile(i, j, gameState, EntityTypes::ET_TILE, false);
+            createTile(i, j, gameState, EntityTypes::ET_BLACK_TILE, true);
         }
     }
 
-    createVillager(player, Vec2d{20, 20});
     // createVillager(player, Vec2d{22, 20});
 
     generateMap(gameState.gameMap);
     createStoneOrGoldCluster(EntityTypes::ET_STONE, gameState.gameMap, 30, 30, 4);
     createStoneOrGoldCluster(EntityTypes::ET_GOLD, gameState.gameMap, 20, 30, 4);
     // createTree(gameState.gameMap, 5, 5);
+
+    createVillager(player, Vec2d{20, 20});
 
     GraphicsID resourcePanelBackground{
         .entityType = EntityTypes::ET_UI_ELEMENT,
@@ -181,7 +157,7 @@ void ResourceLoader::createTree(GridMap& map, uint32_t x, uint32_t y)
     gameState.addComponent(tree, sc);
     gameState.addComponent(tree, CompResource(Resource(ResourceType::WOOD, 100)));
 
-    map.layers[MapLayerType::STATIC].cells[x][y].addEntity(tree);
+    map.addEntity(MapLayerType::STATIC, Vec2d(x, y), tree);
 }
 
 void ResourceLoader::createStoneOrGold(EntityTypes entityType,
@@ -223,7 +199,7 @@ void ResourceLoader::createStoneOrGold(EntityTypes entityType,
         resourceType = ResourceType::GOLD;
     gameState.addComponent(stone, CompResource(Resource(resourceType, 1000)));
 
-    gameMap.layers[MapLayerType::STATIC].cells[x][y].addEntity(stone);
+    gameMap.addEntity(MapLayerType::STATIC, Vec2d(x, y), stone);
 }
 
 void ResourceLoader::createVillager(Ref<ion::Player> player, const Vec2d& tilePos)
@@ -289,6 +265,8 @@ void ResourceLoader::createVillager(Ref<ion::Player> player, const Vec2d& tilePo
     auto coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
     auto newTile = coordinates->feetToTiles(transform.position);
     gameState.gameMap.addEntity(MapLayerType::UNITS, newTile, villager);
+
+    player->getFOW()->markAsExplored(transform.position, 5);
 }
 
 void ResourceLoader::createStoneOrGoldCluster(
@@ -299,13 +277,12 @@ void ResourceLoader::createStoneOrGoldCluster(
 
     const auto width = gameMap.width;
     const auto height = gameMap.height;
-    auto& layer = gameMap.layers[MapLayerType::STATIC];
 
     std::vector<std::pair<uint32_t, uint32_t>> cluster;
     std::vector<std::pair<uint32_t, uint32_t>> frontier;
 
     auto isValid = [&](uint32_t x, uint32_t y)
-    { return x < width && y < height && !layer.cells[x][y].isOccupied(); };
+    { return x < width && y < height && !gameMap.isOccupied(MapLayerType::STATIC, Vec2d(x, y)); };
 
     // Try to start from the hint or nearby
     if (!isValid(xHint, yHint))
@@ -405,7 +382,7 @@ void ResourceLoader::generateMap(GridMap& gameMap)
                 if (x >= midXStart && x <= midXEnd && y >= midYStart && y <= midYEnd)
                     continue;
 
-                if (gameMap.layers[MapLayerType::STATIC].cells[x][y].isOccupied() == false)
+                if (gameMap.isOccupied(MapLayerType::STATIC, {x, y}) == false)
                 {
                     createTree(gameMap, x, y);
                     ++treesPlaced;
@@ -424,12 +401,55 @@ void ResourceLoader::generateMap(GridMap& gameMap)
         if (x >= midXStart && x <= midXEnd && y >= midYStart && y <= midYEnd)
             continue;
 
-        if (gameMap.layers[MapLayerType::STATIC].cells[x][y].isOccupied() == false)
+        if (gameMap.isOccupied(MapLayerType::STATIC, {x, y}) == false)
         {
             createTree(gameMap, x, y);
             ++treesPlaced;
         }
     }
+}
+
+void ResourceLoader::createTile(
+    uint32_t x, uint32_t y, ion::GameState& gameState, EntityTypes entityType, bool isFOW)
+{
+    auto size = m_settings->getWorldSizeInTiles();
+
+    auto tile = gameState.createEntity();
+    gameState.addComponent(tile, CompTransform(x * 256, y * 256));
+    gameState.addComponent(tile, CompRendering());
+    gameState.addComponent(tile, CompDirty());
+
+    CompGraphics gc;
+    gc.entityID = tile;
+    gc.entityType = entityType;
+    if (!isFOW)
+    {
+        // tc = sqrt(total_tile_frame_count)
+        int tc = 10;
+        // Convet our top corner based coordinate to left corner based coordinate
+        int newX = size.height - y;
+        int newY = x;
+        // AOE2 standard tiling rule. From OpenAge documentation
+        int tileVariation = (newX % tc) + ((newY % tc) * tc) + 1;
+        gameState.addComponent(tile, CompEntityInfo(entityType, 0, tileVariation));
+
+        DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, ion::Color::GREY,
+                             DebugOverlay::FixedPosition::BOTTOM_CENTER};
+        overlay.customPos1 = DebugOverlay::FixedPosition::CENTER_LEFT;
+        overlay.customPos2 = DebugOverlay::FixedPosition::CENTER_RIGHT;
+        gc.debugOverlays.push_back(overlay);
+        gc.layer = GraphicLayer::GROUND;
+
+        auto map = gameState.gameMap;
+        map.addEntity(MapLayerType::GROUND, Vec2d(x, y), tile);
+    }
+    else
+    {
+        gameState.addComponent(tile, CompEntityInfo(entityType, 0, 0));
+        gc.layer = GraphicLayer::FOG;
+        gameState.gameMap.addEntity(MapLayerType::FOG_OF_WAR, Vec2d(x, y), tile);
+    }
+    gameState.addComponent(tile, gc);
 }
 
 void ResourceLoader::init()

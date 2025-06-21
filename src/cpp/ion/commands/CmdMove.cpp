@@ -1,5 +1,6 @@
 #include "CmdMove.h"
 
+#include "EventPublisher.h"
 #include "GameState.h"
 #include "ServiceRegistry.h"
 #include "components/CompGraphics.h"
@@ -121,6 +122,9 @@ void CmdMove::setPosition(CompTransform& transform, const Vec2d& newPosFeet)
     {
         GameState::getInstance().gameMap.removeEntity(MapLayerType::UNITS, oldTile, entity);
         GameState::getInstance().gameMap.addEntity(MapLayerType::UNITS, newTile, entity);
+
+        publishEvent(Event::Type::UNIT_TILE_MOVEMENT,
+                     UnitTileMovementData{entity, newTile, transform.position});
     }
     transform.position = newPosFeet;
 }
@@ -146,7 +150,7 @@ std::list<Vec2d> CmdMove::findPath(const Vec2d& endPosInFeet, uint32_t entity)
         for (Vec2d node : path)
         {
             // map.map[node.x][node.y] = 2;
-            auto entity = map.layers[MapLayerType::GROUND].cells[node.x][node.y].getEntity();
+            auto entity = map.getEntity(MapLayerType::GROUND, node);
             if (entity != entt::null)
             {
                 // TODO: Should avoid manipulating CompGraphics directly

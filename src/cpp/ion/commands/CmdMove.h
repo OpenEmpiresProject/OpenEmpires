@@ -2,6 +2,7 @@
 #define CMDMOVE_H
 
 #include "Coordinates.h"
+#include "Player.h"
 #include "Vec2d.h"
 #include "commands/Command.h"
 #include "components/CompAction.h"
@@ -23,6 +24,7 @@ class CmdMove : public Command
     std::list<Vec2d> path;
     uint32_t entity = entt::null;
     Ref<Coordinates> coordinates;
+    Ref<Player> player;
 
     void onStart() override;
     void onQueue(uint32_t entityID) override;

@@ -1,5 +1,6 @@
 #include "Player.h"
 
+#include "ServiceRegistry.h"
 #include "debug.h"
 
 using namespace ion;
@@ -19,6 +20,10 @@ void Player::init(uint8_t id)
     {
         m_resources.push_back(Resource(i, 0));
     }
+    m_fow = CreateRef<FogOfWar>();
+    auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
+    m_fow->init(settings->getWorldSizeInTiles().width, settings->getWorldSizeInTiles().height,
+                settings->getFOWRevealStatus());
 }
 
 void Player::grantResource(uint8_t resourceType, uint32_t amount)

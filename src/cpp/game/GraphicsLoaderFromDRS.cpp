@@ -3,6 +3,7 @@
 #include "DRSFile.h"
 #include "GameTypes.h"
 #include "SLPFile.h"
+#include "debug.h"
 #include "utils/Logger.h"
 #include "utils/Types.h"
 
@@ -27,16 +28,25 @@ void loadSLP(shared_ptr<DRSFile> drs,
 shared_ptr<DRSFile> loadDRSFile(const string& drsFilename);
 void adjustDirections(GraphicsRegistry& graphicsRegistry);
 void registerDummyTexture(int entityType, int entitySubType, GraphicsRegistry& graphicsRegistry);
+void createFOWBlackTile(shared_ptr<DRSFile> drs,
+                        uint32_t slpId,
+                        uint32_t entityType,
+                        SDL_Renderer* renderer,
+                        GraphicsRegistry& graphicsRegistry,
+                        AtlasGenerator& atlasGenerator);
+SDL_Surface* frameToFOWBlackSurface(const Frame& frame);
 
 void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
-                                            ion::GraphicsRegistry& graphicsRegistry,
-                                            ion::AtlasGenerator& atlasGenerator)
+                                            GraphicsRegistry& graphicsRegistry,
+                                            AtlasGenerator& atlasGenerator)
 {
     auto interfaceDRS = loadDRSFile("assets/interfac.drs");
     auto terrainDRS = loadDRSFile("assets/terrain.drs");
     auto graphicsDRS = loadDRSFile("assets/graphics.drs");
 
     loadSLP(terrainDRS, 15001, 2, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Grass tiles
+    createFOWBlackTile(terrainDRS, 15001, EntityTypes::ET_BLACK_TILE, renderer, graphicsRegistry,
+                       atlasGenerator); // Black FogOfWar tile
     loadSLP(graphicsDRS, 1388, 3, 0, Actions::IDLE, renderer, graphicsRegistry,
             atlasGenerator); // Villager idle
     loadSLP(graphicsDRS, 1392, 3, 0, Actions::MOVE, renderer, graphicsRegistry,
@@ -81,6 +91,49 @@ void registerDummyTexture(int entityType, int entitySubType, GraphicsRegistry& g
     graphicsRegistry.registerTexture(id, entry);
 }
 
+void createFOWBlackTile(shared_ptr<DRSFile> drs,
+                        uint32_t slpId,
+                        uint32_t entityType,
+                        SDL_Renderer* renderer,
+                        GraphicsRegistry& graphicsRegistry,
+                        AtlasGenerator& atlasGenerator)
+{
+    auto slp = drs->getSLPFile(slpId);
+
+    std::vector<SDL_Surface*> surfaces;
+
+    auto frames = slp.getFrames();
+    debug_assert(frames.size() > 1,
+                 "Couldn't find any frames in SLP file for creating FogOfWar black tile");
+
+    auto& frame = frames[0];
+    auto surface = frameToFOWBlackSurface(frame);
+
+    std::vector<SDL_Rect> srcRects;
+
+    auto atlasTexture = atlasGenerator.generateAtlas(renderer, {surface}, srcRects);
+    if (!atlasTexture)
+    {
+        spdlog::error("Failed to create atlas texture for entity type {}.", entityType);
+        return;
+    }
+
+    auto& srcRect = srcRects[0];
+
+    Size imageSize = {srcRect.w, srcRect.h};
+
+    GraphicsID id;
+    id.entityType = entityType;
+    auto anchorPair = frame.getAnchor();
+    Vec2d anchor = {imageSize.width / 2 + 1,
+                    0}; // Must override tile anchoring since their anchors don't work here
+    SDL_FRect* srcRectF =
+        new SDL_FRect{(float) srcRect.x, (float) srcRect.y, (float) srcRect.w, (float) srcRect.h};
+
+    Texture entry{atlasTexture, srcRectF, anchor, imageSize, false};
+    graphicsRegistry.registerTexture(id, entry);
+}
+
 SDL_Surface* frameToSurface(const Frame& frame)
 {
     const auto& image = frame.getImage();
@@ -120,6 +173,56 @@ SDL_Surface* frameToSurface(const Frame& frame)
         for (int x = 0; x < width; ++x)
         {
             const drs::Color& c = image[y][x];
+            row[x] = SDL_MapRGB(formatDetails, palette, c.r, c.g, c.b);
+        }
+    }
+
+    SDL_UnlockSurface(surface);
+    return surface;
+}
+
+SDL_Surface* frameToFOWBlackSurface(const Frame& frame)
+{
+    const auto& image = frame.getImage();
+    auto [width, height] = frame.getDimensions();
+
+    if (image.empty() || width <= 0 || height <= 0)
+    {
+        return nullptr;
+    }
+
+    // Create a surface with 32-bit RGBA format (alpha will be set to 255)
+    SDL_Surface* surface = SDL_CreateSurface(width, height, SDL_PIXELFORMAT_RGBA32);
+    if (!surface)
+    {
+        SDL_Log("Failed to create surface: %s", SDL_GetError());
+        return nullptr;
+    }
+
+    if (SDL_LockSurface(surface) < 0)
+    {
+        SDL_Log("Failed to lock surface: %s", SDL_GetError());
+        SDL_DestroySurface(surface);
+        return nullptr;
+    }
+
+    uint8_t* pixels = static_cast<uint8_t*>(surface->pixels);
+    int pitch = surface->pitch;
+
+    auto formatDetails = SDL_GetPixelFormatDetails(surface->format);
+    auto palette = SDL_GetSurfacePalette(surface);
+    auto rgb = SDL_MapRGB(formatDetails, palette, 0xFF, 0, 0xFF); // magenta key
+    SDL_SetSurfaceColorKey(surface, true, rgb);
+
+    for (int y = 0; y < height; ++y)
+    {
+        uint32_t* row = reinterpret_cast<uint32_t*>(pixels + y * pitch);
+        for (int x = 0; x < width; ++x)
+        {
+            drs::Color c = image[y][x];
+            if (!(c.r == 255 && c.g == 0 && c.b == 255))
+                c = drs::Color{0, 0, 0};
+
             row[x] = SDL_MapRGB(formatDetails, palette, c.r, c.g, c.b);
         }
     }

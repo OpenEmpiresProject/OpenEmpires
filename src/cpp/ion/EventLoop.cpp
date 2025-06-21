@@ -1,6 +1,7 @@
 #include "EventLoop.h"
 
 #include "EventHandler.h"
+#include "EventPublisher.h"
 #include "utils/Logger.h"
 
 #include <SDL3/SDL_keyboard.h>
@@ -31,6 +32,8 @@ void EventLoop::init()
 void EventLoop::run()
 {
     spdlog::info("Starting event loop...");
+
+    registerPublisher();
 
     for (auto& listener : m_listeners)
     {

@@ -1,5 +1,9 @@
 #include "PlayerManager.h"
 
+#include "GameState.h"
+#include "components/CompPlayer.h"
+
+#include <SDL3/SDL_scancode.h>
 #include <algorithm>
 #include <list>
 
@@ -7,7 +11,8 @@ using namespace ion;
 
 PlayerManager::PlayerManager()
 {
-    registerCallback(Event::Type::TICK, this, &PlayerManager::onTick);
+    registerCallback(Event::Type::UNIT_TILE_MOVEMENT, this, &PlayerManager::onUnitTileMovement);
+    registerCallback(Event::Type::KEY_UP, this, &PlayerManager::onToggleFOW);
 }
 
 PlayerManager::~PlayerManager()
@@ -49,10 +54,27 @@ uint8_t PlayerManager::getNextPlayerId() const
     return nextId;
 }
 
-void PlayerManager::onEvent(const Event& e)
+void PlayerManager::onUnitTileMovement(const Event& e)
 {
+    auto data = e.getData<UnitTileMovementData>();
+    auto player = GameState::getInstance().getComponent<CompPlayer>(data.unit).player;
+
+    player->getFOW()->markAsExplored(data.positionFeet, 5);
 }
 
-void PlayerManager::onTick(const Event& e)
+void PlayerManager::onToggleFOW(const Event& e)
 {
+    auto data = e.getData<KeyboardData>();
+    if (data.keyCode == SDL_Scancode::SDL_SCANCODE_3)
+    {
+        m_fowEnabled = !m_fowEnabled;
+        if (m_fowEnabled)
+        {
+            m_players[0]->getFOW()->enable();
+        }
+        else
+        {
+            m_players[0]->getFOW()->disable();
+        }
+    }
 }
