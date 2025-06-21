@@ -31,17 +31,17 @@ Vec2d Coordinates::feetToScreenUnits(const Vec2d& feet) const
     return pixelsToScreenUnits(feetToPixels(feet));
 }
 
-Vec2d Coordinates::feetToTiles(const Vec2d& feet) const
+Vec2d Coordinates::feetToTiles(const Vec2d& feet)
 {
     return feet / Constants::FEET_PER_TILE;
 }
 
-Vec2d Coordinates::tilesToFeet(const Vec2d& tiles) const
+Vec2d Coordinates::tilesToFeet(const Vec2d& tiles)
 {
     return tiles * Constants::FEET_PER_TILE;
 }
 
-Vec2d Coordinates::getTileCenterInFeet(const Vec2d& tile) const
+Vec2d Coordinates::getTileCenterInFeet(const Vec2d& tile)
 {
     return tilesToFeet(tile) + Vec2d(Constants::FEET_PER_TILE / 2, Constants::FEET_PER_TILE / 2);
 }

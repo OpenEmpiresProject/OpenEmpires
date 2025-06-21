@@ -115,8 +115,8 @@ Vec2d CmdMove::calculateNewPosition(CompTransform& transform, int timeMs)
 
 void CmdMove::setPosition(CompTransform& transform, const Vec2d& newPosFeet)
 {
-    auto oldTile = coordinates->feetToTiles(transform.position);
-    auto newTile = coordinates->feetToTiles(newPosFeet);
+    auto oldTile = Coordinates::feetToTiles(transform.position);
+    auto newTile = Coordinates::feetToTiles(newPosFeet);
 
     if (oldTile != newTile)
     {
@@ -134,8 +134,8 @@ std::list<Vec2d> CmdMove::findPath(const Vec2d& endPosInFeet, uint32_t entity)
     auto& transform = GameState::getInstance().getComponent<CompTransform>(entity);
     Vec2d startPos = transform.position;
 
-    startPos = coordinates->feetToTiles(startPos);
-    auto endPos = coordinates->feetToTiles(endPosInFeet);
+    startPos = Coordinates::feetToTiles(startPos);
+    auto endPos = Coordinates::feetToTiles(endPosInFeet);
 
     GridMap map = GameState::getInstance().gameMap;
     std::vector<Vec2d> path =
@@ -165,7 +165,7 @@ std::list<Vec2d> CmdMove::findPath(const Vec2d& endPosInFeet, uint32_t entity)
         std::list<Vec2d> pathList;
         for (size_t i = 0; i < path.size(); i++)
         {
-            pathList.push_back(coordinates->getTileCenterInFeet(path[i]));
+            pathList.push_back(Coordinates::getTileCenterInFeet(path[i]));
         }
         pathList.push_back(endPosInFeet);
 
@@ -182,8 +182,7 @@ constexpr int square(int n)
 bool CmdMove::resolveCollision(const Vec2d& newPosFeet)
 {
     // Static collision resolution
-    auto coordinateSystem = ServiceRegistry::getInstance().getService<Coordinates>();
-    auto newTilePos = coordinateSystem->feetToTiles(newPosFeet);
+    auto newTilePos = Coordinates::feetToTiles(newPosFeet);
     auto& state = GameState::getInstance();
     auto& transform = state.getComponent<CompTransform>(entity);
     auto& gameMap = state.gameMap;

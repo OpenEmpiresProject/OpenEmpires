@@ -173,7 +173,7 @@ class CmdGatherResource : public Command
     {
         spdlog::debug("Looking for another resource...");
         auto& transformMy = GameState::getInstance().getComponent<CompTransform>(entity);
-        auto tilePos = coordinateSystem->feetToTiles(transformMy.position);
+        auto tilePos = Coordinates::feetToTiles(transformMy.position);
 
         auto newResource = findClosestResource(targetResource->type, tilePos,
                                                Constants::MAX_RESOURCE_LOOKUP_RADIUS);

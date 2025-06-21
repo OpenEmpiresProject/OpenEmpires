@@ -262,8 +262,7 @@ void ResourceLoader::createVillager(Ref<ion::Player> player, const Vec2d& tilePo
     };
     gameState.addComponent(villager, gatherer);
 
-    auto coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
-    auto newTile = coordinates->feetToTiles(transform.position);
+    auto newTile = Coordinates::feetToTiles(transform.position);
     gameState.gameMap.addEntity(MapLayerType::UNITS, newTile, villager);
 
     player->getFOW()->markAsExplored(transform.position, 5);

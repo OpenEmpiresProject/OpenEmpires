@@ -43,13 +43,13 @@ void FogOfWar::markAsExplored(uint32_t x, uint32_t y)
 
 void FogOfWar::markAsExplored(const Vec2d& feetPos)
 {
-    auto tilePos = m_coordinates->feetToTiles(feetPos);
+    auto tilePos = Coordinates::feetToTiles(feetPos);
     markAsExplored(tilePos.x, tilePos.y);
 }
 
 void FogOfWar::markAsExplored(const Vec2d& feetPos, uint8_t lineOfSight)
 {
-    auto tilePos = m_coordinates->feetToTiles(feetPos);
+    auto tilePos = Coordinates::feetToTiles(feetPos);
     markRadius(tilePos.x, tilePos.y, lineOfSight, RevealStatus::EXPLORED);
 }
 
@@ -60,7 +60,7 @@ void FogOfWar::markAsVisible(uint32_t tileX, uint32_t tileY, uint8_t lineOfSight
 
 void FogOfWar::markAsVisible(const Vec2d& feetPos, uint8_t lineOfSight)
 {
-    auto tilePos = m_coordinates->feetToTiles(feetPos);
+    auto tilePos = Coordinates::feetToTiles(feetPos);
     markAsVisible(tilePos.x, tilePos.y, lineOfSight);
 }
 

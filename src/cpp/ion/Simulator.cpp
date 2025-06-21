@@ -124,7 +124,7 @@ void Simulator::onMouseMove(const Event& e)
         auto& transform =
             GameState::getInstance().getComponent<CompTransform>(m_currentBuildingOnPlacement);
         auto feet = m_coordinates->screenUnitsToFeet(m_lastMouseScreenPos);
-        auto tile = m_coordinates->feetToTiles(feet);
+        auto tile = Coordinates::feetToTiles(feet);
 
         auto& building =
             GameState::getInstance().getComponent<CompBuilding>(m_currentBuildingOnPlacement);
@@ -136,7 +136,7 @@ void Simulator::onMouseMove(const Event& e)
         {
             // place buildings at the bottom corner of a tile
             tile += Vec2d(1, 1);
-            feet = m_coordinates->tilesToFeet(tile);
+            feet = Coordinates::tilesToFeet(tile);
             transform.position = feet - Vec2d(10, 10);
         }
 
@@ -424,7 +424,7 @@ void Simulator::testBuild(const Vec2d& targetFeetPos, int buildingType, Size siz
 bool Simulator::canPlaceBuildingAt(const CompBuilding& building, const Vec2d& feet, bool& outOfMap)
 {
     auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
-    auto tile = m_coordinates->feetToTiles(feet);
+    auto tile = Coordinates::feetToTiles(feet);
     auto staticMap = GameState::getInstance().gameMap.getMap(MapLayerType::STATIC);
 
     auto isValidTile = [&](const Vec2d& tile)

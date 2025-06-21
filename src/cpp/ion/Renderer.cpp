@@ -411,7 +411,7 @@ bool RendererImpl::handleEvents()
             {
                 Vec2d mousePosScreenUnits(event.button.x, event.button.y);
                 m_lastMouseClickPosInFeet = m_coordinates.screenUnitsToFeet(mousePosScreenUnits);
-                m_lastMouseClickPosInTiles = m_coordinates.feetToTiles(m_lastMouseClickPosInFeet);
+                m_lastMouseClickPosInTiles = Coordinates::feetToTiles(m_lastMouseClickPosInFeet);
 
                 Event clickEvent(
                     Event::Type::MOUSE_BTN_UP,

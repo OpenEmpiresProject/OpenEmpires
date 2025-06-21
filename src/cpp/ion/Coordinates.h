@@ -20,9 +20,9 @@ class Coordinates
     Vec2d screenUnitsToFeet(const Vec2d& screenUnits) const;
     Vec2d screenUnitsToTiles(const Vec2d& screenUnits) const;
     Vec2d feetToScreenUnits(const Vec2d& feet) const;
-    Vec2d feetToTiles(const Vec2d& feet) const;
-    Vec2d tilesToFeet(const Vec2d& tiles) const;
-    Vec2d getTileCenterInFeet(const Vec2d& tile) const;
+    static Vec2d feetToTiles(const Vec2d& feet);
+    static Vec2d tilesToFeet(const Vec2d& tiles);
+    static Vec2d getTileCenterInFeet(const Vec2d& tile);
     Vec2d getMapCenterInFeet() const;
     int getZOrder(const Vec2d& feet) const;
     int getMaxZOrder() const;
