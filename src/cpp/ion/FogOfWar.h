@@ -20,9 +20,10 @@ class FogOfWar
     void init(uint32_t width, uint32_t height, RevealStatus initialFill);
     void markAsExplored(uint32_t tileX, uint32_t tileY);
     void markAsExplored(const Feet& feetPos);
-    void markAsExplored(const Feet& feetPos, uint8_t lineOfSight);
-    void markAsVisible(uint32_t tileX, uint32_t tileY, uint8_t lineOfSight);
-    void markAsVisible(const Feet& feetPos, uint8_t lineOfSight);
+    void markAsExplored(const Feet& feetPos, uint32_t lineOfSight);
+    void markAsExplored(const Feet& feetPos, const Size& size, uint32_t lineOfSight);
+    void markAsVisible(uint32_t tileX, uint32_t tileY, uint32_t lineOfSight);
+    void markAsVisible(const Feet& feetPos, uint32_t lineOfSight);
 
     const std::vector<std::vector<RevealStatus>>& getMap() const;
     RevealStatus getRevealMode(uint32_t tileX, uint32_t tileY) const;
@@ -33,6 +34,7 @@ class FogOfWar
 
   private:
     void markRadius(uint32_t gridX, uint32_t gridY, uint8_t lineOfSight, RevealStatus type);
+    void markRadius(const Tile& bottomCorner, const Size& size, uint8_t lineOfSight, RevealStatus type);
     uint32_t m_width = 0;
     uint32_t m_height = 0;
     std::vector<std::vector<RevealStatus>> m_map;

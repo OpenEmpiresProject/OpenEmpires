@@ -37,8 +37,8 @@ We use milestone versions for planning. Early versions are experimental. Feature
 - [ ] Group path finding (with flow fields)
 - [x] Stone and gold mines as gatherable resources
 - [x] Resource collection (stone, gold)
-- [ ] LOS (Line of Sight) 
-- [ ] Fog of war
+- [x] LOS (Line of Sight) 
+- [x] Fog of war
 
 ---
 

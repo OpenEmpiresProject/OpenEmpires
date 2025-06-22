@@ -2,6 +2,8 @@
 
 #include "GameState.h"
 #include "components/CompPlayer.h"
+#include "components/CompUnit.h"
+#include "components/CompBuilding.h"
 
 #include <SDL3/SDL_scancode.h>
 #include <algorithm>
@@ -12,6 +14,7 @@ using namespace ion;
 PlayerManager::PlayerManager()
 {
     registerCallback(Event::Type::UNIT_TILE_MOVEMENT, this, &PlayerManager::onUnitTileMovement);
+    registerCallback(Event::Type::BUILDING_PLACED, this, &PlayerManager::onBuildingPlaced);
     registerCallback(Event::Type::KEY_UP, this, &PlayerManager::onToggleFOW);
 }
 
@@ -57,9 +60,17 @@ uint8_t PlayerManager::getNextPlayerId() const
 void PlayerManager::onUnitTileMovement(const Event& e)
 {
     auto data = e.getData<UnitTileMovementData>();
-    auto player = GameState::getInstance().getComponent<CompPlayer>(data.unit).player;
+    auto [player, unit] = GameState::getInstance().getComponents<CompPlayer, CompUnit>(data.unit);
 
-    player->getFOW()->markAsExplored(data.positionFeet, 5);
+    player.player->getFOW()->markAsExplored(data.positionFeet, unit.lineOfSight);
+}
+
+void PlayerManager::onBuildingPlaced(const Event& e)
+{
+    auto data = e.getData<BuildingPlacedData>();
+    auto [player, building] = GameState::getInstance().getComponents<CompPlayer, CompBuilding>(data.building);
+
+    player.player->getFOW()->markAsExplored(data.tile.centerInFeet(), building.size, building.lineOfSight);
 }
 
 void PlayerManager::onToggleFOW(const Event& e)

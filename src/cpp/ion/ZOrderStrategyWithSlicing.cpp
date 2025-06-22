@@ -106,7 +106,8 @@ const std::vector<CompRendering*>& ZOrderStrategyWithSlicing::zOrder(const Coord
             }
             else
             {
-                // ERROR
+                spdlog::error("Graphic {} doesn't have a layer specified to render",
+                              rc->toString());
             }
         }
     }

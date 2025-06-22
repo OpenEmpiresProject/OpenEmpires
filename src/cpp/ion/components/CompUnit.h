@@ -14,6 +14,7 @@ class CompUnit
 {
   public:
     CommandQueueType commandQueue;
+    uint32_t lineOfSight = 0; // LOS in feet
 };
 
 } // namespace ion

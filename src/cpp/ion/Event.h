@@ -56,6 +56,12 @@ struct UnitTileMovementData
     Feet positionFeet;
 };
 
+struct BuildingPlacedData
+{
+    uint32_t building; // entity
+    Tile tile; // Bottom corner
+};
+
 struct Event
 {
     enum class Type
@@ -69,6 +75,7 @@ struct Event
         MOUSE_BTN_UP,
         UNIT_SELECTION,
         UNIT_TILE_MOVEMENT,
+        BUILDING_PLACED,
         COMMAND_REQUEST,
         MAX_TYPE_MARKER,
     };
@@ -80,7 +87,8 @@ struct Event
                               MouseMoveData,
                               UnitSelectionData,
                               CommandRequestData,
-                              UnitTileMovementData>;
+                              UnitTileMovementData,
+                              BuildingPlacedData>;
 
     const Type type = Type::NONE;
     const Data data = std::monostate{};

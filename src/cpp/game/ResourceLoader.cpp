@@ -236,6 +236,7 @@ void ResourceLoader::createVillager(Ref<ion::Player> player, const Tile& tilePos
 
     // villager goes idle by default
     CompUnit unit;
+    unit.lineOfSight = 256 * 10;
     unit.commandQueue.push(ObjectPool<CmdIdle>::acquire());
     gameState.addComponent(villager, unit);
 
@@ -264,7 +265,7 @@ void ResourceLoader::createVillager(Ref<ion::Player> player, const Tile& tilePos
     auto newTile = transform.position.toTile();
     gameState.gameMap.addEntity(MapLayerType::UNITS, newTile, villager);
 
-    player->getFOW()->markAsExplored(transform.position, 5);
+    player->getFOW()->markAsExplored(transform.position, unit.lineOfSight);
 }
 
 void ResourceLoader::createStoneOrGoldCluster(

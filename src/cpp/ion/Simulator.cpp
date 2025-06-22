@@ -19,6 +19,8 @@
 #include "components/CompTransform.h"
 #include "components/CompUIElement.h"
 #include "components/CompUnit.h"
+#include "components/CompPlayer.h"
+#include "PlayerManager.h"
 #include "utils/ObjectPool.h"
 
 #include <algorithm>
@@ -174,7 +176,7 @@ void Simulator::onSynchorizedBlock()
     // GameState::getInstance().destroyAllPendingEntities();
 }
 
-void ion::Simulator::onUnitSelection(const Event& e)
+void Simulator::onUnitSelection(const Event& e)
 {
     auto selectedEntities = e.getData<UnitSelectionData>().selection.selectedEntities;
     if (selectedEntities.size() == 1)
@@ -337,13 +339,18 @@ void Simulator::resolveSelection(const Vec2& screenPos)
 
     if (m_currentBuildingOnPlacement != entt::null)
     {
-        auto& building =
-            GameState::getInstance().getComponent<CompBuilding>(m_currentBuildingOnPlacement);
+        auto [building, transform] = GameState::getInstance().getComponents<CompBuilding,
+                                                                             CompTransform>(
+            m_currentBuildingOnPlacement);
 
         if (!building.validPlacement)
         {
             GameState::getInstance().destroyEntity(m_currentBuildingOnPlacement);
         }
+
+        publishEvent(Event::Type::BUILDING_PLACED,
+                     BuildingPlacedData{m_currentBuildingOnPlacement, transform.position.toTile()});
+
         // Building is permanent now, no need to track for placement
         m_currentBuildingOnPlacement = entt::null;
     }
@@ -407,11 +414,18 @@ void Simulator::testBuild(const Feet& targetFeetPos, int buildingType, Size size
     CompGraphics gc;
     gc.entityID = mill;
     gc.entityType = buildingType;
+    gc.layer = GraphicLayer::ENTITIES;
     gameState.addComponent(mill, gc);
     gameState.addComponent(mill, CompEntityInfo(buildingType));
 
+    auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
+    auto player = playerManager->getPlayer(0); // TODO - replace with current player on the UI
+    gameState.addComponent(mill, CompPlayer{player});
+
     CompBuilding building;
     building.size = size;
+    building.lineOfSight = 256 * 5;
+
     gameState.addComponent(mill, building);
 
     CompDirty dirty;

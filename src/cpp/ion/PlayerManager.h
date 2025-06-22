@@ -26,6 +26,7 @@ class PlayerManager : public EventHandler
   private:
     uint8_t getNextPlayerId() const;
     void onUnitTileMovement(const Event& e);
+    void onBuildingPlaced(const Event& e);
     void onToggleFOW(const Event& e);
 
     std::vector<Ref<Player>> m_players;
