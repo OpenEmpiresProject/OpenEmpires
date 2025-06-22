@@ -2,7 +2,7 @@
 #define GRAPHICADDON_H
 
 #include "Color.h"
-#include "Vec2d.h"
+#include "Feet.h"
 #include "utils/Types.h"
 
 #include <cstdint>
@@ -24,14 +24,14 @@ struct GraphicAddon
     struct IsoCircle
     {
         int radius = 0;
-        Vec2d center = {0, 0}; // Relative to anchor. i.e. actual unit position
+        Vec2 center; // Relative to anchor. i.e. actual unit position
     };
 
     struct Square
     {
         int width = 0;
         int height = 0;
-        Vec2d center = {0, 0};
+        Vec2 center;
     };
 
     struct Rhombus // Relative to anchor

@@ -8,7 +8,7 @@ namespace ion
 class PathFinderAStar : public PathFinderBase
 {
   public:
-    Path findPath(const GridMap& map, const Vec2d& start, const Vec2d& goal) override;
+    Path findPath(const TileMap& map, const Feet& start, const Feet& goal) override;
 };
 
 } // namespace ion

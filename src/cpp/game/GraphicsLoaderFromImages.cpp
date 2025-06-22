@@ -37,9 +37,9 @@ void GraphicsLoaderFromImages::loadAllGraphics(SDL_Renderer* renderer,
     setCursor(4);
 }
 
-std::vector<Vec2d> loadAnchorsFromCSV(const std::filesystem::path& filepath)
+std::vector<Vec2> loadAnchorsFromCSV(const std::filesystem::path& filepath)
 {
-    std::vector<Vec2d> anchors;
+    std::vector<Vec2> anchors;
     std::ifstream file(filepath);
     std::string line;
 
@@ -72,7 +72,7 @@ std::vector<Vec2d> loadAnchorsFromCSV(const std::filesystem::path& filepath)
         auto [py, ecy] = std::from_chars(y_str.data(), y_str.data() + y_str.size(), y);
         if (ecx == std::errc() && ecy == std::errc())
         {
-            anchors.emplace_back(Vec2d(x, y));
+            anchors.emplace_back(Vec2(x, y));
         }
     }
 
@@ -85,7 +85,7 @@ void GraphicsLoaderFromImages::loadTextures(GraphicsRegistry& graphicsRegistry,
     spdlog::info("Loading textures from assets/images...");
 
     std::map<int, std::vector<std::filesystem::path>> entityTypeToPaths;
-    std::map<std::string, Vec2d> anchorsByFileName;
+    std::map<std::string, Vec2> anchorsByFileName;
     int loadedCount = 0;
 
     // Group textures by entityType
@@ -94,7 +94,7 @@ void GraphicsLoaderFromImages::loadTextures(GraphicsRegistry& graphicsRegistry,
         if (!entry.is_regular_file())
             continue;
 
-        std::vector<Vec2d> anchors;
+        std::vector<Vec2> anchors;
 
         if (entry.path().extension() == ".csv")
         {
@@ -148,7 +148,7 @@ int GraphicsLoaderFromImages::determineEntityType(const std::filesystem::path& p
 void GraphicsLoaderFromImages::createAtlasForEntityType(
     int entityType,
     const std::vector<std::filesystem::path>& paths,
-    const std::map<std::string, Vec2d>& anchors,
+    const std::map<std::string, Vec2>& anchors,
     GraphicsRegistry& graphicsRegistry,
     AtlasGenerator& atlasGenerator)
 {
@@ -187,7 +187,7 @@ void GraphicsLoaderFromImages::createAtlasForEntityType(
         id.action = 0; // Deduce action if applicable
         // id.m_variation = i; // Variation index
 
-        Vec2d anchor = {imageSize.width / 2 + 1, imageSize.height};
+        Vec2 anchor = {imageSize.width / 2 + 1, imageSize.height};
         std::string pathStr = path.string();
 
         if (entityType == EntityTypes::ET_TILE)

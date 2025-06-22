@@ -6,7 +6,7 @@ using namespace ion;
 class PathFinderAStarTest : public ::testing::Test {
 protected:
     PathFinderAStar pathFinder;
-    GridMap map;
+    TileMap map;
 
     void SetUp() override {
         map.init(5, 5);
@@ -29,8 +29,8 @@ protected:
 };
 
 TEST_F(PathFinderAStarTest, FindPath_StraightLine) {
-    Vec2d start = {0, 0};
-    Vec2d goal = {4, 0};
+    Feet start = {0, 0};
+    Feet goal = {4, 0};
     Path path = pathFinder.findPath(map, start, goal);
 
     ASSERT_FALSE(path.empty());
@@ -39,8 +39,8 @@ TEST_F(PathFinderAStarTest, FindPath_StraightLine) {
 }
 
 TEST_F(PathFinderAStarTest, FindPath_AroundObstacle) {
-    Vec2d start = {0, 0};
-    Vec2d goal = {4, 4};
+    Feet start = {0, 0};
+    Feet goal = {4, 4};
     Path path = pathFinder.findPath(map, start, goal);
 
     ASSERT_FALSE(path.empty());
@@ -48,7 +48,7 @@ TEST_F(PathFinderAStarTest, FindPath_AroundObstacle) {
     EXPECT_EQ(path.back(), goal);
 
     // Ensure the path avoids obstacles
-    for (const Vec2d& pos : path) {
+    for (const Feet& pos : path) {
         EXPECT_TRUE(map.getStaticMap()[pos.x][pos.y].isOccupied() == false) << "Path crosses an obstacle at " << pos.x << ", " << pos.y;
     }
 }
@@ -68,8 +68,8 @@ TEST_F(PathFinderAStarTest, FindPath_CornersBlocked) {
         }
     }
 
-    Vec2d start = {2, 2}; // inside the block
-    Vec2d goal = {4, 4}; // outside the block
+    Feet start = {2, 2}; // inside the block
+    Feet goal = {4, 4}; // outside the block
     Path path = pathFinder.findPath(map, start, goal);
 
     ASSERT_TRUE(path.empty());
@@ -90,8 +90,8 @@ TEST_F(PathFinderAStarTest, FindPath_OnlyOneCornerBlocked) {
         }
     }
 
-    Vec2d start = {0, 0};
-    Vec2d goal = {4, 4};
+    Feet start = {0, 0};
+    Feet goal = {4, 4};
     Path path = pathFinder.findPath(map, start, goal);
 
     ASSERT_EQ(path.size(), 6);
@@ -112,8 +112,8 @@ TEST_F(PathFinderAStarTest, FindPath_StraightLinesUnblocked) {
         }
     }
 
-    Vec2d start = {2, 2}; // inside the block
-    Vec2d goal = {4, 4}; // outside the block
+    Feet start = {2, 2}; // inside the block
+    Feet goal = {4, 4}; // outside the block
     Path path = pathFinder.findPath(map, start, goal);
 
     ASSERT_FALSE(path.empty());
@@ -125,16 +125,16 @@ TEST_F(PathFinderAStarTest, FindPath_NoPathAvailable) {
     map.getStaticMap()[3][4].addEntity(1);
     map.getStaticMap()[4][3].addEntity(1);
 
-    Vec2d start = {0, 0};
-    Vec2d goal = {4, 4};
+    Feet start = {0, 0};
+    Feet goal = {4, 4};
     Path path = pathFinder.findPath(map, start, goal);
 
     EXPECT_TRUE(path.empty());
 }
 
 TEST_F(PathFinderAStarTest, FindPath_StartEqualsGoal) {
-    Vec2d start = {2, 2};
-    Vec2d goal = {2, 2};
+    Feet start = {2, 2};
+    Feet goal = {2, 2};
     Path path = pathFinder.findPath(map, start, goal);
 
     ASSERT_EQ(path.size(), 1);
@@ -146,8 +146,8 @@ TEST_F(PathFinderAStarTest, FindPath_LargeMap_StraightLine) {
     // Initialize a 50x50 map with no obstacles
     map.init(50, 50);
 
-    Vec2d start = {0, 0};
-    Vec2d goal = {49, 0};
+    Feet start = {0, 0};
+    Feet goal = {49, 0};
     Path path = pathFinder.findPath(map, start, goal);
 
     ASSERT_FALSE(path.empty());
@@ -167,8 +167,8 @@ TEST_F(PathFinderAStarTest, FindPath_LargeMap_WithObstacles) {
 
     map.getStaticMap()[0][0].removeAllEntities(); 
     map.getStaticMap()[49][49].removeAllEntities();
-    Vec2d start = {0, 49};
-    Vec2d goal = {49, 0};
+    Feet start = {0, 49};
+    Feet goal = {49, 0};
     Path path = pathFinder.findPath(map, start, goal);
 
     ASSERT_FALSE(path.empty());
@@ -176,7 +176,7 @@ TEST_F(PathFinderAStarTest, FindPath_LargeMap_WithObstacles) {
     EXPECT_EQ(path.back(), goal);
 
     // Ensure the path avoids obstacles
-    for (const Vec2d& pos : path) {
+    for (const Feet& pos : path) {
         EXPECT_TRUE(map.getStaticMap()[pos.y][pos.x].isOccupied() == false) << "Path crosses an obstacle at " << pos.x << ", " << pos.y;
     }
 }
@@ -191,8 +191,8 @@ TEST_F(PathFinderAStarTest, FindPath_LargeMap_NoPathAvailable) {
     map.getStaticMap()[49][48].addEntity(1);
     map.getStaticMap()[49][49].addEntity(1);
 
-    Vec2d start = {0, 0};
-    Vec2d goal = {49, 49};
+    Feet start = {0, 0};
+    Feet goal = {49, 49};
     Path path = pathFinder.findPath(map, start, goal);
 
     EXPECT_TRUE(path.empty());
@@ -202,8 +202,8 @@ TEST_F(PathFinderAStarTest, FindPath_LargeMap_StartEqualsGoal) {
     // Initialize a 50x50 map with no obstacles
     map.init(50, 50);
 
-    Vec2d start = {25, 25};
-    Vec2d goal = {25, 25};
+    Feet start = {25, 25};
+    Feet goal = {25, 25};
     Path path = pathFinder.findPath(map, start, goal);
 
     ASSERT_EQ(path.size(), 1);

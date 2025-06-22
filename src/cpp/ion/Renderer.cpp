@@ -2,7 +2,6 @@
 
 #include "AtlasGeneratorBasic.h"
 #include "Coordinates.h"
-#include "Event.h"
 #include "FPSCounter.h"
 #include "GameSettings.h"
 #include "GameState.h"
@@ -11,6 +10,7 @@
 #include "ServiceRegistry.h"
 #include "StatsCounter.h"
 #include "ThreadQueue.h"
+#include "Tile.h"
 #include "Version.h"
 #include "ZOrderStrategyBase.h"
 #include "ZOrderStrategyWithSlicing.h"
@@ -157,8 +157,8 @@ class RendererImpl
     void updateRenderingComponents();
     void renderDebugInfo(FPSCounter& counter);
     void renderGameEntities();
-    void renderText(const Vec2d& screenPos, const std::string& text, const Color& color);
-    void renderGraphicAddons(const Vec2d& screenPos, CompRendering* rc);
+    void renderText(const Vec2& screenPos, const std::string& text, const Color& color);
+    void renderGraphicAddons(const Vec2& screenPos, CompRendering* rc);
     void renderBackground();
     void renderSelectionBox();
     void addDebugText(const std::string& text);
@@ -166,7 +166,7 @@ class RendererImpl
     void generateTicks();
     void onTick();
     void handleViewportMovement();
-    Vec2d getDebugOverlayPosition(DebugOverlay::FixedPosition anchor, const SDL_FRect& rect);
+    Vec2 getDebugOverlayPosition(DebugOverlay::FixedPosition anchor, const SDL_FRect& rect);
     void renderCirlceInIsometric(SDL_Renderer* renderer,
                                  Sint16 cx,
                                  Sint16 cy,
@@ -194,8 +194,8 @@ class RendererImpl
     Coordinates m_coordinates;
 
     std::chrono::steady_clock::time_point m_lastTickTime;
-    Vec2d m_lastMouseClickPosInFeet;
-    Vec2d m_lastMouseClickPosInTiles;
+    Feet m_lastMouseClickPosInFeet;
+    Tile m_lastMouseClickPosInTiles;
 
     int64_t m_tickCount = 0;
 
@@ -203,8 +203,8 @@ class RendererImpl
 
     ThreadSynchronizer<FrameData>& m_synchronizer;
 
-    Vec2d m_selectionStartPosScreenUnits;
-    Vec2d m_selectionEndPosScreenUnits;
+    Vec2 m_selectionStartPosScreenUnits;
+    Vec2 m_selectionEndPosScreenUnits;
     bool m_isSelecting = false;
 
     std::list<CompRendering*> m_subRenderingComponents;
@@ -242,8 +242,8 @@ RendererImpl::RendererImpl(std::stop_source* stopSource,
 
     auto center = m_coordinates.getMapCenterInFeet();
     auto centerPixels = m_coordinates.feetToPixels(center);
-    centerPixels -= Vec2d(m_settings->getWindowDimensions().width / 2,
-                          m_settings->getWindowDimensions().height / 2);
+    centerPixels -= Vec2(m_settings->getWindowDimensions().width / 2,
+                         m_settings->getWindowDimensions().height / 2);
     m_coordinates.setViewportPositionInPixels(centerPixels);
 }
 
@@ -409,13 +409,9 @@ bool RendererImpl::handleEvents()
         {
             if (event.button.button == SDL_BUTTON_LEFT)
             {
-                Vec2d mousePosScreenUnits(event.button.x, event.button.y);
+                Vec2 mousePosScreenUnits(event.button.x, event.button.y);
                 m_lastMouseClickPosInFeet = m_coordinates.screenUnitsToFeet(mousePosScreenUnits);
-                m_lastMouseClickPosInTiles = Coordinates::feetToTiles(m_lastMouseClickPosInFeet);
-
-                Event clickEvent(
-                    Event::Type::MOUSE_BTN_UP,
-                    MouseClickData{MouseClickData::Button::LEFT, m_lastMouseClickPosInFeet});
+                m_lastMouseClickPosInTiles = m_lastMouseClickPosInFeet.toTile();
 
                 m_isSelecting = true;
                 m_selectionStartPosScreenUnits = mousePosScreenUnits;
@@ -440,7 +436,7 @@ bool RendererImpl::handleEvents()
         {
             if (m_isSelecting)
             {
-                Vec2d mousePosScreenUnits(event.button.x, event.button.y);
+                Vec2 mousePosScreenUnits(event.button.x, event.button.y);
                 m_selectionEndPosScreenUnits = mousePosScreenUnits;
             }
         }
@@ -529,7 +525,7 @@ void RendererImpl::renderGameEntities()
 
     for (auto& rc : objectsToRender)
     {
-        Vec2d screenPos = rc->positionInScreenUnits - rc->anchor;
+        Vec2 screenPos = rc->positionInScreenUnits - rc->anchor;
 
         if (rc->positionInFeet.isNull() == false)
             screenPos = m_coordinates.feetToScreenUnits(rc->positionInFeet) - rc->anchor;
@@ -584,9 +580,9 @@ void RendererImpl::renderGameEntities()
     if (m_showDebugInfo)
     {
         auto windowSize = m_settings->getWindowDimensions();
-        Vec2d center(windowSize.width / 2, windowSize.height / 2);
-        auto horiLineStart = center - Vec2d(5, 0);
-        auto vertLineStart = center - Vec2d(0, 5);
+        Vec2 center(windowSize.width / 2, windowSize.height / 2);
+        auto horiLineStart = center - Vec2(5, 0);
+        auto vertLineStart = center - Vec2(0, 5);
 
         lineRGBA(m_renderer, horiLineStart.x, horiLineStart.y, horiLineStart.x + 10,
                  horiLineStart.y, 255, 255, 255, 255);
@@ -595,7 +591,7 @@ void RendererImpl::renderGameEntities()
     }
 }
 
-void RendererImpl::renderText(const Vec2d& screenPos, const std::string& text, const Color& color)
+void RendererImpl::renderText(const Vec2& screenPos, const std::string& text, const Color& color)
 {
     int x = screenPos.x;
     for (char c : text)
@@ -612,7 +608,7 @@ void RendererImpl::renderText(const Vec2d& screenPos, const std::string& text, c
     }
 }
 
-void RendererImpl::renderGraphicAddons(const Vec2d& screenPos, CompRendering* rc)
+void RendererImpl::renderGraphicAddons(const Vec2& screenPos, CompRendering* rc)
 {
     for (auto& addon : rc->addons)
     {
@@ -710,30 +706,30 @@ void RendererImpl::handleViewportMovement()
     {
         m_coordinates.setViewportPositionInPixelsWithBounryChecking(
             m_coordinates.getViewportPositionInPixels() -
-            Vec2d(0, m_settings->getViewportMovingSpeed()));
+            Vec2(0, m_settings->getViewportMovingSpeed()));
     }
     if (keyStates[SDL_SCANCODE_A])
     {
         m_coordinates.setViewportPositionInPixelsWithBounryChecking(
             m_coordinates.getViewportPositionInPixels() -
-            Vec2d(m_settings->getViewportMovingSpeed(), 0));
+            Vec2(m_settings->getViewportMovingSpeed(), 0));
     }
     if (keyStates[SDL_SCANCODE_S])
     {
         m_coordinates.setViewportPositionInPixelsWithBounryChecking(
             m_coordinates.getViewportPositionInPixels() +
-            Vec2d(0, m_settings->getViewportMovingSpeed()));
+            Vec2(0, m_settings->getViewportMovingSpeed()));
     }
     if (keyStates[SDL_SCANCODE_D])
     {
         m_coordinates.setViewportPositionInPixelsWithBounryChecking(
             m_coordinates.getViewportPositionInPixels() +
-            Vec2d(m_settings->getViewportMovingSpeed(), 0));
+            Vec2(m_settings->getViewportMovingSpeed(), 0));
     }
 }
 
-Vec2d RendererImpl::getDebugOverlayPosition(DebugOverlay::FixedPosition anchor,
-                                            const SDL_FRect& rect)
+Vec2 RendererImpl::getDebugOverlayPosition(DebugOverlay::FixedPosition anchor,
+                                           const SDL_FRect& rect)
 {
     int x = rect.x;
     int y = rect.y;

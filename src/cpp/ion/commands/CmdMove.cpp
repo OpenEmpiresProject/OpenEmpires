@@ -98,7 +98,7 @@ bool CmdMove::move(CompTransform& transform, int deltaTimeMs)
     return path.empty();
 }
 
-Vec2d CmdMove::calculateNewPosition(CompTransform& transform, int timeMs)
+Feet CmdMove::calculateNewPosition(CompTransform& transform, int timeMs)
 {
     debug_assert(transform.speed > 0, "Speed must be greater than zero");
     // Update the position based on speed and time
@@ -113,10 +113,10 @@ Vec2d CmdMove::calculateNewPosition(CompTransform& transform, int timeMs)
     return newPos;
 }
 
-void CmdMove::setPosition(CompTransform& transform, const Vec2d& newPosFeet)
+void CmdMove::setPosition(CompTransform& transform, const Feet& newPosFeet)
 {
-    auto oldTile = Coordinates::feetToTiles(transform.position);
-    auto newTile = Coordinates::feetToTiles(newPosFeet);
+    auto oldTile = transform.position.toTile();
+    auto newTile = newPosFeet.toTile();
 
     if (oldTile != newTile)
     {
@@ -129,17 +129,15 @@ void CmdMove::setPosition(CompTransform& transform, const Vec2d& newPosFeet)
     transform.position = newPosFeet;
 }
 
-std::list<Vec2d> CmdMove::findPath(const Vec2d& endPosInFeet, uint32_t entity)
+std::list<Feet> CmdMove::findPath(const Feet& endPosInFeet, uint32_t entity)
 {
     auto& transform = GameState::getInstance().getComponent<CompTransform>(entity);
-    Vec2d startPos = transform.position;
+    Tile startPos = transform.position.toTile();
+    auto endPos = endPosInFeet.toTile();
 
-    startPos = Coordinates::feetToTiles(startPos);
-    auto endPos = Coordinates::feetToTiles(endPosInFeet);
-
-    GridMap map = GameState::getInstance().gameMap;
-    std::vector<Vec2d> path =
-        GameState::getInstance().getPathFinder()->findPath(map, startPos, endPos);
+    TileMap map = GameState::getInstance().gameMap;
+    std::vector<Feet> path =
+        GameState::getInstance().getPathFinder()->findPath(map, transform.position, endPosInFeet);
 
     if (path.empty())
     {
@@ -147,10 +145,10 @@ std::list<Vec2d> CmdMove::findPath(const Vec2d& endPosInFeet, uint32_t entity)
     }
     else
     {
-        for (Vec2d node : path)
+        for (Feet node : path)
         {
             // map.map[node.x][node.y] = 2;
-            auto entity = map.getEntity(MapLayerType::GROUND, node);
+            auto entity = map.getEntity(MapLayerType::GROUND, node.toTile());
             if (entity != entt::null)
             {
                 // TODO: Should avoid manipulating CompGraphics directly
@@ -162,16 +160,16 @@ std::list<Vec2d> CmdMove::findPath(const Vec2d& endPosInFeet, uint32_t entity)
             }
         }
 
-        std::list<Vec2d> pathList;
+        std::list<Feet> pathList;
         for (size_t i = 0; i < path.size(); i++)
         {
-            pathList.push_back(Coordinates::getTileCenterInFeet(path[i]));
+            pathList.push_back(path[i]);
         }
         pathList.push_back(endPosInFeet);
 
         return pathList;
     }
-    return std::list<Vec2d>();
+    return std::list<Feet>();
 }
 
 constexpr int square(int n)
@@ -179,10 +177,10 @@ constexpr int square(int n)
     return n * n;
 }
 
-bool CmdMove::resolveCollision(const Vec2d& newPosFeet)
+bool CmdMove::resolveCollision(const Feet& newPosFeet)
 {
     // Static collision resolution
-    auto newTilePos = Coordinates::feetToTiles(newPosFeet);
+    auto newTilePos = newPosFeet.toTile();
     auto& state = GameState::getInstance();
     auto& transform = state.getComponent<CompTransform>(entity);
     auto& gameMap = state.gameMap;
@@ -201,17 +199,17 @@ bool CmdMove::resolveCollision(const Vec2d& newPosFeet)
     }
 
     // Dynamic collision resolution
-    Vec2d searchStartTile = newTilePos - Vec2d(1, 1);
-    Vec2d searchEndTile = newTilePos + Vec2d(1, 1);
+    Tile searchStartTile = newTilePos - Tile(1, 1);
+    Tile searchEndTile = newTilePos + Tile(1, 1);
 
-    Vec2d totalAvoidance{0, 0};
+    Feet totalAvoidance{0, 0};
     bool hasCollision = false;
 
     for (int x = searchStartTile.x; x <= searchEndTile.x; x++)
     {
         for (int y = searchStartTile.y; y <= searchEndTile.y; y++)
         {
-            Vec2d gridPos{x, y};
+            Tile gridPos{x, y};
             auto& entities = gameMap.getEntities(MapLayerType::UNITS, gridPos);
 
             for (auto e : entities)
@@ -222,7 +220,7 @@ bool CmdMove::resolveCollision(const Vec2d& newPosFeet)
                 // spdlog::debug("Checking collision with entity {}", e);
 
                 auto& otherTransform = state.getComponent<CompTransform>(e);
-                Vec2d toOther = otherTransform.position - newPosFeet;
+                Feet toOther = otherTransform.position - newPosFeet;
 
                 float distSq = toOther.lengthSquared();
                 float minDistSq = square(transform.goalRadius + otherTransform.goalRadius);
@@ -238,7 +236,8 @@ bool CmdMove::resolveCollision(const Vec2d& newPosFeet)
                 {
                     hasCollision = true;
 
-                    Vec2d repulsionDir = (-toOther).normalized10();
+                    Feet repulsionDir = -toOther;
+                    repulsionDir = repulsionDir.normalized10();
                     totalAvoidance += repulsionDir;
 
                     // spdlog::debug("totalAvoidance: {}", totalAvoidance.toString());
@@ -250,7 +249,7 @@ bool CmdMove::resolveCollision(const Vec2d& newPosFeet)
     if (hasCollision)
     {
         // Apply the integer push (scaled down if needed)
-        Vec2d averagePush = totalAvoidance; // This keeps the actual push small
+        Feet averagePush = totalAvoidance; // This keeps the actual push small
 
         // spdlog::debug("Collision detected! Avoidance vector {}", averagePush.toString());
 

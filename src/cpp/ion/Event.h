@@ -1,8 +1,9 @@
 #ifndef EVENT_H
 #define EVENT_H
 
+#include "Feet.h"
+#include "Tile.h"
 #include "UnitSelection.h"
-#include "Vec2d.h"
 #include "commands/Command.h"
 
 #include <entt/entity/registry.hpp>
@@ -22,7 +23,7 @@ struct KeyboardData
 
 struct MouseMoveData
 {
-    Vec2d screenPos;
+    Vec2 screenPos;
 };
 
 struct MouseClickData
@@ -34,7 +35,7 @@ struct MouseClickData
         MIDDLE
     };
     Button button;
-    Vec2d screenPosition;
+    Vec2 screenPosition;
 };
 
 struct UnitSelectionData
@@ -51,8 +52,8 @@ struct CommandRequestData
 struct UnitTileMovementData
 {
     uint32_t unit;
-    Vec2d tile;
-    Vec2d positionFeet;
+    Tile tile;
+    Feet positionFeet;
 };
 
 struct Event

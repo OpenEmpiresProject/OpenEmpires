@@ -1,9 +1,9 @@
 #ifndef GAMESTATE_H
 #define GAMESTATE_H
 
-#include "GridMap.h"
 #include "PathFinderBase.h"
 #include "SubSystem.h"
+#include "TileMap.h"
 
 #include <entt/entity/registry.hpp>
 #include <vector>
@@ -65,7 +65,7 @@ class GameState
 
     void clearAll();
 
-    GridMap gameMap;
+    TileMap gameMap;
 
     PathFinderBase* getPathFinder() const
     {

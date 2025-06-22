@@ -1,7 +1,8 @@
 #ifndef COMPTRANSFORM_H
 #define COMPTRANSFORM_H
 
-#include "Vec2d.h"
+#include "Feet.h"
+#include "Tile.h"
 #include "utils/Types.h"
 
 #include <cassert>
@@ -12,8 +13,8 @@ namespace ion
 class CompTransform
 {
   public:
-    Vec2d position{0, 0}; // Position in feet
-    int rotation = 0;     // Rotation in degrees from feet North (0 degrees is up)
+    Feet position{0, 0}; // Position in feet
+    int rotation = 0;    // Rotation in degrees from feet North (0 degrees is up)
     bool hasRotation = false;
     int speed = 0; // Speed in feet per second
     int goalRadiusSquared = 1000;
@@ -27,13 +28,13 @@ class CompTransform
     CompTransform(int x, int y) : position(x, y)
     {
     }
-    CompTransform(const Vec2d& pos) : position(pos)
+    CompTransform(const Feet& pos) : position(pos)
     {
     }
     CompTransform(const CompTransform&) = default;
     CompTransform& operator=(const CompTransform&) = default;
 
-    void face(const Vec2d& target)
+    void face(const Feet& target)
     {
         // Calculate the angle to face the target position
         int deltaX = target.x - position.x;
@@ -46,7 +47,7 @@ class CompTransform
         }
     }
 
-    void face(const Vec2d& relativeTo, const Vec2d& target)
+    void face(const Feet& relativeTo, const Feet& target)
     {
         // Calculate the angle to face the target position relative to the
         // provided position rather than our own position
@@ -92,10 +93,10 @@ class CompTransform
         }
     }
 
-    Vec2d getTilePosition() const
+    Tile getTilePosition() const
     {
-        return Vec2d{static_cast<int>(position.x / Constants::FEET_PER_TILE),
-                     static_cast<int>(position.y / Constants::FEET_PER_TILE)};
+        return Tile(static_cast<int>(position.x / Constants::FEET_PER_TILE),
+                    static_cast<int>(position.y / Constants::FEET_PER_TILE));
     }
 };
 } // namespace ion

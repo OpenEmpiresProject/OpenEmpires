@@ -2,6 +2,7 @@
 #define TYPES_H
 
 #include "utils/Constants.h"
+#include "Vec2Base.h"
 
 #include <bitset>
 #include <memory>
@@ -18,6 +19,9 @@ template <typename T, typename... Args> Ref<T> CreateRef(Args&&... args)
 }
 
 using Signature = std::bitset<Constants::MAX_COMPONENTS>;
+
+struct GenericTag {};
+using Vec2 = Vec2Base<int, GenericTag>;
 
 enum class WorldSizeType
 {

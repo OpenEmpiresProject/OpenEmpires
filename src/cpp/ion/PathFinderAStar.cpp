@@ -1,5 +1,6 @@
 #include "PathFinderAStar.h"
 
+#include "Tile.h"
 #include "utils/Logger.h"
 
 #include <cmath>
@@ -11,7 +12,7 @@
 
 using namespace ion;
 
-double heuristic(const Vec2d& a, const Vec2d& b)
+double heuristic(const Tile& a, const Tile& b)
 {
     // Manhattan distance
     // return std::abs(a.x - b.x) + std::abs(a.y - b.y);
@@ -20,7 +21,7 @@ double heuristic(const Vec2d& a, const Vec2d& b)
     return std::sqrt(std::pow(a.x - b.x, 2) + std::pow(a.y - b.y, 2));
 }
 
-bool isBlocked(const GridMap& map, const Vec2d& pos)
+bool isBlocked(const TileMap& map, const Tile& pos)
 {
     if (pos.x < 0 || pos.x >= map.width || pos.y < 0 || pos.y >= map.height ||
         map.isOccupied(MapLayerType::STATIC, pos))
@@ -28,7 +29,7 @@ bool isBlocked(const GridMap& map, const Vec2d& pos)
     return false;
 }
 
-bool isWalkable(const GridMap& map, const Vec2d& from, const Vec2d& to)
+bool isWalkable(const TileMap& map, const Tile& from, const Tile& to)
 {
     if (isBlocked(map, to))
         return false;
@@ -36,8 +37,8 @@ bool isWalkable(const GridMap& map, const Vec2d& from, const Vec2d& to)
     if (from.x != to.x && from.y != to.y)
     {
         auto diff = to - from;
-        auto corner1 = Vec2d(from.x, from.y + diff.y);
-        auto corner2 = Vec2d(from.x + diff.x, from.y);
+        auto corner1 = Tile(from.x, from.y + diff.y);
+        auto corner2 = Tile(from.x + diff.x, from.y);
 
         // Diagonal movement is not allowed if the adjacent tiles are not walkable
         if (isBlocked(map, corner1) || isBlocked(map, corner2))
@@ -46,56 +47,59 @@ bool isWalkable(const GridMap& map, const Vec2d& from, const Vec2d& to)
     return true;
 }
 
-std::vector<Vec2d> getNeighbors(const Vec2d& pos)
+std::vector<Tile> getNeighbors(const Tile& pos)
 {
     return {{pos.x + 1, pos.y},     {pos.x - 1, pos.y},     {pos.x, pos.y + 1},
             {pos.x, pos.y - 1},     {pos.x + 1, pos.y + 1}, {pos.x - 1, pos.y - 1},
             {pos.x + 1, pos.y - 1}, {pos.x - 1, pos.y + 1}};
 }
 
-Path reconstructPath(const std::unordered_map<Vec2d, Vec2d>& cameFrom, Vec2d current)
+Path reconstructPath(const std::unordered_map<Tile, Tile>& cameFrom, Tile current)
 {
     Path path;
     while (cameFrom.contains(current))
     {
-        path.push_back(current);
+        path.push_back(current.centerInFeet());
         current = cameFrom.at(current);
     }
-    path.push_back(current);
+    path.push_back(current.centerInFeet());
     std::reverse(path.begin(), path.end());
     return path;
 }
 
-Path PathFinderAStar::findPath(const GridMap& map, const Vec2d& start, const Vec2d& goal)
+Path PathFinderAStar::findPath(const TileMap& map, const Feet& start, const Feet& goal)
 {
-    using PQNode = std::pair<int, Vec2d>; // cost, position
+    using PQNode = std::pair<int, Tile>; // cost, position
     std::priority_queue<PQNode, std::vector<PQNode>, std::greater<>> open;
 
-    std::unordered_map<Vec2d, Vec2d> cameFrom;
-    std::unordered_map<Vec2d, double> gScore;
+    std::unordered_map<Tile, Tile> cameFrom;
+    std::unordered_map<Tile, double> gScore;
 
-    open.emplace(0, start);
-    gScore[start] = 0.0;
+    auto startTile = start.toTile();
+    auto goalTile = goal.toTile();
 
-    Vec2d closestToGoal = start;
-    double minHeuristic = heuristic(start, goal);
+    open.emplace(0, startTile);
+    gScore[startTile] = 0.0;
+
+    Tile closestToGoal = startTile;
+    double minHeuristic = heuristic(startTile, goalTile);
 
     while (!open.empty())
     {
-        Vec2d current = open.top().second;
+        Tile current = open.top().second;
         open.pop();
 
-        if (current == goal)
+        if (current == goalTile)
             return reconstructPath(cameFrom, current);
 
-        double h = heuristic(current, goal);
+        double h = heuristic(current, goalTile);
         if (h < minHeuristic)
         {
             minHeuristic = h;
             closestToGoal = current;
         }
 
-        for (const Vec2d& neighbor : getNeighbors(current))
+        for (const Tile& neighbor : getNeighbors(current))
         {
             if (!isWalkable(map, current, neighbor))
             {
@@ -110,7 +114,7 @@ Path PathFinderAStar::findPath(const GridMap& map, const Vec2d& start, const Vec
             {
                 cameFrom[neighbor] = current;
                 gScore[neighbor] = tentativeG;
-                double fScore = tentativeG + heuristic(neighbor, goal);
+                double fScore = tentativeG + heuristic(neighbor, goalTile);
                 open.emplace(fScore, neighbor);
             }
         }

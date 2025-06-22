@@ -1,8 +1,9 @@
 #ifndef COORDINATES_H
 #define COORDINATES_H
 
+#include "Feet.h"
 #include "GameSettings.h"
-#include "Vec2d.h"
+#include "Tile.h"
 
 #include <memory>
 
@@ -13,33 +14,33 @@ class Coordinates
   public:
     Coordinates(std::shared_ptr<GameSettings> settings);
 
-    Vec2d feetToPixels(const Vec2d& feet) const;
-    Vec2d pixelsToFeet(const Vec2d& pixels) const;
-    Vec2d pixelsToScreenUnits(const Vec2d& pixels) const;
-    Vec2d screenUnitsToPixels(const Vec2d& screenUnits) const;
-    Vec2d screenUnitsToFeet(const Vec2d& screenUnits) const;
-    Vec2d screenUnitsToTiles(const Vec2d& screenUnits) const;
-    Vec2d feetToScreenUnits(const Vec2d& feet) const;
-    static Vec2d feetToTiles(const Vec2d& feet);
-    static Vec2d tilesToFeet(const Vec2d& tiles);
-    static Vec2d getTileCenterInFeet(const Vec2d& tile);
-    Vec2d getMapCenterInFeet() const;
-    int getZOrder(const Vec2d& feet) const;
+    Vec2 feetToPixels(const Feet& feet) const;
+    Feet pixelsToFeet(const Vec2& pixels) const;
+    Vec2 pixelsToScreenUnits(const Vec2& pixels) const;
+    Vec2 screenUnitsToPixels(const Vec2& screenUnits) const;
+    Feet screenUnitsToFeet(const Vec2& screenUnits) const;
+    Tile screenUnitsToTiles(const Vec2& screenUnits) const;
+    Vec2 feetToScreenUnits(const Feet& feet) const;
+    static Tile feetToTiles(const Feet& feet);
+    static Feet tilesToFeet(const Tile& tiles);
+    static Feet getTileCenterInFeet(const Tile& tile);
+    Feet getMapCenterInFeet() const;
+    int getZOrder(const Feet& feet) const;
     int getMaxZOrder() const;
-    bool isValidFeet(const Vec2d& feet) const;
-    bool isValidTile(const Vec2d& tile) const;
+    bool isValidFeet(const Feet& feet) const;
+    bool isValidTile(const Tile& tile) const;
 
-    const Vec2d& getViewportPositionInPixels() const;
-    void setViewportPositionInPixels(const Vec2d& pixels);
-    void setViewportPositionInPixelsWithBounryChecking(const Vec2d& pixels);
-    Vec2d getViewportCenterInPixels() const;
-    bool isInsideMap(const Vec2d& pixelPos) const;
+    const Vec2& getViewportPositionInPixels() const;
+    void setViewportPositionInPixels(const Vec2& pixels);
+    void setViewportPositionInPixelsWithBounryChecking(const Vec2& pixels);
+    Vec2 getViewportCenterInPixels() const;
+    bool isInsideMap(const Vec2& pixelPos) const;
     bool isViewportCenterInsideMap() const;
 
   private:
-    Vec2d m_viewportPositionInPixels;
+    Vec2 m_viewportPositionInPixels;
     std::shared_ptr<GameSettings> m_settings;
-    const Vec2d m_windowMiddle;
+    const Vec2 m_windowMiddle;
 };
 
 } // namespace ion

@@ -1,7 +1,7 @@
-#ifndef GRIDNMAP_H
-#define GRIDNMAP_H
+#ifndef TILEMAP_H
+#define TILEMAP_H
 
-#include "Vec2d.h"
+#include "Tile.h"
 #include "debug.h"
 #include "utils/Logger.h"
 #include "utils/Types.h"
@@ -58,7 +58,7 @@ enum class MapLayerType
     MAX_LAYERS
 };
 
-struct GridMap
+struct TileMap
 {
     uint32_t width = 0;
     uint32_t height = 0;
@@ -82,42 +82,42 @@ struct GridMap
     /**
      * @brief Checks if a cell at the specified grid position is occupied in the given map layer.
      *
-     * This function verifies whether the cell located at the provided grid position (`gridPos`)
+     * This function verifies whether the cell located at the provided grid position (`pos`)
      * within the specified map layer (`layerType`) is occupied. It first asserts that the layer
      * type is valid, then checks if the grid position is within the bounds of the map. If the
      * position is valid, it returns the occupancy status of the cell. If the position is invalid,
      * it logs an error and returns false.
      *
      * @param layerType The type of the map layer to check.
-     * @param gridPos The 2D grid position to check for occupancy.
+     * @param pos The 2D grid position to check for occupancy.
      * @return true if the cell is occupied; false otherwise or if the position is invalid.
      */
-    inline bool isOccupied(MapLayerType layerType, const Vec2d& gridPos) const
+    inline bool isOccupied(MapLayerType layerType, const Tile& pos) const
     {
         auto layerTypeInt = toInt(layerType);
 
-        if (gridPos.x >= 0 && gridPos.y >= 0 && gridPos.x < width && gridPos.y < height) [[likely]]
+        if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height) [[likely]]
         {
-            return layers[layerTypeInt].cells[gridPos.x][gridPos.y].isOccupied();
+            return layers[layerTypeInt].cells[pos.x][pos.y].isOccupied();
         }
         else [[unlikely]]
         {
-            spdlog::error("Invalid grid position: ({}, {})", gridPos.x, gridPos.y);
+            spdlog::error("Invalid grid position: ({}, {})", pos.x, pos.y);
             return false;
         }
     }
 
     inline bool isOccupiedByAnother(MapLayerType layerType,
-                                    const Vec2d& gridPos,
+                                    const Tile& pos,
                                     uint32_t myEntity) const
     {
         auto layerTypeInt = toInt(layerType);
 
-        if (gridPos.x >= 0 && gridPos.y >= 0 && gridPos.x < width && gridPos.y < height) [[likely]]
+        if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height) [[likely]]
         {
-            if (layers[layerTypeInt].cells[gridPos.x][gridPos.y].isOccupied())
+            if (layers[layerTypeInt].cells[pos.x][pos.y].isOccupied())
             {
-                auto& entities = layers[layerTypeInt].cells[gridPos.x][gridPos.y].entities;
+                auto& entities = layers[layerTypeInt].cells[pos.x][pos.y].entities;
 
                 // Check if a value other than myEntity exist in the entities list
                 return std::any_of(entities.begin(), entities.end(),
@@ -126,7 +126,7 @@ struct GridMap
         }
         else [[unlikely]]
         {
-            spdlog::error("Invalid grid position: ({}, {})", gridPos.x, gridPos.y);
+            spdlog::error("Invalid grid position: ({}, {})", pos.x, pos.y);
             return false;
         }
     }
@@ -134,57 +134,57 @@ struct GridMap
     /**
      * @brief Adds an entity to the specified map layer at the given grid position.
      *
-     * This function inserts the provided entity into the cell located at `gridPos`
+     * This function inserts the provided entity into the cell located at `pos`
      * within the specified `layerType`. It performs bounds checking to ensure that
      * the grid position is valid and that the layer type is within the allowed range.
      * If the position or layer type is invalid, an error is logged.
      *
      * @param layerType The type of map layer to which the entity should be added.
-     * @param gridPos The 2D grid position where the entity will be placed.
+     * @param pos The 2D grid position where the entity will be placed.
      * @param entity The unique identifier of the entity to add.
      */
-    void addEntity(MapLayerType layerType, const Vec2d& gridPos, uint32_t entity)
+    void addEntity(MapLayerType layerType, const Tile& pos, uint32_t entity)
     {
         auto layerTypeInt = toInt(layerType);
 
-        if (gridPos.x >= 0 && gridPos.y >= 0 && gridPos.x < width && gridPos.y < height) [[likely]]
+        if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height) [[likely]]
         {
-            layers[layerTypeInt].cells[gridPos.x][gridPos.y].addEntity(entity);
+            layers[layerTypeInt].cells[pos.x][pos.y].addEntity(entity);
         }
         else [[unlikely]]
         {
-            spdlog::error("Invalid grid position: ({}, {}) to add entity {}", gridPos.x, gridPos.y,
+            spdlog::error("Invalid grid position: ({}, {}) to add entity {}", pos.x, pos.y,
                           entity);
         }
     }
 
-    void removeEntity(MapLayerType layerType, const Vec2d& gridPos, uint32_t entity)
+    void removeEntity(MapLayerType layerType, const Tile& pos, uint32_t entity)
     {
         auto layerTypeInt = toInt(layerType);
 
-        if (gridPos.x >= 0 && gridPos.y >= 0 && gridPos.x < width && gridPos.y < height) [[likely]]
+        if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height) [[likely]]
         {
-            layers[layerTypeInt].cells[gridPos.x][gridPos.y].removeEntity(entity);
+            layers[layerTypeInt].cells[pos.x][pos.y].removeEntity(entity);
         }
         else [[unlikely]]
         {
-            spdlog::error("Invalid grid position: ({}, {}) to remove entity {}", gridPos.x,
-                          gridPos.y, entity);
+            spdlog::error("Invalid grid position: ({}, {}) to remove entity {}", pos.x,
+                          pos.y, entity);
         }
     }
 
-    void removeAllEntities(MapLayerType layerType, const Vec2d& gridPos)
+    void removeAllEntities(MapLayerType layerType, const Tile& pos)
     {
         auto layerTypeInt = toInt(layerType);
 
-        if (gridPos.x >= 0 && gridPos.y >= 0 && gridPos.x < width && gridPos.y < height) [[likely]]
+        if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height) [[likely]]
         {
-            layers[layerTypeInt].cells[gridPos.x][gridPos.y].removeAllEntities();
+            layers[layerTypeInt].cells[pos.x][pos.y].removeAllEntities();
         }
         else [[unlikely]]
         {
-            spdlog::error("Invalid grid position: ({}, {}) to remove all entities", gridPos.x,
-                          gridPos.y);
+            spdlog::error("Invalid grid position: ({}, {}) to remove all entities", pos.x,
+                          pos.y);
         }
     }
 
@@ -192,20 +192,20 @@ struct GridMap
      * Retrieves the entity ID at the specified grid position and layer.
      *
      * @param layerType The type of map layer to query.
-     * @param gridPos The 2D grid position to look up.
+     * @param pos The 2D grid position to look up.
      * @return The entity ID at the given position and layer, or entt::null if the position is
      * invalid.
      *
      * Logs an error if the grid position is out of bounds.
      * Asserts that the layerType is valid.
      */
-    uint32_t getEntity(MapLayerType layerType, const Vec2d& gridPos) const
+    uint32_t getEntity(MapLayerType layerType, const Tile& pos) const
     {
         auto layerTypeInt = toInt(layerType);
 
-        if (gridPos.x >= 0 && gridPos.y >= 0 && gridPos.x < width && gridPos.y < height) [[likely]]
+        if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height) [[likely]]
         {
-            auto& cell = layers[layerTypeInt].cells[gridPos.x][gridPos.y];
+            auto& cell = layers[layerTypeInt].cells[pos.x][pos.y];
             if (cell.isOccupied())
             {
                 return cell.getEntity();
@@ -214,24 +214,24 @@ struct GridMap
         }
         else [[unlikely]]
         {
-            spdlog::error("Invalid grid position: ({}, {})", gridPos.x, gridPos.y);
+            spdlog::error("Invalid grid position: ({}, {})", pos.x, pos.y);
             return entt::null;
         }
     }
 
-    const std::list<uint32_t>& getEntities(MapLayerType layerType, const Vec2d& gridPos) const
+    const std::list<uint32_t>& getEntities(MapLayerType layerType, const Tile& pos) const
     {
         auto layerTypeInt = toInt(layerType);
         static const std::list<uint32_t> empty;
 
-        if (gridPos.x >= 0 && gridPos.y >= 0 && gridPos.x < width && gridPos.y < height) [[likely]]
+        if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height) [[likely]]
         {
-            auto& cell = layers[layerTypeInt].cells[gridPos.x][gridPos.y];
+            auto& cell = layers[layerTypeInt].cells[pos.x][pos.y];
             return cell.entities;
         }
         else [[unlikely]]
         {
-            spdlog::error("Invalid grid position: ({}, {})", gridPos.x, gridPos.y);
+            spdlog::error("Invalid grid position: ({}, {})", pos.x, pos.y);
             return empty;
         }
     }

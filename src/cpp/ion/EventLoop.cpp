@@ -116,7 +116,7 @@ void EventLoop::handleInputEvents()
 
     if (m_previouseMouseX != mouseX || m_previouseMouseY != mouseY)
     {
-        MouseMoveData data{Vec2d(mouseX, mouseY)};
+        MouseMoveData data{Vec2(mouseX, mouseY)};
         Event mouseMoveEvent(Event::Type::MOUSE_MOVE, data);
         for (auto& listener : m_listeners)
         {
@@ -130,7 +130,7 @@ void EventLoop::handleInputEvents()
     {
         if ((currentMouseState & SDL_BUTTON_LMASK) && !(m_previousMouseState & SDL_BUTTON_LMASK))
         {
-            MouseClickData data{MouseClickData::Button::LEFT, Vec2d(mouseX, mouseY)};
+            MouseClickData data{MouseClickData::Button::LEFT, Vec2(mouseX, mouseY)};
             Event mouseClickEvent(Event::Type::MOUSE_BTN_DOWN, data);
             for (auto& listener : m_listeners)
             {
@@ -140,7 +140,7 @@ void EventLoop::handleInputEvents()
 
         if (!(currentMouseState & SDL_BUTTON_LMASK) && (m_previousMouseState & SDL_BUTTON_LMASK))
         {
-            MouseClickData data{MouseClickData::Button::LEFT, Vec2d(mouseX, mouseY)};
+            MouseClickData data{MouseClickData::Button::LEFT, Vec2(mouseX, mouseY)};
             Event mouseClickEvent(Event::Type::MOUSE_BTN_UP, data);
             for (auto& listener : m_listeners)
             {
@@ -150,7 +150,7 @@ void EventLoop::handleInputEvents()
 
         if ((currentMouseState & SDL_BUTTON_RMASK) && !(m_previousMouseState & SDL_BUTTON_RMASK))
         {
-            MouseClickData data{MouseClickData::Button::RIGHT, Vec2d(mouseX, mouseY)};
+            MouseClickData data{MouseClickData::Button::RIGHT, Vec2(mouseX, mouseY)};
             Event mouseClickEvent(Event::Type::MOUSE_BTN_DOWN, data);
             for (auto& listener : m_listeners)
             {
@@ -159,7 +159,7 @@ void EventLoop::handleInputEvents()
         }
         if (!(currentMouseState & SDL_BUTTON_RMASK) && (m_previousMouseState & SDL_BUTTON_RMASK))
         {
-            MouseClickData data{MouseClickData::Button::RIGHT, Vec2d(mouseX, mouseY)};
+            MouseClickData data{MouseClickData::Button::RIGHT, Vec2(mouseX, mouseY)};
             Event mouseClickEvent(Event::Type::MOUSE_BTN_UP, data);
             for (auto& listener : m_listeners)
             {

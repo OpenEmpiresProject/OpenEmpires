@@ -40,7 +40,7 @@ struct Element : std::enable_shared_from_this<Element>
     Rect<int> getAbsoluteRect() const;
 
   private:
-    bool inside(const Vec2d& pos) const;
+    bool inside(const Vec2& pos) const;
 };
 
 struct Label : public Element

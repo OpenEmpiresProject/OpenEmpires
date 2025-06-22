@@ -2,7 +2,8 @@
 #define FOGOFWAR_H
 
 #include "Coordinates.h"
-#include "Vec2d.h"
+#include "Feet.h"
+#include "Tile.h"
 #include "utils/Types.h"
 
 #include <cstdint>
@@ -18,14 +19,14 @@ class FogOfWar
 
     void init(uint32_t width, uint32_t height, RevealStatus initialFill);
     void markAsExplored(uint32_t tileX, uint32_t tileY);
-    void markAsExplored(const Vec2d& feetPos);
-    void markAsExplored(const Vec2d& feetPos, uint8_t lineOfSight);
+    void markAsExplored(const Feet& feetPos);
+    void markAsExplored(const Feet& feetPos, uint8_t lineOfSight);
     void markAsVisible(uint32_t tileX, uint32_t tileY, uint8_t lineOfSight);
-    void markAsVisible(const Vec2d& feetPos, uint8_t lineOfSight);
+    void markAsVisible(const Feet& feetPos, uint8_t lineOfSight);
 
     const std::vector<std::vector<RevealStatus>>& getMap() const;
     RevealStatus getRevealMode(uint32_t tileX, uint32_t tileY) const;
-    RevealStatus getRevealMode(const Vec2d& tilePos) const;
+    RevealStatus getRevealMode(const Tile& tilePos) const;
     void setRevealMode(uint32_t tileX, uint32_t tileY, RevealStatus type);
     void disable();
     void enable();

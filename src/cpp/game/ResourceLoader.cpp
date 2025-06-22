@@ -7,6 +7,7 @@
 #include "Renderer.h"
 #include "ServiceRegistry.h"
 #include "SubSystemRegistry.h"
+#include "Tile.h"
 #include "UI.h"
 #include "UIManager.h"
 #include "commands/CmdIdle.h"
@@ -76,14 +77,12 @@ void ResourceLoader::loadEntities()
         }
     }
 
-    // createVillager(player, Vec2d{22, 20});
-
     generateMap(gameState.gameMap);
     createStoneOrGoldCluster(EntityTypes::ET_STONE, gameState.gameMap, 30, 30, 4);
     createStoneOrGoldCluster(EntityTypes::ET_GOLD, gameState.gameMap, 20, 30, 4);
     // createTree(gameState.gameMap, 5, 5);
 
-    createVillager(player, Vec2d{20, 20});
+    createVillager(player, Tile(20, 20));
 
     GraphicsID resourcePanelBackground{
         .entityType = EntityTypes::ET_UI_ELEMENT,
@@ -124,7 +123,7 @@ void ResourceLoader::loadEntities()
     spdlog::info("Entity loading successfully.");
 }
 
-void ResourceLoader::createTree(GridMap& map, uint32_t x, uint32_t y)
+void ResourceLoader::createTree(TileMap& map, uint32_t x, uint32_t y)
 {
     auto& gameState = GameState::getInstance();
 
@@ -157,11 +156,11 @@ void ResourceLoader::createTree(GridMap& map, uint32_t x, uint32_t y)
     gameState.addComponent(tree, sc);
     gameState.addComponent(tree, CompResource(Resource(ResourceType::WOOD, 100)));
 
-    map.addEntity(MapLayerType::STATIC, Vec2d(x, y), tree);
+    map.addEntity(MapLayerType::STATIC, Tile(x, y), tree);
 }
 
 void ResourceLoader::createStoneOrGold(EntityTypes entityType,
-                                       ion::GridMap& gameMap,
+                                       ion::TileMap& gameMap,
                                        uint32_t x,
                                        uint32_t y)
 {
@@ -199,10 +198,10 @@ void ResourceLoader::createStoneOrGold(EntityTypes entityType,
         resourceType = ResourceType::GOLD;
     gameState.addComponent(stone, CompResource(Resource(resourceType, 1000)));
 
-    gameMap.addEntity(MapLayerType::STATIC, Vec2d(x, y), stone);
+    gameMap.addEntity(MapLayerType::STATIC, Tile(x, y), stone);
 }
 
-void ResourceLoader::createVillager(Ref<ion::Player> player, const Vec2d& tilePos)
+void ResourceLoader::createVillager(Ref<ion::Player> player, const Tile& tilePos)
 {
     auto& gameState = GameState::getInstance();
     auto villager = gameState.createEntity();
@@ -250,7 +249,7 @@ void ResourceLoader::createVillager(Ref<ion::Player> player, const Vec2d& tilePo
     auto box = getBoundingBox(m_drs, 1388, 1);
     sc.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
     sc.selectionIndicator = {GraphicAddon::Type::ISO_CIRCLE,
-                             GraphicAddon::IsoCircle{10, Vec2d{0, 0}}};
+                             GraphicAddon::IsoCircle{10, Vec2(0, 0)}};
 
     gameState.addComponent(villager, sc);
     gameState.addComponent(villager, CompPlayer{player});
@@ -262,14 +261,14 @@ void ResourceLoader::createVillager(Ref<ion::Player> player, const Vec2d& tilePo
     };
     gameState.addComponent(villager, gatherer);
 
-    auto newTile = Coordinates::feetToTiles(transform.position);
+    auto newTile = transform.position.toTile();
     gameState.gameMap.addEntity(MapLayerType::UNITS, newTile, villager);
 
     player->getFOW()->markAsExplored(transform.position, 5);
 }
 
 void ResourceLoader::createStoneOrGoldCluster(
-    EntityTypes entityType, ion::GridMap& gameMap, uint32_t xHint, uint32_t yHint, uint8_t amount)
+    EntityTypes entityType, ion::TileMap& gameMap, uint32_t xHint, uint32_t yHint, uint8_t amount)
 {
     if (amount == 0)
         return;
@@ -281,7 +280,7 @@ void ResourceLoader::createStoneOrGoldCluster(
     std::vector<std::pair<uint32_t, uint32_t>> frontier;
 
     auto isValid = [&](uint32_t x, uint32_t y)
-    { return x < width && y < height && !gameMap.isOccupied(MapLayerType::STATIC, Vec2d(x, y)); };
+    { return x < width && y < height && !gameMap.isOccupied(MapLayerType::STATIC, Tile(x, y)); };
 
     // Try to start from the hint or nearby
     if (!isValid(xHint, yHint))
@@ -343,7 +342,7 @@ void ResourceLoader::createStoneOrGoldCluster(
     }
 }
 
-void ResourceLoader::generateMap(GridMap& gameMap)
+void ResourceLoader::generateMap(TileMap& gameMap)
 {
     std::random_device rd;
     std::mt19937 rng(rd());
@@ -440,13 +439,13 @@ void ResourceLoader::createTile(
         gc.layer = GraphicLayer::GROUND;
 
         auto map = gameState.gameMap;
-        map.addEntity(MapLayerType::GROUND, Vec2d(x, y), tile);
+        map.addEntity(MapLayerType::GROUND, Tile(x, y), tile);
     }
     else
     {
         gameState.addComponent(tile, CompEntityInfo(entityType, 0, 0));
         gc.layer = GraphicLayer::FOG;
-        gameState.gameMap.addEntity(MapLayerType::FOG_OF_WAR, Vec2d(x, y), tile);
+        gameState.gameMap.addEntity(MapLayerType::FOG_OF_WAR, Tile(x, y), tile);
     }
     gameState.addComponent(tile, gc);
 }

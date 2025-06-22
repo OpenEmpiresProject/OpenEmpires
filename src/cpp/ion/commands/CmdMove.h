@@ -2,8 +2,8 @@
 #define CMDMOVE_H
 
 #include "Coordinates.h"
+#include "Feet.h"
 #include "Player.h"
-#include "Vec2d.h"
 #include "commands/Command.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
@@ -18,10 +18,10 @@ namespace ion
 class CmdMove : public Command
 {
   public:
-    Vec2d goal; // In Feet
+    Feet goal; // In Feet
 
   private:
-    std::list<Vec2d> path;
+    std::list<Feet> path;
     uint32_t entity = entt::null;
     Ref<Coordinates> coordinates;
     Ref<Player> player;
@@ -40,10 +40,10 @@ class CmdMove : public Command
                  uint32_t entityId);
 
     bool move(CompTransform& transform, int deltaTimeMs);
-    std::list<Vec2d> findPath(const Vec2d& endPosInFeet, uint32_t entity);
-    bool resolveCollision(const Vec2d& newPosFeet);
-    Vec2d calculateNewPosition(CompTransform& transform, int timeMs);
-    void setPosition(CompTransform& transform, const Vec2d& newPosFeet);
+    std::list<Feet> findPath(const Feet& endPosInFeet, uint32_t entity);
+    bool resolveCollision(const Feet& newPosFeet);
+    Feet calculateNewPosition(CompTransform& transform, int timeMs);
+    void setPosition(CompTransform& transform, const Feet& newPosFeet);
 };
 } // namespace ion
 

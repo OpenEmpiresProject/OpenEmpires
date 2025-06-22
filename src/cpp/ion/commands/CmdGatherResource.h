@@ -2,10 +2,10 @@
 #define CMDATTACK_H
 
 #include "Coordinates.h"
+#include "Feet.h"
 #include "GameState.h"
 #include "Player.h"
 #include "ServiceRegistry.h"
-#include "Vec2d.h"
 #include "commands/CmdMove.h"
 #include "commands/Command.h"
 #include "components/CompEntityInfo.h"
@@ -32,7 +32,7 @@ class CmdGatherResource : public Command
     const int choppingSpeed = 10; // 10 wood per second
     // Cached values
     uint32_t entity = entt::null;
-    Vec2d targetPosition; // Use when target is absent by the time this command execute
+    Feet targetPosition; // Use when target is absent by the time this command execute
     float collectedResourceAmount = 0;
     std::shared_ptr<Coordinates> coordinateSystem;
     Ref<Player> player;
@@ -173,7 +173,7 @@ class CmdGatherResource : public Command
     {
         spdlog::debug("Looking for another resource...");
         auto& transformMy = GameState::getInstance().getComponent<CompTransform>(entity);
-        auto tilePos = Coordinates::feetToTiles(transformMy.position);
+        auto tilePos = transformMy.position.toTile();
 
         auto newResource = findClosestResource(targetResource->type, tilePos,
                                                Constants::MAX_RESOURCE_LOOKUP_RADIUS);
@@ -186,7 +186,7 @@ class CmdGatherResource : public Command
         return newResource != entt::null;
     }
 
-    bool hasResource(uint8_t resourceType, const Vec2d& posTile, uint32_t& resourceEntity)
+    bool hasResource(uint8_t resourceType, const Tile& posTile, uint32_t& resourceEntity)
     {
         resourceEntity = entt::null;
         auto& map = GameState::getInstance().gameMap;
@@ -210,18 +210,18 @@ class CmdGatherResource : public Command
         return false;
     }
 
-    uint32_t findClosestResource(uint8_t resourceType, const Vec2d& startTile, int maxRadius)
+    uint32_t findClosestResource(uint8_t resourceType, const Tile& startTile, int maxRadius)
     {
-        std::queue<std::pair<Vec2d, int>> toVisit; // Pair: position, current distance
-        std::unordered_set<Vec2d> visited;
+        std::queue<std::pair<Tile, int>> toVisit; // Pair: position, current distance
+        std::unordered_set<Tile> visited;
 
         uint32_t resourceEntity = entt::null;
 
         toVisit.push({startTile, 0});
         visited.insert(startTile);
 
-        const std::vector<Vec2d> directions = {{0, -1},  {1, 0},  {0, 1}, {-1, 0},
-                                               {-1, -1}, {1, -1}, {1, 1}, {-1, 1}};
+        const std::vector<Tile> directions = {{0, -1},  {1, 0},  {0, 1}, {-1, 0},
+                                              {-1, -1}, {1, -1}, {1, 1}, {-1, 1}};
 
         while (!toVisit.empty())
         {
@@ -240,7 +240,7 @@ class CmdGatherResource : public Command
 
             for (const auto& dir : directions)
             {
-                Vec2d neighbor{current.x + dir.x, current.y + dir.y};
+                Tile neighbor{current.x + dir.x, current.y + dir.y};
 
                 if (!visited.contains(neighbor))
                 {

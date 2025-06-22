@@ -124,7 +124,7 @@ void Simulator::onMouseMove(const Event& e)
         auto& transform =
             GameState::getInstance().getComponent<CompTransform>(m_currentBuildingOnPlacement);
         auto feet = m_coordinates->screenUnitsToFeet(m_lastMouseScreenPos);
-        auto tile = Coordinates::feetToTiles(feet);
+        auto tile = feet.toTile();
 
         auto& building =
             GameState::getInstance().getComponent<CompBuilding>(m_currentBuildingOnPlacement);
@@ -135,9 +135,9 @@ void Simulator::onMouseMove(const Event& e)
         if (!outOfMap)
         {
             // place buildings at the bottom corner of a tile
-            tile += Vec2d(1, 1);
-            feet = Coordinates::tilesToFeet(tile);
-            transform.position = feet - Vec2d(10, 10);
+            tile += Tile(1, 1);
+            feet = tile.toFeet();
+            transform.position = feet - Feet(10, 10);
         }
 
         auto& dirty =
@@ -256,8 +256,8 @@ void Simulator::updateGraphicComponents()
 
         if (state.hasComponent<CompUIElement>(entity))
         {
-            gc.positionInFeet = Vec2d::null;
-            gc.positionInScreenUnits = transform.position;
+            gc.positionInFeet = Feet::null;
+            gc.positionInScreenUnits = {transform.position.x, transform.position.y};
 
             auto ui = state.getComponent<CompUIElement>(entity);
             if (ui.type == UIRenderingType::TEXT)
@@ -269,7 +269,7 @@ void Simulator::updateGraphicComponents()
     }
 }
 
-void Simulator::onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endScreenPos)
+void Simulator::onSelectingUnits(const Vec2& startScreenPos, const Vec2& endScreenPos)
 {
     clearSelection();
 
@@ -306,7 +306,7 @@ void Simulator::onSelectingUnits(const Vec2d& startScreenPos, const Vec2d& endSc
     }
 }
 
-void Simulator::onClickToSelect(const Vec2d& screenPos)
+void Simulator::onClickToSelect(const Vec2& screenPos)
 {
     clearSelection();
 
@@ -318,7 +318,7 @@ void Simulator::onClickToSelect(const Vec2d& screenPos)
     }
 }
 
-void Simulator::resolveSelection(const Vec2d& screenPos)
+void Simulator::resolveSelection(const Vec2& screenPos)
 {
     // Invalidate in-progress selection if mouse hasn't moved much
     if (m_isSelecting)
@@ -359,7 +359,7 @@ void Simulator::resolveSelection(const Vec2d& screenPos)
     }
 }
 
-void Simulator::resolveAction(const Vec2d& screenPos)
+void Simulator::resolveAction(const Vec2& screenPos)
 {
     auto target = whatIsAt(screenPos);
     bool gatherable = GameState::getInstance().hasComponent<CompResource>(target);
@@ -396,7 +396,7 @@ void Simulator::resolveAction(const Vec2d& screenPos)
     }
 }
 
-void Simulator::testBuild(const Vec2d& targetFeetPos, int buildingType, Size size)
+void Simulator::testBuild(const Feet& targetFeetPos, int buildingType, Size size)
 {
     auto& gameState = GameState::getInstance();
     auto mill = gameState.createEntity();
@@ -421,13 +421,13 @@ void Simulator::testBuild(const Vec2d& targetFeetPos, int buildingType, Size siz
     m_currentBuildingOnPlacement = mill;
 }
 
-bool Simulator::canPlaceBuildingAt(const CompBuilding& building, const Vec2d& feet, bool& outOfMap)
+bool Simulator::canPlaceBuildingAt(const CompBuilding& building, const Feet& feet, bool& outOfMap)
 {
     auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
-    auto tile = Coordinates::feetToTiles(feet);
+    auto tile = feet.toTile();
     auto staticMap = GameState::getInstance().gameMap.getMap(MapLayerType::STATIC);
 
-    auto isValidTile = [&](const Vec2d& tile)
+    auto isValidTile = [&](const Tile& tile)
     {
         return tile.x >= 0 && tile.y >= 0 && tile.x < settings->getWorldSizeInTiles().width &&
                tile.y < settings->getWorldSizeInTiles().height;
@@ -488,7 +488,7 @@ void Simulator::clearSelection()
     m_currentUnitSelection.selectedEntities.clear();
 }
 
-uint32_t Simulator::whatIsAt(const Vec2d& screenPos)
+uint32_t Simulator::whatIsAt(const Vec2& screenPos)
 {
     auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
     auto& gameState = GameState::getInstance();
@@ -497,11 +497,11 @@ uint32_t Simulator::whatIsAt(const Vec2d& screenPos)
 
     spdlog::debug("Clicking at grid pos {} to select", clickedCellPos.toString());
 
-    Vec2d gridStartPos = clickedCellPos + Constants::MAX_SELECTION_LOOKUP_HEIGHT;
+    Tile gridStartPos = clickedCellPos + Constants::MAX_SELECTION_LOOKUP_HEIGHT;
     gridStartPos.limitTo(settings->getWorldSizeInTiles().width - 1,
                          settings->getWorldSizeInTiles().height - 1);
 
-    Vec2d pos;
+    Tile pos;
 
     for (pos.y = gridStartPos.y; pos.y >= clickedCellPos.y; pos.y--)
     {

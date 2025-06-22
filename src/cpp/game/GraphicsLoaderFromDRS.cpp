@@ -87,7 +87,7 @@ void registerDummyTexture(int entityType, int entitySubType, GraphicsRegistry& g
     id.entityType = entityType;
     id.entitySubType = entitySubType;
     SDL_FRect* srcRectF = new SDL_FRect{0, 0, 0, 0};
-    Texture entry{nullptr, srcRectF, Vec2d::null, Size(), false};
+    Texture entry{nullptr, srcRectF, {0,0}, Size(), false};
     graphicsRegistry.registerTexture(id, entry);
 }
 
@@ -125,8 +125,8 @@ void createFOWBlackTile(shared_ptr<DRSFile> drs,
     GraphicsID id;
     id.entityType = entityType;
     auto anchorPair = frame.getAnchor();
-    Vec2d anchor = {imageSize.width / 2 + 1,
-                    0}; // Must override tile anchoring since their anchors don't work here
+    Vec2 anchor = {imageSize.width / 2 + 1,
+                   0}; // Must override tile anchoring since their anchors don't work here
     SDL_FRect* srcRectF =
         new SDL_FRect{(float) srcRect.x, (float) srcRect.y, (float) srcRect.w, (float) srcRect.h};
 
@@ -288,7 +288,7 @@ void loadSLP(shared_ptr<DRSFile> drs,
         id.entitySubType = entitySubType;
         id.action = action;
         auto anchorPair = frames[i].getAnchor();
-        Vec2d anchor = {anchorPair.first, anchorPair.second};
+        Vec2 anchor = {anchorPair.first, anchorPair.second};
 
         if (entityType == EntityTypes::ET_TILE)
         {

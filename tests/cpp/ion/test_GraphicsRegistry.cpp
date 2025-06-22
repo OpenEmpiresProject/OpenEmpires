@@ -75,7 +75,7 @@ TEST(GraphicsRegistryTest, RegisterAndRetrieveGraphic) {
 
     GraphicsID id1{1, 2, 3, 4, Direction::EAST};
     Texture entry1;
-    entry1.anchor = Vec2d(10, 20);
+    entry1.anchor = Vec2(10, 20);
 
     registry.registerTexture(id1, entry1);
     const Texture& retrievedEntry = registry.getTexture(id1);
@@ -90,14 +90,14 @@ TEST(GraphicsRegistryTest, GetGraphicsCount) {
 
     GraphicsID id1{1, 2, 3, 4, Direction::EAST};
     Texture entry1;
-    entry1.anchor = Vec2d(10, 20);
+    entry1.anchor = Vec2(10, 20);
 
     registry.registerTexture(id1, entry1);
     EXPECT_EQ(registry.getTextureCount(), 1);
 
     GraphicsID id2{4, 5, 6, 7, Direction::WEST};
     Texture entry2;
-    entry2.anchor = Vec2d(30, 40);
+    entry2.anchor = Vec2(30, 40);
 
     registry.registerTexture(id2, entry2);
     EXPECT_EQ(registry.getTextureCount(), 2);

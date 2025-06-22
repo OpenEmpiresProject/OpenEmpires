@@ -1,9 +1,9 @@
 #ifndef COMPSELECTIBLE_H
 #define COMPSELECTIBLE_H
 
+#include "Feet.h"
 #include "GraphicAddon.h"
 #include "Rect.h"
-#include "Vec2d.h"
 #include "utils/Size.h"
 #include "utils/Types.h"
 

@@ -1,7 +1,7 @@
 #ifndef GRAPHICSREGISTRY_H
 #define GRAPHICSREGISTRY_H
 
-#include "Vec2d.h"
+#include "Feet.h"
 #include "utils/Size.h"
 #include "utils/Types.h"
 
@@ -83,7 +83,7 @@ struct Texture
 {
     SDL_Texture* image = nullptr;
     SDL_FRect* srcRect = nullptr; // Source rectangle for the texture
-    Vec2d anchor{0, 0};
+    Vec2 anchor;
     Size size{0, 0};
     bool flip = false;
 };

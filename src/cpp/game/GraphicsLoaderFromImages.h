@@ -2,9 +2,9 @@
 #define GRAPHICSLOADERBYIMAGES_H
 
 #include "AtlasGenerator.h"
+#include "Feet.h"
 #include "GraphicsLoader.h"
 #include "GraphicsRegistry.h"
-#include "Vec2d.h"
 
 #include <SDL3/SDL.h>
 #include <filesystem>
@@ -33,7 +33,7 @@ class GraphicsLoaderFromImages : public ion::GraphicsLoader
     int determineEntityType(const std::filesystem::path& path);
     void createAtlasForEntityType(int entityType,
                                   const std::vector<std::filesystem::path>& paths,
-                                  const std::map<std::string, ion::Vec2d>& anchors,
+                                  const std::map<std::string, ion::Vec2>& anchors,
                                   ion::GraphicsRegistry& graphicsRegistry,
                                   ion::AtlasGenerator& atlasGenerator);
 

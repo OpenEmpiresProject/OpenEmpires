@@ -1,7 +1,7 @@
 #ifndef IONRECT_H
 #define IONRECT_H
 
-#include "Vec2d.h"
+#include "Feet.h"
 
 #include <concepts>
 #include <iostream>
@@ -36,9 +36,9 @@ template <std::integral T> class Rect
     }
 
     // Utility
-    constexpr Vec2d position() const
+    constexpr Vec2 position() const
     {
-        return Vec2d(x, y);
+        return Vec2(x, y);
     }
 
     constexpr T left() const
@@ -72,7 +72,7 @@ template <std::integral T> class Rect
         return px >= x && px < x + w && py >= y && py < y + h;
     }
 
-    constexpr bool contains(const Vec2d& pos) const
+    constexpr bool contains(const Vec2& pos) const
     {
         return pos.x >= x && pos.x < x + w && pos.y >= y && pos.y < y + h;
     }

@@ -41,15 +41,15 @@ void FogOfWar::markAsExplored(uint32_t x, uint32_t y)
     }
 }
 
-void FogOfWar::markAsExplored(const Vec2d& feetPos)
+void FogOfWar::markAsExplored(const Feet& feetPos)
 {
-    auto tilePos = Coordinates::feetToTiles(feetPos);
+    auto tilePos = feetPos.toTile();
     markAsExplored(tilePos.x, tilePos.y);
 }
 
-void FogOfWar::markAsExplored(const Vec2d& feetPos, uint8_t lineOfSight)
+void FogOfWar::markAsExplored(const Feet& feetPos, uint8_t lineOfSight)
 {
-    auto tilePos = Coordinates::feetToTiles(feetPos);
+    auto tilePos = feetPos.toTile();
     markRadius(tilePos.x, tilePos.y, lineOfSight, RevealStatus::EXPLORED);
 }
 
@@ -58,9 +58,9 @@ void FogOfWar::markAsVisible(uint32_t tileX, uint32_t tileY, uint8_t lineOfSight
     markRadius(tileX, tileY, lineOfSight, RevealStatus::VISIBLE);
 }
 
-void FogOfWar::markAsVisible(const Vec2d& feetPos, uint8_t lineOfSight)
+void FogOfWar::markAsVisible(const Feet& feetPos, uint8_t lineOfSight)
 {
-    auto tilePos = Coordinates::feetToTiles(feetPos);
+    auto tilePos = feetPos.toTile();
     markAsVisible(tilePos.x, tilePos.y, lineOfSight);
 }
 
@@ -97,7 +97,7 @@ RevealStatus FogOfWar::getRevealMode(uint32_t tileX, uint32_t tileY) const
     return m_map[tileX][tileY];
 }
 
-RevealStatus FogOfWar::getRevealMode(const Vec2d& tilePos) const
+RevealStatus FogOfWar::getRevealMode(const Tile& tilePos) const
 {
     return m_map[tilePos.x][tilePos.y];
 }

@@ -56,7 +56,10 @@ void Element::updateGraphicCommand()
     auto [ui, transform, info, dirty] =
         GameState::getInstance()
             .getComponents<CompUIElement, CompTransform, CompEntityInfo, CompDirty>(id);
-    transform.position = getAbsoluteRect().position();
+    auto pixelPos = getAbsoluteRect().position();
+    // HACK: We are hacking transform's position to carry UI element positions as well. 
+    // But it is usually meant to carry positions in Feet.
+    transform.position = {pixelPos.x, pixelPos.y};
     ui.rect = getAbsoluteRect();
     ui.color = background;
     ui.type = UIRenderingType::RECT;
@@ -77,7 +80,7 @@ Rect<int> Element::getAbsoluteRect() const
     return rect;
 }
 
-bool Element::inside(const Vec2d& pos) const
+bool Element::inside(const Vec2& pos) const
 {
     return getAbsoluteRect().contains(pos);
 }

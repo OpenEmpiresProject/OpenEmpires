@@ -2,9 +2,9 @@
 #define COMPGRAPHICS_H
 
 #include "Color.h"
+#include "Feet.h"
 #include "GraphicAddon.h"
 #include "GraphicsRegistry.h" // For GraphicsID
-#include "Vec2d.h"
 #include "utils/Size.h"
 
 #include <array>
@@ -61,8 +61,8 @@ class CompGraphics : public GraphicsID
 {
   public:
     uint32_t entityID = entt::null;
-    Vec2d positionInFeet = {0, 0};
-    Vec2d positionInScreenUnits = Vec2d::null;
+    Feet positionInFeet;
+    Vec2 positionInScreenUnits;
     std::vector<DebugOverlay> debugOverlays;
     std::vector<GraphicAddon> addons;
     Color shading;

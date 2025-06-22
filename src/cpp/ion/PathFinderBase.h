@@ -1,17 +1,17 @@
 #ifndef PATHFINDERBASE_H
 #define PATHFINDERBASE_H
 
-#include "GridMap.h"
-#include "vec2d.h"
+#include "Feet.h"
+#include "TileMap.h"
 
 namespace ion
 {
-using Path = std::vector<Vec2d>;
+using Path = std::vector<Feet>;
 
 class PathFinderBase
 {
   public:
-    virtual Path findPath(const GridMap& map, const Vec2d& start, const Vec2d& goal) = 0;
+    virtual Path findPath(const TileMap& map, const Feet& start, const Feet& goal) = 0;
 };
 
 } // namespace ion
