@@ -31,6 +31,8 @@ void registerDummyTexture(int entityType, int entitySubType, GraphicsRegistry& g
 void createFOWBlackTile(shared_ptr<DRSFile> drs,
                         uint32_t slpId,
                         uint32_t entityType,
+                        uint32_t entitySubType,
+                        bool semiTransparent,
                         SDL_Renderer* renderer,
                         GraphicsRegistry& graphicsRegistry,
                         AtlasGenerator& atlasGenerator);
@@ -45,8 +47,10 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
     auto graphicsDRS = loadDRSFile("assets/graphics.drs");
 
     loadSLP(terrainDRS, 15001, 2, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Grass tiles
-    createFOWBlackTile(terrainDRS, 15001, EntityTypes::ET_BLACK_TILE, renderer, graphicsRegistry,
+    createFOWBlackTile(terrainDRS, 15001, EntityTypes::ET_BLACK_TILE, 0, false, renderer, graphicsRegistry,
                        atlasGenerator); // Black FogOfWar tile
+    createFOWBlackTile(terrainDRS, 15001, EntityTypes::ET_BLACK_TILE, 1, true, renderer, graphicsRegistry,
+                       atlasGenerator); // Black semi transparent FogOfWar outer edge tile
     loadSLP(graphicsDRS, 1388, 3, 0, Actions::IDLE, renderer, graphicsRegistry,
             atlasGenerator); // Villager idle
     loadSLP(graphicsDRS, 1392, 3, 0, Actions::MOVE, renderer, graphicsRegistry,
@@ -94,6 +98,8 @@ void registerDummyTexture(int entityType, int entitySubType, GraphicsRegistry& g
 void createFOWBlackTile(shared_ptr<DRSFile> drs,
                         uint32_t slpId,
                         uint32_t entityType,
+                        uint32_t entitySubType,
+                        bool semiTransparent,
                         SDL_Renderer* renderer,
                         GraphicsRegistry& graphicsRegistry,
                         AtlasGenerator& atlasGenerator)
@@ -124,11 +130,18 @@ void createFOWBlackTile(shared_ptr<DRSFile> drs,
 
     GraphicsID id;
     id.entityType = entityType;
+    id.entitySubType = entitySubType;
     auto anchorPair = frame.getAnchor();
     Vec2 anchor = {imageSize.width / 2 + 1,
                    0}; // Must override tile anchoring since their anchors don't work here
     SDL_FRect* srcRectF =
         new SDL_FRect{(float) srcRect.x, (float) srcRect.y, (float) srcRect.w, (float) srcRect.h};
+
+    if (semiTransparent)
+    {
+        SDL_SetTextureAlphaMod(atlasTexture, 180);  // Semi-transparent
+        SDL_SetTextureBlendMode(atlasTexture, SDL_BLENDMODE_BLEND);
+    }
 
     Texture entry{atlasTexture, srcRectF, anchor, imageSize, false};
     graphicsRegistry.registerTexture(id, entry);

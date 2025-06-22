@@ -87,7 +87,39 @@ void FogOfWar::markRadius(uint32_t tileX, uint32_t tileY, uint8_t lineOfSight, R
             uint32_t dy = y - tileY;
             if (dx * dx + dy * dy <= radiusSq)
             {
-                setRevealMode(x, y, type);
+                bool isEdge = false;
+
+                // Check 4-neighbors to see if any are outside the radius
+                const std::array<std::pair<int32_t, int32_t>, 4> neighbors = {{
+                    {x + 1, y},
+                    {x - 1, y},
+                    {x, y + 1},
+                    {x, y - 1},
+                }};
+
+                for (const auto& [nx, ny] : neighbors)
+                {
+                    if (nx < 0 || nx >= static_cast<int32_t>(m_width) || ny < 0 || ny >= static_cast<int32_t>(m_height))
+                        continue;
+
+                    int ndx = nx - tileX;
+                    int ndy = ny - tileY;
+                    if (ndx * ndx + ndy * ndy > static_cast<int>(radiusSq))
+                    {
+                        isEdge = true;
+                        break;
+                    }
+                }
+
+                if (isEdge)
+                {
+                    // Mark as revealed, but flagged as an edge (e.g., semi-transparent)
+                    setRevealMode(x, y, type, true);
+                }
+                else
+                {
+                    setRevealMode(x, y, type); // Full reveal
+                }
             }
         }
     }
@@ -141,7 +173,7 @@ RevealStatus FogOfWar::getRevealMode(const Tile& tilePos) const
     return m_map[tilePos.x][tilePos.y];
 }
 
-void FogOfWar::setRevealMode(uint32_t tileX, uint32_t tileY, RevealStatus type)
+void FogOfWar::setRevealMode(uint32_t tileX, uint32_t tileY, RevealStatus type, bool isEdge)
 {
     if (type == m_map[tileX][tileY])
         return;
@@ -157,8 +189,25 @@ void FogOfWar::setRevealMode(uint32_t tileX, uint32_t tileY, RevealStatus type)
 
             info.isDestroyed = true;
             dirty.markDirty(fowTileEntity);
-            gameState.gameMap.removeAllEntities(MapLayerType::FOG_OF_WAR,
-                                                {(int) tileX, (int) tileY});
+
+            gameState.gameMap.removeEntity(MapLayerType::FOG_OF_WAR, {(int) tileX, (int) tileY}, fowTileEntity);
+            auto edgeTileEntity =
+                    gameState.gameMap.getEntity(MapLayerType::FOG_OF_WAR, {(int) tileX, (int) tileY});
+
+            if (edgeTileEntity != entt::null)
+            {
+                auto [edgeInfo, edgeDirty] = gameState.getComponents<CompEntityInfo, CompDirty>(edgeTileEntity
+                );
+
+                edgeInfo.isDestroyed = !isEdge;
+                edgeDirty.markDirty(edgeTileEntity);
+            }
+            
+            if (!isEdge)
+            {
+                gameState.gameMap.removeAllEntities(MapLayerType::FOG_OF_WAR,
+                                                {(int) tileX, (int) tileY}); 
+            }
         }
     }
     m_map[tileX][tileY] = type;

@@ -72,8 +72,12 @@ void ResourceLoader::loadEntities()
     {
         for (size_t j = 0; j < size.height; j++)
         {
-            createTile(i, j, gameState, EntityTypes::ET_TILE, false);
-            createTile(i, j, gameState, EntityTypes::ET_BLACK_TILE, true);
+            createTile(i, j, gameState, EntityTypes::ET_TILE, 0, false);
+            createTile(i, j, gameState, EntityTypes::ET_BLACK_TILE, 0, true);
+            auto edge = createTile(i, j, gameState, EntityTypes::ET_BLACK_TILE, 1, true);
+
+            auto& edgeGc = gameState.getComponent<CompGraphics>(edge);
+            edgeGc.isDestroyed = true;
         }
     }
 
@@ -408,8 +412,8 @@ void ResourceLoader::generateMap(TileMap& gameMap)
     }
 }
 
-void ResourceLoader::createTile(
-    uint32_t x, uint32_t y, ion::GameState& gameState, EntityTypes entityType, bool isFOW)
+uint32_t ResourceLoader::createTile(
+    uint32_t x, uint32_t y, ion::GameState& gameState, EntityTypes entityType, uint32_t entitySubType, bool isFOW)
 {
     auto size = m_settings->getWorldSizeInTiles();
 
@@ -421,6 +425,8 @@ void ResourceLoader::createTile(
     CompGraphics gc;
     gc.entityID = tile;
     gc.entityType = entityType;
+    gc.entitySubType = entitySubType;
+
     if (!isFOW)
     {
         // tc = sqrt(total_tile_frame_count)
@@ -444,11 +450,12 @@ void ResourceLoader::createTile(
     }
     else
     {
-        gameState.addComponent(tile, CompEntityInfo(entityType, 0, 0));
+        gameState.addComponent(tile, CompEntityInfo(entityType, entitySubType, 0));
         gc.layer = GraphicLayer::FOG;
         gameState.gameMap.addEntity(MapLayerType::FOG_OF_WAR, Tile(x, y), tile);
     }
     gameState.addComponent(tile, gc);
+    return tile;
 }
 
 void ResourceLoader::init()

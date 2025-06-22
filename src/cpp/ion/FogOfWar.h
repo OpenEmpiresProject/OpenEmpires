@@ -28,7 +28,7 @@ class FogOfWar
     const std::vector<std::vector<RevealStatus>>& getMap() const;
     RevealStatus getRevealMode(uint32_t tileX, uint32_t tileY) const;
     RevealStatus getRevealMode(const Tile& tilePos) const;
-    void setRevealMode(uint32_t tileX, uint32_t tileY, RevealStatus type);
+    void setRevealMode(uint32_t tileX, uint32_t tileY, RevealStatus type, bool isEdge = false);
     void disable();
     void enable();
 
