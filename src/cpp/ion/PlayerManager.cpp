@@ -1,9 +1,9 @@
 #include "PlayerManager.h"
 
 #include "GameState.h"
+#include "components/CompBuilding.h"
 #include "components/CompPlayer.h"
 #include "components/CompUnit.h"
-#include "components/CompBuilding.h"
 
 #include <SDL3/SDL_scancode.h>
 #include <algorithm>
@@ -15,7 +15,6 @@ PlayerManager::PlayerManager()
 {
     registerCallback(Event::Type::UNIT_TILE_MOVEMENT, this, &PlayerManager::onUnitTileMovement);
     registerCallback(Event::Type::BUILDING_PLACED, this, &PlayerManager::onBuildingPlaced);
-    registerCallback(Event::Type::KEY_UP, this, &PlayerManager::onToggleFOW);
 }
 
 PlayerManager::~PlayerManager()
@@ -62,30 +61,15 @@ void PlayerManager::onUnitTileMovement(const Event& e)
     auto data = e.getData<UnitTileMovementData>();
     auto [player, unit] = GameState::getInstance().getComponents<CompPlayer, CompUnit>(data.unit);
 
-    player.player->getFOW()->markAsExplored(data.positionFeet, unit.lineOfSight);
+    player.player->getFogOfWar()->markAsExplored(data.positionFeet, unit.lineOfSight);
 }
 
 void PlayerManager::onBuildingPlaced(const Event& e)
 {
     auto data = e.getData<BuildingPlacedData>();
-    auto [player, building] = GameState::getInstance().getComponents<CompPlayer, CompBuilding>(data.building);
+    auto [player, building] =
+        GameState::getInstance().getComponents<CompPlayer, CompBuilding>(data.building);
 
-    player.player->getFOW()->markAsExplored(data.tile.centerInFeet(), building.size, building.lineOfSight);
-}
-
-void PlayerManager::onToggleFOW(const Event& e)
-{
-    auto data = e.getData<KeyboardData>();
-    if (data.keyCode == SDL_Scancode::SDL_SCANCODE_3)
-    {
-        m_fowEnabled = !m_fowEnabled;
-        if (m_fowEnabled)
-        {
-            m_players[0]->getFOW()->enable();
-        }
-        else
-        {
-            m_players[0]->getFOW()->disable();
-        }
-    }
+    player.player->getFogOfWar()->markAsExplored(data.tile.centerInFeet(), building.size,
+                                                 building.lineOfSight);
 }

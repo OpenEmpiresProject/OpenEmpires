@@ -5,7 +5,9 @@
 
 namespace ion
 {
-struct FeetTag {};
+struct FeetTag
+{
+};
 class Tile;
 class Feet : public Vec2Base<int, FeetTag>
 {

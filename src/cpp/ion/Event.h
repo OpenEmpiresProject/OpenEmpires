@@ -59,7 +59,7 @@ struct UnitTileMovementData
 struct BuildingPlacedData
 {
     uint32_t building; // entity
-    Tile tile; // Bottom corner
+    Tile tile;         // Bottom corner
 };
 
 struct Event

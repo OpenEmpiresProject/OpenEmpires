@@ -57,7 +57,7 @@ void Element::updateGraphicCommand()
         GameState::getInstance()
             .getComponents<CompUIElement, CompTransform, CompEntityInfo, CompDirty>(id);
     auto pixelPos = getAbsoluteRect().position();
-    // HACK: We are hacking transform's position to carry UI element positions as well. 
+    // HACK: We are hacking transform's position to carry UI element positions as well.
     // But it is usually meant to carry positions in Feet.
     transform.position = {pixelPos.x, pixelPos.y};
     ui.rect = getAbsoluteRect();

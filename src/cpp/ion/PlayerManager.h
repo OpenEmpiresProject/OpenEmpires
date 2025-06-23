@@ -23,11 +23,16 @@ class PlayerManager : public EventHandler
         return m_playersById[id];
     }
 
+    Ref<Player> getViewingPlayer()
+    {
+        // TODO: Change according to the viewing
+        return m_playersById[0];
+    }
+
   private:
     uint8_t getNextPlayerId() const;
     void onUnitTileMovement(const Event& e);
     void onBuildingPlaced(const Event& e);
-    void onToggleFOW(const Event& e);
 
     std::vector<Ref<Player>> m_players;
     std::unordered_map<uint8_t, Ref<Player>> m_playersById;

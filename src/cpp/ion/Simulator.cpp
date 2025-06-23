@@ -2,6 +2,7 @@
 
 #include "Event.h"
 #include "GameState.h"
+#include "PlayerManager.h"
 #include "ServiceRegistry.h"
 #include "UI.h"
 #include "commands/CmdGatherResource.h"
@@ -13,14 +14,13 @@
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
+#include "components/CompPlayer.h"
 #include "components/CompRendering.h"
 #include "components/CompResource.h"
 #include "components/CompSelectible.h"
 #include "components/CompTransform.h"
 #include "components/CompUIElement.h"
 #include "components/CompUnit.h"
-#include "components/CompPlayer.h"
-#include "PlayerManager.h"
 #include "utils/ObjectPool.h"
 
 #include <algorithm>
@@ -166,6 +166,9 @@ void Simulator::onTickEnd()
 {
     CompDirty::globalDirtyVersion++;
     m_frame++;
+    // TODO: Use a better method to find the displaying player
+    auto player = ServiceRegistry::getInstance().getService<PlayerManager>()->getViewingPlayer();
+    m_synchronizer.getSenderFrameData().fogOfWar = *(player->getFogOfWar().get());
     m_synchronizer.waitForReceiver([&]() { onSynchorizedBlock(); });
     CompDirty::g_dirtyEntities.clear();
 }
@@ -339,9 +342,9 @@ void Simulator::resolveSelection(const Vec2& screenPos)
 
     if (m_currentBuildingOnPlacement != entt::null)
     {
-        auto [building, transform] = GameState::getInstance().getComponents<CompBuilding,
-                                                                             CompTransform>(
-            m_currentBuildingOnPlacement);
+        auto [building, transform] =
+            GameState::getInstance().getComponents<CompBuilding, CompTransform>(
+                m_currentBuildingOnPlacement);
 
         if (!building.validPlacement)
         {
@@ -419,7 +422,7 @@ void Simulator::testBuild(const Feet& targetFeetPos, int buildingType, Size size
     gameState.addComponent(mill, CompEntityInfo(buildingType));
 
     auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
-    auto player = playerManager->getPlayer(0); // TODO - replace with current player on the UI
+    auto player = playerManager->getViewingPlayer();
     gameState.addComponent(mill, CompPlayer{player});
 
     CompBuilding building;

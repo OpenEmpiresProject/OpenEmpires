@@ -35,7 +35,7 @@ class Player
     void removeEntity(uint32_t entityId);
     bool isOwned(uint32_t entityId);
 
-    Ref<FogOfWar> getFOW() const
+    Ref<FogOfWar> getFogOfWar() const
     {
         return m_fow;
     }

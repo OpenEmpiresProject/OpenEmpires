@@ -1,43 +1,21 @@
 #include "FogOfWar.h"
 
 #include "GameState.h"
-#include "ServiceRegistry.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 
 using namespace ion;
 
-FogOfWar::FogOfWar(/* args */)
-{
-    m_coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
-}
-
-FogOfWar::~FogOfWar()
-{
-}
-
 void FogOfWar::init(uint32_t width, uint32_t height, RevealStatus initialFill)
 {
-    m_width = width;
-    m_height = height;
-
-    m_map.resize(width);
-
-    for (uint32_t i = 0; i < width; ++i)
-    {
-        m_map[i].resize(height);
-        for (uint32_t j = 0; j < height; ++j)
-        {
-            m_map[i][j] = initialFill;
-        }
-    }
+    m_map = Flat2DArray<RevealStatus>(width, height, initialFill);
 }
 
 void FogOfWar::markAsExplored(uint32_t x, uint32_t y)
 {
-    if (x >= 0 && x < m_width && y >= 0 && y < m_height)
+    if (x >= 0 && x < m_map.width() && y >= 0 && y < m_map.height())
     {
-        m_map[x][y] = RevealStatus::EXPLORED;
+        m_map.at(x, y) = RevealStatus::EXPLORED;
     }
 }
 
@@ -50,7 +28,8 @@ void FogOfWar::markAsExplored(const Feet& feetPos)
 void FogOfWar::markAsExplored(const Feet& feetPos, uint32_t lineOfSight)
 {
     auto tilePos = feetPos.toTile();
-    markRadius(tilePos.x, tilePos.y, lineOfSight / Constants::FEET_PER_TILE, RevealStatus::EXPLORED);
+    markRadius(tilePos.x, tilePos.y, lineOfSight / Constants::FEET_PER_TILE,
+               RevealStatus::EXPLORED);
 }
 
 void FogOfWar::markAsExplored(const Feet& feetPos, const Size& size, uint32_t lineOfSight)
@@ -73,9 +52,9 @@ void FogOfWar::markAsVisible(const Feet& feetPos, uint32_t lineOfSight)
 void FogOfWar::markRadius(uint32_t tileX, uint32_t tileY, uint8_t lineOfSight, RevealStatus type)
 {
     const int32_t minX = std::max<int32_t>(0, static_cast<int32_t>(tileX) - lineOfSight);
-    const int32_t maxX = std::min<uint32_t>(m_width - 1, tileX + lineOfSight);
+    const int32_t maxX = std::min<uint32_t>(m_map.width() - 1, tileX + lineOfSight);
     const int32_t minY = std::max<int32_t>(0, static_cast<int32_t>(tileY) - lineOfSight);
-    const int32_t maxY = std::min<uint32_t>(m_height - 1, tileY + lineOfSight);
+    const int32_t maxY = std::min<uint32_t>(m_map.height() - 1, tileY + lineOfSight);
 
     const uint32_t radiusSq = lineOfSight * lineOfSight;
 
@@ -93,7 +72,10 @@ void FogOfWar::markRadius(uint32_t tileX, uint32_t tileY, uint8_t lineOfSight, R
     }
 }
 
-void FogOfWar::markRadius(const Tile& bottomCorner, const Size& size, uint8_t lineOfSight, RevealStatus type)
+void FogOfWar::markRadius(const Tile& bottomCorner,
+                          const Size& size,
+                          uint8_t lineOfSight,
+                          RevealStatus type)
 {
     // Compute building's occupied tile range
     int32_t startX = static_cast<int32_t>(bottomCorner.x) - static_cast<int32_t>(size.width) + 1;
@@ -101,9 +83,11 @@ void FogOfWar::markRadius(const Tile& bottomCorner, const Size& size, uint8_t li
 
     // Clamp reveal bounds
     int32_t minX = std::max(0, startX - static_cast<int32_t>(lineOfSight));
-    int32_t maxX = std::min(static_cast<int32_t>(m_width) - 1, bottomCorner.x + static_cast<int32_t>(lineOfSight));
+    int32_t maxX = std::min(static_cast<int32_t>(m_map.width()) - 1,
+                            bottomCorner.x + static_cast<int32_t>(lineOfSight));
     int32_t minY = std::max(0, startY - static_cast<int32_t>(lineOfSight));
-    int32_t maxY = std::min(static_cast<int32_t>(m_height) - 1, bottomCorner.y + static_cast<int32_t>(lineOfSight));
+    int32_t maxY = std::min(static_cast<int32_t>(m_map.height()) - 1,
+                            bottomCorner.y + static_cast<int32_t>(lineOfSight));
 
     uint32_t radiusSq = lineOfSight * lineOfSight;
 
@@ -126,84 +110,17 @@ void FogOfWar::markRadius(const Tile& bottomCorner, const Size& size, uint8_t li
     }
 }
 
-const std::vector<std::vector<RevealStatus>>& FogOfWar::getMap() const
+RevealStatus FogOfWar::getRevealStatus(uint32_t tileX, uint32_t tileY) const
 {
-    return m_map;
+    return m_map.at(tileX, tileY);
 }
 
-RevealStatus FogOfWar::getRevealMode(uint32_t tileX, uint32_t tileY) const
+RevealStatus FogOfWar::getRevealStatus(const Tile& tilePos) const
 {
-    return m_map[tileX][tileY];
-}
-
-RevealStatus FogOfWar::getRevealMode(const Tile& tilePos) const
-{
-    return m_map[tilePos.x][tilePos.y];
+    return m_map.at(tilePos.x, tilePos.y);
 }
 
 void FogOfWar::setRevealMode(uint32_t tileX, uint32_t tileY, RevealStatus type)
 {
-    if (type == m_map[tileX][tileY])
-        return;
-
-    if (type == RevealStatus::EXPLORED || type == RevealStatus::VISIBLE)
-    {
-        auto& gameState = GameState::getInstance();
-        auto fowTileEntity =
-            gameState.gameMap.getEntity(MapLayerType::FOG_OF_WAR, {(int) tileX, (int) tileY});
-        if (fowTileEntity != entt::null)
-        {
-            auto [info, dirty] = gameState.getComponents<CompEntityInfo, CompDirty>(fowTileEntity);
-
-            info.isDestroyed = true;
-            dirty.markDirty(fowTileEntity);
-            gameState.gameMap.removeAllEntities(MapLayerType::FOG_OF_WAR,
-                                                {(int) tileX, (int) tileY});
-        }
-    }
-    m_map[tileX][tileY] = type;
-}
-
-void FogOfWar::disable()
-{
-    auto& gameState = GameState::getInstance();
-
-    for (uint32_t i = 0; i < m_width; ++i)
-    {
-        for (uint32_t j = 0; j < m_height; ++j)
-        {
-            auto fowTileEntity =
-                gameState.gameMap.getEntity(MapLayerType::FOG_OF_WAR, {(int) i, (int) j});
-            if (fowTileEntity != entt::null)
-            {
-                auto [info, dirty] =
-                    gameState.getComponents<CompEntityInfo, CompDirty>(fowTileEntity);
-
-                info.isDestroyed = true;
-                dirty.markDirty(fowTileEntity);
-            }
-        }
-    }
-}
-
-void FogOfWar::enable()
-{
-    auto& gameState = GameState::getInstance();
-
-    for (uint32_t i = 0; i < m_width; ++i)
-    {
-        for (uint32_t j = 0; j < m_height; ++j)
-        {
-            auto fowTileEntity =
-                gameState.gameMap.getEntity(MapLayerType::FOG_OF_WAR, {(int) i, (int) j});
-            if (fowTileEntity != entt::null)
-            {
-                auto [info, dirty] =
-                    gameState.getComponents<CompEntityInfo, CompDirty>(fowTileEntity);
-
-                info.isDestroyed = false;
-                dirty.markDirty(fowTileEntity);
-            }
-        }
-    }
+    m_map.at(tileX, tileY) = type;
 }

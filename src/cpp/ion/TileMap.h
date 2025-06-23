@@ -52,7 +52,6 @@ enum class MapLayerType
     GROUND = 0,
     STATIC,
     UNITS,
-    FOG_OF_WAR,
     // Add more layers here
 
     MAX_LAYERS
@@ -153,8 +152,7 @@ struct TileMap
         }
         else [[unlikely]]
         {
-            spdlog::error("Invalid grid position: ({}, {}) to add entity {}", pos.x, pos.y,
-                          entity);
+            spdlog::error("Invalid grid position: ({}, {}) to add entity {}", pos.x, pos.y, entity);
         }
     }
 
@@ -168,8 +166,8 @@ struct TileMap
         }
         else [[unlikely]]
         {
-            spdlog::error("Invalid grid position: ({}, {}) to remove entity {}", pos.x,
-                          pos.y, entity);
+            spdlog::error("Invalid grid position: ({}, {}) to remove entity {}", pos.x, pos.y,
+                          entity);
         }
     }
 
@@ -183,8 +181,7 @@ struct TileMap
         }
         else [[unlikely]]
         {
-            spdlog::error("Invalid grid position: ({}, {}) to remove all entities", pos.x,
-                          pos.y);
+            spdlog::error("Invalid grid position: ({}, {}) to remove all entities", pos.x, pos.y);
         }
     }
 

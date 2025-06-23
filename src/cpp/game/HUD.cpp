@@ -49,7 +49,7 @@ void HUD::onTick(const Event& e)
     if (m_woodLabel != nullptr)
     {
         auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
-        auto player = playerManager->getPlayer(0); // TODO - replace with current player on the UI
+        auto player = playerManager->getViewingPlayer();
         m_woodLabel->text = std::to_string(player->getResourceAmount(ResourceType::WOOD));
     }
     else
@@ -60,7 +60,7 @@ void HUD::onTick(const Event& e)
     if (m_stoneabel != nullptr)
     {
         auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
-        auto player = playerManager->getPlayer(0); // TODO - replace with current player on the UI
+        auto player = playerManager->getViewingPlayer();
         m_stoneabel->text = std::to_string(player->getResourceAmount(ResourceType::STONE));
     }
     else
@@ -71,7 +71,7 @@ void HUD::onTick(const Event& e)
     if (m_goldLabel != nullptr)
     {
         auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
-        auto player = playerManager->getPlayer(0); // TODO - replace with current player on the UI
+        auto player = playerManager->getViewingPlayer();
         m_goldLabel->text = std::to_string(player->getResourceAmount(ResourceType::GOLD));
     }
     else

@@ -31,8 +31,7 @@ class ResourceLoader : public ion::SubSystem
 
     void loadEntities();
     void generateMap(ion::TileMap& gameMap);
-    void createTile(
-        uint32_t x, uint32_t y, ion::GameState& gameState, EntityTypes entityType, bool isFOW);
+    void createTile(uint32_t x, uint32_t y, ion::GameState& gameState, EntityTypes entityType);
     void createTree(ion::TileMap& gameMap, uint32_t x, uint32_t y);
     void createStoneOrGoldCluster(EntityTypes entityType,
                                   ion::TileMap& gameMap,

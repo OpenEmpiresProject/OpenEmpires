@@ -72,8 +72,7 @@ void ResourceLoader::loadEntities()
     {
         for (size_t j = 0; j < size.height; j++)
         {
-            createTile(i, j, gameState, EntityTypes::ET_TILE, false);
-            createTile(i, j, gameState, EntityTypes::ET_BLACK_TILE, true);
+            createTile(i, j, gameState, EntityTypes::ET_TILE);
         }
     }
 
@@ -265,7 +264,7 @@ void ResourceLoader::createVillager(Ref<ion::Player> player, const Tile& tilePos
     auto newTile = transform.position.toTile();
     gameState.gameMap.addEntity(MapLayerType::UNITS, newTile, villager);
 
-    player->getFOW()->markAsExplored(transform.position, unit.lineOfSight);
+    player->getFogOfWar()->markAsExplored(transform.position, unit.lineOfSight);
 }
 
 void ResourceLoader::createStoneOrGoldCluster(
@@ -408,8 +407,10 @@ void ResourceLoader::generateMap(TileMap& gameMap)
     }
 }
 
-void ResourceLoader::createTile(
-    uint32_t x, uint32_t y, ion::GameState& gameState, EntityTypes entityType, bool isFOW)
+void ResourceLoader::createTile(uint32_t x,
+                                uint32_t y,
+                                ion::GameState& gameState,
+                                EntityTypes entityType)
 {
     auto size = m_settings->getWorldSizeInTiles();
 
@@ -421,33 +422,24 @@ void ResourceLoader::createTile(
     CompGraphics gc;
     gc.entityID = tile;
     gc.entityType = entityType;
-    if (!isFOW)
-    {
-        // tc = sqrt(total_tile_frame_count)
-        int tc = 10;
-        // Convet our top corner based coordinate to left corner based coordinate
-        int newX = size.height - y;
-        int newY = x;
-        // AOE2 standard tiling rule. From OpenAge documentation
-        int tileVariation = (newX % tc) + ((newY % tc) * tc) + 1;
-        gameState.addComponent(tile, CompEntityInfo(entityType, 0, tileVariation));
+    // tc = sqrt(total_tile_frame_count)
+    int tc = 10;
+    // Convet our top corner based coordinate to left corner based coordinate
+    int newX = size.height - y;
+    int newY = x;
+    // AOE2 standard tiling rule. From OpenAge documentation
+    int tileVariation = (newX % tc) + ((newY % tc) * tc) + 1;
+    gameState.addComponent(tile, CompEntityInfo(entityType, 0, tileVariation));
 
-        DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, ion::Color::GREY,
-                             DebugOverlay::FixedPosition::BOTTOM_CENTER};
-        overlay.customPos1 = DebugOverlay::FixedPosition::CENTER_LEFT;
-        overlay.customPos2 = DebugOverlay::FixedPosition::CENTER_RIGHT;
-        gc.debugOverlays.push_back(overlay);
-        gc.layer = GraphicLayer::GROUND;
+    DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, ion::Color::GREY,
+                         DebugOverlay::FixedPosition::BOTTOM_CENTER};
+    overlay.customPos1 = DebugOverlay::FixedPosition::CENTER_LEFT;
+    overlay.customPos2 = DebugOverlay::FixedPosition::CENTER_RIGHT;
+    gc.debugOverlays.push_back(overlay);
+    gc.layer = GraphicLayer::GROUND;
 
-        auto map = gameState.gameMap;
-        map.addEntity(MapLayerType::GROUND, Tile(x, y), tile);
-    }
-    else
-    {
-        gameState.addComponent(tile, CompEntityInfo(entityType, 0, 0));
-        gc.layer = GraphicLayer::FOG;
-        gameState.gameMap.addEntity(MapLayerType::FOG_OF_WAR, Tile(x, y), tile);
-    }
+    auto map = gameState.gameMap;
+    map.addEntity(MapLayerType::GROUND, Tile(x, y), tile);
     gameState.addComponent(tile, gc);
 }
 

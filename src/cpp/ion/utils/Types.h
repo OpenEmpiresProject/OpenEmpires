@@ -1,10 +1,11 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#include "utils/Constants.h"
 #include "Vec2Base.h"
+#include "utils/Constants.h"
 
 #include <bitset>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
@@ -20,7 +21,9 @@ template <typename T, typename... Args> Ref<T> CreateRef(Args&&... args)
 
 using Signature = std::bitset<Constants::MAX_COMPONENTS>;
 
-struct GenericTag {};
+struct GenericTag
+{
+};
 using Vec2 = Vec2Base<int, GenericTag>;
 
 enum class WorldSizeType
@@ -78,7 +81,7 @@ enum Actions
     BUILDING = 4
 };
 
-enum class RevealStatus
+enum class RevealStatus : uint8_t
 {
     NONE = 0,
     UNEXPLORED,

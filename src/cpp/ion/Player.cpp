@@ -1,5 +1,6 @@
 #include "Player.h"
 
+#include "GameSettings.h"
 #include "ServiceRegistry.h"
 #include "debug.h"
 

@@ -222,6 +222,8 @@ class RendererImpl
     std::stop_source* m_stopSource = nullptr;
 
     FontAtlas m_fontAtlas;
+
+    bool m_showFogOfWar = true;
 };
 } // namespace ion
 
@@ -431,6 +433,10 @@ bool RendererImpl::handleEvents()
             {
                 m_showDebugInfo = !m_showDebugInfo;
             }
+            else if (event.key.scancode == SDL_SCANCODE_3)
+            {
+                m_showFogOfWar = !m_showFogOfWar;
+            }
         }
         else if (event.type == SDL_EVENT_MOUSE_MOTION)
         {
@@ -522,13 +528,19 @@ void RendererImpl::renderGameEntities()
     SDL_FRect dstRect = {0, 0, 0, 0};
 
     auto& objectsToRender = m_zOrderStrategy->zOrder(m_coordinates);
+    auto& fogOfWar = m_synchronizer.getReceiverFrameData().fogOfWar;
 
     for (auto& rc : objectsToRender)
     {
         Vec2 screenPos = rc->positionInScreenUnits - rc->anchor;
 
         if (rc->positionInFeet.isNull() == false)
+        {
             screenPos = m_coordinates.feetToScreenUnits(rc->positionInFeet) - rc->anchor;
+
+            if (m_showFogOfWar && fogOfWar.isExplored(rc->positionInFeet.toTile()) == false)
+                continue;
+        }
 
         dstRect.x = screenPos.x;
         dstRect.y = screenPos.y;
