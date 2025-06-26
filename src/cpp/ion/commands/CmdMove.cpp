@@ -91,7 +91,7 @@ bool CmdMove::move(CompTransform& transform, int deltaTimeMs)
             {
                 spdlog::debug("Couldn't resolve collision, skiping to next point");
                 // Try to skip it
-                path.pop_front();
+                // path.pop_front();
             }
         }
     }
@@ -117,6 +117,11 @@ void CmdMove::setPosition(CompTransform& transform, const Feet& newPosFeet)
 {
     auto oldTile = transform.position.toTile();
     auto newTile = newPosFeet.toTile();
+    auto& state = GameState::getInstance();
+
+#ifndef NDEBUG
+    state.getComponent<CompGraphics>(entity).debugOverlays[0].arrowEnd = coordinates->feetToScreenUnits((newPosFeet + (transform.getVelocityVector() * 2)));
+#endif
 
     if (oldTile != newTile)
     {
@@ -125,8 +130,51 @@ void CmdMove::setPosition(CompTransform& transform, const Feet& newPosFeet)
 
         publishEvent(Event::Type::UNIT_TILE_MOVEMENT,
                      UnitTileMovementData{entity, newTile, transform.position});
+
+        refinePath();
     }
     transform.position = newPosFeet;
+}
+
+bool CmdMove::hasLineOfSight(const Feet & target)
+{
+    auto& state = GameState::getInstance();
+    auto& transform = state.getComponent<CompTransform>(entity);
+    return state.gameMap.intersectsStaticObstacle(transform.position, target) == false;
+}
+
+void CmdMove::refinePath()
+{
+    if (path.empty() || path.size() < 2)
+    {
+        spdlog::debug("Either path is empty or has less than 2 points. Nothing to refine");
+        return;
+    }
+    auto length = path.size();
+
+    int pointsToRemove = -1;
+    
+    for (auto waypoint : path)
+    {
+        if (hasLineOfSight(waypoint))
+        {
+            spdlog::debug("Waypoint {} is in line of sight, consdered to remove", waypoint.toString());
+            pointsToRemove++;
+        }
+        else
+        {
+            spdlog::debug("Waypoint {} is NOT in line of sight", waypoint.toString());
+            break;
+        }
+    }
+
+    spdlog::debug("Removing {} waypoints", pointsToRemove);
+
+    for (int i = 0; i < pointsToRemove && !path.empty(); i++)
+    {
+        spdlog::debug("Removing waypoint {}", path.front().toString());
+        path.pop_front();
+    }
 }
 
 std::list<Feet> CmdMove::findPath(const Feet& endPosInFeet, uint32_t entity)
@@ -145,20 +193,20 @@ std::list<Feet> CmdMove::findPath(const Feet& endPosInFeet, uint32_t entity)
     }
     else
     {
-        for (Feet node : path)
-        {
-            // map.map[node.x][node.y] = 2;
-            auto entity = map.getEntity(MapLayerType::GROUND, node.toTile());
-            if (entity != entt::null)
-            {
-                // TODO: Should avoid manipulating CompGraphics directly
-                auto [dirty, gc] =
-                    GameState::getInstance().getComponents<CompDirty, CompGraphics>(entity);
-                gc.debugOverlays.push_back({DebugOverlay::Type::FILLED_CIRCLE, Color::BLUE,
-                                            DebugOverlay::FixedPosition::CENTER});
-                dirty.markDirty(entity);
-            }
-        }
+        // for (Feet node : path)
+        // {
+        //     // map.map[node.x][node.y] = 2;
+        //     auto entity = map.getEntity(MapLayerType::GROUND, node.toTile());
+        //     if (entity != entt::null)
+        //     {
+        //         // TODO: Should avoid manipulating CompGraphics directly
+        //         auto [dirty, gc] =
+        //             GameState::getInstance().getComponents<CompDirty, CompGraphics>(entity);
+        //         gc.debugOverlays.push_back({DebugOverlay::Type::FILLED_CIRCLE, Color::BLUE,
+        //                                     DebugOverlay::FixedPosition::CENTER});
+        //         dirty.markDirty(entity);
+        //     }
+        // }
 
         std::list<Feet> pathList;
         for (size_t i = 0; i < path.size(); i++)
@@ -192,11 +240,11 @@ bool CmdMove::resolveCollision(const Feet& newPosFeet)
         return false;
     }
 
-    if (gameMap.isOccupiedByAnother(MapLayerType::UNITS, newTilePos, entity))
-    {
-        // spdlog::debug("Tile {} is occupied by another entity", newTilePos.toString());
-        return false;
-    }
+    // if (gameMap.isOccupiedByAnother(MapLayerType::UNITS, newTilePos, entity))
+    // {
+    //     // spdlog::debug("Tile {} is occupied by another entity", newTilePos.toString());
+    //     return false;
+    // }
 
     // Dynamic collision resolution
     Tile searchStartTile = newTilePos - Tile(1, 1);
@@ -246,21 +294,16 @@ bool CmdMove::resolveCollision(const Feet& newPosFeet)
         }
     }
 
+    Feet averagePush = totalAvoidance * 2; // This keeps the actual push small
+    auto newPos = newPosFeet + averagePush;
+    setPosition(transform, newPos);
+
+#ifndef NDEBUG
     if (hasCollision)
-    {
-        // Apply the integer push (scaled down if needed)
-        Feet averagePush = totalAvoidance; // This keeps the actual push small
-
-        // spdlog::debug("Collision detected! Avoidance vector {}", averagePush.toString());
-
-        // You can apply as-is or convert to float if needed
-        auto newPos = newPosFeet + averagePush;
-        setPosition(transform, newPos);
-    }
+        state.getComponent<CompGraphics>(entity).debugOverlays[1].arrowEnd = coordinates->feetToScreenUnits((transform.position + (averagePush * 2)));
     else
-    {
-        setPosition(transform, newPosFeet);
-    }
+        state.getComponent<CompGraphics>(entity).debugOverlays[1].arrowEnd = Vec2();
+#endif
 
     return true;
 }

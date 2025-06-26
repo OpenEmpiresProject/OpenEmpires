@@ -44,6 +44,8 @@ class CmdMove : public Command
     bool resolveCollision(const Feet& newPosFeet);
     Feet calculateNewPosition(CompTransform& transform, int timeMs);
     void setPosition(CompTransform& transform, const Feet& newPosFeet);
+    bool hasLineOfSight(const Feet& target);
+    void refinePath();
 };
 } // namespace ion
 

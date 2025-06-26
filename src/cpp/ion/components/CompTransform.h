@@ -10,6 +10,13 @@
 
 namespace ion
 {
+constexpr float DEG_TO_RAD = 3.14159265f / 180.0f;
+
+inline float toRadians(float degrees)
+{
+    return degrees * DEG_TO_RAD;
+}
+
 class CompTransform
 {
   public:
@@ -33,6 +40,21 @@ class CompTransform
     }
     CompTransform(const CompTransform&) = default;
     CompTransform& operator=(const CompTransform&) = default;
+
+    Feet getVelocityVector()
+    {
+        if (!hasRotation || speed == 0)
+            return Feet(0, 0);
+
+        float angleDeg = static_cast<float>(rotation);
+        float angleRad = toRadians(angleDeg);
+
+        // 0 degrees = North = -Y
+        float dx = std::sin(angleRad);
+        float dy = -std::cos(angleRad);  // flipped to make 0° point upward (-Y)
+
+        return Feet(dx * speed, dy * speed);
+    }
 
     void face(const Feet& target)
     {

@@ -159,6 +159,7 @@ class RendererImpl
     void renderGameEntities();
     void renderText(const Vec2& screenPos, const std::string& text, const Color& color);
     void renderGraphicAddons(const Vec2& screenPos, CompRendering* rc);
+    void renderDebugOverlays(const SDL_FRect& dstRect, CompRendering* rc);
     void renderBackground();
     void renderSelectionBox();
     void addDebugText(const std::string& text);
@@ -525,7 +526,6 @@ void RendererImpl::renderDebugInfo(FPSCounter& counter)
 
 void RendererImpl::renderGameEntities()
 {
-    SDL_FRect dstRect = {0, 0, 0, 0};
 
     auto& objectsToRender = m_zOrderStrategy->zOrder(m_coordinates);
     auto& fogOfWar = m_synchronizer.getReceiverFrameData().fogOfWar;
@@ -542,12 +542,9 @@ void RendererImpl::renderGameEntities()
                 continue;
         }
 
-        dstRect.x = screenPos.x;
-        dstRect.y = screenPos.y;
-        dstRect.w = rc->srcRect.w;
-        dstRect.h = rc->srcRect.h;
-
         renderGraphicAddons(screenPos, rc);
+
+        SDL_FRect dstRect = {screenPos.x, screenPos.y, rc->srcRect.w, rc->srcRect.h};
 
         if (dstRect.w > 0 && dstRect.h > 0 && rc->texture != nullptr)
         {
@@ -557,35 +554,7 @@ void RendererImpl::renderGameEntities()
             ++m_texturesDrew;
         }
 
-        if (m_showDebugInfo)
-        {
-            for (auto& overlay : rc->debugOverlays)
-            {
-                auto pos = getDebugOverlayPosition(overlay.anchor, dstRect);
-
-                switch (overlay.type)
-                {
-                case DebugOverlay::Type::CIRCLE:
-                    ellipseRGBA(m_renderer, pos.x, pos.y, 30, 15, 255, 0, 0,
-                                255); // green circle
-                    break;
-                case DebugOverlay::Type::FILLED_CIRCLE:
-                    filledEllipseRGBA(m_renderer, pos.x, pos.y, 20, 10, 0, 0, 255,
-                                      100); // blue ellipse
-                case DebugOverlay::Type::RHOMBUS:
-                {
-                    auto end1 = getDebugOverlayPosition(overlay.customPos1, dstRect);
-                    auto end2 = getDebugOverlayPosition(overlay.customPos2, dstRect);
-
-                    // Lifting the lines by a single pixel to avoid the next tile overriding
-                    // these
-                    lineRGBA(m_renderer, pos.x, pos.y - 1, end1.x, end1.y - 1, 180, 180, 180, 255);
-                    lineRGBA(m_renderer, pos.x, pos.y - 1, end2.x, end2.y - 1, 180, 180, 180, 255);
-                }
-                break;
-                }
-            }
-        }
+        renderDebugOverlays(dstRect, rc);
     }
 
     // Show a small cross at center of the screen.
@@ -659,6 +628,80 @@ void RendererImpl::renderGraphicAddons(const Vec2& screenPos, CompRendering* rc)
         break;
         default:
             break;
+        }
+    }
+}
+
+void RendererImpl::renderDebugOverlays(const SDL_FRect& dstRect, CompRendering* rc)
+{
+    if (m_showDebugInfo)
+    {
+        for (auto& overlay : rc->debugOverlays)
+        {
+            auto pos = getDebugOverlayPosition(overlay.anchor, dstRect);
+
+            switch (overlay.type)
+            {
+            case DebugOverlay::Type::CIRCLE:
+                ellipseRGBA(m_renderer, pos.x, pos.y, 30, 15, 255, 0, 0,
+                            255); // green circle
+                break;
+            case DebugOverlay::Type::FILLED_CIRCLE:
+                filledEllipseRGBA(m_renderer, pos.x, pos.y, 20, 10, 0, 0, 255,
+                                    100); // blue ellipse
+            case DebugOverlay::Type::RHOMBUS:
+            {
+                auto end1 = getDebugOverlayPosition(overlay.customPos1, dstRect);
+                auto end2 = getDebugOverlayPosition(overlay.customPos2, dstRect);
+
+                // Lifting the lines by a single pixel to avoid the next tile overriding
+                // these
+                lineRGBA(m_renderer, pos.x, pos.y - 1, end1.x, end1.y - 1, 180, 180, 180, 255);
+                lineRGBA(m_renderer, pos.x, pos.y - 1, end2.x, end2.y - 1, 180, 180, 180, 255);
+            }
+            break;
+            case DebugOverlay::Type::ARROW:
+            {
+                // TODO: Use null
+                if (overlay.arrowEnd.x == 0 && overlay.arrowEnd.y == 0)
+                    break;
+
+                auto end = overlay.arrowEnd;
+
+                // Arrow shaft
+                lineRGBA(m_renderer, pos.x, pos.y, end.x, end.y, overlay.color.r, overlay.color.g, overlay.color.b, 255);
+
+                // Arrowhead (two lines angled from the end point)
+                float dx = pos.x - end.x;
+                float dy = pos.y - end.y;
+                float length = std::sqrt(dx * dx + dy * dy);
+
+                if (length > 0.001f)
+                {
+                    float ux = dx / length;
+                    float uy = dy / length;
+
+                    // Rotate by ±30 degrees to get the arrowhead wings
+                    float angle = M_PI / 6.0f; // 30 degrees in radians
+                    float sinA = std::sin(angle);
+                    float cosA = std::cos(angle);
+
+                    // Left wing
+                    float lx = cosA * ux - sinA * uy;
+                    float ly = sinA * ux + cosA * uy;
+
+                    // Right wing
+                    float rx = cosA * ux + sinA * uy;
+                    float ry = -sinA * ux + cosA * uy;
+
+                    const float headSize = 10.0f; // arrowhead length
+
+                    lineRGBA(m_renderer, end.x, end.y, end.x + lx * headSize, end.y + ly * headSize, overlay.color.r, overlay.color.g, overlay.color.b, 255);
+                    lineRGBA(m_renderer, end.x, end.y, end.x + rx * headSize, end.y + ry * headSize, overlay.color.r, overlay.color.g, overlay.color.b, 255);
+                }
+            }
+            break;
+            }
         }
     }
 }

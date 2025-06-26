@@ -126,6 +126,11 @@ template <typename T, typename Tag> class Vec2Base
         return std::powl(x - other.x, 2) + std::powl(y - other.y, 2);
     }
 
+    T distance(const Vec2Base& other) const noexcept
+    {
+        return static_cast<T>(std::sqrt(distanceSquared(other)));
+    }
+
     // Dot product
     constexpr T dot(const Vec2Base& other) const noexcept
     {

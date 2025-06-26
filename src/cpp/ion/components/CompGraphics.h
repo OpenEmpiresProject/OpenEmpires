@@ -20,7 +20,8 @@ struct DebugOverlay
     {
         CIRCLE,
         FILLED_CIRCLE,
-        RHOMBUS
+        RHOMBUS,
+        ARROW,
     };
 
     enum class FixedPosition : uint8_t
@@ -41,6 +42,7 @@ struct DebugOverlay
     FixedPosition anchor = FixedPosition::CENTER;
     FixedPosition customPos1;
     FixedPosition customPos2;
+    Vec2 arrowEnd;
 };
 
 enum class GraphicLayer

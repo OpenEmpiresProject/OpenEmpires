@@ -81,6 +81,7 @@ void ResourceLoader::loadEntities()
     createStoneOrGoldCluster(EntityTypes::ET_GOLD, gameState.gameMap, 20, 30, 4);
     // createTree(gameState.gameMap, 5, 5);
 
+    createVillager(player, Tile(25, 25));
     createVillager(player, Tile(20, 20));
 
     GraphicsID resourcePanelBackground{
@@ -132,8 +133,6 @@ void ResourceLoader::createTree(TileMap& map, uint32_t x, uint32_t y)
     gameState.addComponent(tree, transform);
     gameState.addComponent(tree, CompRendering());
     CompGraphics gc;
-    gc.debugOverlays.push_back(
-        {DebugOverlay::Type::CIRCLE, ion::Color::RED, DebugOverlay::FixedPosition::BOTTOM_CENTER});
     gc.entityID = tree;
     gc.entityType = EntityTypes::ET_TREE;
     gc.entitySubType = 0; // 0=main tree, 1=chopped
@@ -171,8 +170,6 @@ void ResourceLoader::createStoneOrGold(EntityTypes entityType,
     gameState.addComponent(stone, transform);
     gameState.addComponent(stone, CompRendering());
     CompGraphics gc;
-    gc.debugOverlays.push_back(
-        {DebugOverlay::Type::CIRCLE, ion::Color::RED, DebugOverlay::FixedPosition::BOTTOM_CENTER});
     gc.entityID = stone;
     gc.entityType = entityType;
     gc.entitySubType = 0;
@@ -235,7 +232,7 @@ void ResourceLoader::createVillager(Ref<ion::Player> player, const Tile& tilePos
 
     // villager goes idle by default
     CompUnit unit;
-    unit.lineOfSight = 256 * 10;
+    unit.lineOfSight = 256 * 5;
     unit.commandQueue.push(ObjectPool<CmdIdle>::acquire());
     gameState.addComponent(villager, unit);
 
@@ -243,6 +240,10 @@ void ResourceLoader::createVillager(Ref<ion::Player> player, const Tile& tilePos
     gc.entityID = villager;
     gc.entityType = EntityTypes::ET_VILLAGER;
     gc.layer = GraphicLayer::ENTITIES;
+    gc.debugOverlays.push_back(
+        {DebugOverlay::Type::ARROW, ion::Color::GREEN, DebugOverlay::FixedPosition::BOTTOM_CENTER, DebugOverlay::FixedPosition::CENTER});
+    gc.debugOverlays.push_back(
+        {DebugOverlay::Type::ARROW, ion::Color::RED, DebugOverlay::FixedPosition::BOTTOM_CENTER, DebugOverlay::FixedPosition::CENTER});
     gameState.addComponent(villager, gc);
 
     CompSelectible sc;

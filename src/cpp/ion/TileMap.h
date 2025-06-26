@@ -5,6 +5,7 @@
 #include "debug.h"
 #include "utils/Logger.h"
 #include "utils/Types.h"
+#include "utils/Constants.h"
 
 #include <algorithm>
 #include <entt/entity/registry.hpp>
@@ -232,6 +233,28 @@ struct TileMap
             return empty;
         }
     }
+
+    bool intersectsStaticObstacle(const Feet& start, const Feet& end) const
+    {
+        float distance = start.distance(end);
+        int numSteps = static_cast<int>(distance / (Constants::FEET_PER_TILE * 0.25f)); // Sample every ¼ tile
+
+        if (numSteps <= 0)
+            return false;
+
+        Feet step = (end - start) / static_cast<float>(numSteps);
+
+        for (int i = 0; i <= numSteps; ++i) {
+            Feet point = start + step * static_cast<float>(i);
+            Tile tile = point.toTile();
+
+            if (isOccupied(MapLayerType::STATIC, tile)) {
+                return true; // Hit a static obstacle
+            }
+        }
+        return false; // Clear line
+    }
+
 
     /**
      * @brief Initializes the grid map with the specified width and height.
