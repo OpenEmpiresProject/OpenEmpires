@@ -24,7 +24,7 @@ using Signature = std::bitset<Constants::MAX_COMPONENTS>;
 struct GenericTag
 {
 };
-using Vec2 = Vec2Base<int, GenericTag>;
+using Vec2 = Vec2Base<float, GenericTag>;
 
 enum class WorldSizeType
 {

@@ -186,13 +186,13 @@ void loadSLP(shared_ptr<DRSFile> drs,
         id.entitySubType = entitySubType;
         id.action = action;
         auto anchorPair = frames[i].getAnchor();
-        Vec2 anchor = {anchorPair.first, anchorPair.second};
+        Vec2 anchor(anchorPair.first, anchorPair.second);
 
         if (entityType == EntityTypes::ET_TILE)
         {
             id.variation = frames[i].getId();
-            anchor = {imageSize.width / 2 + 1,
-                      0}; // Must override tile anchoring since their anchors don't work here
+            anchor = Vec2(imageSize.width / 2 + 1,
+                      0); // Must override tile anchoring since their anchors don't work here
         }
         else if (entityType == EntityTypes::ET_VILLAGER)
         {

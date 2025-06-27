@@ -795,10 +795,10 @@ void RendererImpl::handleViewportMovement()
 Vec2 RendererImpl::getDebugOverlayPosition(DebugOverlay::FixedPosition anchor,
                                            const SDL_FRect& rect)
 {
-    int x = rect.x;
-    int y = rect.y;
-    int w = rect.w;
-    int h = rect.h;
+    float x = rect.x;
+    float y = rect.y;
+    float w = rect.w;
+    float h = rect.h;
 
     switch (anchor)
     {

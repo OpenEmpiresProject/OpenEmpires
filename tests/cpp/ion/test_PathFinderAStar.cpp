@@ -48,8 +48,10 @@ TEST_F(PathFinderAStarTest, FindPath_AroundObstacle) {
     EXPECT_EQ(path.back(), goal);
 
     // Ensure the path avoids obstacles
-    for (const Feet& pos : path) {
-        EXPECT_TRUE(map.getStaticMap()[pos.x][pos.y].isOccupied() == false) << "Path crosses an obstacle at " << pos.x << ", " << pos.y;
+    for (const Feet& pos : path) 
+    {
+        auto tile = pos.toTile();
+        EXPECT_TRUE(map.getStaticMap()[tile.x][tile.y].isOccupied() == false) << "Path crosses an obstacle at " << tile.x << ", " << tile.y;
     }
 }
 
@@ -176,8 +178,10 @@ TEST_F(PathFinderAStarTest, FindPath_LargeMap_WithObstacles) {
     EXPECT_EQ(path.back(), goal);
 
     // Ensure the path avoids obstacles
-    for (const Feet& pos : path) {
-        EXPECT_TRUE(map.getStaticMap()[pos.y][pos.x].isOccupied() == false) << "Path crosses an obstacle at " << pos.x << ", " << pos.y;
+    for (const Feet& pos : path) 
+    {
+        auto tile = pos.toTile();
+        EXPECT_TRUE(map.getStaticMap()[tile.y][tile.x].isOccupied() == false) << "Path crosses an obstacle at " << tile.x << ", " << tile.y;
     }
 }
 

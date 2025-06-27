@@ -187,7 +187,7 @@ void GraphicsLoaderFromImages::createAtlasForEntityType(
         id.action = 0; // Deduce action if applicable
         // id.m_variation = i; // Variation index
 
-        Vec2 anchor = {imageSize.width / 2 + 1, imageSize.height};
+        Vec2 anchor(imageSize.width / 2 + 1, imageSize.height);
         std::string pathStr = path.string();
 
         if (entityType == EntityTypes::ET_TILE)
@@ -195,7 +195,7 @@ void GraphicsLoaderFromImages::createAtlasForEntityType(
             auto imageName = path.stem().string();
             auto frameId = std::stoi(imageName.substr(imageName.find_last_of('_') + 1, 3));
             id.variation = frameId;
-            anchor = {imageSize.width / 2 + 1, 0};
+            anchor = Vec2(imageSize.width / 2 + 1, 0);
         }
         else if (entityType == EntityTypes::ET_VILLAGER)
         {

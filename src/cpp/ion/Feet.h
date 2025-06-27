@@ -10,19 +10,19 @@ struct FeetTag
 {
 };
 class Tile;
-class Feet : public Vec2Base<int, FeetTag>
+class Feet : public Vec2Base<float, FeetTag>
 {
   public:
-    using Vec2Base<int, FeetTag>::Vec2Base;
+    using Vec2Base<float, FeetTag>::Vec2Base;
 
-    Feet(const Vec2Base<int, FeetTag>& base) : Vec2Base<int, FeetTag>(base)
+    Feet(const Vec2Base<float, FeetTag>& base) : Vec2Base<float, FeetTag>(base)
     {
     }
     Feet(const Tile& tile) = delete;
 
     bool isNull() const
     {
-        return (*this) == Feet::null;
+        return std::isnan(x) || std::isnan(y);
     }
 
     inline Feet normalized10() const
@@ -33,7 +33,7 @@ class Feet : public Vec2Base<int, FeetTag>
 
         float len = std::sqrt(static_cast<float>(lenSq));
         float scale = 10.0f / len;
-        return {static_cast<int>(std::round(x * scale)), static_cast<int>(std::round(y * scale))};
+        return {std::round(x * scale), std::round(y * scale)};
     }
 
     Tile toTile() const;
