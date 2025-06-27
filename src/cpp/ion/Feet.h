@@ -2,6 +2,7 @@
 #define FEET_H
 
 #include "Vec2Base.h"
+#include "utils/Types.h"
 
 namespace ion
 {
@@ -36,6 +37,7 @@ class Feet : public Vec2Base<int, FeetTag>
     }
 
     Tile toTile() const;
+    Vec2 toVec2() const;
 
     static const Feet null;
 };

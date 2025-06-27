@@ -89,6 +89,18 @@ void Simulator::onKeyUp(const Event& e)
         GameState::getInstance().destroyEntity(m_currentBuildingOnPlacement);
         m_currentBuildingOnPlacement = entt::null;
     }
+    else if (scancode == SDL_SCANCODE_T)
+    {
+        m_showSpamLogs = !m_showSpamLogs;
+        if (m_showSpamLogs)
+        {
+            spdlog::default_logger()->set_level(spdlog::level::trace);
+        }
+        else
+        {
+            spdlog::default_logger()->set_level(spdlog::level::debug);
+        }
+    }
 }
 
 void Simulator::onKeyDown(const Event& e)

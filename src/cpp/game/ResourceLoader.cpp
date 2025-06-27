@@ -240,10 +240,21 @@ void ResourceLoader::createVillager(Ref<ion::Player> player, const Tile& tilePos
     gc.entityID = villager;
     gc.entityType = EntityTypes::ET_VILLAGER;
     gc.layer = GraphicLayer::ENTITIES;
-    gc.debugOverlays.push_back(
-        {DebugOverlay::Type::ARROW, ion::Color::GREEN, DebugOverlay::FixedPosition::BOTTOM_CENTER, DebugOverlay::FixedPosition::CENTER});
-    gc.debugOverlays.push_back(
-        {DebugOverlay::Type::ARROW, ion::Color::RED, DebugOverlay::FixedPosition::BOTTOM_CENTER, DebugOverlay::FixedPosition::CENTER});
+    gc.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::GREEN,
+                                DebugOverlay::FixedPosition::BOTTOM_CENTER,
+                                DebugOverlay::FixedPosition::CENTER});
+    gc.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::RED,
+                                DebugOverlay::FixedPosition::BOTTOM_CENTER,
+                                DebugOverlay::FixedPosition::CENTER});
+    gc.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::BLUE,
+                                DebugOverlay::FixedPosition::BOTTOM_CENTER,
+                                DebugOverlay::FixedPosition::CENTER});
+    gc.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::YELLOW,
+                                DebugOverlay::FixedPosition::BOTTOM_CENTER,
+                                DebugOverlay::FixedPosition::CENTER});
+    gc.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::BLACK,
+                                DebugOverlay::FixedPosition::BOTTOM_CENTER,
+                                DebugOverlay::FixedPosition::CENTER});
     gameState.addComponent(villager, gc);
 
     CompSelectible sc;

@@ -11,6 +11,8 @@
 using namespace ion;
 using namespace std::chrono;
 
+bool EventLoop::s_isPaused = false;
+
 EventLoop::EventLoop(std::stop_token* stopToken) : SubSystem(stopToken)
 {
     m_previousKeyboardState = new bool[SDL_SCANCODE_COUNT];
@@ -44,9 +46,16 @@ void EventLoop::run()
 
     while (m_stopToken->stop_requested() == false)
     {
-        handleTickEvent(lastTick);
-        handleInputEvents();
-        handleGameEvents();
+        if (!isPaused())
+        {
+            handleInputEvents();
+            handleTickEvent(lastTick);
+            handleGameEvents();
+        }
+        else
+        {
+            std::this_thread::sleep_for(milliseconds(100));
+        }
 
         // Sleep for a short duration to avoid busy-waiting
         std::this_thread::sleep_for(milliseconds(1));
@@ -67,11 +76,17 @@ void EventLoop::shutdown()
 void EventLoop::handleTickEvent(std::chrono::steady_clock::time_point& lastTime)
 {
     // TODO: Make this configurable
-    const auto tickRate = milliseconds(16); // ~60 ticks per second
+    const auto tickRate = milliseconds(16);  // ~60 ticks per second
+    // Don't jump more than half a second. Useful when unpause the simulation
+    const auto maxDelay = milliseconds(500);
     auto now = steady_clock::now();
     if (now - lastTime >= tickRate)
     {
-        TickData data{static_cast<int>(duration_cast<milliseconds>(now - lastTime).count())};
+        auto duration = now - lastTime;
+        if (duration > maxDelay)
+            duration = tickRate;
+
+        TickData data{static_cast<int>(duration_cast<milliseconds>(duration).count())};
         Event tickEvent(Event::Type::TICK, data);
 
         // Notify listeners about the event

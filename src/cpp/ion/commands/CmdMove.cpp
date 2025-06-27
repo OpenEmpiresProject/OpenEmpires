@@ -4,6 +4,7 @@
 #include "GameState.h"
 #include "ServiceRegistry.h"
 #include "components/CompGraphics.h"
+#include "components/CompUnit.h"
 #include "debug.h"
 #include "utils/Logger.h"
 #include "utils/ObjectPool.h"
@@ -18,6 +19,12 @@ void CmdMove::onQueue(uint32_t entityID)
 {
     entity = entityID;
     path = findPath(goal, entityID);
+    refinePath();
+    if (path.empty() == false)
+        nextIntermediateGoal = path.front();
+    else
+        nextIntermediateGoal = Feet::null;
+
     coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
 }
 
@@ -68,31 +75,61 @@ bool CmdMove::move(CompTransform& transform, int deltaTimeMs)
 {
     if (!path.empty())
     {
-        auto& nextPos = path.front();
+        debug_assert(nextIntermediateGoal != Feet::null, "Next intermediate goal must be set");
+
         if (transform.position.distanceSquared(goal) < transform.goalRadiusSquared)
         {
             spdlog::debug("Reached goal before hopping all points");
             return true;
         }
-        else if (transform.position.distanceSquared(nextPos) < transform.goalRadiusSquared)
+        else if (transform.position.distanceSquared(nextIntermediateGoal) <
+                 transform.goalRadiusSquared)
         {
-            spdlog::debug("Next hop {} reached", nextPos.toString());
-            path.pop_front();
+            spdlog::debug("Next hop {} reached", nextIntermediateGoal.toString());
+            refinePath();
+            if (path.empty() == false)
+                nextIntermediateGoal = path.front();
+            else
+                nextIntermediateGoal = Feet::null;
         }
         else
         {
-            transform.face(nextPos);
-            auto beforePos = transform.position;
-            auto newPos = calculateNewPosition(transform, deltaTimeMs);
-            if (resolveCollision(newPos))
-            {
-            }
+
+            auto desiredDirection = nextIntermediateGoal - transform.position;
+            auto separationForce = resolveCollision(transform);
+            auto avoidanceForce = avoidCollision(transform);
+
+            Feet finalDir = desiredDirection + separationForce + avoidanceForce;
+
+#ifndef NDEBUG
+            auto& state = GameState::getInstance();
+            if (separationForce != Feet(0, 0))
+                state.getComponent<CompGraphics>(entity).debugOverlays[1].arrowEnd =
+                    coordinates->feetToScreenUnits((transform.position + (separationForce)));
             else
-            {
-                spdlog::debug("Couldn't resolve collision, skiping to next point");
-                // Try to skip it
-                // path.pop_front();
-            }
+                state.getComponent<CompGraphics>(entity).debugOverlays[1].arrowEnd =
+                    separationForce.toVec2();
+
+            if (avoidanceForce != Feet(0, 0))
+                state.getComponent<CompGraphics>(entity).debugOverlays[2].arrowEnd =
+                    coordinates->feetToScreenUnits((transform.position + (avoidanceForce)));
+            else
+                state.getComponent<CompGraphics>(entity).debugOverlays[2].arrowEnd =
+                    avoidanceForce.toVec2();
+
+            state.getComponent<CompGraphics>(entity).debugOverlays[4].arrowEnd =
+                coordinates->feetToScreenUnits((transform.position + (finalDir)));
+
+#endif
+
+            finalDir = finalDir.normalized10();
+
+            auto timeS = (double) deltaTimeMs / 1000.0;
+
+            auto newPos = transform.position + ((finalDir * (transform.speed * timeS)) / 10);
+            transform.face(newPos);
+
+            setPosition(transform, newPos);
         }
     }
     return path.empty();
@@ -120,7 +157,8 @@ void CmdMove::setPosition(CompTransform& transform, const Feet& newPosFeet)
     auto& state = GameState::getInstance();
 
 #ifndef NDEBUG
-    state.getComponent<CompGraphics>(entity).debugOverlays[0].arrowEnd = coordinates->feetToScreenUnits((newPosFeet + (transform.getVelocityVector() * 2)));
+    state.getComponent<CompGraphics>(entity).debugOverlays[0].arrowEnd =
+        coordinates->feetToScreenUnits((newPosFeet + (transform.getVelocityVector() * 2)));
 #endif
 
     if (oldTile != newTile)
@@ -136,7 +174,7 @@ void CmdMove::setPosition(CompTransform& transform, const Feet& newPosFeet)
     transform.position = newPosFeet;
 }
 
-bool CmdMove::hasLineOfSight(const Feet & target)
+bool CmdMove::hasLineOfSight(const Feet& target)
 {
     auto& state = GameState::getInstance();
     auto& transform = state.getComponent<CompTransform>(entity);
@@ -147,32 +185,32 @@ void CmdMove::refinePath()
 {
     if (path.empty() || path.size() < 2)
     {
-        spdlog::debug("Either path is empty or has less than 2 points. Nothing to refine");
+        spam("Either path is empty or has less than 2 points. Nothing to refine");
         return;
     }
     auto length = path.size();
 
     int pointsToRemove = -1;
-    
+
     for (auto waypoint : path)
     {
         if (hasLineOfSight(waypoint))
         {
-            spdlog::debug("Waypoint {} is in line of sight, consdered to remove", waypoint.toString());
+            spam("Waypoint {} is in line of sight, consdered to remove", waypoint.toString());
             pointsToRemove++;
         }
         else
         {
-            spdlog::debug("Waypoint {} is NOT in line of sight", waypoint.toString());
+            spam("Waypoint {} is NOT in line of sight", waypoint.toString());
             break;
         }
     }
 
-    spdlog::debug("Removing {} waypoints", pointsToRemove);
+    spam("Removing {} waypoints", pointsToRemove);
 
     for (int i = 0; i < pointsToRemove && !path.empty(); i++)
     {
-        spdlog::debug("Removing waypoint {}", path.front().toString());
+        spam("Removing waypoint {}", path.front().toString());
         path.pop_front();
     }
 }
@@ -184,16 +222,16 @@ std::list<Feet> CmdMove::findPath(const Feet& endPosInFeet, uint32_t entity)
     auto endPos = endPosInFeet.toTile();
 
     TileMap map = GameState::getInstance().gameMap;
-    std::vector<Feet> path =
+    std::vector<Feet> newPath =
         GameState::getInstance().getPathFinder()->findPath(map, transform.position, endPosInFeet);
 
-    if (path.empty())
+    if (newPath.empty())
     {
         spdlog::error("No path found from {} to {}", startPos.toString(), endPos.toString());
     }
     else
     {
-        // for (Feet node : path)
+        // for (Feet node : newPath)
         // {
         //     // map.map[node.x][node.y] = 2;
         //     auto entity = map.getEntity(MapLayerType::GROUND, node.toTile());
@@ -209,9 +247,9 @@ std::list<Feet> CmdMove::findPath(const Feet& endPosInFeet, uint32_t entity)
         // }
 
         std::list<Feet> pathList;
-        for (size_t i = 0; i < path.size(); i++)
+        for (size_t i = 0; i < newPath.size(); i++)
         {
-            pathList.push_back(path[i]);
+            pathList.push_back(newPath[i]);
         }
         pathList.push_back(endPosInFeet);
 
@@ -225,19 +263,19 @@ constexpr int square(int n)
     return n * n;
 }
 
-bool CmdMove::resolveCollision(const Feet& newPosFeet)
+Feet CmdMove::resolveCollision(CompTransform& transform)
 {
     // Static collision resolution
-    auto newTilePos = newPosFeet.toTile();
+    auto newTilePos = transform.position.toTile();
     auto& state = GameState::getInstance();
-    auto& transform = state.getComponent<CompTransform>(entity);
     auto& gameMap = state.gameMap;
+    Feet totalAvoidance{0, 0};
 
     if (gameMap.isOccupied(MapLayerType::STATIC, newTilePos))
     {
-        spdlog::debug("Tile {} is occupied", newTilePos.toString());
+        spdlog::debug("Collision resolution. Tile {} is occupied", newTilePos.toString());
         // Can't resolve collision, target is blocked.
-        return false;
+        return totalAvoidance;
     }
 
     // if (gameMap.isOccupiedByAnother(MapLayerType::UNITS, newTilePos, entity))
@@ -250,7 +288,6 @@ bool CmdMove::resolveCollision(const Feet& newPosFeet)
     Tile searchStartTile = newTilePos - Tile(1, 1);
     Tile searchEndTile = newTilePos + Tile(1, 1);
 
-    Feet totalAvoidance{0, 0};
     bool hasCollision = false;
 
     for (int x = searchStartTile.x; x <= searchEndTile.x; x++)
@@ -268,10 +305,11 @@ bool CmdMove::resolveCollision(const Feet& newPosFeet)
                 // spdlog::debug("Checking collision with entity {}", e);
 
                 auto& otherTransform = state.getComponent<CompTransform>(e);
-                Feet toOther = otherTransform.position - newPosFeet;
+                Feet toOther = otherTransform.position - transform.position;
 
                 float distSq = toOther.lengthSquared();
-                float minDistSq = square(transform.goalRadius + otherTransform.goalRadius);
+                float minDistSq =
+                    square(transform.collisionRadius + otherTransform.collisionRadius);
 
                 // spdlog::debug("distance: {}, min distance: {}", distSq, minDistSq);
                 // spdlog::debug("oldPosFeet: {}", transform.position.toString());
@@ -295,15 +333,139 @@ bool CmdMove::resolveCollision(const Feet& newPosFeet)
     }
 
     Feet averagePush = totalAvoidance * 2; // This keeps the actual push small
-    auto newPos = newPosFeet + averagePush;
-    setPosition(transform, newPos);
+
+    return averagePush;
+}
+
+Feet CmdMove::avoidCollision(CompTransform& transform)
+{
+    auto& unit = GameState::getInstance().getComponent<CompUnit>(entity);
+    auto dir = transform.getVelocityVector().normalized10();
+
+    auto rayEnd = transform.position + ((dir * unit.lineOfSight / 2) / 10);
+    auto unitToAvoid = intersectsUnits(entity, transform, transform.position, rayEnd);
 
 #ifndef NDEBUG
-    if (hasCollision)
-        state.getComponent<CompGraphics>(entity).debugOverlays[1].arrowEnd = coordinates->feetToScreenUnits((transform.position + (averagePush * 2)));
-    else
-        state.getComponent<CompGraphics>(entity).debugOverlays[1].arrowEnd = Vec2();
+    auto& state = GameState::getInstance();
+    state.getComponent<CompGraphics>(entity).debugOverlays[3].arrowEnd =
+        coordinates->feetToScreenUnits(rayEnd);
 #endif
 
-    return true;
+    if (unitToAvoid != entt::null)
+    {
+        spam("Posible collision with entity {}", unitToAvoid);
+        auto& otherTransform = GameState::getInstance().getComponent<CompTransform>(unitToAvoid);
+
+        Feet dir = otherTransform.position - transform.position;
+        auto forward10 = dir.normalized10();
+        Feet left(-forward10.y, forward10.x);
+
+        Feet avoidanceForce = left * (otherTransform.collisionRadius * 10 / 10);
+        return avoidanceForce;
+    }
+    return Feet(0, 0);
+}
+
+double CmdMove::distancePointToSegment(const Feet& p0, const Feet& p1, const Feet& q) const
+{
+    const Feet v = p1 - p0;
+    const Feet w = q - p0;
+
+    const double lenSq = v.lengthSquared();
+    if (lenSq == 0.0)
+    {
+        // Degenerate segment (start == end)
+        return (q - p0).length();
+    }
+
+    double t = std::clamp(w.dot(v) / lenSq, 0.0, 1.0);
+    auto vx = (double) (v.x) * t;
+    auto vy = (double) (v.y) * t;
+
+    Feet projection = p0 + Feet(vx, vy);
+
+    spam("Start {}, end {}, q {}, projection {}", p0.toString(), p1.toString(), q.toString(),
+         projection.toString());
+
+    return (q - projection).length();
+}
+
+uint32_t CmdMove::intersectsUnits(uint32_t self,
+                                  CompTransform& transform,
+                                  const Feet& start,
+                                  const Feet& end) const
+{
+    auto& state = GameState::getInstance();
+    auto& gameMap = state.gameMap;
+
+    float distance = start.distance(end);
+    int numSteps =
+        static_cast<int>(distance / (Constants::FEET_PER_TILE * 0.25f)); // Sample every ¼ tile
+
+    if (numSteps <= 0)
+        return false;
+
+    Feet step = (end - start) / static_cast<float>(numSteps);
+
+    for (int i = 0; i <= numSteps; ++i)
+    {
+        // TODO: Optimize this to avoid duplicated tile check
+        Feet point = start + step * static_cast<float>(i);
+        Tile tile = point.toTile();
+
+        if (gameMap.isOccupied(MapLayerType::UNITS, tile))
+        {
+            auto& otherUnits = gameMap.getEntities(MapLayerType::UNITS, tile);
+            for (auto otherUnit : otherUnits)
+            {
+                if (otherUnit != entt::null && otherUnit != self)
+                {
+                    auto& otherTransform =
+                        GameState::getInstance().getComponent<CompTransform>(otherUnit);
+                    double d = distancePointToSegment(start, end, otherTransform.position);
+                    auto totalRadius = transform.collisionRadius + otherTransform.collisionRadius;
+
+                    spam("Checking collision with entity {} at distance {}, LOS {}, projected "
+                         "distance {}",
+                         otherUnit, (otherTransform.position - start).length(),
+                         (start - end).length(), d);
+
+                    if (d <= totalRadius)
+                    {
+                        return otherUnit;
+                    }
+                }
+            }
+        }
+    }
+    return entt::null; // Clear line
+}
+
+bool CmdMove::lineIntersectsCircle(const Vec2& p1,
+                                   const Vec2& p2,
+                                   const Vec2& center,
+                                   float radius) const
+{
+    // Vector from p1 to p2
+    Vec2 d = p2 - p1;
+    // Vector from p1 to circle center
+    Vec2 f = p1 - center;
+
+    float a = d.dot(d);
+    float b = 2 * f.dot(d);
+    float c = f.dot(f) - radius * radius;
+
+    float discriminant = b * b - 4 * a * c;
+    if (discriminant < 0)
+    {
+        // No intersection
+        return false;
+    }
+
+    discriminant = std::sqrt(discriminant);
+    float t1 = (-b - discriminant) / (2 * a);
+    float t2 = (-b + discriminant) / (2 * a);
+
+    // Check if either t is in [0, 1] → segment intersects circle
+    return (t1 >= 0 && t1 <= 1) || (t2 >= 0 && t2 <= 1);
 }

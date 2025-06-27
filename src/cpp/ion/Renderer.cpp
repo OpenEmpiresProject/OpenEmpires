@@ -2,6 +2,7 @@
 
 #include "AtlasGeneratorBasic.h"
 #include "Coordinates.h"
+#include "EventLoop.h"
 #include "FPSCounter.h"
 #include "GameSettings.h"
 #include "GameState.h"
@@ -359,7 +360,9 @@ void RendererImpl::renderingLoop()
         m_frameTime.addSample(SDL_GetTicks() - start);
 
         auto waitStart = SDL_GetTicks();
-        m_synchronizer.waitForSender();
+
+        if (!EventLoop::isPaused())
+            m_synchronizer.waitForSender();
         m_waitTime.addSample(SDL_GetTicks() - waitStart);
 
         int delay = (1000 / m_settings->getTargetFPS()) - (SDL_GetTicks() - start);
@@ -437,6 +440,10 @@ bool RendererImpl::handleEvents()
             else if (event.key.scancode == SDL_SCANCODE_3)
             {
                 m_showFogOfWar = !m_showFogOfWar;
+            }
+            else if (event.key.scancode == SDL_SCANCODE_P)
+            {
+                EventLoop::setPaused(!EventLoop::isPaused());
             }
         }
         else if (event.type == SDL_EVENT_MOUSE_MOTION)
@@ -526,7 +533,6 @@ void RendererImpl::renderDebugInfo(FPSCounter& counter)
 
 void RendererImpl::renderGameEntities()
 {
-
     auto& objectsToRender = m_zOrderStrategy->zOrder(m_coordinates);
     auto& fogOfWar = m_synchronizer.getReceiverFrameData().fogOfWar;
 
@@ -648,7 +654,7 @@ void RendererImpl::renderDebugOverlays(const SDL_FRect& dstRect, CompRendering* 
                 break;
             case DebugOverlay::Type::FILLED_CIRCLE:
                 filledEllipseRGBA(m_renderer, pos.x, pos.y, 20, 10, 0, 0, 255,
-                                    100); // blue ellipse
+                                  100); // blue ellipse
             case DebugOverlay::Type::RHOMBUS:
             {
                 auto end1 = getDebugOverlayPosition(overlay.customPos1, dstRect);
@@ -669,7 +675,8 @@ void RendererImpl::renderDebugOverlays(const SDL_FRect& dstRect, CompRendering* 
                 auto end = overlay.arrowEnd;
 
                 // Arrow shaft
-                lineRGBA(m_renderer, pos.x, pos.y, end.x, end.y, overlay.color.r, overlay.color.g, overlay.color.b, 255);
+                lineRGBA(m_renderer, pos.x, pos.y, end.x, end.y, overlay.color.r, overlay.color.g,
+                         overlay.color.b, 255);
 
                 // Arrowhead (two lines angled from the end point)
                 float dx = pos.x - end.x;
@@ -696,8 +703,10 @@ void RendererImpl::renderDebugOverlays(const SDL_FRect& dstRect, CompRendering* 
 
                     const float headSize = 10.0f; // arrowhead length
 
-                    lineRGBA(m_renderer, end.x, end.y, end.x + lx * headSize, end.y + ly * headSize, overlay.color.r, overlay.color.g, overlay.color.b, 255);
-                    lineRGBA(m_renderer, end.x, end.y, end.x + rx * headSize, end.y + ry * headSize, overlay.color.r, overlay.color.g, overlay.color.b, 255);
+                    lineRGBA(m_renderer, end.x, end.y, end.x + lx * headSize, end.y + ly * headSize,
+                             overlay.color.r, overlay.color.g, overlay.color.b, 255);
+                    lineRGBA(m_renderer, end.x, end.y, end.x + rx * headSize, end.y + ry * headSize,
+                             overlay.color.r, overlay.color.g, overlay.color.b, 255);
                 }
             }
             break;

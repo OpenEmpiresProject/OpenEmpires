@@ -121,6 +121,11 @@ template <typename T, typename Tag> class Vec2Base
         return x * x + y * y;
     }
 
+    constexpr T length() const noexcept
+    {
+        return static_cast<T>(std::sqrt(x * x + y * y));
+    }
+
     T distanceSquared(const Vec2Base& other) const noexcept
     {
         return std::powl(x - other.x, 2) + std::powl(y - other.y, 2);

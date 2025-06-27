@@ -15,8 +15,8 @@ struct FrameData
     std::vector<CompGraphics*> graphicUpdates; // Simulator to Renderer
     // Even in a giant map (i.e. 240x240), fogOfWar information would take around 56KB
     // Therefore, it is totally acceptable to copy FogOfWar.
-    FogOfWar fogOfWar;                         // Simulator to Renderer
-    Vec2 viewportPositionInPixels;             // Renderer to simulator
+    FogOfWar fogOfWar;             // Simulator to Renderer
+    Vec2 viewportPositionInPixels; // Renderer to simulator
 };
 } // namespace ion
 

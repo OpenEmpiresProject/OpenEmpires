@@ -25,6 +25,16 @@ class EventLoop : public SubSystem, public EventPublisher
         return m_listeners.size();
     }
 
+    static bool isPaused()
+    {
+        return s_isPaused;
+    }
+
+    static void setPaused(bool isPaused)
+    {
+        s_isPaused = isPaused;
+    }
+
   private:
     // SubSystem methods
     void init() override;
@@ -43,6 +53,8 @@ class EventLoop : public SubSystem, public EventPublisher
     uint32_t m_previousMouseState = 0;
     int m_previouseMouseX = 0;
     int m_previouseMouseY = 0;
+
+    static bool s_isPaused;
 };
 
 } // namespace ion

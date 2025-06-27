@@ -60,6 +60,7 @@ class Simulator : public EventHandler
     Vec2 m_lastMouseScreenPos;
     uint32_t m_currentBuildingOnPlacement = 0;
     bool m_initialized = false;
+    bool m_showSpamLogs = false;
 };
 } // namespace ion
 

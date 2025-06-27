@@ -28,7 +28,7 @@ class CompTransform
     int goalRadius = 100;
     int selectionBoxWidth = 15;
     int selectionBoxHeight = 30;
-    int collisionRadius = 10; // TODO: not every entity would be circular
+    int collisionRadius = 100; // TODO: not every entity would be circular
     // int prevRotation = 0;
 
     CompTransform() = default;
@@ -51,7 +51,7 @@ class CompTransform
 
         // 0 degrees = North = -Y
         float dx = std::sin(angleRad);
-        float dy = -std::cos(angleRad);  // flipped to make 0° point upward (-Y)
+        float dy = -std::cos(angleRad); // flipped to make 0° point upward (-Y)
 
         return Feet(dx * speed, dy * speed);
     }
