@@ -8,8 +8,6 @@
 
 using namespace ion;
 
-const ion::Tile ion::Tile::null =
-    ion::Tile(std::numeric_limits<int>::min(), std::numeric_limits<int>::min());
 
 Feet Tile::toFeet() const
 {

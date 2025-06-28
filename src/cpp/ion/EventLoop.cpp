@@ -76,7 +76,7 @@ void EventLoop::shutdown()
 void EventLoop::handleTickEvent(std::chrono::steady_clock::time_point& lastTime)
 {
     // TODO: Make this configurable
-    const auto tickRate = milliseconds(16);  // ~60 ticks per second
+    const auto tickRate = milliseconds(16); // ~60 ticks per second
     // Don't jump more than half a second. Useful when unpause the simulation
     const auto maxDelay = milliseconds(500);
     auto now = steady_clock::now();

@@ -1,11 +1,14 @@
 #ifndef VEC2BASE_H
 #define VEC2BASE_H
 
+#include <cmath>
 #include <compare>
 #include <cstddef>
 #include <format>
 #include <functional>
 #include <iostream>
+#include <limits>
+#include <type_traits>
 #include <utility>
 
 namespace ion
@@ -30,17 +33,32 @@ template <typename T, typename Tag> class Vec2Base
     constexpr Vec2Base& operator=(const Vec2Base&) noexcept = default;
     constexpr Vec2Base& operator=(Vec2Base&&) noexcept = default;
 
-    // Comparison operators
-    constexpr auto operator<=>(const Vec2Base&) const = default;
+    const static Vec2Base null;
+    const static Vec2Base zero;
 
-    bool operator==(const Vec2Base& other) const
+    constexpr bool isNull() const
     {
-        return x == other.x && y == other.y;
+        return std::isnan(x) || std::isnan(y);
     }
 
-    bool operator!=(const Vec2Base& other) const
+    // Epsilon for floating point comparisons
+    static constexpr T epsilon = static_cast<T>(1e-2);
+
+    constexpr bool operator==(const Vec2Base& other) const noexcept
     {
-        return x != other.x || y != other.y;
+        if constexpr (std::is_floating_point_v<T>)
+        {
+            return (std::abs(x - other.x) < epsilon) && (std::abs(y - other.y) < epsilon);
+        }
+        else
+        {
+            return x == other.x && y == other.y;
+        }
+    }
+
+    constexpr bool operator!=(const Vec2Base& other) const noexcept
+    {
+        return !(*this == other);
     }
 
     // Arithmetic operators
@@ -115,6 +133,16 @@ template <typename T, typename Tag> class Vec2Base
         return {-x, -y};
     }
 
+    constexpr bool operator<(const Vec2Base& other) const noexcept
+    {
+        return x < other.x && y < other.y;
+    }
+
+    constexpr bool operator>(const Vec2Base& other) const noexcept
+    {
+        return x > other.x && y > other.y;
+    }
+
     // Magnitude squared
     constexpr T lengthSquared() const noexcept
     {
@@ -123,17 +151,25 @@ template <typename T, typename Tag> class Vec2Base
 
     constexpr T length() const noexcept
     {
-        return static_cast<T>(std::sqrt(x * x + y * y));
+        return std::sqrt(x * x + y * y);
     }
 
     T distanceSquared(const Vec2Base& other) const noexcept
     {
-        return std::powl(x - other.x, 2) + std::powl(y - other.y, 2);
+        return std::pow(x - other.x, 2) + std::pow(y - other.y, 2);
     }
 
     T distance(const Vec2Base& other) const noexcept
     {
-        return static_cast<T>(std::sqrt(distanceSquared(other)));
+        return std::sqrt(distanceSquared(other));
+    }
+
+    constexpr Vec2Base normalized() const noexcept
+    {
+        T len = length();
+        if (len == T(0))
+            return Vec2Base(0, 0);
+        return Vec2Base(x / len, y / len);
     }
 
     // Dot product
@@ -144,7 +180,14 @@ template <typename T, typename Tag> class Vec2Base
 
     std::string toString() const
     {
-        return std::format("({}, {})", x, y);
+        if constexpr (std::is_floating_point_v<T>)
+        {
+            return std::format("({:.2f}, {:.2f})", x, y);
+        }
+        else
+        {
+            return std::format("({}, {})", x, y);
+        }
     }
 
     constexpr void limitTo(T xLimit, T yLimit) noexcept
@@ -155,6 +198,12 @@ template <typename T, typename Tag> class Vec2Base
             y = yLimit;
     }
 };
+
+template <typename T, typename Tag> const Vec2Base<T, Tag> Vec2Base<T, Tag>::zero = Vec2Base(0, 0);
+
+template <typename T, typename Tag>
+const Vec2Base<T, Tag> Vec2Base<T, Tag>::null =
+    Vec2Base(std::numeric_limits<T>::quiet_NaN(), std::numeric_limits<T>::quiet_NaN());
 
 } // namespace ion
 

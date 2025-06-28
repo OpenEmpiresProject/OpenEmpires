@@ -103,30 +103,29 @@ bool CmdMove::move(CompTransform& transform, int deltaTimeMs)
 
 #ifndef NDEBUG
             auto& state = GameState::getInstance();
+            auto& debugOverlays = state.getComponent<CompGraphics>(entity).debugOverlays;
+
             if (separationForce != Feet(0, 0))
-                state.getComponent<CompGraphics>(entity).debugOverlays[1].arrowEnd =
+                debugOverlays[1].arrowEnd =
                     coordinates->feetToScreenUnits((transform.position + (separationForce)));
             else
-                state.getComponent<CompGraphics>(entity).debugOverlays[1].arrowEnd =
-                    separationForce.toVec2();
+                debugOverlays[1].arrowEnd = Vec2::zero;
 
             if (avoidanceForce != Feet(0, 0))
-                state.getComponent<CompGraphics>(entity).debugOverlays[2].arrowEnd =
+                debugOverlays[2].arrowEnd =
                     coordinates->feetToScreenUnits((transform.position + (avoidanceForce)));
             else
-                state.getComponent<CompGraphics>(entity).debugOverlays[2].arrowEnd =
-                    avoidanceForce.toVec2();
+                debugOverlays[2].arrowEnd = Vec2::zero;
 
-            state.getComponent<CompGraphics>(entity).debugOverlays[4].arrowEnd =
+            debugOverlays[4].arrowEnd =
                 coordinates->feetToScreenUnits((transform.position + (finalDir)));
-
 #endif
 
-            finalDir = finalDir.normalized10();
+            finalDir = finalDir.normalized();
 
             auto timeS = (double) deltaTimeMs / 1000.0;
 
-            auto newPos = transform.position + ((finalDir * (transform.speed * timeS)) / 10);
+            auto newPos = transform.position + (finalDir * (transform.speed * timeS));
             transform.face(newPos);
 
             setPosition(transform, newPos);
@@ -278,12 +277,6 @@ Feet CmdMove::resolveCollision(CompTransform& transform)
         return totalAvoidance;
     }
 
-    // if (gameMap.isOccupiedByAnother(MapLayerType::UNITS, newTilePos, entity))
-    // {
-    //     // spdlog::debug("Tile {} is occupied by another entity", newTilePos.toString());
-    //     return false;
-    // }
-
     // Dynamic collision resolution
     Tile searchStartTile = newTilePos - Tile(1, 1);
     Tile searchEndTile = newTilePos + Tile(1, 1);
@@ -302,8 +295,6 @@ Feet CmdMove::resolveCollision(CompTransform& transform)
                 if (e == entt::null || e == entity)
                     continue;
 
-                // spdlog::debug("Checking collision with entity {}", e);
-
                 auto& otherTransform = state.getComponent<CompTransform>(e);
                 Feet toOther = otherTransform.position - transform.position;
 
@@ -311,28 +302,19 @@ Feet CmdMove::resolveCollision(CompTransform& transform)
                 float minDistSq =
                     square(transform.collisionRadius + otherTransform.collisionRadius);
 
-                // spdlog::debug("distance: {}, min distance: {}", distSq, minDistSq);
-                // spdlog::debug("oldPosFeet: {}", transform.position.toString());
-                // spdlog::debug("newPosFeet: {}", newPosFeet.toString());
-                // spdlog::debug("otherpos: {}", otherTransform.position.toString());
-                // spdlog::debug("toOther: {}", toOther.toString());
-                // spdlog::debug("toOther normalized10: {}", toOther.normalized10().toString());
-
                 if (distSq < minDistSq && distSq > 0.0001f)
                 {
                     hasCollision = true;
 
                     Feet repulsionDir = -toOther;
-                    repulsionDir = repulsionDir.normalized10();
+                    repulsionDir = repulsionDir.normalized();
                     totalAvoidance += repulsionDir;
-
-                    // spdlog::debug("totalAvoidance: {}", totalAvoidance.toString());
                 }
             }
         }
     }
 
-    Feet averagePush = totalAvoidance * 2; // This keeps the actual push small
+    Feet averagePush = totalAvoidance * 2;
 
     return averagePush;
 }
@@ -340,9 +322,9 @@ Feet CmdMove::resolveCollision(CompTransform& transform)
 Feet CmdMove::avoidCollision(CompTransform& transform)
 {
     auto& unit = GameState::getInstance().getComponent<CompUnit>(entity);
-    auto dir = transform.getVelocityVector().normalized10();
+    auto dir = transform.getVelocityVector().normalized();
 
-    auto rayEnd = transform.position + ((dir * unit.lineOfSight / 2) / 10);
+    auto rayEnd = transform.position + (dir * (unit.lineOfSight / 2));
     auto unitToAvoid = intersectsUnits(entity, transform, transform.position, rayEnd);
 
 #ifndef NDEBUG
@@ -357,10 +339,10 @@ Feet CmdMove::avoidCollision(CompTransform& transform)
         auto& otherTransform = GameState::getInstance().getComponent<CompTransform>(unitToAvoid);
 
         Feet dir = otherTransform.position - transform.position;
-        auto forward10 = dir.normalized10();
-        Feet left(-forward10.y, forward10.x);
+        auto forward = dir.normalized();
+        Feet left(-forward.y, forward.x);
 
-        Feet avoidanceForce = left * (otherTransform.collisionRadius * 10 / 10);
+        Feet avoidanceForce = left * (otherTransform.collisionRadius * 10);
         return avoidanceForce;
     }
     return Feet(0, 0);

@@ -8,9 +8,6 @@
 
 using namespace ion;
 
-const ion::Feet ion::Feet::null =
-    ion::Feet(std::numeric_limits<float>::quiet_NaN(),
-                std::numeric_limits<float>::quiet_NaN());
 
 Tile Feet::toTile() const
 {

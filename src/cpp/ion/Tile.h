@@ -19,26 +19,8 @@ class Tile : public Vec2Base<int, TileTag>
     }
     Tile(const Feet& feet) = delete;
 
-    bool isNull() const
-    {
-        return (*this) == Tile::null;
-    }
-
-    inline Tile normalized10() const
-    {
-        int lenSq = x * x + y * y;
-        if (lenSq == 0)
-            return {0, 0};
-
-        float len = std::sqrt(static_cast<float>(lenSq));
-        float scale = 10.0f / len;
-        return {static_cast<int>(std::round(x * scale)), static_cast<int>(std::round(y * scale))};
-    }
-
     Feet toFeet() const;
     Feet centerInFeet() const;
-
-    static const Tile null;
 };
 } // namespace ion
 
