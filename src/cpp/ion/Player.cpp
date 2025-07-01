@@ -1,7 +1,9 @@
 #include "Player.h"
 
 #include "GameSettings.h"
+#include "GameState.h"
 #include "ServiceRegistry.h"
+#include "components/CompBuilding.h"
 #include "debug.h"
 
 using namespace ion;
@@ -67,11 +69,21 @@ bool Player::hasResource(uint8_t resourceType, uint32_t amount)
 void Player::addEntity(uint32_t entityId)
 {
     m_ownedEntities.insert(entityId);
+
+    if (GameState::getInstance().hasComponent<CompBuilding>(entityId))
+    {
+        m_myBuildings.insert(entityId);
+    }
 }
 
 void Player::removeEntity(uint32_t entityId)
 {
     m_ownedEntities.erase(entityId);
+
+    if (GameState::getInstance().hasComponent<CompBuilding>(entityId))
+    {
+        m_myBuildings.erase(entityId);
+    }
 }
 
 bool Player::isOwned(uint32_t entityId)

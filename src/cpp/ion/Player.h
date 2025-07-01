@@ -40,6 +40,11 @@ class Player
         return m_fow;
     }
 
+    const std::unordered_set<uint32_t>& getMyBuildings() const
+    {
+        return m_myBuildings;
+    }
+
     static constexpr uint8_t INVALID_ID = std::numeric_limits<uint8_t>::max();
 
   private:
@@ -47,6 +52,7 @@ class Player
     std::vector<Resource> m_resources;
     std::unordered_set<uint8_t> m_ownedEntities;
     Ref<FogOfWar> m_fow;
+    std::unordered_set<uint32_t> m_myBuildings;
 };
 
 } // namespace ion

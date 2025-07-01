@@ -3,6 +3,7 @@
 #include "EventPublisher.h"
 #include "GameState.h"
 #include "ServiceRegistry.h"
+#include "components/CompBuilding.h"
 #include "components/CompGraphics.h"
 #include "components/CompUnit.h"
 #include "debug.h"
@@ -17,25 +18,56 @@ void CmdMove::onStart()
 
 void CmdMove::onQueue(uint32_t entityID)
 {
-    entity = entityID;
-    path = findPath(goal, entityID);
-    refinePath();
-    if (path.empty() == false)
-        nextIntermediateGoal = path.front();
-    else
-        nextIntermediateGoal = Feet::null;
+    auto& gameState = GameState::getInstance();
 
+    if (targetEntity != entt::null && gameState.hasComponent<CompBuilding>(targetEntity))
+    {
+        auto& transform = gameState.getComponent<CompTransform>(entityID);
+        targetPos = findClosestEdgeOfStaticEntity(targetEntity, transform.position);
+    }
+
+    if (targetPos.isNull() == false)
+    {
+        entity = entityID;
+        path = findPath(targetPos, entityID);
+        refinePath();
+        if (path.empty() == false)
+            nextIntermediateGoal = path.front();
+        else
+            nextIntermediateGoal = Feet::null;
+
+#ifndef NDEBUG
+        auto tileEntity = gameState.gameMap.getEntity(MapLayerType::GROUND, targetPos.toTile());
+        auto [graphics, dirty] = gameState.getComponents<CompGraphics, CompDirty>(tileEntity);
+
+        graphics.debugOverlays.clear();
+        DebugOverlay filledCircle;
+        filledCircle.type = DebugOverlay::Type::FILLED_CIRCLE;
+        filledCircle.color = Color::RED;
+        filledCircle.absolutePosition = targetPos;
+        graphics.debugOverlays.push_back(filledCircle);
+        dirty.markDirty(tileEntity);
+#endif
+    }
     coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
 }
 
 bool CmdMove::onExecute(uint32_t entityID, int deltaTimeMs)
 {
-    auto [transform, action, animation, dirty] =
-        GameState::getInstance().getComponents<CompTransform, CompAction, CompAnimation, CompDirty>(
-            entityID);
+    if (targetPos.isNull() == false) [[likely]]
+    {
+        auto [transform, action, animation, dirty] =
+            GameState::getInstance()
+                .getComponents<CompTransform, CompAction, CompAnimation, CompDirty>(entityID);
 
-    animate(action, animation, dirty, deltaTimeMs, entityID);
-    return move(transform, deltaTimeMs);
+        animate(action, animation, dirty, deltaTimeMs, entityID);
+        return move(transform, deltaTimeMs);
+    }
+    else [[unlikely]]
+    {
+        spdlog::error("Target pos {} is not properly set to move.", targetPos.toString());
+        return true;
+    }
 }
 
 std::string CmdMove::toString() const
@@ -75,17 +107,23 @@ bool CmdMove::move(CompTransform& transform, int deltaTimeMs)
 {
     if (!path.empty())
     {
-        debug_assert(nextIntermediateGoal != Feet::null, "Next intermediate goal must be set");
+        debug_assert(nextIntermediateGoal != Feet::null, "Next intermediate target must be set");
 
-        if (transform.position.distanceSquared(goal) < transform.goalRadiusSquared)
+        if (transform.position.distanceSquared(targetPos) < transform.goalRadiusSquared)
         {
-            spdlog::debug("Reached goal before hopping all points");
+            spdlog::debug("Reached targetPos before hopping all points");
             return true;
         }
         else if (transform.position.distanceSquared(nextIntermediateGoal) <
                  transform.goalRadiusSquared)
         {
             spdlog::debug("Next hop {} reached", nextIntermediateGoal.toString());
+
+            if (path.empty() == false && path.front() == nextIntermediateGoal)
+            {
+                path.pop_front();
+            }
+
             refinePath();
             if (path.empty() == false)
                 nextIntermediateGoal = path.front();
@@ -450,4 +488,57 @@ bool CmdMove::lineIntersectsCircle(const Vec2& p1,
 
     // Check if either t is in [0, 1] → segment intersects circle
     return (t1 >= 0 && t1 <= 1) || (t2 >= 0 && t2 <= 1);
+}
+
+Feet CmdMove::findClosestEdgeOfStaticEntity(uint32_t staticEntity, const Feet& fromPos)
+{
+    auto& gameState = GameState::getInstance();
+
+    auto [building, transform] = gameState.getComponents<CompBuilding, CompTransform>(targetEntity);
+    auto anchorTile = transform.position.toTile();
+
+    auto rect = building.getLandInFeetRect(transform.position);
+
+    float x_min = rect.x;
+    float x_max = rect.x + rect.w;
+    float y_min = rect.y;
+    float y_max = rect.y + rect.h;
+
+    float closestX = std::clamp(fromPos.x, x_min, x_max);
+    float closestY = std::clamp(fromPos.y, y_min, y_max);
+
+    return Feet(closestX, closestY);
+
+    //)
+
+    // float bestDistSq = std::numeric_limits<float>::max();
+    // Tile closestTile = Tile::null;
+
+    // for (int dx = -building.size.width + 1; dx < building.size.width; ++dx)
+    // {
+    //     for (int dy = -building.size.height + 1; dy < building.size.height; ++dy)
+    //     {
+    //         Tile t(anchorTile.x + dx, anchorTile.y + dy);
+    //         if (t.x >= 0 && t.y >= 0 && t.x < static_cast<int>(gameState.gameMap.width) && t.y <
+    //         static_cast<int>(gameState.gameMap.height))
+    //         {
+    //             if (gameState.gameMap.getEntity(MapLayerType::STATIC, t) == staticEntity)
+    //             {
+    //                 float distSq = t.toFeet().distanceSquared(fromPos);
+    //                 if (distSq < bestDistSq)
+    //                 {
+    //                     bestDistSq = distSq;
+    //                     closestTile = t;
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+    // if (closestTile.isNull() == false)
+    //     return closestTile.centerInFeet();
+    // else
+    // {
+    //     spdlog::error("Could not find closest edge of static entity {} from {}", staticEntity,
+    //     fromPos.toString()); return Feet::null;
+    // }
 }

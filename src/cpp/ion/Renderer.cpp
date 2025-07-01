@@ -653,8 +653,22 @@ void RendererImpl::renderDebugOverlays(const SDL_FRect& dstRect, CompRendering* 
                             255); // green circle
                 break;
             case DebugOverlay::Type::FILLED_CIRCLE:
-                filledEllipseRGBA(m_renderer, pos.x, pos.y, 20, 10, 0, 0, 255,
-                                  100); // blue ellipse
+            {
+                if (overlay.absolutePosition.isNull() == false)
+                {
+                    auto screenPos = m_coordinates.feetToScreenUnits(overlay.absolutePosition);
+                    filledEllipseRGBA(m_renderer, screenPos.x, screenPos.y, 20, 10, overlay.color.r,
+                                      overlay.color.g, overlay.color.b, 100);
+                }
+                else
+                {
+                    filledEllipseRGBA(m_renderer, pos.x, pos.y, 20, 10, 0, 0, 255,
+                                      100); // blue ellipse
+                }
+
+                break;
+            }
+
             case DebugOverlay::Type::RHOMBUS:
             {
                 auto end1 = getDebugOverlayPosition(overlay.customPos1, dstRect);

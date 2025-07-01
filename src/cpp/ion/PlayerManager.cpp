@@ -72,4 +72,6 @@ void PlayerManager::onBuildingPlaced(const Event& e)
 
     player.player->getFogOfWar()->markAsExplored(data.tile.centerInFeet(), building.size,
                                                  building.lineOfSight);
+
+    player.player->addEntity(data.building);
 }

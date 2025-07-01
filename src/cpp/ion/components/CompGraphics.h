@@ -43,6 +43,7 @@ struct DebugOverlay
     FixedPosition customPos1;
     FixedPosition customPos2;
     Vec2 arrowEnd;
+    Feet absolutePosition = Feet::null; // Doesn't honour anchor
 };
 
 enum class GraphicLayer

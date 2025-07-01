@@ -6,6 +6,7 @@
 #include "GameState.h"
 #include "Player.h"
 #include "ServiceRegistry.h"
+#include "commands/CmdDropResource.h"
 #include "commands/CmdMove.h"
 #include "commands/Command.h"
 #include "components/CompEntityInfo.h"
@@ -37,6 +38,7 @@ class CmdGatherResource : public Command
     std::shared_ptr<Coordinates> coordinateSystem;
     Ref<Player> player;
     Resource* targetResource = nullptr;
+    CompResourceGatherer* gatherer = nullptr;
 
     void onStart() override
     {
@@ -53,6 +55,7 @@ class CmdGatherResource : public Command
         player = playerComp.player;
         coordinateSystem = ServiceRegistry::getInstance().getService<Coordinates>();
         collectedResourceAmount = 0;
+        gatherer = &GameState::getInstance().getComponent<CompResourceGatherer>(entity);
     }
 
     void setTarget(uint32_t targetEntity)
@@ -79,12 +82,11 @@ class CmdGatherResource : public Command
         }
         if (isCloseEnough())
         {
-            auto [transform, action, animation, dirty, gatherer] =
+            auto [transform, action, animation, dirty] =
                 GameState::getInstance()
-                    .getComponents<CompTransform, CompAction, CompAnimation, CompDirty,
-                                   CompResourceGatherer>(entityID);
+                    .getComponents<CompTransform, CompAction, CompAnimation, CompDirty>(entityID);
 
-            animate(action, gatherer, animation, dirty);
+            animate(action, animation, dirty);
             gather(transform, deltaTimeMs);
         }
         return false;
@@ -104,11 +106,22 @@ class CmdGatherResource : public Command
     {
         if (!isCloseEnough())
         {
-            spdlog::debug("Target at {} is not close enough, moving...", targetPosition.toString());
+            spdlog::debug("Target {} at {} is not close enough to gather, moving...", target,
+                          targetPosition.toString());
             auto move = ObjectPool<CmdMove>::acquire();
-            move->goal = targetPosition;
+            move->targetPos = targetPosition;
             move->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
             subCommands.push_back(move);
+            return true;
+        }
+
+        if (isFull())
+        {
+            spdlog::debug("Unit {} is at full capacity, need to drop off", entity);
+            auto drop = ObjectPool<CmdDropResource>::acquire();
+            drop->resourceType = targetResource->type;
+            drop->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
+            subCommands.push_back(drop);
             return true;
         }
         return false;
@@ -135,12 +148,9 @@ class CmdGatherResource : public Command
         return transformMy.position.distanceSquared(targetPosition) < (threshold * threshold);
     }
 
-    void animate(CompAction& action,
-                 CompResourceGatherer& gatherer,
-                 CompAnimation& animation,
-                 CompDirty& dirty)
+    void animate(CompAction& action, CompAnimation& animation, CompDirty& dirty)
     {
-        action.action = gatherer.getGatheringAction(targetResource->type);
+        action.action = gatherer->getGatheringAction(targetResource->type);
         auto& actionAnimation = animation.animations[action.action];
 
         auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.speed;
@@ -152,6 +162,11 @@ class CmdGatherResource : public Command
         }
     }
 
+    bool isFull()
+    {
+        return gatherer->gatheredAmount >= gatherer->capacity;
+    }
+
     void gather(CompTransform& transform, int deltaTimeMs)
     {
         collectedResourceAmount += float(choppingSpeed) * deltaTimeMs / 1000.0f;
@@ -160,12 +175,11 @@ class CmdGatherResource : public Command
 
         if (rounded != 0)
         {
-            auto& dirty = GameState::getInstance().getComponent<CompDirty>(target);
-
             auto actualDelta = std::min(targetResource->amount, rounded);
+            actualDelta = std::min(actualDelta, (gatherer->capacity - gatherer->gatheredAmount));
             targetResource->amount -= actualDelta;
-            player->grantResource(targetResource->type, actualDelta);
-            dirty.markDirty(target);
+            gatherer->gatheredAmount += actualDelta;
+            GameState::getInstance().getComponent<CompDirty>(target).markDirty(target);
         }
     }
 
@@ -182,6 +196,11 @@ class CmdGatherResource : public Command
         {
             spdlog::debug("Found resource {}", newResource);
             setTarget(newResource);
+        }
+        else
+        {
+            spdlog::debug("No resource of type {} found around {}", targetResource->type,
+                          transformMy.position.toString());
         }
         return newResource != entt::null;
     }

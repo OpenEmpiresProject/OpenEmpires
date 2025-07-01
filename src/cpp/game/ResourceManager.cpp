@@ -6,6 +6,7 @@
 #include "components/CompEntityInfo.h"
 #include "components/CompResource.h"
 #include "components/CompSelectible.h"
+#include "components/CompTransform.h"
 
 using namespace game;
 using namespace ion;
@@ -29,13 +30,16 @@ void ResourceManager::onTick(const Event& e)
     {
         if (GameState::getInstance().hasComponent<CompResource>(entity))
         {
-            auto [resource, dirty, info, select] =
+            auto [resource, dirty, info, select, transform] =
                 GameState::getInstance()
-                    .getComponents<CompResource, CompDirty, CompEntityInfo, CompSelectible>(entity);
+                    .getComponents<CompResource, CompDirty, CompEntityInfo, CompSelectible,
+                                   CompTransform>(entity);
 
             if (resource.resource.amount == 0)
             {
                 info.isDestroyed = true;
+                GameState::getInstance().gameMap.removeStaticEntity(transform.position.toTile(),
+                                                                    entity);
             }
             else
             {

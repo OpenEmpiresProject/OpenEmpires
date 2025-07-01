@@ -10,7 +10,7 @@
 
 namespace ion
 {
-template <std::integral T> class Rect
+template <typename T> class Rect
 {
   public:
     T x{};
@@ -168,6 +168,18 @@ template <std::integral T> class Rect
             return h;
         else
             static_assert(N < 4, "Rect only has 4 elements");
+    }
+
+    std::string toString()
+    {
+        if constexpr (std::is_floating_point_v<T>)
+        {
+            return std::format("(x{:.2f}, y{:.2f}, w{:.2f}, h{:.2f})", x, y, w, h);
+        }
+        else
+        {
+            return std::format("(x{}, y{}, w{}, h{})", x, y, w, h);
+        }
     }
 };
 } // namespace ion

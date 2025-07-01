@@ -270,6 +270,7 @@ void ResourceLoader::createVillager(Ref<ion::Player> player, const Tile& tilePos
         .gatheringAction = {{ResourceType::WOOD, Actions::CHOPPING},
                             {ResourceType::STONE, Actions::MINING},
                             {ResourceType::GOLD, Actions::MINING}},
+        .capacity = 100,
     };
     gameState.addComponent(villager, gatherer);
 

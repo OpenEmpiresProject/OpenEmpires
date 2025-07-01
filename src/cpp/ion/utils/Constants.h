@@ -24,6 +24,8 @@ class Constants
     // The villager will look MAX_RESOURCE_LOOKUP_RADIUS*MAX_RESOURCE_LOOKUP_RADIUS square for
     // similar resource once the current resource exhausted
     static const int MAX_RESOURCE_LOOKUP_RADIUS = 4;
+    // A static entity such as building can occupy at most 4x4 tiles
+    static const int MAX_STATIC_ENTITY_TILE_SIZE = 4;
 };
 } // namespace ion
 

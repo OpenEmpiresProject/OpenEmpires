@@ -14,6 +14,8 @@ enum EntityTypes
     ET_MARKETPLACE = 6,
     ET_STONE = 7,
     ET_GOLD = 8,
+    ET_LUMBER_CAMP = 9,
+
     ET_UI_ELEMENT = 10000
 };
 
@@ -21,14 +23,18 @@ enum EntitySubTypes
 {
     UI_WINDOW = 0,
     UI_BUTTON = 1,
-    UI_LABEL = 2
+    UI_LABEL = 2,
+
+    EST_DEFAULT = 0,
+    EST_CHOPPED_TREE = 1
 };
 
 enum ResourceType : uint8_t
 {
-    WOOD = 0,
-    STONE = 1,
-    GOLD = 2
+    RT_NONE = 0,
+    WOOD = 1,
+    STONE = 2,
+    GOLD = 3
 };
 
 } // namespace game

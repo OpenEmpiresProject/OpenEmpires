@@ -46,23 +46,38 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
             atlasGenerator); // Villager tree chopping
     loadSLP(graphicsDRS, 1880, 3, 0, Actions::MINING, renderer, graphicsRegistry,
             atlasGenerator); // Villager mining
-    loadSLP(graphicsDRS, 1254, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1256, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1258, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1260, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1262, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1264, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1266, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1268, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1270, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1272, 4, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 1254, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
+            graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 1256, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
+            graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 1258, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
+            graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 1260, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
+            graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 1262, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
+            graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 1264, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
+            graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 1266, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
+            graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 1268, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
+            graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 1270, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
+            graphicsRegistry, atlasGenerator); // Tree
+    loadSLP(graphicsDRS, 1272, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
+            graphicsRegistry, atlasGenerator); // Tree
     loadSLP(graphicsDRS, 1034, EntityTypes::ET_STONE, 0, 0, renderer, graphicsRegistry,
             atlasGenerator);
     loadSLP(graphicsDRS, 4479, EntityTypes::ET_GOLD, 0, 0, renderer, graphicsRegistry,
             atlasGenerator);
-    loadSLP(graphicsDRS, 3483, 5, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Mill
-    loadSLP(graphicsDRS, 2278, 6, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Marketplace
-    loadSLP(graphicsDRS, 1252, 4, 1, 0, renderer, graphicsRegistry, atlasGenerator); // Chopped tree
+    loadSLP(graphicsDRS, 3483, EntityTypes::ET_MILL, EntitySubTypes::EST_DEFAULT, 0, renderer,
+            graphicsRegistry, atlasGenerator); // Mill
+    loadSLP(graphicsDRS, 2278, EntityTypes::ET_MARKETPLACE, EntitySubTypes::EST_DEFAULT, 0,
+            renderer, graphicsRegistry, atlasGenerator); // Marketplace
+    loadSLP(graphicsDRS, 3505, EntityTypes::ET_LUMBER_CAMP, EntitySubTypes::EST_DEFAULT, 0,
+            renderer, graphicsRegistry, atlasGenerator); // Lumber camp
+    loadSLP(graphicsDRS, 1252, EntityTypes::ET_TREE, EntitySubTypes::EST_CHOPPED_TREE, 0, renderer,
+            graphicsRegistry, atlasGenerator); // Chopped tree
     loadSLP(interfaceDRS, 51101, EntityTypes::ET_UI_ELEMENT, EntitySubTypes::UI_WINDOW, 0, renderer,
             graphicsRegistry, atlasGenerator, Size(400, 25)); // Resource HUD
 

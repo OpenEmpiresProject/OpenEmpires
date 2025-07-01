@@ -79,6 +79,16 @@ void Simulator::onKeyUp(const Event& e)
 
         testBuild(worldPos, 6, Size(4, 4));
     }
+    else if (scancode == SDL_SCANCODE_M)
+    {
+        auto worldPos = m_coordinates->screenUnitsToFeet(m_lastMouseScreenPos);
+
+        testBuild(worldPos, 9, Size(2, 2));
+
+        auto& gameState = GameState::getInstance();
+        auto& building = gameState.getComponent<CompBuilding>(m_currentBuildingOnPlacement);
+        building.dropOffForResourceType = 1;
+    }
     else if (scancode == SDL_SCANCODE_ESCAPE)
     {
         // TODO: Not the ideal way to delete an entity
@@ -138,7 +148,6 @@ void Simulator::onMouseMove(const Event& e)
         auto& transform =
             GameState::getInstance().getComponent<CompTransform>(m_currentBuildingOnPlacement);
         auto feet = m_coordinates->screenUnitsToFeet(m_lastMouseScreenPos);
-        auto tile = feet.toTile();
 
         auto& building =
             GameState::getInstance().getComponent<CompBuilding>(m_currentBuildingOnPlacement);
@@ -148,10 +157,7 @@ void Simulator::onMouseMove(const Event& e)
 
         if (!outOfMap)
         {
-            // place buildings at the bottom corner of a tile
-            tile += Tile(1, 1);
-            feet = tile.toFeet();
-            transform.position = feet - Feet(10, 10);
+            transform.position = building.getTileSnappedPosition(feet);
         }
 
         auto& dirty =
@@ -366,6 +372,17 @@ void Simulator::resolveSelection(const Vec2& screenPos)
         publishEvent(Event::Type::BUILDING_PLACED,
                      BuildingPlacedData{m_currentBuildingOnPlacement, transform.position.toTile()});
 
+        auto& gameMap = GameState::getInstance().gameMap;
+
+        for (size_t i = 0; i < building.size.width; i++)
+        {
+            for (size_t j = 0; j < building.size.height; j++)
+            {
+                gameMap.addEntity(MapLayerType::STATIC, transform.position.toTile() - Tile(i, j),
+                                  m_currentBuildingOnPlacement);
+            }
+        }
+
         // Building is permanent now, no need to track for placement
         m_currentBuildingOnPlacement = entt::null;
     }
@@ -398,7 +415,7 @@ void Simulator::resolveAction(const Vec2& screenPos)
             {
                 auto worldPos = m_coordinates->screenUnitsToFeet(screenPos);
                 auto cmd = ObjectPool<CmdMove>::acquire();
-                cmd->goal = worldPos;
+                cmd->targetPos = worldPos;
 
                 Event event(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, entity});
                 m_publisher->publish(event);

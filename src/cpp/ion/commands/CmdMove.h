@@ -18,7 +18,8 @@ namespace ion
 class CmdMove : public Command
 {
   public:
-    Feet goal; // In Feet
+    Feet targetPos = Feet::null;
+    uint32_t targetEntity = entt::null;
 
   private:
     std::list<Feet> path;
@@ -57,6 +58,7 @@ class CmdMove : public Command
                               const Vec2& p2,
                               const Vec2& center,
                               float radius) const;
+    Feet findClosestEdgeOfStaticEntity(uint32_t staticEntity, const Feet& fromPos);
 };
 } // namespace ion
 

@@ -8,7 +8,6 @@
 
 using namespace ion;
 
-
 Feet Tile::toFeet() const
 {
     return Coordinates::tilesToFeet(*this);

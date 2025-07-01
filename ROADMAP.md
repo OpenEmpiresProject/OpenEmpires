@@ -33,8 +33,8 @@ We use milestone versions for planning. Early versions are experimental. Feature
 - [x] Trees as gatherable resources
 - [x] Resource collection (wood)
 - [x] Resource UI panel
-- [ ] Resource drop-off points
-- [ ] Group path finding (with flow fields)
+- [x] Resource drop-off points
+- [x] Basic steering behaviours for units
 - [x] Stone and gold mines as gatherable resources
 - [x] Resource collection (stone, gold)
 - [x] LOS (Line of Sight) 

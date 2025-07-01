@@ -157,6 +157,25 @@ struct TileMap
         }
     }
 
+    void removeStaticEntity(const Tile& pos, uint32_t entity)
+    {
+        auto layerTypeInt = toInt(MapLayerType::STATIC);
+        int maxSize = Constants::MAX_STATIC_ENTITY_TILE_SIZE;
+        for (int dx = -maxSize + 1; dx < maxSize; ++dx)
+        {
+            for (int dy = -maxSize + 1; dy < maxSize; ++dy)
+            {
+                int nx = pos.x + dx;
+                int ny = pos.y + dy;
+                if (nx >= 0 && ny >= 0 && nx < static_cast<int>(width) &&
+                    ny < static_cast<int>(height))
+                {
+                    layers[layerTypeInt].cells[nx][ny].removeEntity(entity);
+                }
+            }
+        }
+    }
+
     void removeEntity(MapLayerType layerType, const Tile& pos, uint32_t entity)
     {
         auto layerTypeInt = toInt(layerType);
