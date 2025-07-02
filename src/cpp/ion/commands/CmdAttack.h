@@ -13,12 +13,12 @@ class CmdAttack : public Command
     {
     }
 
-    void onQueue(uint32_t entityID) override
+    void onQueue() override
     {
         // TODO: Reset frame to zero (since this is a new command)
     }
 
-    bool onExecute(uint32_t entityID, int deltaTimeMs) override
+    bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) override
     {
         return false;
     }
@@ -31,11 +31,6 @@ class CmdAttack : public Command
     void destroy() override
     {
         ObjectPool<CmdAttack>::release(this);
-    }
-
-    bool onCreateSubCommands(std::list<Command*>& subCommands) override
-    {
-        return false;
     }
 };
 

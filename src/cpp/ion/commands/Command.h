@@ -5,6 +5,7 @@
 #include "ServiceRegistry.h"
 #include "utils/Types.h"
 
+#include <entt/entity/registry.hpp>
 #include <list>
 
 namespace ion
@@ -23,11 +24,10 @@ class Command
     virtual ~Command() = default;
 
     virtual void onStart() = 0;
-    virtual void onQueue(uint32_t entityID) = 0;
-    virtual bool onExecute(uint32_t entityID, int deltaTimeMs) = 0;
+    virtual void onQueue() = 0;
+    virtual bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) = 0;
     virtual std::string toString() const = 0;
     virtual void destroy() = 0;
-    virtual bool onCreateSubCommands(std::list<Command*>& subCommands) = 0;
 
     void setPriority(int m_priority)
     {
@@ -44,10 +44,17 @@ class Command
         s_totalTicks++;
     }
 
+    void setEntityID(uint32_t entityID)
+    {
+        m_entityID = entityID;
+    }
+
   protected:
+    inline static int s_totalTicks = 0;
+
     std::shared_ptr<GameSettings> m_settings;
     int m_priority = 0;
-    inline static int s_totalTicks = 0;
+    uint32_t m_entityID = entt::null;
 };
 
 // Comparator to use Commands in priority_queue

@@ -13,20 +13,27 @@ namespace ion
 {
 class CmdIdle : public Command
 {
+  public:
+    CmdIdle(uint32_t entityId)
+    {
+        setEntityID(entityId);
+    }
+
   private:
     void onStart() override
     {
     }
 
-    void onQueue(uint32_t entityID) override
+    void onQueue() override
     {
     }
 
-    bool onExecute(uint32_t entityID, int deltaTimeMs) override
+    bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) override
     {
         auto [action, animation, dirty] =
-            GameState::getInstance().getComponents<CompAction, CompAnimation, CompDirty>(entityID);
-        animate(action, animation, dirty, entityID);
+            GameState::getInstance().getComponents<CompAction, CompAnimation, CompDirty>(
+                m_entityID);
+        animate(action, animation, dirty);
         return false; // Idling never completes
     }
 
@@ -40,12 +47,7 @@ class CmdIdle : public Command
         ObjectPool<CmdIdle>::release(this);
     }
 
-    bool onCreateSubCommands(std::list<Command*>& subCommands) override
-    {
-        return false;
-    }
-
-    void animate(CompAction& action, CompAnimation& animation, CompDirty& dirty, uint32_t entityId)
+    void animate(CompAction& action, CompAnimation& animation, CompDirty& dirty)
     {
         action.action = Actions::IDLE;
         auto& actionAnimation = animation.animations[action.action];
@@ -53,7 +55,7 @@ class CmdIdle : public Command
         auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.speed;
         if (s_totalTicks % ticksPerFrame == 0)
         {
-            dirty.markDirty(entityId);
+            dirty.markDirty(m_entityID);
             animation.frame++;
             animation.frame %= actionAnimation.frames; // Idle is always repeatable
         }

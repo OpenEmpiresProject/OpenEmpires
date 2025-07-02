@@ -32,7 +32,6 @@ class CmdGatherResource : public Command
   private:
     const int choppingSpeed = 10; // 10 wood per second
     // Cached values
-    uint32_t entity = entt::null;
     Feet targetPosition; // Use when target is absent by the time this command execute
     float collectedResourceAmount = 0;
     std::shared_ptr<Coordinates> coordinateSystem;
@@ -45,17 +44,16 @@ class CmdGatherResource : public Command
         spdlog::debug("Start gathering resource...");
     }
 
-    void onQueue(uint32_t entityID) override
+    void onQueue() override
     {
         // TODO: Reset frame to zero (since this is a new command)
-        entity = entityID;
         setTarget(target);
 
-        auto& playerComp = GameState::getInstance().getComponent<CompPlayer>(entity);
+        auto& playerComp = GameState::getInstance().getComponent<CompPlayer>(m_entityID);
         player = playerComp.player;
         coordinateSystem = ServiceRegistry::getInstance().getService<Coordinates>();
         collectedResourceAmount = 0;
-        gatherer = &GameState::getInstance().getComponent<CompResourceGatherer>(entity);
+        gatherer = &GameState::getInstance().getComponent<CompResourceGatherer>(m_entityID);
     }
 
     void setTarget(uint32_t targetEntity)
@@ -70,7 +68,7 @@ class CmdGatherResource : public Command
         targetResource = &GameState::getInstance().getComponent<CompResource>(target).resource;
     }
 
-    bool onExecute(uint32_t entityID, int deltaTimeMs) override
+    bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) override
     {
         if (!isResourceAvailable())
         {
@@ -80,14 +78,24 @@ class CmdGatherResource : public Command
                 return true;
             }
         }
+
         if (isCloseEnough())
         {
             auto [transform, action, animation, dirty] =
                 GameState::getInstance()
-                    .getComponents<CompTransform, CompAction, CompAnimation, CompDirty>(entityID);
+                    .getComponents<CompTransform, CompAction, CompAnimation, CompDirty>(m_entityID);
 
             animate(action, animation, dirty);
             gather(transform, deltaTimeMs);
+        }
+        else
+        {
+            moveCloser(subCommands);
+        }
+
+        if (isFull())
+        {
+            dropOff(subCommands);
         }
         return false;
     }
@@ -102,29 +110,23 @@ class CmdGatherResource : public Command
         ObjectPool<CmdGatherResource>::release(this);
     }
 
-    bool onCreateSubCommands(std::list<Command*>& subCommands) override
+    void moveCloser(std::list<Command*>& subCommands)
     {
-        if (!isCloseEnough())
-        {
-            spdlog::debug("Target {} at {} is not close enough to gather, moving...", target,
-                          targetPosition.toString());
-            auto move = ObjectPool<CmdMove>::acquire();
-            move->targetPos = targetPosition;
-            move->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
-            subCommands.push_back(move);
-            return true;
-        }
+        spdlog::debug("Target {} at {} is not close enough to gather, moving...", target,
+                      targetPosition.toString());
+        auto move = ObjectPool<CmdMove>::acquire();
+        move->targetPos = targetPosition;
+        move->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
+        subCommands.push_back(move);
+    }
 
-        if (isFull())
-        {
-            spdlog::debug("Unit {} is at full capacity, need to drop off", entity);
-            auto drop = ObjectPool<CmdDropResource>::acquire();
-            drop->resourceType = targetResource->type;
-            drop->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
-            subCommands.push_back(drop);
-            return true;
-        }
-        return false;
+    void dropOff(std::list<Command*>& subCommands)
+    {
+        spdlog::debug("Unit {} is at full capacity, need to drop off", m_entityID);
+        auto drop = ObjectPool<CmdDropResource>::acquire();
+        drop->resourceType = targetResource->type;
+        drop->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
+        subCommands.push_back(drop);
     }
 
     bool isResourceAvailable()
@@ -139,7 +141,7 @@ class CmdGatherResource : public Command
 
     bool isCloseEnough()
     {
-        auto& transformMy = GameState::getInstance().getComponent<CompTransform>(entity);
+        auto& transformMy = GameState::getInstance().getComponent<CompTransform>(m_entityID);
         auto threshold = transformMy.goalRadius + Constants::FEET_PER_TILE / 2;
         auto distanceSquared = transformMy.position.distanceSquared(targetPosition);
         // spdlog::debug("Check closeness. my {}, target {}", transformMy.position.toString(),
@@ -156,7 +158,7 @@ class CmdGatherResource : public Command
         auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.speed;
         if (s_totalTicks % ticksPerFrame == 0)
         {
-            dirty.markDirty(entity);
+            dirty.markDirty(m_entityID);
             animation.frame++;
             animation.frame %= actionAnimation.frames;
         }
@@ -186,7 +188,7 @@ class CmdGatherResource : public Command
     bool lookForAnotherSimilarResource()
     {
         spdlog::debug("Looking for another resource...");
-        auto& transformMy = GameState::getInstance().getComponent<CompTransform>(entity);
+        auto& transformMy = GameState::getInstance().getComponent<CompTransform>(m_entityID);
         auto tilePos = transformMy.position.toTile();
 
         auto newResource = findClosestResource(targetResource->type, tilePos,

@@ -16,20 +16,19 @@ void CmdMove::onStart()
 {
 }
 
-void CmdMove::onQueue(uint32_t entityID)
+void CmdMove::onQueue()
 {
     auto& gameState = GameState::getInstance();
 
     if (targetEntity != entt::null && gameState.hasComponent<CompBuilding>(targetEntity))
     {
-        auto& transform = gameState.getComponent<CompTransform>(entityID);
+        auto& transform = gameState.getComponent<CompTransform>(m_entityID);
         targetPos = findClosestEdgeOfStaticEntity(targetEntity, transform.position);
     }
 
     if (targetPos.isNull() == false)
     {
-        entity = entityID;
-        path = findPath(targetPos, entityID);
+        path = findPath(targetPos, m_entityID);
         refinePath();
         if (path.empty() == false)
             nextIntermediateGoal = path.front();
@@ -52,15 +51,15 @@ void CmdMove::onQueue(uint32_t entityID)
     coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
 }
 
-bool CmdMove::onExecute(uint32_t entityID, int deltaTimeMs)
+bool CmdMove::onExecute(int deltaTimeMs, std::list<Command*>& subCommands)
 {
     if (targetPos.isNull() == false) [[likely]]
     {
         auto [transform, action, animation, dirty] =
             GameState::getInstance()
-                .getComponents<CompTransform, CompAction, CompAnimation, CompDirty>(entityID);
+                .getComponents<CompTransform, CompAction, CompAnimation, CompDirty>(m_entityID);
 
-        animate(action, animation, dirty, deltaTimeMs, entityID);
+        animate(action, animation, dirty, deltaTimeMs, m_entityID);
         return move(transform, deltaTimeMs);
     }
     else [[unlikely]]
@@ -78,11 +77,6 @@ std::string CmdMove::toString() const
 void CmdMove::destroy()
 {
     ObjectPool<CmdMove>::release(this);
-}
-
-bool CmdMove::onCreateSubCommands(std::list<Command*>& subCommands)
-{
-    return false;
 }
 
 void CmdMove::animate(CompAction& action,
@@ -141,7 +135,7 @@ bool CmdMove::move(CompTransform& transform, int deltaTimeMs)
 
 #ifndef NDEBUG
             auto& state = GameState::getInstance();
-            auto& debugOverlays = state.getComponent<CompGraphics>(entity).debugOverlays;
+            auto& debugOverlays = state.getComponent<CompGraphics>(m_entityID).debugOverlays;
 
             if (separationForce != Feet(0, 0))
                 debugOverlays[1].arrowEnd =
@@ -194,17 +188,17 @@ void CmdMove::setPosition(CompTransform& transform, const Feet& newPosFeet)
     auto& state = GameState::getInstance();
 
 #ifndef NDEBUG
-    state.getComponent<CompGraphics>(entity).debugOverlays[0].arrowEnd =
+    state.getComponent<CompGraphics>(m_entityID).debugOverlays[0].arrowEnd =
         coordinates->feetToScreenUnits((newPosFeet + (transform.getVelocityVector() * 2)));
 #endif
 
     if (oldTile != newTile)
     {
-        GameState::getInstance().gameMap.removeEntity(MapLayerType::UNITS, oldTile, entity);
-        GameState::getInstance().gameMap.addEntity(MapLayerType::UNITS, newTile, entity);
+        GameState::getInstance().gameMap.removeEntity(MapLayerType::UNITS, oldTile, m_entityID);
+        GameState::getInstance().gameMap.addEntity(MapLayerType::UNITS, newTile, m_entityID);
 
         publishEvent(Event::Type::UNIT_TILE_MOVEMENT,
-                     UnitTileMovementData{entity, newTile, transform.position});
+                     UnitTileMovementData{m_entityID, newTile, transform.position});
 
         refinePath();
     }
@@ -214,7 +208,7 @@ void CmdMove::setPosition(CompTransform& transform, const Feet& newPosFeet)
 bool CmdMove::hasLineOfSight(const Feet& target)
 {
     auto& state = GameState::getInstance();
-    auto& transform = state.getComponent<CompTransform>(entity);
+    auto& transform = state.getComponent<CompTransform>(m_entityID);
     return state.gameMap.intersectsStaticObstacle(transform.position, target) == false;
 }
 
@@ -330,7 +324,7 @@ Feet CmdMove::resolveCollision(CompTransform& transform)
 
             for (auto e : entities)
             {
-                if (e == entt::null || e == entity)
+                if (e == entt::null || e == m_entityID)
                     continue;
 
                 auto& otherTransform = state.getComponent<CompTransform>(e);
@@ -359,15 +353,15 @@ Feet CmdMove::resolveCollision(CompTransform& transform)
 
 Feet CmdMove::avoidCollision(CompTransform& transform)
 {
-    auto& unit = GameState::getInstance().getComponent<CompUnit>(entity);
+    auto& unit = GameState::getInstance().getComponent<CompUnit>(m_entityID);
     auto dir = transform.getVelocityVector().normalized();
 
     auto rayEnd = transform.position + (dir * (unit.lineOfSight / 2));
-    auto unitToAvoid = intersectsUnits(entity, transform, transform.position, rayEnd);
+    auto unitToAvoid = intersectsUnits(m_entityID, transform, transform.position, rayEnd);
 
 #ifndef NDEBUG
     auto& state = GameState::getInstance();
-    state.getComponent<CompGraphics>(entity).debugOverlays[3].arrowEnd =
+    state.getComponent<CompGraphics>(m_entityID).debugOverlays[3].arrowEnd =
         coordinates->feetToScreenUnits(rayEnd);
 #endif
 
@@ -508,37 +502,4 @@ Feet CmdMove::findClosestEdgeOfStaticEntity(uint32_t staticEntity, const Feet& f
     float closestY = std::clamp(fromPos.y, y_min, y_max);
 
     return Feet(closestX, closestY);
-
-    //)
-
-    // float bestDistSq = std::numeric_limits<float>::max();
-    // Tile closestTile = Tile::null;
-
-    // for (int dx = -building.size.width + 1; dx < building.size.width; ++dx)
-    // {
-    //     for (int dy = -building.size.height + 1; dy < building.size.height; ++dy)
-    //     {
-    //         Tile t(anchorTile.x + dx, anchorTile.y + dy);
-    //         if (t.x >= 0 && t.y >= 0 && t.x < static_cast<int>(gameState.gameMap.width) && t.y <
-    //         static_cast<int>(gameState.gameMap.height))
-    //         {
-    //             if (gameState.gameMap.getEntity(MapLayerType::STATIC, t) == staticEntity)
-    //             {
-    //                 float distSq = t.toFeet().distanceSquared(fromPos);
-    //                 if (distSq < bestDistSq)
-    //                 {
-    //                     bestDistSq = distSq;
-    //                     closestTile = t;
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-    // if (closestTile.isNull() == false)
-    //     return closestTile.centerInFeet();
-    // else
-    // {
-    //     spdlog::error("Could not find closest edge of static entity {} from {}", staticEntity,
-    //     fromPos.toString()); return Feet::null;
-    // }
 }

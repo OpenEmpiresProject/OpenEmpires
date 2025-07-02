@@ -36,7 +36,16 @@ void CommandCenter::onEvent(const Event& e)
                 if (!unit.commandQueue.empty())
                 {
                     auto cmd = unit.commandQueue.top();
-                    auto completed = cmd->onExecute(entity, e.getData<TickData>().deltaTimeMs);
+                    auto completed = cmd->onExecute(e.getData<TickData>().deltaTimeMs, newCommands);
+
+                    for (auto subCmd : newCommands)
+                    {
+                        subCmd->setEntityID(entity);
+                        unit.commandQueue.push(subCmd);
+                        subCmd->onQueue();
+                    }
+                    newCommands.clear();
+
                     if (completed)
                     {
                         spdlog::debug("Entity {}'s command {} completed.", entity, cmd->toString());
@@ -49,16 +58,6 @@ void CommandCenter::onEvent(const Event& e)
                             nextCmd->onStart();
                         }
                     }
-
-                    if (cmd->onCreateSubCommands(newCommands))
-                    {
-                        for (auto subCmd : newCommands)
-                        {
-                            unit.commandQueue.push(subCmd);
-                            subCmd->onQueue(entity);
-                        }
-                        newCommands.clear();
-                    }
                 }
             });
     }
@@ -66,6 +65,7 @@ void CommandCenter::onEvent(const Event& e)
     {
         auto data = e.getData<CommandRequestData>();
         data.command->setPriority(Command::DEFAULT_PRIORITY + Command::CHILD_PRIORITY_OFFSET);
+        data.command->setEntityID(data.entity);
 
         CompUnit& unit = GameState::getInstance().getComponent<CompUnit>(data.entity);
 
@@ -78,6 +78,6 @@ void CommandCenter::onEvent(const Event& e)
             }
         }
         unit.commandQueue.push(data.command);
-        data.command->onQueue(data.entity);
+        data.command->onQueue();
     }
 }

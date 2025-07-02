@@ -9,18 +9,16 @@
 #include "ServiceRegistry.h"
 #include "GameSettings.h"
 
-
 using namespace ion;
 
 class MockCommand : public Command {
 public:
-    MOCK_METHOD(bool, onExecute, (uint32_t, int), (override));
-    MOCK_METHOD(bool, onCreateSubCommands, (std::list<Command*>&), (override));
+    MOCK_METHOD(bool, onExecute, (int, std::list<Command*>&), (override));
     MOCK_METHOD(std::string, toString, (), (const, override));
     MOCK_METHOD(void, destroy, (), (override));
 
     void onStart() {};
-    void onQueue(uint32_t entityID) {};
+    void onQueue() {};
 };
 
 class CommandCenterTest : public ::testing::Test 
@@ -53,8 +51,9 @@ TEST_F(CommandCenterTest, ExecutesCommandsInQueue_CommandComplete) {
     CompUnit unit;
     auto mockCommand = new MockCommand();
     auto entity = GameState::getInstance().createEntity();
+    std::list<Command*> subCommands;
 
-    EXPECT_CALL(*mockCommand, onExecute(entity, 0))
+    EXPECT_CALL(*mockCommand, onExecute(0, subCommands))
         .WillOnce(::testing::Return(true)); // mark command as completed
 
     unit.commandQueue.push(mockCommand);
@@ -72,8 +71,9 @@ TEST_F(CommandCenterTest, ExecutesCommandsInQueue_CommandNotComplete) {
     CompUnit unit;
     auto mockCommand = new MockCommand();
     auto entity = GameState::getInstance().createEntity();
+    std::list<Command*> subCommands;
 
-    EXPECT_CALL(*mockCommand, onExecute(entity, 0))
+    EXPECT_CALL(*mockCommand, onExecute(0, subCommands))
         .WillOnce(::testing::Return(false)); // mark command as not completed
 
     unit.commandQueue.push(mockCommand);
@@ -92,11 +92,10 @@ TEST_F(CommandCenterTest, CreatesSubCommands) {
     auto mockCommand = new MockCommand();
     auto subCommand = new MockCommand();
     auto entity = GameState::getInstance().createEntity();
+    std::list<Command*> subCommands;
 
-    EXPECT_CALL(*mockCommand, onExecute(entity, 0))
-        .WillOnce(::testing::Return(false));
-    EXPECT_CALL(*mockCommand, onCreateSubCommands(::testing::_))
-        .WillOnce(::testing::Invoke([&](std::list<Command*>& newCommands) {
+    EXPECT_CALL(*mockCommand, onExecute(0, subCommands))
+        .WillOnce(::testing::Invoke([&](int deltaTimeMs, std::list<Command*>& newCommands) {
             newCommands.push_back(subCommand);
             return true;
         }));

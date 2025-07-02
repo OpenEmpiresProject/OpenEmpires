@@ -23,17 +23,15 @@ class CmdMove : public Command
 
   private:
     std::list<Feet> path;
-    uint32_t entity = entt::null;
     Ref<Coordinates> coordinates;
     Ref<Player> player;
     Feet nextIntermediateGoal = Feet::null;
 
     void onStart() override;
-    void onQueue(uint32_t entityID) override;
-    bool onExecute(uint32_t entityID, int deltaTimeMs) override;
+    void onQueue() override;
+    bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) override;
     std::string toString() const override;
     void destroy() override;
-    bool onCreateSubCommands(std::list<Command*>& subCommands) override;
 
     void animate(CompAction& action,
                  CompAnimation& animation,

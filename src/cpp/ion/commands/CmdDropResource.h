@@ -25,7 +25,6 @@ class CmdDropResource : public Command
     uint8_t resourceType = Constants::RESOURCE_TYPE_NONE;
 
   private:
-    uint32_t entity = entt::null;
     uint32_t dropOffEntity = entt::null;
     Ref<Player> player;
     CompResourceGatherer* gatherer = nullptr;
@@ -45,32 +44,32 @@ class CmdDropResource : public Command
         spdlog::debug("Start gathering resource...");
     }
 
-    void onQueue(uint32_t entityID) override
+    void onQueue() override
     {
-        entity = entityID;
-        auto& playerComp = GameState::getInstance().getComponent<CompPlayer>(entity);
+        auto& playerComp = GameState::getInstance().getComponent<CompPlayer>(m_entityID);
         player = playerComp.player;
-        gatherer = &GameState::getInstance().getComponent<CompResourceGatherer>(entity);
+        gatherer = &GameState::getInstance().getComponent<CompResourceGatherer>(m_entityID);
     }
 
-    bool onExecute(uint32_t entityID, int deltaTimeMs) override
+    bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) override
     {
+        findClosestDropOffBuilding();
+
         if (isDropOffCloseEnough())
         {
             dropResource();
             return true;
         }
-
-        if (!isDropOffFoundAndValid())
+        else
         {
-            findClosestDropOffBuilding();
+            goToDropOffBuilding(subCommands);
         }
         return false;
     }
 
-    bool onCreateSubCommands(std::list<Command*>& subCommands) override
+    void goToDropOffBuilding(std::list<Command*>& subCommands)
     {
-        if (!isDropOffCloseEnough())
+        if (dropOffEntity != entt::null)
         {
             auto& dropOff = GameState::getInstance().getComponent<CompTransform>(dropOffEntity);
 
@@ -80,9 +79,7 @@ class CmdDropResource : public Command
             move->targetEntity = dropOffEntity;
             move->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
             subCommands.push_back(move);
-            return true;
         }
-        return false;
     }
 
     bool isDropOffCloseEnough()
@@ -90,7 +87,7 @@ class CmdDropResource : public Command
         if (dropOffEntity == entt::null)
             return false;
 
-        auto& transformMy = GameState::getInstance().getComponent<CompTransform>(entity);
+        auto& transformMy = GameState::getInstance().getComponent<CompTransform>(m_entityID);
         auto [transform, building] =
             GameState::getInstance().getComponents<CompTransform, CompBuilding>(dropOffEntity);
         auto pos = transformMy.position;
@@ -116,9 +113,12 @@ class CmdDropResource : public Command
 
     void findClosestDropOffBuilding()
     {
+        if (isDropOffFoundAndValid())
+            return;
+
         dropOffEntity = entt::null;
         std::map<float, uint32_t> matchingBuildingEntitiesByDistane;
-        auto& unitTransform = GameState::getInstance().getComponent<CompTransform>(entity);
+        auto& unitTransform = GameState::getInstance().getComponent<CompTransform>(m_entityID);
 
         for (auto buildingEntity : player->getMyBuildings())
         {
@@ -137,6 +137,10 @@ class CmdDropResource : public Command
         {
             dropOffEntity = matchingBuildingEntitiesByDistane.begin()->second;
             spdlog::debug("Selected {} as the drop off buildings", dropOffEntity);
+        }
+        else
+        {
+            spdlog::warn("Could not find a drop-off building for resource {}", resourceType);
         }
     }
 

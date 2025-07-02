@@ -233,7 +233,7 @@ void ResourceLoader::createVillager(Ref<ion::Player> player, const Tile& tilePos
     // villager goes idle by default
     CompUnit unit;
     unit.lineOfSight = 256 * 5;
-    unit.commandQueue.push(ObjectPool<CmdIdle>::acquire());
+    unit.commandQueue.push(ObjectPool<CmdIdle>::acquire(villager));
     gameState.addComponent(villager, unit);
 
     CompGraphics gc;
