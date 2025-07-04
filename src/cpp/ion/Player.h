@@ -45,6 +45,11 @@ class Player
         return m_myBuildings;
     }
 
+    bool isBuildingOwned(uint32_t buildingId) const
+    {
+        return m_myBuildings.contains(buildingId);
+    }
+
     static constexpr uint8_t INVALID_ID = std::numeric_limits<uint8_t>::max();
 
   private:

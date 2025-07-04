@@ -26,6 +26,10 @@ class Constants
     static const int MAX_RESOURCE_LOOKUP_RADIUS = 4;
     // A static entity such as building can occupy at most 4x4 tiles
     static const int MAX_STATIC_ENTITY_TILE_SIZE = 4;
+    static const int FIXED_FPS = 60; // Frames per second
+    // Maximum gap between two frames. If the gap is more than this,
+    // frame delay will be capped to this.
+    static const int MAX_FRAME_DELAY_MS = 500;
 };
 } // namespace ion
 

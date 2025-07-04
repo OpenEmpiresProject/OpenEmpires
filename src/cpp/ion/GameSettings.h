@@ -5,6 +5,9 @@
 #include "utils/Size.h"
 #include "utils/Types.h"
 
+#include <stdexcept>
+
+
 namespace ion
 {
 class GameSettings
@@ -98,8 +101,7 @@ class GameSettings
         case WorldSizeType::GIANT:
             return {240 * Constants::FEET_PER_TILE, 240 * Constants::FEET_PER_TILE};
         default:
-            // TODO: Handle error case
-            return {-1, -1};
+            throw std::invalid_argument("Invalid world size type");
         }
     }
 
