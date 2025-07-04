@@ -37,7 +37,7 @@ void CmdMove::onQueue()
 
 #ifndef NDEBUG
         auto tileEntity = gameState.gameMap.getEntity(MapLayerType::GROUND, targetPos.toTile());
-        auto [graphics, dirty] = gameState.getComponents<CompGraphics, CompDirty>(tileEntity);
+        auto [graphics, dirty] = Entity::getComponents<CompGraphics, CompDirty>(tileEntity);
 
         graphics.debugOverlays.clear();
         DebugOverlay filledCircle;
@@ -56,8 +56,7 @@ bool CmdMove::onExecute(int deltaTimeMs, std::list<Command*>& subCommands)
     if (targetPos.isNull() == false) [[likely]]
     {
         auto [transform, action, animation, dirty] =
-            GameState::getInstance()
-                .getComponents<CompTransform, CompAction, CompAnimation, CompDirty>(m_entityID);
+            Entity::getComponents<CompTransform, CompAction, CompAnimation, CompDirty>(m_entityID);
 
         animate(action, animation, dirty, deltaTimeMs, m_entityID);
         return move(transform, deltaTimeMs);
@@ -486,9 +485,7 @@ bool CmdMove::lineIntersectsCircle(const Vec2& p1,
 
 Feet CmdMove::findClosestEdgeOfStaticEntity(uint32_t staticEntity, const Feet& fromPos)
 {
-    auto& gameState = GameState::getInstance();
-
-    auto [building, transform] = gameState.getComponents<CompBuilding, CompTransform>(targetEntity);
+    auto [building, transform] = Entity::getComponents<CompBuilding, CompTransform>(targetEntity);
     auto anchorTile = transform.position.toTile();
 
     auto rect = building.getLandInFeetRect(transform.position);

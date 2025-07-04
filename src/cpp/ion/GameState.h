@@ -80,6 +80,40 @@ class GameState
     PathFinderBase* m_pathFinder = nullptr;
     std::vector<uint32_t> m_entitiesToDestroy;
 };
+
+class Entity
+{
+public:
+    template <typename T, typename... Args>
+    static decltype(auto) addComponent(uint32_t entity, Args&&... args)
+    {
+        return GameState::getInstance().addComponent<T>(entity, std::forward<Args>(args)...);
+    }
+
+    template <typename T>
+    static bool hasComponent(uint32_t entity)
+    {
+        return GameState::getInstance().hasComponent<T>(entity);
+    }
+
+    template <typename T>
+    static T& getComponent(uint32_t entity)
+    {
+        return GameState::getInstance().getComponent<T>(entity);
+    }
+
+    template <typename... T>
+    static decltype(auto) getComponents(uint32_t entity)
+    {
+        return GameState::getInstance().getComponents<T...>(entity);
+    }
+
+    template <typename... T>
+    static auto getEntities()
+    {
+        return GameState::getInstance().getEntities<T...>();
+    }
+};
 } // namespace ion
 
 #endif

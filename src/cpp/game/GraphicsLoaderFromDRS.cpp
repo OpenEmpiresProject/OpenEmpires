@@ -301,6 +301,7 @@ void adjustDirections(GraphicsRegistry& graphicsRegistry)
 
     for (auto& [id, texture] : graphicsToFlip)
     {
+        texture.anchor.x = texture.size.width - texture.anchor.x;
         texture.flip = true; // Mark the texture for flipping
         id.direction =
             static_cast<Direction>(getFlippedDirection(id.direction)); // Flip the direction
