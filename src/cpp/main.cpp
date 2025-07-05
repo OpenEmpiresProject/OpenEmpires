@@ -1,6 +1,6 @@
 #include "Game.h"
-#include "internal/DRSTester.h"
 #include "Studio.h"
+#include "internal/DRSTester.h"
 
 int main()
 {

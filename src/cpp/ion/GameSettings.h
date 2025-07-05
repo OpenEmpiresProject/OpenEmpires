@@ -7,7 +7,6 @@
 
 #include <stdexcept>
 
-
 namespace ion
 {
 class GameSettings

@@ -36,6 +36,12 @@ void CommandCenter::onEvent(const Event& e)
                 if (!unit.commandQueue.empty())
                 {
                     auto cmd = unit.commandQueue.top();
+                    if (cmd->isExecutedAtLeastOnce() == false)
+                    {
+                        cmd->onStart();
+                        cmd->setExecutedAtLeastOnce(true);
+                    }
+
                     auto completed = cmd->onExecute(e.getData<TickData>().deltaTimeMs, newCommands);
 
                     for (auto subCmd : newCommands)
@@ -51,12 +57,6 @@ void CommandCenter::onEvent(const Event& e)
                         spdlog::debug("Entity {}'s command {} completed.", entity, cmd->toString());
                         unit.commandQueue.pop();
                         cmd->destroy();
-
-                        if (!unit.commandQueue.empty())
-                        {
-                            auto nextCmd = unit.commandQueue.top();
-                            nextCmd->onStart();
-                        }
                     }
                 }
             });

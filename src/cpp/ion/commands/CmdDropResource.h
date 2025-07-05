@@ -41,7 +41,8 @@ class CmdDropResource : public Command
 
     void onStart() override
     {
-        spdlog::debug("Start gathering resource...");
+        spdlog::debug("Start dropping resource...");
+        animate();
     }
 
     void onQueue() override
@@ -67,6 +68,18 @@ class CmdDropResource : public Command
         return false;
     }
 
+    void animate()
+    {
+        auto [action, animation, dirty] =
+            GameState::getInstance().getComponents<CompAction, CompAnimation, CompDirty>(
+                m_entityID);
+
+        action.action = gatherer->getCarryingAction(resourceType);
+        auto& actionAnimation = animation.animations[action.action];
+        animation.frame = 0;
+        dirty.markDirty(m_entityID);
+    }
+
     void goToDropOffBuilding(std::list<Command*>& subCommands)
     {
         if (dropOffEntity != entt::null)
@@ -77,6 +90,7 @@ class CmdDropResource : public Command
                           dropOffEntity, dropOff.position.toString());
             auto move = ObjectPool<CmdMove>::acquire();
             move->targetEntity = dropOffEntity;
+            move->actionOverride = gatherer->getCarryingAction(resourceType);
             move->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
             subCommands.push_back(move);
         }
@@ -116,8 +130,8 @@ class CmdDropResource : public Command
             return;
 
         dropOffEntity = entt::null;
-        std::map<float, uint32_t> matchingBuildingEntitiesByDistane;
         auto& unitTransform = Entity::getComponent<CompTransform>(m_entityID);
+        float currentClosestDistance = std::numeric_limits<float>::max();
 
         for (auto buildingEntity : player->getMyBuildings())
         {
@@ -127,20 +141,20 @@ class CmdDropResource : public Command
                 continue;
 
             auto distance = transform.position.distanceSquared(unitTransform.position);
-            matchingBuildingEntitiesByDistane[distance] = buildingEntity;
+
+            if (distance < currentClosestDistance)
+            {
+                currentClosestDistance = distance;
+                dropOffEntity = buildingEntity;
+            }
         }
 
-        spdlog::debug("Found {} drop off buildings", matchingBuildingEntitiesByDistane.size());
-
-        if (matchingBuildingEntitiesByDistane.empty() == false)
+        if (dropOffEntity != entt::null)
         {
-            dropOffEntity = matchingBuildingEntitiesByDistane.begin()->second;
-            spdlog::debug("Selected {} as the drop off buildings", dropOffEntity);
+            spdlog::debug("Selected {} at distance sq {} as the drop off building", dropOffEntity,
+                          currentClosestDistance);
         }
-        else
-        {
-            spdlog::warn("Could not find a drop-off building for resource {}", resourceType);
-        }
+        // Not being able to find a drop-off point is a valid scenario
     }
 
     void dropResource()

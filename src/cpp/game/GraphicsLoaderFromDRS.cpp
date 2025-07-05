@@ -38,14 +38,16 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
     auto graphicsDRS = loadDRSFile("assets/graphics.drs");
 
     loadSLP(terrainDRS, 15001, 2, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Grass tiles
-    loadSLP(graphicsDRS, 1388, 3, 0, Actions::IDLE, renderer, graphicsRegistry,
-            atlasGenerator); // Villager idle
-    loadSLP(graphicsDRS, 1392, 3, 0, Actions::MOVE, renderer, graphicsRegistry,
-            atlasGenerator); // Villager walk
-    loadSLP(graphicsDRS, 1434, 3, 0, Actions::CHOPPING, renderer, graphicsRegistry,
-            atlasGenerator); // Villager tree chopping
-    loadSLP(graphicsDRS, 1880, 3, 0, Actions::MINING, renderer, graphicsRegistry,
-            atlasGenerator); // Villager mining
+    loadSLP(graphicsDRS, 1388, EntityTypes::ET_VILLAGER, 0, UnitAction::IDLE, renderer,
+            graphicsRegistry, atlasGenerator);
+    loadSLP(graphicsDRS, 1392, EntityTypes::ET_VILLAGER, 0, UnitAction::MOVE, renderer,
+            graphicsRegistry, atlasGenerator);
+    loadSLP(graphicsDRS, 1434, EntityTypes::ET_VILLAGER, 0, UnitAction::CHOPPING, renderer,
+            graphicsRegistry, atlasGenerator);
+    loadSLP(graphicsDRS, 1880, EntityTypes::ET_VILLAGER, 0, UnitAction::MINING, renderer,
+            graphicsRegistry, atlasGenerator);
+    loadSLP(graphicsDRS, 1883, EntityTypes::ET_VILLAGER, 0, UnitAction::CARRYING_LUMBER, renderer,
+            graphicsRegistry, atlasGenerator);
     loadSLP(graphicsDRS, 1254, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
             graphicsRegistry, atlasGenerator); // Tree
     loadSLP(graphicsDRS, 1256, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,

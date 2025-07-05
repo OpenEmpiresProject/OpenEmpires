@@ -70,9 +70,9 @@ class CmdGatherResource : public Command
 
     bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) override
     {
-        if (!isResourceAvailable())
+        if (isResourceAvailable() == false)
         {
-            if (!lookForAnotherSimilarResource())
+            if (lookForAnotherSimilarResource() == false)
             {
                 // Could not find another resource, nothing to gather, done with the command
                 return true;
@@ -81,12 +81,8 @@ class CmdGatherResource : public Command
 
         if (isCloseEnough())
         {
-            auto [transform, action, animation, dirty] =
-                GameState::getInstance()
-                    .getComponents<CompTransform, CompAction, CompAnimation, CompDirty>(m_entityID);
-
-            animate(action, animation, dirty);
-            gather(transform, deltaTimeMs);
+            animate();
+            gather(deltaTimeMs);
         }
         else
         {
@@ -115,7 +111,7 @@ class CmdGatherResource : public Command
         spdlog::debug("Target {} at {} is not close enough to gather, moving...", target,
                       targetPosition.toString());
         auto move = ObjectPool<CmdMove>::acquire();
-        move->targetPos = targetPosition;
+        move->targetEntity = target;
         move->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
         subCommands.push_back(move);
     }
@@ -150,8 +146,11 @@ class CmdGatherResource : public Command
         return transformMy.position.distanceSquared(targetPosition) < (threshold * threshold);
     }
 
-    void animate(CompAction& action, CompAnimation& animation, CompDirty& dirty)
+    void animate()
     {
+        auto [transform, action, animation, dirty] =
+            Entity::getComponents<CompTransform, CompAction, CompAnimation, CompDirty>(m_entityID);
+
         action.action = gatherer->getGatheringAction(targetResource->type);
         auto& actionAnimation = animation.animations[action.action];
 
@@ -169,8 +168,10 @@ class CmdGatherResource : public Command
         return gatherer->gatheredAmount >= gatherer->capacity;
     }
 
-    void gather(CompTransform& transform, int deltaTimeMs)
+    void gather(int deltaTimeMs)
     {
+        auto& transform = Entity::getComponent<CompTransform>(m_entityID);
+
         collectedResourceAmount += float(choppingSpeed) * deltaTimeMs / 1000.0f;
         uint32_t rounded = collectedResourceAmount;
         collectedResourceAmount -= rounded;

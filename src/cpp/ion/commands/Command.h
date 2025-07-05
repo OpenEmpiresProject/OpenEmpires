@@ -49,12 +49,24 @@ class Command
         m_entityID = entityID;
     }
 
+    inline bool isExecutedAtLeastOnce() const
+    {
+        return m_executedAtLeastOnce;
+    }
+
+    inline void setExecutedAtLeastOnce(bool executed)
+    {
+        m_executedAtLeastOnce = executed;
+    }
+
   protected:
     inline static int s_totalTicks = 0;
 
     std::shared_ptr<GameSettings> m_settings;
     int m_priority = 0;
     uint32_t m_entityID = entt::null;
+
+    bool m_executedAtLeastOnce = false;
 };
 
 // Comparator to use Commands in priority_queue

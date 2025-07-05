@@ -84,6 +84,13 @@ void ResourceLoader::loadEntities()
     createVillager(player, Tile(25, 25));
     createVillager(player, Tile(20, 20));
 
+    CompResourceGatherer::gatheringActions = {{ResourceType::WOOD, UnitAction::CHOPPING},
+                                              {ResourceType::STONE, UnitAction::MINING},
+                                              {ResourceType::GOLD, UnitAction::MINING}};
+    CompResourceGatherer::carryingActions = {{ResourceType::WOOD, UnitAction::CARRYING_LUMBER},
+                                             {ResourceType::STONE, UnitAction::CARRYING_LUMBER},
+                                             {ResourceType::GOLD, UnitAction::CARRYING_LUMBER}};
+
     GraphicsID resourcePanelBackground{
         .entityType = EntityTypes::ET_UI_ELEMENT,
         .entitySubType = EntitySubTypes::UI_WINDOW,
@@ -207,21 +214,25 @@ void ResourceLoader::createVillager(Ref<ion::Player> player, const Tile& tilePos
     transform.speed = 256;
 
     CompAnimation anim;
-    anim.animations[Actions::IDLE].frames = 15;
-    anim.animations[Actions::IDLE].repeatable = true;
-    anim.animations[Actions::IDLE].speed = 10;
+    anim.animations[UnitAction::IDLE].frames = 15;
+    anim.animations[UnitAction::IDLE].repeatable = true;
+    anim.animations[UnitAction::IDLE].speed = 10;
 
-    anim.animations[Actions::MOVE].frames = 15;
-    anim.animations[Actions::MOVE].repeatable = true;
-    anim.animations[Actions::MOVE].speed = 15;
+    anim.animations[UnitAction::MOVE].frames = 15;
+    anim.animations[UnitAction::MOVE].repeatable = true;
+    anim.animations[UnitAction::MOVE].speed = 15;
 
-    anim.animations[Actions::CHOPPING].frames = 15;
-    anim.animations[Actions::CHOPPING].repeatable = true;
-    anim.animations[Actions::CHOPPING].speed = 15;
+    anim.animations[UnitAction::CHOPPING].frames = 15;
+    anim.animations[UnitAction::CHOPPING].repeatable = true;
+    anim.animations[UnitAction::CHOPPING].speed = 15;
 
-    anim.animations[Actions::MINING].frames = 15;
-    anim.animations[Actions::MINING].repeatable = true;
-    anim.animations[Actions::MINING].speed = 15;
+    anim.animations[UnitAction::MINING].frames = 15;
+    anim.animations[UnitAction::MINING].repeatable = true;
+    anim.animations[UnitAction::MINING].speed = 15;
+
+    anim.animations[UnitAction::CARRYING_LUMBER].frames = 15;
+    anim.animations[UnitAction::CARRYING_LUMBER].repeatable = true;
+    anim.animations[UnitAction::CARRYING_LUMBER].speed = 15;
 
     gameState.addComponent(villager, transform);
     gameState.addComponent(villager, CompRendering());
@@ -267,9 +278,6 @@ void ResourceLoader::createVillager(Ref<ion::Player> player, const Tile& tilePos
     gameState.addComponent(villager, CompPlayer{player});
 
     CompResourceGatherer gatherer{
-        .gatheringAction = {{ResourceType::WOOD, Actions::CHOPPING},
-                            {ResourceType::STONE, Actions::MINING},
-                            {ResourceType::GOLD, Actions::MINING}},
         .capacity = 100,
     };
     gameState.addComponent(villager, gatherer);

@@ -49,7 +49,7 @@ class CmdIdle : public Command
 
     void animate(CompAction& action, CompAnimation& animation, CompDirty& dirty)
     {
-        action.action = Actions::IDLE;
+        action.action = UnitAction::IDLE;
         auto& actionAnimation = animation.animations[action.action];
 
         auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.speed;

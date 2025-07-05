@@ -72,13 +72,16 @@ static std::string directionToString(Direction direction)
     }
 }
 
-enum Actions
+enum UnitAction
 {
     IDLE = 0,
     MOVE = 1,
     CHOPPING = 2,
     MINING = 3,
-    BUILDING = 4
+    BUILDING = 4,
+    CARRYING_LUMBER = 5,
+    CARRYING_GOLD = 6,
+    CARRYING_STONE = 7,
 };
 
 enum class RevealStatus : uint8_t

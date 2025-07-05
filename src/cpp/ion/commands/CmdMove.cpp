@@ -5,6 +5,7 @@
 #include "ServiceRegistry.h"
 #include "components/CompBuilding.h"
 #include "components/CompGraphics.h"
+#include "components/CompResource.h"
 #include "components/CompUnit.h"
 #include "debug.h"
 #include "utils/Logger.h"
@@ -22,8 +23,21 @@ void CmdMove::onQueue()
 
     if (targetEntity != entt::null && gameState.hasComponent<CompBuilding>(targetEntity))
     {
+        auto [building, buildingTransform] =
+            Entity::getComponents<CompBuilding, CompTransform>(targetEntity);
+        auto rect = building.getLandInFeetRect(buildingTransform.position);
         auto& transform = gameState.getComponent<CompTransform>(m_entityID);
-        targetPos = findClosestEdgeOfStaticEntity(targetEntity, transform.position);
+
+        targetPos = findClosestEdgeOfStaticEntity(targetEntity, transform.position, rect);
+    }
+    else if (targetEntity != entt::null && gameState.hasComponent<CompResource>(targetEntity))
+    {
+        auto [resource, resourceTransform] =
+            Entity::getComponents<CompResource, CompTransform>(targetEntity);
+        auto rect = resource.getLandInFeetRect(resourceTransform.position);
+        auto& transform = gameState.getComponent<CompTransform>(m_entityID);
+
+        targetPos = findClosestEdgeOfStaticEntity(targetEntity, transform.position, rect);
     }
 
     if (targetPos.isNull() == false)
@@ -84,7 +98,7 @@ void CmdMove::animate(CompAction& action,
                       int deltaTimeMs,
                       uint32_t entityId)
 {
-    action.action = Actions::MOVE;
+    action.action = actionOverride;
     auto& actionAnimation = animation.animations[action.action];
 
     auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.speed;
@@ -483,17 +497,17 @@ bool CmdMove::lineIntersectsCircle(const Vec2& p1,
     return (t1 >= 0 && t1 <= 1) || (t2 >= 0 && t2 <= 1);
 }
 
-Feet CmdMove::findClosestEdgeOfStaticEntity(uint32_t staticEntity, const Feet& fromPos)
+Feet CmdMove::findClosestEdgeOfStaticEntity(uint32_t staticEntity,
+                                            const Feet& fromPos,
+                                            const Rect<float>& land)
 {
-    auto [building, transform] = Entity::getComponents<CompBuilding, CompTransform>(targetEntity);
+    auto& transform = Entity::getComponent<CompTransform>(targetEntity);
     auto anchorTile = transform.position.toTile();
 
-    auto rect = building.getLandInFeetRect(transform.position);
-
-    float x_min = rect.x;
-    float x_max = rect.x + rect.w;
-    float y_min = rect.y;
-    float y_max = rect.y + rect.h;
+    float x_min = land.x;
+    float x_max = land.x + land.w;
+    float y_min = land.y;
+    float y_max = land.y + land.h;
 
     float closestX = std::clamp(fromPos.x, x_min, x_max);
     float closestY = std::clamp(fromPos.y, y_min, y_max);

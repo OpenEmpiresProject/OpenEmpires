@@ -4,6 +4,7 @@
 #include "Coordinates.h"
 #include "Feet.h"
 #include "Player.h"
+#include "Rect.h"
 #include "commands/Command.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
@@ -20,6 +21,7 @@ class CmdMove : public Command
   public:
     Feet targetPos = Feet::null;
     uint32_t targetEntity = entt::null;
+    UnitAction actionOverride = UnitAction::MOVE;
 
   private:
     std::list<Feet> path;
@@ -56,7 +58,9 @@ class CmdMove : public Command
                               const Vec2& p2,
                               const Vec2& center,
                               float radius) const;
-    Feet findClosestEdgeOfStaticEntity(uint32_t staticEntity, const Feet& fromPos);
+    Feet findClosestEdgeOfStaticEntity(uint32_t staticEntity,
+                                       const Feet& fromPos,
+                                       const Rect<float>& land);
 };
 } // namespace ion
 
