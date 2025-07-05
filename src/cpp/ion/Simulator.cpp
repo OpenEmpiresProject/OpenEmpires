@@ -83,11 +83,22 @@ void Simulator::onKeyUp(const Event& e)
     {
         auto worldPos = m_coordinates->screenUnitsToFeet(m_lastMouseScreenPos);
 
-        testBuild(worldPos, 9, Size(2, 2));
+        testBuild(worldPos, 9, Size(2, 2)); // lumber camp
 
         auto& gameState = GameState::getInstance();
         auto& building = gameState.getComponent<CompBuilding>(m_currentBuildingOnPlacement);
-        building.dropOffForResourceType = 1;
+        building.addDropOff(1);
+    }
+    else if (scancode == SDL_SCANCODE_L)
+    {
+        auto worldPos = m_coordinates->screenUnitsToFeet(m_lastMouseScreenPos);
+
+        testBuild(worldPos, 10, Size(2, 2)); // Mining camp
+
+        auto& gameState = GameState::getInstance();
+        auto& building = gameState.getComponent<CompBuilding>(m_currentBuildingOnPlacement);
+        building.addDropOff(2);
+        building.addDropOff(4);
     }
     else if (scancode == SDL_SCANCODE_ESCAPE)
     {

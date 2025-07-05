@@ -88,8 +88,8 @@ void ResourceLoader::loadEntities()
                                               {ResourceType::STONE, UnitAction::MINING},
                                               {ResourceType::GOLD, UnitAction::MINING}};
     CompResourceGatherer::carryingActions = {{ResourceType::WOOD, UnitAction::CARRYING_LUMBER},
-                                             {ResourceType::STONE, UnitAction::CARRYING_LUMBER},
-                                             {ResourceType::GOLD, UnitAction::CARRYING_LUMBER}};
+                                             {ResourceType::STONE, UnitAction::CARRYING_STONE},
+                                             {ResourceType::GOLD, UnitAction::CARRYING_GOLD}};
 
     GraphicsID resourcePanelBackground{
         .entityType = EntityTypes::ET_UI_ELEMENT,
@@ -233,6 +233,14 @@ void ResourceLoader::createVillager(Ref<ion::Player> player, const Tile& tilePos
     anim.animations[UnitAction::CARRYING_LUMBER].frames = 15;
     anim.animations[UnitAction::CARRYING_LUMBER].repeatable = true;
     anim.animations[UnitAction::CARRYING_LUMBER].speed = 15;
+
+    anim.animations[UnitAction::CARRYING_GOLD].frames = 15;
+    anim.animations[UnitAction::CARRYING_GOLD].repeatable = true;
+    anim.animations[UnitAction::CARRYING_GOLD].speed = 15;
+    
+    anim.animations[UnitAction::CARRYING_STONE].frames = 15;
+    anim.animations[UnitAction::CARRYING_STONE].repeatable = true;
+    anim.animations[UnitAction::CARRYING_STONE].speed = 15;
 
     gameState.addComponent(villager, transform);
     gameState.addComponent(villager, CompRendering());

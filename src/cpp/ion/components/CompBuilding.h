@@ -15,7 +15,18 @@ class CompBuilding
     bool validPlacement = true;
     Size size{0, 0};
     uint32_t lineOfSight = 0; // LOS in feet
-    uint8_t dropOffForResourceType = Constants::RESOURCE_TYPE_NONE;
+
+    // Add a resource type to the drop-off list
+    inline void addDropOff(uint8_t type)
+    {
+        dropOffForResourceType |= type;
+    }
+
+    // Check if the building supports drop-off for a specific resource type
+    inline bool canDropOff(uint8_t type) const
+    {
+        return dropOffForResourceType & type;
+    }
 
     // Relying on externally provided own position to avoid coupling CompTransform with this class
     Rect<float> getLandInFeetRect(const Feet& position) const
@@ -39,6 +50,11 @@ class CompBuilding
         Tile tile = position.toTile() + Tile(1, 1);
         return tile.toFeet() - 10;
     }
+
+private:
+    // Indicate what are the resource types this building accepts to drop. 
+    // It may support more than 1 resource type, the following act as a flag.
+    uint8_t dropOffForResourceType = Constants::RESOURCE_TYPE_NONE;
 };
 
 } // namespace ion

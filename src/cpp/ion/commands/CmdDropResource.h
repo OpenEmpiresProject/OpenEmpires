@@ -137,15 +137,16 @@ class CmdDropResource : public Command
         {
             auto [transform, building] =
                 Entity::getComponents<CompTransform, CompBuilding>(buildingEntity);
-            if (building.dropOffForResourceType != resourceType)
-                continue;
 
-            auto distance = transform.position.distanceSquared(unitTransform.position);
-
-            if (distance < currentClosestDistance)
+            if (building.canDropOff(resourceType))
             {
-                currentClosestDistance = distance;
-                dropOffEntity = buildingEntity;
+                auto distance = transform.position.distanceSquared(unitTransform.position);
+
+                if (distance < currentClosestDistance)
+                {
+                    currentClosestDistance = distance;
+                    dropOffEntity = buildingEntity;
+                }
             }
         }
 
