@@ -22,7 +22,7 @@ configure:
 configure-release:
 	@echo "Configuring project (Release)..."
 # Using static libraries for the releases 
-	cmake --preset=vcpkg -G "Visual Studio 17 2022" -A x64 -B $(BUILD_DIR) -S . -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=x64-windows-static
+	cmake --preset=vcpkg -G "Visual Studio 17 2022" -A x64 -B $(BUILD_DIR) -S . -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=x64-windows
 
 # Build the project
 build:
