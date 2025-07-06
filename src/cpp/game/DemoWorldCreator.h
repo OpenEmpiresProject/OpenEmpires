@@ -1,5 +1,5 @@
-#ifndef RESOURCELOADER_H
-#define RESOURCELOADER_H
+#ifndef DEMOWORLDCREATOR_H
+#define DEMOWORLDCREATOR_H
 
 #include "DRSFile.h"
 #include "GameSettings.h"
@@ -15,14 +15,14 @@
 #include <memory>
 namespace game
 {
-class ResourceLoader : public ion::SubSystem
+class DemoWorldCreator : public ion::SubSystem
 {
   public:
-    ResourceLoader(std::stop_token* stopToken,
-                   std::shared_ptr<ion::GameSettings> settings,
-                   ion::GraphicsRegistry& graphicsRegistry,
-                   std::shared_ptr<ion::Renderer> renderer);
-    ~ResourceLoader() = default;
+    DemoWorldCreator(std::stop_token* stopToken,
+                     std::shared_ptr<ion::GameSettings> settings,
+                     ion::GraphicsRegistry& graphicsRegistry,
+                     std::shared_ptr<ion::Renderer> renderer);
+    ~DemoWorldCreator() = default;
 
   private:
     // SubSystem methods

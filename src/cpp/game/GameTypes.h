@@ -16,6 +16,9 @@ enum EntityTypes
     ET_GOLD = 8,
     ET_LUMBER_CAMP = 9,
     ET_MINING_CAMP = 10,
+    ET_SMALL_BUILDING_SITE = 11, // for 2x2 buildings
+    ET_MEDIUM_BUILDING_SITE = 12,
+    ET_LARGE_BUILDING_SITE = 13,
 
     ET_UI_ELEMENT = 10000
 };
@@ -32,10 +35,10 @@ enum EntitySubTypes
 
 enum ResourceType : uint8_t
 {
-    RT_NONE  = 0,
-    WOOD     = 1 << 0, // 00000001
-    STONE    = 1 << 1, // 00000010
-    GOLD     = 1 << 2, // 00000100
+    RT_NONE = 0,
+    WOOD = 1 << 0,  // 00000001
+    STONE = 1 << 1, // 00000010
+    GOLD = 1 << 2,  // 00000100
 };
 
 } // namespace game

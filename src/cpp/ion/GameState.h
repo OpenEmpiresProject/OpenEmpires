@@ -84,6 +84,11 @@ class GameState
 class Entity
 {
   public:
+    template <typename T> static decltype(auto) addComponent(uint32_t entity, const T& t)
+    {
+        return GameState::getInstance().addComponent<T>(entity, t);
+    }
+
     template <typename T, typename... Args>
     static decltype(auto) addComponent(uint32_t entity, Args&&... args)
     {

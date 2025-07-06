@@ -49,9 +49,9 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
     loadSLP(graphicsDRS, 1883, EntityTypes::ET_VILLAGER, 0, UnitAction::CARRYING_LUMBER, renderer,
             graphicsRegistry, atlasGenerator);
     loadSLP(graphicsDRS, 2218, EntityTypes::ET_VILLAGER, 0, UnitAction::CARRYING_GOLD, renderer,
-            graphicsRegistry, atlasGenerator);            
+            graphicsRegistry, atlasGenerator);
     loadSLP(graphicsDRS, 1879, EntityTypes::ET_VILLAGER, 0, UnitAction::CARRYING_STONE, renderer,
-            graphicsRegistry, atlasGenerator);                     
+            graphicsRegistry, atlasGenerator);
     loadSLP(graphicsDRS, 1254, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
             graphicsRegistry, atlasGenerator); // Tree
     loadSLP(graphicsDRS, 1256, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
@@ -83,6 +83,8 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
     loadSLP(graphicsDRS, 3505, EntityTypes::ET_LUMBER_CAMP, EntitySubTypes::EST_DEFAULT, 0,
             renderer, graphicsRegistry, atlasGenerator);
     loadSLP(graphicsDRS, 3492, EntityTypes::ET_MINING_CAMP, EntitySubTypes::EST_DEFAULT, 0,
+            renderer, graphicsRegistry, atlasGenerator);
+    loadSLP(graphicsDRS, 236, EntityTypes::ET_SMALL_BUILDING_SITE, EntitySubTypes::EST_DEFAULT, 0,
             renderer, graphicsRegistry, atlasGenerator);
     loadSLP(graphicsDRS, 1252, EntityTypes::ET_TREE, EntitySubTypes::EST_CHOPPED_TREE, 0, renderer,
             graphicsRegistry, atlasGenerator); // Chopped tree
@@ -258,6 +260,10 @@ void loadSLP(shared_ptr<DRSFile> drs,
                     break;
                 }
             }
+        }
+        else if (entityType == EntityTypes::ET_SMALL_BUILDING_SITE)
+        {
+            id.entitySubType = i;
         }
 
         SDL_FRect* srcRectF = new SDL_FRect{(float) srcRect.x, (float) srcRect.y, (float) srcRect.w,

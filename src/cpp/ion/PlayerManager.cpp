@@ -2,7 +2,10 @@
 
 #include "GameState.h"
 #include "components/CompBuilding.h"
+#include "components/CompDirty.h"
+#include "components/CompEntityInfo.h"
 #include "components/CompPlayer.h"
+#include "components/CompTransform.h"
 #include "components/CompUnit.h"
 
 #include <SDL3/SDL_scancode.h>
@@ -14,7 +17,6 @@ using namespace ion;
 PlayerManager::PlayerManager()
 {
     registerCallback(Event::Type::UNIT_TILE_MOVEMENT, this, &PlayerManager::onUnitTileMovement);
-    registerCallback(Event::Type::BUILDING_PLACED, this, &PlayerManager::onBuildingPlaced);
 }
 
 PlayerManager::~PlayerManager()
@@ -59,19 +61,7 @@ uint8_t PlayerManager::getNextPlayerId() const
 void PlayerManager::onUnitTileMovement(const Event& e)
 {
     auto data = e.getData<UnitTileMovementData>();
-    auto [player, unit] = GameState::getInstance().getComponents<CompPlayer, CompUnit>(data.unit);
+    auto [player, unit] = Entity::getComponents<CompPlayer, CompUnit>(data.unit);
 
     player.player->getFogOfWar()->markAsExplored(data.positionFeet, unit.lineOfSight);
-}
-
-void PlayerManager::onBuildingPlaced(const Event& e)
-{
-    auto data = e.getData<BuildingPlacedData>();
-    auto [player, building] =
-        GameState::getInstance().getComponents<CompPlayer, CompBuilding>(data.building);
-
-    player.player->getFogOfWar()->markAsExplored(data.tile.centerInFeet(), building.size,
-                                                 building.lineOfSight);
-
-    player.player->addEntity(data.building);
 }

@@ -51,8 +51,8 @@ class CompBuilding
         return tile.toFeet() - 10;
     }
 
-private:
-    // Indicate what are the resource types this building accepts to drop. 
+  private:
+    // Indicate what are the resource types this building accepts to drop.
     // It may support more than 1 resource type, the following act as a flag.
     uint8_t dropOffForResourceType = Constants::RESOURCE_TYPE_NONE;
 };

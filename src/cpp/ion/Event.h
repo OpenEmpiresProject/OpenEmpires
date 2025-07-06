@@ -2,6 +2,7 @@
 #define EVENT_H
 
 #include "Feet.h"
+#include "Player.h"
 #include "Tile.h"
 #include "UnitSelection.h"
 #include "commands/Command.h"
@@ -56,10 +57,10 @@ struct UnitTileMovementData
     Feet positionFeet;
 };
 
-struct BuildingPlacedData
+struct BuildingPlacementData
 {
-    uint32_t building; // entity
-    Tile tile;         // Bottom corner
+    Ref<Player> player;
+    uint32_t entity = entt::null;
 };
 
 struct Event
@@ -75,7 +76,7 @@ struct Event
         MOUSE_BTN_UP,
         UNIT_SELECTION,
         UNIT_TILE_MOVEMENT,
-        BUILDING_PLACED,
+        BUILDING_REQUESTED, // Use BuildingPlacementData
         COMMAND_REQUEST,
         MAX_TYPE_MARKER,
     };
@@ -88,7 +89,7 @@ struct Event
                               UnitSelectionData,
                               CommandRequestData,
                               UnitTileMovementData,
-                              BuildingPlacedData>;
+                              BuildingPlacementData>;
 
     const Type type = Type::NONE;
     const Data data = std::monostate{};

@@ -1,17 +1,19 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include "BuildingManager.h"
 #include "CommandCenter.h"
 #include "Coordinates.h"
+#include "DemoWorldCreator.h"
 #include "EventLoop.h"
 #include "GameState.h"
 #include "GraphicsLoaderFromDRS.h"
 #include "GraphicsLoaderFromImages.h"
 #include "GraphicsRegistry.h"
 #include "HUD.h"
+#include "PlayerActionResolver.h"
 #include "PlayerManager.h"
 #include "Renderer.h"
-#include "ResourceLoader.h"
 #include "ResourceManager.h"
 #include "ServiceRegistry.h"
 #include "Simulator.h"
@@ -79,18 +81,23 @@ class Game
         auto cc = std::make_shared<ion::CommandCenter>();
         ion::ServiceRegistry::getInstance().registerService(cc);
 
+        auto buildingMngr = std::make_shared<ion::BuildingManager>();
+        auto playerActionResolver = std::make_shared<game::PlayerActionResolver>();
+
         eventLoop->registerListener(std::move(simulator));
         eventLoop->registerListener(std::move(cc));
         eventLoop->registerListener(std::move(uiManager));
         eventLoop->registerListener(std::move(playerManager));
         eventLoop->registerListener(std::move(resourceManager));
         eventLoop->registerListener(std::move(hud));
+        eventLoop->registerListener(std::move(buildingMngr));
+        eventLoop->registerListener(std::move(playerActionResolver));
 
         auto resourceLoader =
-            std::make_shared<ResourceLoader>(&stopToken, settings, graphicsRegistry, renderer);
+            std::make_shared<DemoWorldCreator>(&stopToken, settings, graphicsRegistry, renderer);
 
         ion::SubSystemRegistry::getInstance().registerSubSystem("Renderer", std::move(renderer));
-        ion::SubSystemRegistry::getInstance().registerSubSystem("ResourceLoader",
+        ion::SubSystemRegistry::getInstance().registerSubSystem("DemoWorldCreator",
                                                                 std::move(resourceLoader));
         ion::SubSystemRegistry::getInstance().registerSubSystem("EventLoop", std::move(eventLoop));
 

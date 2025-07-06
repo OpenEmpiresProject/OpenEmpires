@@ -866,7 +866,7 @@ void RendererImpl::renderCirlceInIsometric(SDL_Renderer* renderer,
 
 void RendererImpl::loadFonts()
 {
-    if (TTF_Init() == -1)
+    if (TTF_Init() == false)
     {
         spdlog::error("Failed to initialize TTF: {}", SDL_GetError());
         throw std::runtime_error("TTF_Init failed");

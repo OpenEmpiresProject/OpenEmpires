@@ -30,7 +30,6 @@ class Simulator : public EventHandler
     void onKeyDown(const Event& e);
     void onMouseButtonUp(const Event& e);
     void onMouseButtonDown(const Event& e);
-    void onMouseMove(const Event& e);
 
     void onTickStart();
     void onTickEnd();
@@ -44,7 +43,6 @@ class Simulator : public EventHandler
     void onClickToSelect(const Vec2& screenPos);
     void resolveSelection(const Vec2& screenPos);
     void resolveAction(const Vec2& screenPos);
-    void testBuild(const Feet& targetFeetPos, int buildingType, Size size);
     bool canPlaceBuildingAt(const CompBuilding& building, const Feet& feet, bool& outOfMap);
     void addEntitiesToSelection(const std::vector<uint32_t>& selectedEntities);
     void clearSelection();
@@ -57,8 +55,6 @@ class Simulator : public EventHandler
     bool m_isSelecting = false;
     std::shared_ptr<EventPublisher> m_publisher;
     UnitSelection m_currentUnitSelection;
-    Vec2 m_lastMouseScreenPos;
-    uint32_t m_currentBuildingOnPlacement = 0;
     bool m_initialized = false;
     bool m_showSpamLogs = false;
 };

@@ -1,4 +1,4 @@
-#include "ResourceLoader.h"
+#include "DemoWorldCreator.h"
 
 #include "Coordinates.h"
 #include "GameState.h"
@@ -46,16 +46,16 @@ shared_ptr<DRSFile> loadDRSFile(const string& drsFilename);
 // frameId is 1 based but not 0 based
 Rect<int> getBoundingBox(shared_ptr<DRSFile> drs, uint32_t slpId, uint32_t frameId);
 
-ResourceLoader::ResourceLoader(std::stop_token* stopToken,
-                               std::shared_ptr<GameSettings> settings,
-                               GraphicsRegistry& graphicsRegistry,
-                               std::shared_ptr<Renderer> renderer)
+DemoWorldCreator::DemoWorldCreator(std::stop_token* stopToken,
+                                   std::shared_ptr<GameSettings> settings,
+                                   GraphicsRegistry& graphicsRegistry,
+                                   std::shared_ptr<Renderer> renderer)
     : SubSystem(stopToken), m_settings(std::move(settings)), m_graphicsRegistry(graphicsRegistry),
       m_renderer(std::move(renderer))
 {
 }
 
-void ResourceLoader::loadEntities()
+void DemoWorldCreator::loadEntities()
 {
     spdlog::info("Loading entities...");
 
@@ -130,7 +130,7 @@ void ResourceLoader::loadEntities()
     spdlog::info("Entity loading successfully.");
 }
 
-void ResourceLoader::createTree(TileMap& map, uint32_t x, uint32_t y)
+void DemoWorldCreator::createTree(TileMap& map, uint32_t x, uint32_t y)
 {
     auto& gameState = GameState::getInstance();
 
@@ -164,10 +164,10 @@ void ResourceLoader::createTree(TileMap& map, uint32_t x, uint32_t y)
     map.addEntity(MapLayerType::STATIC, Tile(x, y), tree);
 }
 
-void ResourceLoader::createStoneOrGold(EntityTypes entityType,
-                                       ion::TileMap& gameMap,
-                                       uint32_t x,
-                                       uint32_t y)
+void DemoWorldCreator::createStoneOrGold(EntityTypes entityType,
+                                         ion::TileMap& gameMap,
+                                         uint32_t x,
+                                         uint32_t y)
 {
     auto& gameState = GameState::getInstance();
 
@@ -204,7 +204,7 @@ void ResourceLoader::createStoneOrGold(EntityTypes entityType,
     gameMap.addEntity(MapLayerType::STATIC, Tile(x, y), stone);
 }
 
-void ResourceLoader::createVillager(Ref<ion::Player> player, const Tile& tilePos)
+void DemoWorldCreator::createVillager(Ref<ion::Player> player, const Tile& tilePos)
 {
     auto& gameState = GameState::getInstance();
     auto villager = gameState.createEntity();
@@ -237,7 +237,7 @@ void ResourceLoader::createVillager(Ref<ion::Player> player, const Tile& tilePos
     anim.animations[UnitAction::CARRYING_GOLD].frames = 15;
     anim.animations[UnitAction::CARRYING_GOLD].repeatable = true;
     anim.animations[UnitAction::CARRYING_GOLD].speed = 15;
-    
+
     anim.animations[UnitAction::CARRYING_STONE].frames = 15;
     anim.animations[UnitAction::CARRYING_STONE].repeatable = true;
     anim.animations[UnitAction::CARRYING_STONE].speed = 15;
@@ -296,7 +296,7 @@ void ResourceLoader::createVillager(Ref<ion::Player> player, const Tile& tilePos
     player->getFogOfWar()->markAsExplored(transform.position, unit.lineOfSight);
 }
 
-void ResourceLoader::createStoneOrGoldCluster(
+void DemoWorldCreator::createStoneOrGoldCluster(
     EntityTypes entityType, ion::TileMap& gameMap, uint32_t xHint, uint32_t yHint, uint8_t amount)
 {
     if (amount == 0)
@@ -371,7 +371,7 @@ void ResourceLoader::createStoneOrGoldCluster(
     }
 }
 
-void ResourceLoader::generateMap(TileMap& gameMap)
+void DemoWorldCreator::generateMap(TileMap& gameMap)
 {
     std::random_device rd;
     std::mt19937 rng(rd());
@@ -436,10 +436,10 @@ void ResourceLoader::generateMap(TileMap& gameMap)
     }
 }
 
-void ResourceLoader::createTile(uint32_t x,
-                                uint32_t y,
-                                ion::GameState& gameState,
-                                EntityTypes entityType)
+void DemoWorldCreator::createTile(uint32_t x,
+                                  uint32_t y,
+                                  ion::GameState& gameState,
+                                  EntityTypes entityType)
 {
     auto size = m_settings->getWorldSizeInTiles();
 
@@ -472,7 +472,7 @@ void ResourceLoader::createTile(uint32_t x,
     gameState.addComponent(tile, gc);
 }
 
-void ResourceLoader::init()
+void DemoWorldCreator::init()
 {
     Resource::registerResourceType(ResourceType::WOOD);
     Resource::registerResourceType(ResourceType::STONE);
@@ -480,7 +480,7 @@ void ResourceLoader::init()
     loadEntities();
 }
 
-void ResourceLoader::shutdown()
+void DemoWorldCreator::shutdown()
 {
     // Cleanup code for resource loading
 }

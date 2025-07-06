@@ -36,7 +36,6 @@ Simulator::Simulator(ThreadSynchronizer<FrameData>& synchronizer,
       m_coordinates(ServiceRegistry::getInstance().getService<Coordinates>()),
       m_publisher(std::move(publisher))
 {
-    m_currentBuildingOnPlacement = entt::null;
     CompDirty::g_dirtyEntities.reserve(10000);
 
     registerCallback(Event::Type::TICK, this, &Simulator::onTick);
@@ -44,7 +43,6 @@ Simulator::Simulator(ThreadSynchronizer<FrameData>& synchronizer,
     registerCallback(Event::Type::KEY_DOWN, this, &Simulator::onKeyDown);
     registerCallback(Event::Type::MOUSE_BTN_UP, this, &Simulator::onMouseButtonUp);
     registerCallback(Event::Type::MOUSE_BTN_DOWN, this, &Simulator::onMouseButtonDown);
-    registerCallback(Event::Type::MOUSE_MOVE, this, &Simulator::onMouseMove);
     registerCallback(Event::Type::UNIT_SELECTION, this, &Simulator::onUnitSelection);
 }
 
@@ -66,51 +64,7 @@ void Simulator::onKeyUp(const Event& e)
 {
     SDL_Scancode scancode = static_cast<SDL_Scancode>(e.getData<KeyboardData>().keyCode);
 
-    // TODO: temporary
-    if (scancode == SDL_SCANCODE_B)
-    {
-        auto worldPos = m_coordinates->screenUnitsToFeet(m_lastMouseScreenPos);
-
-        testBuild(worldPos, 5, Size(2, 2));
-    }
-    else if (scancode == SDL_SCANCODE_N)
-    {
-        auto worldPos = m_coordinates->screenUnitsToFeet(m_lastMouseScreenPos);
-
-        testBuild(worldPos, 6, Size(4, 4));
-    }
-    else if (scancode == SDL_SCANCODE_M)
-    {
-        auto worldPos = m_coordinates->screenUnitsToFeet(m_lastMouseScreenPos);
-
-        testBuild(worldPos, 9, Size(2, 2)); // lumber camp
-
-        auto& gameState = GameState::getInstance();
-        auto& building = gameState.getComponent<CompBuilding>(m_currentBuildingOnPlacement);
-        building.addDropOff(1);
-    }
-    else if (scancode == SDL_SCANCODE_L)
-    {
-        auto worldPos = m_coordinates->screenUnitsToFeet(m_lastMouseScreenPos);
-
-        testBuild(worldPos, 10, Size(2, 2)); // Mining camp
-
-        auto& gameState = GameState::getInstance();
-        auto& building = gameState.getComponent<CompBuilding>(m_currentBuildingOnPlacement);
-        building.addDropOff(2);
-        building.addDropOff(4);
-    }
-    else if (scancode == SDL_SCANCODE_ESCAPE)
-    {
-        // TODO: Not the ideal way to delete an entity
-        auto [info, dirty] = GameState::getInstance().getComponents<CompEntityInfo, CompDirty>(
-            m_currentBuildingOnPlacement);
-        info.isDestroyed = true;
-        dirty.markDirty(m_currentBuildingOnPlacement);
-        GameState::getInstance().destroyEntity(m_currentBuildingOnPlacement);
-        m_currentBuildingOnPlacement = entt::null;
-    }
-    else if (scancode == SDL_SCANCODE_T)
+    if (scancode == SDL_SCANCODE_T)
     {
         m_showSpamLogs = !m_showSpamLogs;
         if (m_showSpamLogs)
@@ -148,32 +102,6 @@ void Simulator::onMouseButtonDown(const Event& e)
     {
         m_isSelecting = true;
         m_selectionStartPosScreenUnits = e.getData<MouseClickData>().screenPosition;
-    }
-}
-
-void Simulator::onMouseMove(const Event& e)
-{
-    m_lastMouseScreenPos = e.getData<MouseMoveData>().screenPos;
-    if (m_currentBuildingOnPlacement != entt::null)
-    {
-        auto& transform =
-            GameState::getInstance().getComponent<CompTransform>(m_currentBuildingOnPlacement);
-        auto feet = m_coordinates->screenUnitsToFeet(m_lastMouseScreenPos);
-
-        auto& building =
-            GameState::getInstance().getComponent<CompBuilding>(m_currentBuildingOnPlacement);
-
-        bool outOfMap = false;
-        building.validPlacement = canPlaceBuildingAt(building, feet, outOfMap);
-
-        if (!outOfMap)
-        {
-            transform.position = building.getTileSnappedPosition(feet);
-        }
-
-        auto& dirty =
-            GameState::getInstance().getComponent<CompDirty>(m_currentBuildingOnPlacement);
-        dirty.markDirty(m_currentBuildingOnPlacement);
     }
 }
 
@@ -365,39 +293,10 @@ void Simulator::resolveSelection(const Vec2& screenPos)
     }
 
     // Click priorities are;
-    // 1. Any building placement (you can't select anything if there is planned building)
-    // 2. Complete selection box
-    // 3. Individual selection click
+    // 1. Complete selection box
+    // 2. Individual selection click
 
-    if (m_currentBuildingOnPlacement != entt::null)
-    {
-        auto [building, transform] =
-            GameState::getInstance().getComponents<CompBuilding, CompTransform>(
-                m_currentBuildingOnPlacement);
-
-        if (!building.validPlacement)
-        {
-            GameState::getInstance().destroyEntity(m_currentBuildingOnPlacement);
-        }
-
-        publishEvent(Event::Type::BUILDING_PLACED,
-                     BuildingPlacedData{m_currentBuildingOnPlacement, transform.position.toTile()});
-
-        auto& gameMap = GameState::getInstance().gameMap;
-
-        for (size_t i = 0; i < building.size.width; i++)
-        {
-            for (size_t j = 0; j < building.size.height; j++)
-            {
-                gameMap.addEntity(MapLayerType::STATIC, transform.position.toTile() - Tile(i, j),
-                                  m_currentBuildingOnPlacement);
-            }
-        }
-
-        // Building is permanent now, no need to track for placement
-        m_currentBuildingOnPlacement = entt::null;
-    }
-    else if (m_isSelecting)
+    if (m_isSelecting)
     {
         // TODO: we want on the fly selection instead of mouse button up
         onSelectingUnits(m_selectionStartPosScreenUnits, screenPos);
@@ -444,70 +343,6 @@ void Simulator::resolveAction(const Vec2& screenPos)
             m_publisher->publish(event);
         }
     }
-}
-
-void Simulator::testBuild(const Feet& targetFeetPos, int buildingType, Size size)
-{
-    auto& gameState = GameState::getInstance();
-    auto mill = gameState.createEntity();
-    auto transform = CompTransform(targetFeetPos);
-    transform.face(Direction::NORTHWEST);
-    gameState.addComponent(mill, transform);
-    gameState.addComponent(mill, CompRendering());
-    CompGraphics gc;
-    gc.entityID = mill;
-    gc.entityType = buildingType;
-    gc.layer = GraphicLayer::ENTITIES;
-    gameState.addComponent(mill, gc);
-    gameState.addComponent(mill, CompEntityInfo(buildingType));
-
-    auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
-    auto player = playerManager->getViewingPlayer();
-    gameState.addComponent(mill, CompPlayer{player});
-
-    CompBuilding building;
-    building.size = size;
-    building.lineOfSight = 256 * 5;
-
-    gameState.addComponent(mill, building);
-
-    CompDirty dirty;
-    dirty.markDirty(mill);
-    gameState.addComponent(mill, dirty);
-
-    m_currentBuildingOnPlacement = mill;
-}
-
-bool Simulator::canPlaceBuildingAt(const CompBuilding& building, const Feet& feet, bool& outOfMap)
-{
-    auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
-    auto tile = feet.toTile();
-    auto staticMap = GameState::getInstance().gameMap.getMap(MapLayerType::STATIC);
-
-    auto isValidTile = [&](const Tile& tile)
-    {
-        return tile.x >= 0 && tile.y >= 0 && tile.x < settings->getWorldSizeInTiles().width &&
-               tile.y < settings->getWorldSizeInTiles().height;
-    };
-
-    outOfMap = false;
-
-    for (int i = 0; i < building.size.width; i++)
-    {
-        for (int j = 0; j < building.size.height; j++)
-        {
-            if (!isValidTile({tile.x - i, tile.y - j}))
-            {
-                outOfMap = true;
-                return false;
-            }
-            if (staticMap[tile.x - i][tile.y - j].isOccupied())
-            {
-                return false;
-            }
-        }
-    }
-    return true;
 }
 
 void Simulator::addEntitiesToSelection(const std::vector<uint32_t>& selectedEntities)
