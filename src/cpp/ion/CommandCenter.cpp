@@ -64,7 +64,8 @@ void CommandCenter::onEvent(const Event& e)
     else if (e.type == Event::Type::COMMAND_REQUEST)
     {
         auto data = e.getData<CommandRequestData>();
-        data.command->setPriority(Command::DEFAULT_PRIORITY + Command::CHILD_PRIORITY_OFFSET);
+        if (data.command->getPriority() == -1)
+            data.command->setPriority(Command::DEFAULT_PRIORITY + Command::CHILD_PRIORITY_OFFSET);
         data.command->setEntityID(data.entity);
 
         CompUnit& unit = GameState::getInstance().getComponent<CompUnit>(data.entity);

@@ -109,8 +109,15 @@ uint32_t PlayerActionResolver::createBuilding(const Feet& targetFeetPos,
     building.size = size;
     building.lineOfSight = 256 * 5;
     building.addDropOff(resourceTypesAccept);
-
+    building.visualVariationByProgress = {{33, 1}, {66, 2}, {99, 3}, {100, 0}};
     Entity::addComponent(entity, building);
+
+    // auto box = getBoundingBox(m_drs, 1254, 1);
+    // CompSelectible sc;
+    // sc.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
+    // sc.selectionIndicator = {
+    //     GraphicAddon::Type::RHOMBUS,
+    //     GraphicAddon::Rhombus{Constants::TILE_PIXEL_WIDTH, Constants::TILE_PIXEL_HEIGHT}};
 
     CompDirty dirty;
     dirty.markDirty(entity);

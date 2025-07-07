@@ -1,6 +1,9 @@
 #ifndef COMPDIRTY_H
 #define COMPDIRTY_H
 
+#include <cstdint>
+#include <vector>
+
 namespace ion
 {
 class CompDirty

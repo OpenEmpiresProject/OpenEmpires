@@ -16,9 +16,6 @@ enum EntityTypes
     ET_GOLD = 8,
     ET_LUMBER_CAMP = 9,
     ET_MINING_CAMP = 10,
-    ET_SMALL_BUILDING_SITE = 11, // for 2x2 buildings
-    ET_MEDIUM_BUILDING_SITE = 12,
-    ET_LARGE_BUILDING_SITE = 13,
 
     ET_UI_ELEMENT = 10000
 };

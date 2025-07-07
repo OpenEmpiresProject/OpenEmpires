@@ -52,6 +52,8 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
             graphicsRegistry, atlasGenerator);
     loadSLP(graphicsDRS, 1879, EntityTypes::ET_VILLAGER, 0, UnitAction::CARRYING_STONE, renderer,
             graphicsRegistry, atlasGenerator);
+    loadSLP(graphicsDRS, 1874, EntityTypes::ET_VILLAGER, 0, UnitAction::BUILDING, renderer,
+            graphicsRegistry, atlasGenerator);
     loadSLP(graphicsDRS, 1254, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
             graphicsRegistry, atlasGenerator); // Tree
     loadSLP(graphicsDRS, 1256, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
@@ -84,8 +86,10 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
             renderer, graphicsRegistry, atlasGenerator);
     loadSLP(graphicsDRS, 3492, EntityTypes::ET_MINING_CAMP, EntitySubTypes::EST_DEFAULT, 0,
             renderer, graphicsRegistry, atlasGenerator);
-    loadSLP(graphicsDRS, 236, EntityTypes::ET_SMALL_BUILDING_SITE, EntitySubTypes::EST_DEFAULT, 0,
-            renderer, graphicsRegistry, atlasGenerator);
+    loadSLP(graphicsDRS, 237, EntityTypes::ET_LUMBER_CAMP, EntitySubTypes::EST_DEFAULT, 0, renderer,
+            graphicsRegistry, atlasGenerator); // medium construction site
+    loadSLP(graphicsDRS, 237, EntityTypes::ET_MINING_CAMP, EntitySubTypes::EST_DEFAULT, 0, renderer,
+            graphicsRegistry, atlasGenerator); // medium construction site
     loadSLP(graphicsDRS, 1252, EntityTypes::ET_TREE, EntitySubTypes::EST_CHOPPED_TREE, 0, renderer,
             graphicsRegistry, atlasGenerator); // Chopped tree
     loadSLP(interfaceDRS, 51101, EntityTypes::ET_UI_ELEMENT, EntitySubTypes::UI_WINDOW, 0, renderer,
@@ -250,7 +254,8 @@ void loadSLP(shared_ptr<DRSFile> drs,
             }
         }
         else if (entityType == EntityTypes::ET_TREE || entityType == EntityTypes::ET_STONE ||
-                 entityType == EntityTypes::ET_GOLD)
+                 entityType == EntityTypes::ET_GOLD || entityType == EntityTypes::ET_LUMBER_CAMP ||
+                 entityType == EntityTypes::ET_MINING_CAMP)
         {
             for (size_t i = 0; i < 100; i++)
             {
@@ -260,10 +265,6 @@ void loadSLP(shared_ptr<DRSFile> drs,
                     break;
                 }
             }
-        }
-        else if (entityType == EntityTypes::ET_SMALL_BUILDING_SITE)
-        {
-            id.entitySubType = i;
         }
 
         SDL_FRect* srcRectF = new SDL_FRect{(float) srcRect.x, (float) srcRect.y, (float) srcRect.w,

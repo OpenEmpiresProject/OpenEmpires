@@ -3,18 +3,34 @@
 
 #include "Feet.h"
 #include "Rect.h"
+#include "debug.h"
 #include "utils/Constants.h"
 #include "utils/Size.h"
+
+#include <map>
 
 namespace ion
 {
 class CompBuilding
 {
   public:
-    bool isPlacing = false;
     bool validPlacement = true;
     Size size{0, 0};
-    uint32_t lineOfSight = 0; // LOS in feet
+    uint32_t lineOfSight = 0;          // LOS in feet
+    uint32_t constructionProgress = 0; // out of 100
+    // Lower bound represents the entity variation to be used based on the progress of the
+    // construction.
+    std::map<uint32_t, uint32_t> visualVariationByProgress = {{0, 0}};
+    bool isInStaticMap = false;
+
+    uint32_t getVisualVariation() const
+    {
+        debug_assert(visualVariationByProgress.size() > 0,
+                     "Building's visual variation map is empty");
+
+        auto it = visualVariationByProgress.lower_bound(constructionProgress);
+        return it->second;
+    }
 
     // Add a resource type to the drop-off list
     inline void addDropOff(uint8_t type)

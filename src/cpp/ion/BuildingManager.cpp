@@ -1,8 +1,11 @@
 #include "BuildingManager.h"
 
+#include "Coordinates.h"
 #include "GameState.h"
 #include "PlayerManager.h"
 #include "ServiceRegistry.h"
+#include "commands/CmdBuild.h"
+#include "components/CompBuilder.h"
 #include "components/CompBuilding.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
@@ -20,6 +23,8 @@ BuildingManager::BuildingManager(/* args */)
     registerCallback(Event::Type::KEY_UP, this, &BuildingManager::onKeyUp);
     registerCallback(Event::Type::MOUSE_MOVE, this, &BuildingManager::onMouseMove);
     registerCallback(Event::Type::MOUSE_BTN_UP, this, &BuildingManager::onMouseButtonUp);
+    registerCallback(Event::Type::UNIT_SELECTION, this, &BuildingManager::onUnitSelection);
+    registerCallback(Event::Type::TICK, this, &BuildingManager::onTick);
 }
 
 BuildingManager::~BuildingManager()
@@ -30,6 +35,13 @@ void BuildingManager::onBuildingRequest(const Event& e)
 {
     cancelBuilding();
     m_currentBuildingPlacement = e.getData<BuildingPlacementData>();
+
+    for (auto entity : m_unitSelection.selectedEntities)
+    {
+        auto& builder = Entity::getComponent<CompBuilder>(entity);
+        builder.target = m_currentBuildingPlacement.entity;
+    }
+    publishEvent(Event::Type::BUILDING_PLACEMENT_STARTED, m_currentBuildingPlacement);
 }
 
 void BuildingManager::onKeyUp(const Event& e)
@@ -70,14 +82,53 @@ void BuildingManager::onMouseButtonUp(const Event& e)
     {
         if (m_currentBuildingPlacement.entity != entt::null)
         {
-            auto [building, transform, info, dirty, player] =
-                Entity::getComponents<CompBuilding, CompTransform, CompEntityInfo, CompDirty,
-                                      CompPlayer>(m_currentBuildingPlacement.entity);
+            auto [building, transform, player, info, dirty] =
+                Entity::getComponents<CompBuilding, CompTransform, CompPlayer, CompEntityInfo,
+                                      CompDirty>(m_currentBuildingPlacement.entity);
 
             if (building.validPlacement)
-                confirmBuilding(building, transform, player);
+                confirmBuilding(building, info, dirty);
             else
                 cancelBuilding();
+        }
+    }
+}
+
+void BuildingManager::onUnitSelection(const Event& e)
+{
+    auto data = e.getData<UnitSelectionData>();
+    m_unitSelection = data.selection;
+}
+
+void BuildingManager::onTick(const Event& e)
+{
+    for (auto entity : CompDirty::g_dirtyEntities)
+    {
+        if (GameState::getInstance().hasComponent<CompBuilding>(entity))
+        {
+            auto [transform, building, info, player] =
+                Entity::getComponents<CompTransform, CompBuilding, CompEntityInfo, CompPlayer>(
+                    entity);
+
+            info.variation = building.getVisualVariation();
+
+            if (building.constructionProgress >= 100)
+                onCompleteBuilding(building, transform, player);
+
+            if (building.constructionProgress > 1 && building.isInStaticMap == false)
+            {
+                auto& gameMap = GameState::getInstance().gameMap;
+
+                for (size_t i = 0; i < building.size.width; i++)
+                {
+                    for (size_t j = 0; j < building.size.height; j++)
+                    {
+                        gameMap.addEntity(MapLayerType::STATIC, transform.position.toTile() - Tile(i, j),
+                                        entity);
+                    }
+                }
+                building.isInStaticMap = true;
+            }
         }
     }
 }
@@ -125,30 +176,43 @@ void BuildingManager::cancelBuilding()
 
         info.isDestroyed = true;
         dirty.markDirty(m_currentBuildingPlacement.entity);
+        publishEvent(Event::Type::BUILDING_PLACEMENT_FINISHED, m_currentBuildingPlacement);
+
         m_currentBuildingPlacement = BuildingPlacementData();
     }
 }
 
-void BuildingManager::confirmBuilding(const CompBuilding& building,
-                                      const CompTransform& transform,
-                                      const CompPlayer& player)
+void BuildingManager::confirmBuilding(CompBuilding& building,
+                                      CompEntityInfo& info,
+                                      CompDirty& dirty)
 {
-    auto& gameMap = GameState::getInstance().gameMap;
+    publishEvent(Event::Type::BUILDING_PLACEMENT_FINISHED, m_currentBuildingPlacement);
 
-    for (size_t i = 0; i < building.size.width; i++)
+    for (auto unit : m_unitSelection.selectedEntities)
     {
-        for (size_t j = 0; j < building.size.height; j++)
+        bool isABuilder = Entity::hasComponent<CompBuilder>(unit);
+        if (isABuilder)
         {
-            gameMap.addEntity(MapLayerType::STATIC, transform.position.toTile() - Tile(i, j),
-                              m_currentBuildingPlacement.entity);
+            auto cmd = ObjectPool<CmdBuild>::acquire();
+            cmd->target = m_currentBuildingPlacement.entity;
+
+            publishEvent(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, unit});
         }
     }
+    building.constructionProgress = 0;
+    info.variation = building.getVisualVariation();
+    dirty.markDirty(m_currentBuildingPlacement.entity);
 
+    // Building is permanent now, no need to track for placement
+    m_currentBuildingPlacement = BuildingPlacementData();
+}
+
+void BuildingManager::onCompleteBuilding(const CompBuilding& building,
+                                         const CompTransform& transform,
+                                         const CompPlayer& player)
+{
     player.player->getFogOfWar()->markAsExplored(transform.position.toTile().centerInFeet(),
                                                  building.size, building.lineOfSight);
 
     player.player->addEntity(m_currentBuildingPlacement.entity);
-
-    // Building is permanent now, no need to track for placement
-    m_currentBuildingPlacement = BuildingPlacementData();
 }

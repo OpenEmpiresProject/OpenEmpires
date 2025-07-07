@@ -35,6 +35,8 @@ class Simulator : public EventHandler
     void onTickEnd();
     void onSynchorizedBlock();
     void onUnitSelection(const Event& e);
+    void onBuildingPlacementStarted(const Event& e);
+    void onBuildingPlacementFinished(const Event& e);
 
     void sendGraphicsInstructions();
     void sendGraphiInstruction(CompGraphics* instruction);
@@ -57,6 +59,8 @@ class Simulator : public EventHandler
     UnitSelection m_currentUnitSelection;
     bool m_initialized = false;
     bool m_showSpamLogs = false;
+
+    bool m_buildingPlacementInProgress = false;
 };
 } // namespace ion
 

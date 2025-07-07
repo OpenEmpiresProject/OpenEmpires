@@ -8,8 +8,10 @@
 #include "commands/CmdGatherResource.h"
 #include "commands/CmdIdle.h"
 #include "commands/CmdMove.h"
+#include "commands/cmdBuild.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
+#include "components/CompBuilder.h"
 #include "components/CompBuilding.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
@@ -44,6 +46,10 @@ Simulator::Simulator(ThreadSynchronizer<FrameData>& synchronizer,
     registerCallback(Event::Type::MOUSE_BTN_UP, this, &Simulator::onMouseButtonUp);
     registerCallback(Event::Type::MOUSE_BTN_DOWN, this, &Simulator::onMouseButtonDown);
     registerCallback(Event::Type::UNIT_SELECTION, this, &Simulator::onUnitSelection);
+    registerCallback(Event::Type::BUILDING_PLACEMENT_STARTED, this,
+                     &Simulator::onBuildingPlacementStarted);
+    registerCallback(Event::Type::BUILDING_PLACEMENT_FINISHED, this,
+                     &Simulator::onBuildingPlacementFinished);
 }
 
 void Simulator::onInit(EventLoop* eventLoop)
@@ -149,6 +155,16 @@ void Simulator::onUnitSelection(const Event& e)
             spdlog::info("Selected entity has {} resources", resource.resource.amount);
         }
     }
+}
+
+void Simulator::onBuildingPlacementStarted(const Event& e)
+{
+    m_buildingPlacementInProgress = true;
+}
+
+void Simulator::onBuildingPlacementFinished(const Event& e)
+{
+    m_buildingPlacementInProgress = false;
 }
 
 void Simulator::sendGraphicsInstructions()
@@ -282,6 +298,9 @@ void Simulator::onClickToSelect(const Vec2& screenPos)
 
 void Simulator::resolveSelection(const Vec2& screenPos)
 {
+    if (m_buildingPlacementInProgress)
+        return;
+
     // Invalidate in-progress selection if mouse hasn't moved much
     if (m_isSelecting)
     {
@@ -312,6 +331,7 @@ void Simulator::resolveAction(const Vec2& screenPos)
 {
     auto target = whatIsAt(screenPos);
     bool gatherable = GameState::getInstance().hasComponent<CompResource>(target);
+    bool construction = GameState::getInstance().hasComponent<CompBuilding>(target);
 
     for (auto entity : m_currentUnitSelection.selectedEntities)
     {
@@ -341,6 +361,13 @@ void Simulator::resolveAction(const Vec2& screenPos)
 
             Event event(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, entity});
             m_publisher->publish(event);
+        }
+        else if (construction)
+        {
+            auto cmd = ObjectPool<CmdBuild>::acquire();
+            cmd->target = target;
+
+            publishEvent(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, entity});
         }
     }
 }
@@ -419,6 +446,10 @@ uint32_t Simulator::whatIsAt(const Vec2& screenPos)
                         {
                             return entity;
                         }
+                    }
+                    else if (gameState.hasComponent<CompBuilding>(entity))
+                    {
+
                     }
                     else [[unlikely]]
                     {

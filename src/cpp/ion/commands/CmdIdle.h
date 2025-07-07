@@ -16,7 +16,7 @@ class CmdIdle : public Command
   public:
     CmdIdle(uint32_t entityId)
     {
-        setEntityID(entityId);
+        m_entityID = entityId;
     }
 
   private:

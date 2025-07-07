@@ -13,6 +13,7 @@
 #include "commands/CmdIdle.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
+#include "components/CompBuilder.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
@@ -242,12 +243,17 @@ void DemoWorldCreator::createVillager(Ref<ion::Player> player, const Tile& tileP
     anim.animations[UnitAction::CARRYING_STONE].repeatable = true;
     anim.animations[UnitAction::CARRYING_STONE].speed = 15;
 
+    anim.animations[UnitAction::BUILDING].frames = 15;
+    anim.animations[UnitAction::BUILDING].repeatable = true;
+    anim.animations[UnitAction::BUILDING].speed = 25;
+
     gameState.addComponent(villager, transform);
     gameState.addComponent(villager, CompRendering());
     gameState.addComponent(villager, CompEntityInfo(3));
     gameState.addComponent(villager, CompAction(0));
     gameState.addComponent(villager, anim);
     gameState.addComponent(villager, CompDirty());
+    gameState.addComponent(villager, CompBuilder(10));
 
     // villager goes idle by default
     CompUnit unit;

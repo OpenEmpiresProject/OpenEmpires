@@ -61,6 +61,8 @@ class CmdMove : public Command
     Feet findClosestEdgeOfStaticEntity(uint32_t staticEntity,
                                        const Feet& fromPos,
                                        const Rect<float>& land);
+    bool overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& buildingRect);
+    bool isTargetCloseEnough();
 };
 } // namespace ion
 

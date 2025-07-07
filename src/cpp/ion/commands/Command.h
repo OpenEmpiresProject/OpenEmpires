@@ -3,6 +3,7 @@
 
 #include "GameSettings.h"
 #include "ServiceRegistry.h"
+#include "components/UnitComponentRefs.h"
 #include "utils/Types.h"
 
 #include <entt/entity/registry.hpp>
@@ -47,6 +48,7 @@ class Command
     void setEntityID(uint32_t entityID)
     {
         m_entityID = entityID;
+        m_components = std::make_shared<UnitComponentRefs>(entityID);
     }
 
     inline bool isExecutedAtLeastOnce() const
@@ -63,8 +65,9 @@ class Command
     inline static int s_totalTicks = 0;
 
     std::shared_ptr<GameSettings> m_settings;
-    int m_priority = 0;
+    int m_priority = -1;
     uint32_t m_entityID = entt::null;
+    Ref<UnitComponentRefs> m_components;
 
     bool m_executedAtLeastOnce = false;
 };

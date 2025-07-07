@@ -76,7 +76,9 @@ struct Event
         MOUSE_BTN_UP,
         UNIT_SELECTION,
         UNIT_TILE_MOVEMENT,
-        BUILDING_REQUESTED, // Use BuildingPlacementData
+        BUILDING_REQUESTED,          // Use BuildingPlacementData
+        BUILDING_PLACEMENT_STARTED,  // Use BuildingPlacementData
+        BUILDING_PLACEMENT_FINISHED, // Use BuildingPlacementData
         COMMAND_REQUEST,
         MAX_TYPE_MARKER,
     };

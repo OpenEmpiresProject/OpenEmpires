@@ -1,11 +1,11 @@
 #ifndef BUILDINGMANAGER_H
 #define BUILDINGMANAGER_H
 
-#include "Coordinates.h"
 #include "EventHandler.h"
 
 namespace ion
 {
+class Coordinates;
 class CompBuilding;
 class CompTransform;
 class CompPlayer;
@@ -19,16 +19,20 @@ class BuildingManager : public EventHandler
     BuildingPlacementData m_currentBuildingPlacement;
     Vec2 m_lastMouseScreenPos;
     Ref<Coordinates> m_coordinates;
+    UnitSelection m_unitSelection;
 
     void onMouseButtonUp(const Event& e);
     void onMouseMove(const Event& e);
     void onKeyUp(const Event& e);
     void onBuildingRequest(const Event& e);
+    void onTick(const Event& e);
+    void onUnitSelection(const Event& e);
     bool canPlaceBuildingAt(const CompBuilding& building, const Feet& feet, bool& outOfMap);
     void cancelBuilding();
-    void confirmBuilding(const CompBuilding& building,
-                         const CompTransform& transform,
-                         const CompPlayer& player);
+    void confirmBuilding(CompBuilding& building, CompEntityInfo& info, CompDirty& dirty);
+    void onCompleteBuilding(const CompBuilding& building,
+                            const CompTransform& transform,
+                            const CompPlayer& player);
 };
 
 } // namespace ion

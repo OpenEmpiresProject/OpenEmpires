@@ -112,17 +112,17 @@ void CmdMove::animate(CompAction& action,
 
 bool CmdMove::move(CompTransform& transform, int deltaTimeMs)
 {
+    if (isTargetCloseEnough())
+    {
+        spdlog::debug("Target is reached, move command is completed");
+        return true;
+    }
+
     if (!path.empty())
     {
         debug_assert(nextIntermediateGoal != Feet::null, "Next intermediate target must be set");
 
-        if (transform.position.distanceSquared(targetPos) < transform.goalRadiusSquared)
-        {
-            spdlog::debug("Reached targetPos before hopping all points");
-            return true;
-        }
-        else if (transform.position.distanceSquared(nextIntermediateGoal) <
-                 transform.goalRadiusSquared)
+        if (transform.position.distanceSquared(nextIntermediateGoal) < transform.goalRadiusSquared)
         {
             spdlog::debug("Next hop {} reached", nextIntermediateGoal.toString());
 
@@ -501,9 +501,6 @@ Feet CmdMove::findClosestEdgeOfStaticEntity(uint32_t staticEntity,
                                             const Feet& fromPos,
                                             const Rect<float>& land)
 {
-    auto& transform = Entity::getComponent<CompTransform>(targetEntity);
-    auto anchorTile = transform.position.toTile();
-
     float x_min = land.x;
     float x_max = land.x + land.w;
     float y_min = land.y;
@@ -513,4 +510,40 @@ Feet CmdMove::findClosestEdgeOfStaticEntity(uint32_t staticEntity,
     float closestY = std::clamp(fromPos.y, y_min, y_max);
 
     return Feet(closestX, closestY);
+}
+
+bool CmdMove::overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& buildingRect)
+{
+    float x_min = buildingRect.x;
+    float x_max = buildingRect.x + buildingRect.w;
+    float y_min = buildingRect.y;
+    float y_max = buildingRect.y + buildingRect.h;
+
+    float closestX = std::clamp(unitPos.x, x_min, x_max);
+    float closestY = std::clamp(unitPos.y, y_min, y_max);
+
+    float dx = unitPos.x - closestX;
+    float dy = unitPos.y - closestY;
+
+    return (dx * dx + dy * dy) <= radiusSq;
+}
+
+bool CmdMove::isTargetCloseEnough()
+{
+    auto& transformMy = Entity::getComponent<CompTransform>(m_entityID);
+
+    if (targetEntity != entt::null)
+    {
+        auto [transform, building] =
+            Entity::getComponents<CompTransform, CompBuilding>(targetEntity);
+        auto pos = transformMy.position;
+        auto radiusSq = transformMy.goalRadiusSquared;
+        auto rect = building.getLandInFeetRect(transform.position);
+
+        return overlaps(pos, radiusSq, rect);
+    }
+    else
+    {
+        return transformMy.position.distanceSquared(targetPos) < transformMy.goalRadiusSquared;
+    }
 }
