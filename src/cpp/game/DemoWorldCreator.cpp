@@ -65,7 +65,7 @@ void DemoWorldCreator::loadEntities()
     auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
     auto player = playerManager->createPlayer();
 
-    auto& gameState = GameState::getInstance();
+    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
 
     auto size = m_settings->getWorldSizeInTiles();
 
@@ -77,10 +77,10 @@ void DemoWorldCreator::loadEntities()
         }
     }
 
-    generateMap(gameState.gameMap);
-    createStoneOrGoldCluster(EntityTypes::ET_STONE, gameState.gameMap, 30, 30, 4);
-    createStoneOrGoldCluster(EntityTypes::ET_GOLD, gameState.gameMap, 20, 30, 4);
-    // createTree(gameState.gameMap, 5, 5);
+    generateMap(gameState->gameMap);
+    createStoneOrGoldCluster(EntityTypes::ET_STONE, gameState->gameMap, 30, 30, 4);
+    createStoneOrGoldCluster(EntityTypes::ET_GOLD, gameState->gameMap, 20, 30, 4);
+    // createTree(gameState->gameMap, 5, 5);
 
     createVillager(player, Tile(25, 25));
     createVillager(player, Tile(20, 20));
@@ -133,23 +133,23 @@ void DemoWorldCreator::loadEntities()
 
 void DemoWorldCreator::createTree(TileMap& map, uint32_t x, uint32_t y)
 {
-    auto& gameState = GameState::getInstance();
+    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
 
-    auto tree = gameState.createEntity();
+    auto tree = gameState->createEntity();
     auto transform = CompTransform(x * 256 + 128, y * 256 + 128);
     transform.face(Direction::NORTHWEST);
-    gameState.addComponent(tree, transform);
-    gameState.addComponent(tree, CompRendering());
+    gameState->addComponent(tree, transform);
+    gameState->addComponent(tree, CompRendering());
     CompGraphics gc;
     gc.entityID = tree;
     gc.entityType = EntityTypes::ET_TREE;
     gc.entitySubType = 0; // 0=main tree, 1=chopped
     gc.layer = GraphicLayer::ENTITIES;
 
-    gameState.addComponent(tree, gc);
+    gameState->addComponent(tree, gc);
     // TODO: Should not hard code
-    gameState.addComponent(tree, CompEntityInfo(EntityTypes::ET_TREE, 0, rand() % 10));
-    gameState.addComponent(tree, CompDirty());
+    gameState->addComponent(tree, CompEntityInfo(EntityTypes::ET_TREE, 0, rand() % 10));
+    gameState->addComponent(tree, CompDirty());
 
     // TODO: This doesn't work. Need to conslidate resource and graphic loading and handle this
     auto box = getBoundingBox(m_drs, 1254, 1);
@@ -159,8 +159,8 @@ void DemoWorldCreator::createTree(TileMap& map, uint32_t x, uint32_t y)
         GraphicAddon::Type::RHOMBUS,
         GraphicAddon::Rhombus{Constants::TILE_PIXEL_WIDTH, Constants::TILE_PIXEL_HEIGHT}};
 
-    gameState.addComponent(tree, sc);
-    gameState.addComponent(tree, CompResource(Resource(ResourceType::WOOD, 100)));
+    gameState->addComponent(tree, sc);
+    gameState->addComponent(tree, CompResource(Resource(ResourceType::WOOD, 100)));
 
     map.addEntity(MapLayerType::STATIC, Tile(x, y), tree);
 }
@@ -170,22 +170,22 @@ void DemoWorldCreator::createStoneOrGold(EntityTypes entityType,
                                          uint32_t x,
                                          uint32_t y)
 {
-    auto& gameState = GameState::getInstance();
+    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
 
-    auto stone = gameState.createEntity();
+    auto stone = gameState->createEntity();
     auto transform = CompTransform(x * 256 + 128, y * 256 + 128);
     transform.face(Direction::NORTHWEST);
-    gameState.addComponent(stone, transform);
-    gameState.addComponent(stone, CompRendering());
+    gameState->addComponent(stone, transform);
+    gameState->addComponent(stone, CompRendering());
     CompGraphics gc;
     gc.entityID = stone;
     gc.entityType = entityType;
     gc.entitySubType = 0;
     gc.layer = GraphicLayer::ENTITIES;
 
-    gameState.addComponent(stone, gc);
-    gameState.addComponent(stone, CompEntityInfo(entityType, 0, rand() % 7));
-    gameState.addComponent(stone, CompDirty());
+    gameState->addComponent(stone, gc);
+    gameState->addComponent(stone, CompEntityInfo(entityType, 0, rand() % 7));
+    gameState->addComponent(stone, CompDirty());
 
     // TODO: This doesn't work. Need to conslidate resource and graphic loading and handle this
     auto box = getBoundingBox(m_drs, 1034, 1);
@@ -195,20 +195,20 @@ void DemoWorldCreator::createStoneOrGold(EntityTypes entityType,
         GraphicAddon::Type::RHOMBUS,
         GraphicAddon::Rhombus{Constants::TILE_PIXEL_WIDTH, Constants::TILE_PIXEL_HEIGHT}};
 
-    gameState.addComponent(stone, sc);
+    gameState->addComponent(stone, sc);
 
     ResourceType resourceType = ResourceType::STONE;
     if (entityType == EntityTypes::ET_GOLD)
         resourceType = ResourceType::GOLD;
-    gameState.addComponent(stone, CompResource(Resource(resourceType, 1000)));
+    gameState->addComponent(stone, CompResource(Resource(resourceType, 1000)));
 
     gameMap.addEntity(MapLayerType::STATIC, Tile(x, y), stone);
 }
 
 void DemoWorldCreator::createVillager(Ref<ion::Player> player, const Tile& tilePos)
 {
-    auto& gameState = GameState::getInstance();
-    auto villager = gameState.createEntity();
+    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+    auto villager = gameState->createEntity();
     auto transform = CompTransform(tilePos.x * 256 + 128, tilePos.x * 256 + 50);
     transform.face(Direction::SOUTH);
     transform.hasRotation = true;
@@ -247,19 +247,19 @@ void DemoWorldCreator::createVillager(Ref<ion::Player> player, const Tile& tileP
     anim.animations[UnitAction::BUILDING].repeatable = true;
     anim.animations[UnitAction::BUILDING].speed = 25;
 
-    gameState.addComponent(villager, transform);
-    gameState.addComponent(villager, CompRendering());
-    gameState.addComponent(villager, CompEntityInfo(3));
-    gameState.addComponent(villager, CompAction(0));
-    gameState.addComponent(villager, anim);
-    gameState.addComponent(villager, CompDirty());
-    gameState.addComponent(villager, CompBuilder(10));
+    gameState->addComponent(villager, transform);
+    gameState->addComponent(villager, CompRendering());
+    gameState->addComponent(villager, CompEntityInfo(3));
+    gameState->addComponent(villager, CompAction(0));
+    gameState->addComponent(villager, anim);
+    gameState->addComponent(villager, CompDirty());
+    gameState->addComponent(villager, CompBuilder(10));
 
     // villager goes idle by default
     CompUnit unit;
     unit.lineOfSight = 256 * 5;
     unit.commandQueue.push(ObjectPool<CmdIdle>::acquire(villager));
-    gameState.addComponent(villager, unit);
+    gameState->addComponent(villager, unit);
 
     CompGraphics gc;
     gc.entityID = villager;
@@ -280,7 +280,7 @@ void DemoWorldCreator::createVillager(Ref<ion::Player> player, const Tile& tileP
     gc.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::BLACK,
                                 DebugOverlay::FixedPosition::BOTTOM_CENTER,
                                 DebugOverlay::FixedPosition::CENTER});
-    gameState.addComponent(villager, gc);
+    gameState->addComponent(villager, gc);
 
     CompSelectible sc;
     auto box = getBoundingBox(m_drs, 1388, 1);
@@ -288,16 +288,16 @@ void DemoWorldCreator::createVillager(Ref<ion::Player> player, const Tile& tileP
     sc.selectionIndicator = {GraphicAddon::Type::ISO_CIRCLE,
                              GraphicAddon::IsoCircle{10, Vec2(0, 0)}};
 
-    gameState.addComponent(villager, sc);
-    gameState.addComponent(villager, CompPlayer{player});
+    gameState->addComponent(villager, sc);
+    gameState->addComponent(villager, CompPlayer{player});
 
     CompResourceGatherer gatherer{
         .capacity = 100,
     };
-    gameState.addComponent(villager, gatherer);
+    gameState->addComponent(villager, gatherer);
 
     auto newTile = transform.position.toTile();
-    gameState.gameMap.addEntity(MapLayerType::UNITS, newTile, villager);
+    gameState->gameMap.addEntity(MapLayerType::UNITS, newTile, villager);
 
     player->getFogOfWar()->markAsExplored(transform.position, unit.lineOfSight);
 }
@@ -444,15 +444,15 @@ void DemoWorldCreator::generateMap(TileMap& gameMap)
 
 void DemoWorldCreator::createTile(uint32_t x,
                                   uint32_t y,
-                                  ion::GameState& gameState,
+                                  ion::Ref<ion::GameState> gameState,
                                   EntityTypes entityType)
 {
     auto size = m_settings->getWorldSizeInTiles();
 
-    auto tile = gameState.createEntity();
-    gameState.addComponent(tile, CompTransform(x * 256, y * 256));
-    gameState.addComponent(tile, CompRendering());
-    gameState.addComponent(tile, CompDirty());
+    auto tile = gameState->createEntity();
+    gameState->addComponent(tile, CompTransform(x * 256, y * 256));
+    gameState->addComponent(tile, CompRendering());
+    gameState->addComponent(tile, CompDirty());
 
     CompGraphics gc;
     gc.entityID = tile;
@@ -464,7 +464,7 @@ void DemoWorldCreator::createTile(uint32_t x,
     int newY = x;
     // AOE2 standard tiling rule. From OpenAge documentation
     int tileVariation = (newX % tc) + ((newY % tc) * tc) + 1;
-    gameState.addComponent(tile, CompEntityInfo(entityType, 0, tileVariation));
+    gameState->addComponent(tile, CompEntityInfo(entityType, 0, tileVariation));
 
     DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, ion::Color::GREY,
                          DebugOverlay::FixedPosition::BOTTOM_CENTER};
@@ -473,9 +473,9 @@ void DemoWorldCreator::createTile(uint32_t x,
     gc.debugOverlays.push_back(overlay);
     gc.layer = GraphicLayer::GROUND;
 
-    auto map = gameState.gameMap;
+    auto map = gameState->gameMap;
     map.addEntity(MapLayerType::GROUND, Tile(x, y), tile);
-    gameState.addComponent(tile, gc);
+    gameState->addComponent(tile, gc);
 }
 
 void DemoWorldCreator::init()

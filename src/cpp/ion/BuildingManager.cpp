@@ -104,7 +104,8 @@ void BuildingManager::onTick(const Event& e)
 {
     for (auto entity : CompDirty::g_dirtyEntities)
     {
-        if (GameState::getInstance().hasComponent<CompBuilding>(entity))
+        if (ServiceRegistry::getInstance().getService<GameState>()->hasComponent<CompBuilding>(
+                entity))
         {
             auto [transform, building, info, player] =
                 Entity::getComponents<CompTransform, CompBuilding, CompEntityInfo, CompPlayer>(
@@ -117,7 +118,7 @@ void BuildingManager::onTick(const Event& e)
 
             if (building.constructionProgress > 1 && building.isInStaticMap == false)
             {
-                auto& gameMap = GameState::getInstance().gameMap;
+                auto& gameMap = ServiceRegistry::getInstance().getService<GameState>()->gameMap;
 
                 for (size_t i = 0; i < building.size.width; i++)
                 {
@@ -142,7 +143,8 @@ bool BuildingManager::canPlaceBuildingAt(const CompBuilding& building,
 {
     auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
     auto tile = feet.toTile();
-    auto staticMap = GameState::getInstance().gameMap.getMap(MapLayerType::STATIC);
+    auto staticMap = ServiceRegistry::getInstance().getService<GameState>()->gameMap.getMap(
+        MapLayerType::STATIC);
 
     auto isValidTile = [&](const Tile& tile)
     {
@@ -207,7 +209,7 @@ void BuildingManager::confirmBuilding(CompTransform& transform,
     info.variation = building.getVisualVariation();
     dirty.markDirty(m_currentBuildingPlacement.entity);
 
-    auto& gameMap = GameState::getInstance().gameMap;
+    auto& gameMap = ServiceRegistry::getInstance().getService<GameState>()->gameMap;
 
     for (size_t i = 0; i < building.size.width; i++)
     {

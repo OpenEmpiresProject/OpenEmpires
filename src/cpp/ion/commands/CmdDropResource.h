@@ -71,8 +71,9 @@ class CmdDropResource : public Command
     void animate()
     {
         auto [action, animation, dirty] =
-            GameState::getInstance().getComponents<CompAction, CompAnimation, CompDirty>(
-                m_entityID);
+            ServiceRegistry::getInstance()
+                .getService<GameState>()
+                ->getComponents<CompAction, CompAnimation, CompDirty>(m_entityID);
 
         action.action = gatherer->getCarryingAction(resourceType);
         auto& actionAnimation = animation.animations[action.action];

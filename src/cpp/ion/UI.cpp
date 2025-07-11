@@ -15,18 +15,18 @@ using namespace ion;
 using namespace ion::ui;
 
 Element::Element(const GraphicsID& graphicsId, Ref<Element> parent)
-    : id(GameState::getInstance().createEntity()), parent(parent)
+    : id(ServiceRegistry::getInstance().getService<GameState>()->createEntity()), parent(parent)
 {
-    GameState::getInstance().addComponent(id, CompUIElement());
-    GameState::getInstance().addComponent(id, CompTransform());
+    ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, CompUIElement());
+    ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, CompTransform());
 
     CompGraphics graphics;
     graphics.entityID = id;
     graphics.layer = GraphicLayer::UI;
-    GameState::getInstance().addComponent(id, graphics);
-    GameState::getInstance().addComponent(id, CompRendering());
-    GameState::getInstance().addComponent(id, CompDirty());
-    GameState::getInstance().addComponent(
+    ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, graphics);
+    ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, CompRendering());
+    ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, CompDirty());
+    ServiceRegistry::getInstance().getService<GameState>()->addComponent(
         id, CompEntityInfo(graphicsId.entityType, graphicsId.entitySubType, graphicsId.variation));
 }
 
@@ -54,8 +54,9 @@ void Element::updateGraphicCommand()
 {
     auto coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
     auto [ui, transform, info, dirty] =
-        GameState::getInstance()
-            .getComponents<CompUIElement, CompTransform, CompEntityInfo, CompDirty>(id);
+        ServiceRegistry::getInstance()
+            .getService<GameState>()
+            ->getComponents<CompUIElement, CompTransform, CompEntityInfo, CompDirty>(id);
     auto pixelPos = getAbsoluteRect().position();
     // HACK: We are hacking transform's position to carry UI element positions as well.
     // But it is usually meant to carry positions in Feet.
@@ -93,7 +94,8 @@ void Label::updateGraphicCommand()
 {
     Element::updateGraphicCommand();
 
-    auto& ui = GameState::getInstance().getComponent<CompUIElement>(id);
+    auto& ui =
+        ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompUIElement>(id);
     ui.text = text;
     ui.type = UIRenderingType::TEXT;
 }

@@ -88,8 +88,8 @@ uint32_t PlayerActionResolver::createBuilding(const Feet& targetFeetPos,
                                               Size size,
                                               uint8_t resourceTypesAccept)
 {
-    auto& gameState = GameState::getInstance();
-    auto entity = gameState.createEntity();
+    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+    auto entity = gameState->createEntity();
     auto transform = CompTransform(targetFeetPos);
     transform.face(Direction::NORTHWEST);
     Entity::addComponent(entity, transform);

@@ -49,23 +49,34 @@ class CmdGatherResource : public Command
         // TODO: Reset frame to zero (since this is a new command)
         setTarget(target);
 
-        auto& playerComp = GameState::getInstance().getComponent<CompPlayer>(m_entityID);
+        auto& playerComp =
+            ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompPlayer>(
+                m_entityID);
         player = playerComp.player;
         coordinateSystem = ServiceRegistry::getInstance().getService<Coordinates>();
         collectedResourceAmount = 0;
-        gatherer = &GameState::getInstance().getComponent<CompResourceGatherer>(m_entityID);
+        gatherer = &ServiceRegistry::getInstance()
+                        .getService<GameState>()
+                        ->getComponent<CompResourceGatherer>(m_entityID);
     }
 
     void setTarget(uint32_t targetEntity)
     {
         target = targetEntity;
-        auto& transformTarget = GameState::getInstance().getComponent<CompTransform>(target);
+        auto& transformTarget =
+            ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompTransform>(
+                target);
         targetPosition = transformTarget.position;
 
-        debug_assert(GameState::getInstance().hasComponent<CompResource>(target),
-                     "Target entity is not a resource");
+        debug_assert(
+            ServiceRegistry::getInstance().getService<GameState>()->hasComponent<CompResource>(
+                target),
+            "Target entity is not a resource");
 
-        targetResource = &GameState::getInstance().getComponent<CompResource>(target).resource;
+        targetResource = &ServiceRegistry::getInstance()
+                              .getService<GameState>()
+                              ->getComponent<CompResource>(target)
+                              .resource;
     }
 
     bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) override
@@ -129,7 +140,9 @@ class CmdGatherResource : public Command
     {
         if (target != entt::null)
         {
-            CompEntityInfo info = GameState::getInstance().getComponent<CompEntityInfo>(target);
+            CompEntityInfo info = ServiceRegistry::getInstance()
+                                      .getService<GameState>()
+                                      ->getComponent<CompEntityInfo>(target);
             return !info.isDestroyed;
         }
         return false;
@@ -137,7 +150,9 @@ class CmdGatherResource : public Command
 
     bool isCloseEnough()
     {
-        auto& transformMy = GameState::getInstance().getComponent<CompTransform>(m_entityID);
+        auto& transformMy =
+            ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompTransform>(
+                m_entityID);
         auto threshold = transformMy.goalRadius + Constants::FEET_PER_TILE / 2;
         auto distanceSquared = transformMy.position.distanceSquared(targetPosition);
         // spdlog::debug("Check closeness. my {}, target {}", transformMy.position.toString(),
@@ -182,14 +197,19 @@ class CmdGatherResource : public Command
             actualDelta = std::min(actualDelta, (gatherer->capacity - gatherer->gatheredAmount));
             targetResource->amount -= actualDelta;
             gatherer->gatheredAmount += actualDelta;
-            GameState::getInstance().getComponent<CompDirty>(target).markDirty(target);
+            ServiceRegistry::getInstance()
+                .getService<GameState>()
+                ->getComponent<CompDirty>(target)
+                .markDirty(target);
         }
     }
 
     bool lookForAnotherSimilarResource()
     {
         spdlog::debug("Looking for another resource...");
-        auto& transformMy = GameState::getInstance().getComponent<CompTransform>(m_entityID);
+        auto& transformMy =
+            ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompTransform>(
+                m_entityID);
         auto tilePos = transformMy.position.toTile();
 
         auto newResource = findClosestResource(targetResource->type, tilePos,
@@ -211,16 +231,22 @@ class CmdGatherResource : public Command
     bool hasResource(uint8_t resourceType, const Tile& posTile, uint32_t& resourceEntity)
     {
         resourceEntity = entt::null;
-        auto& map = GameState::getInstance().gameMap;
+        auto& map = ServiceRegistry::getInstance().getService<GameState>()->gameMap;
         auto e = map.getEntity(MapLayerType::STATIC, posTile);
         if (e != entt::null)
         {
-            CompEntityInfo info = GameState::getInstance().getComponent<CompEntityInfo>(e);
+            CompEntityInfo info = ServiceRegistry::getInstance()
+                                      .getService<GameState>()
+                                      ->getComponent<CompEntityInfo>(e);
             if (!info.isDestroyed)
             {
-                if (GameState::getInstance().hasComponent<CompResource>(e))
+                if (ServiceRegistry::getInstance()
+                        .getService<GameState>()
+                        ->hasComponent<CompResource>(e))
                 {
-                    CompResource resource = GameState::getInstance().getComponent<CompResource>(e);
+                    CompResource resource = ServiceRegistry::getInstance()
+                                                .getService<GameState>()
+                                                ->getComponent<CompResource>(e);
                     if (resource.resource.type == resourceType)
                     {
                         resourceEntity = e;

@@ -119,7 +119,7 @@ void Simulator::onTickStart()
 
     if (!m_initialized)
     {
-        GameState::getInstance().getEntities<CompDirty>().each(
+        ServiceRegistry::getInstance().getService<GameState>()->getEntities<CompDirty>().each(
             [this](uint32_t entity, CompDirty& dirty) { dirty.markDirty(entity); });
         m_initialized = true;
     }
@@ -139,7 +139,7 @@ void Simulator::onTickEnd()
 void Simulator::onSynchorizedBlock()
 {
     // TODO: Make this work, might need to delay destroying entities
-    // GameState::getInstance().destroyAllPendingEntities();
+    // ServiceRegistry::getInstance().getService<GameState>()->destroyAllPendingEntities();
 }
 
 void Simulator::onUnitSelection(const Event& e)
@@ -149,9 +149,12 @@ void Simulator::onUnitSelection(const Event& e)
     {
         auto resourceEntity = selectedEntities[0];
 
-        if (GameState::getInstance().hasComponent<CompResource>(resourceEntity))
+        if (ServiceRegistry::getInstance().getService<GameState>()->hasComponent<CompResource>(
+                resourceEntity))
         {
-            auto resource = GameState::getInstance().getComponent<CompResource>(resourceEntity);
+            auto resource =
+                ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompResource>(
+                    resourceEntity);
             spdlog::info("Selected entity has {} resources", resource.resource.amount);
         }
     }
@@ -169,11 +172,11 @@ void Simulator::onBuildingPlacementFinished(const Event& e)
 
 void Simulator::sendGraphicsInstructions()
 {
-    auto& state = GameState::getInstance();
+    auto state = ServiceRegistry::getInstance().getService<GameState>();
 
     for (auto entity : CompDirty::g_dirtyEntities)
     {
-        auto& gc = state.getComponent<CompGraphics>(entity);
+        auto& gc = state->getComponent<CompGraphics>(entity);
         auto instruction = ObjectPool<CompGraphics>::acquire();
         *instruction = gc;
         sendGraphiInstruction(instruction);
@@ -182,11 +185,11 @@ void Simulator::sendGraphicsInstructions()
 
 void Simulator::updateGraphicComponents()
 {
-    auto& state = GameState::getInstance();
+    auto state = ServiceRegistry::getInstance().getService<GameState>();
     for (auto entity : CompDirty::g_dirtyEntities)
     {
         auto [transform, entityInfo, gc] =
-            state.getComponents<CompTransform, CompEntityInfo, CompGraphics>(entity);
+            state->getComponents<CompTransform, CompEntityInfo, CompGraphics>(entity);
 
         gc.positionInFeet = transform.position;
         gc.direction = transform.getIsometricDirection();
@@ -195,9 +198,9 @@ void Simulator::updateGraphicComponents()
         gc.entityType = entityInfo.entityType;
         gc.isDestroyed = entityInfo.isDestroyed;
 
-        if (state.hasComponent<CompSelectible>(entity))
+        if (state->hasComponent<CompSelectible>(entity))
         {
-            auto select = state.getComponent<CompSelectible>(entity);
+            auto select = state->getComponent<CompSelectible>(entity);
             if (select.isSelected)
             {
                 // TODO: Respect other addons
@@ -209,21 +212,21 @@ void Simulator::updateGraphicComponents()
             }
         }
 
-        if (state.hasComponent<CompAnimation>(entity))
+        if (state->hasComponent<CompAnimation>(entity))
         {
-            auto animation = state.getComponent<CompAnimation>(entity);
+            auto animation = state->getComponent<CompAnimation>(entity);
             gc.frame = animation.frame;
         }
 
-        if (state.hasComponent<CompAction>(entity))
+        if (state->hasComponent<CompAction>(entity))
         {
-            auto action = state.getComponent<CompAction>(entity);
+            auto action = state->getComponent<CompAction>(entity);
             gc.action = action.action;
         }
 
-        if (state.hasComponent<CompBuilding>(entity))
+        if (state->hasComponent<CompBuilding>(entity))
         {
-            auto building = state.getComponent<CompBuilding>(entity);
+            auto building = state->getComponent<CompBuilding>(entity);
             if (building.validPlacement)
                 gc.shading = Color::NONE;
             else
@@ -232,12 +235,12 @@ void Simulator::updateGraphicComponents()
             gc.landSize = building.size;
         }
 
-        if (state.hasComponent<CompUIElement>(entity))
+        if (state->hasComponent<CompUIElement>(entity))
         {
             gc.positionInFeet = Feet::null;
             gc.positionInScreenUnits = {transform.position.x, transform.position.y};
 
-            auto ui = state.getComponent<CompUIElement>(entity);
+            auto ui = state->getComponent<CompUIElement>(entity);
             if (ui.type == UIRenderingType::TEXT)
             {
                 GraphicAddon addon{GraphicAddon::Type::TEXT, GraphicAddon::Text{ui.text}};
@@ -256,26 +259,29 @@ void Simulator::onSelectingUnits(const Vec2& startScreenPos, const Vec2& endScre
     int selectionTop = std::min(startScreenPos.y, endScreenPos.y);
     int selectionBottom = std::max(startScreenPos.y, endScreenPos.y);
 
-    GameState::getInstance().getEntities<CompUnit, CompTransform, CompDirty>().each(
-        [this, selectionLeft, selectionRight, selectionTop, selectionBottom](
-            uint32_t entity, CompUnit& unit, CompTransform& transform, CompDirty& dirty)
-        {
-            auto screenPos = m_coordinates->feetToScreenUnits(transform.position);
-            int unitRight = screenPos.x + transform.selectionBoxWidth / 2;
-            int unitBottom = screenPos.y;
-            int unitLeft = screenPos.x - transform.selectionBoxWidth / 2;
-            int unitTop = screenPos.y - transform.selectionBoxHeight;
-
-            bool intersects = !(unitRight < selectionLeft || unitLeft > selectionRight ||
-                                unitBottom < selectionTop || unitTop > selectionBottom);
-
-            if (intersects)
+    ServiceRegistry::getInstance()
+        .getService<GameState>()
+        ->getEntities<CompUnit, CompTransform, CompDirty>()
+        .each(
+            [this, selectionLeft, selectionRight, selectionTop, selectionBottom](
+                uint32_t entity, CompUnit& unit, CompTransform& transform, CompDirty& dirty)
             {
-                spdlog::info("Unit {} is selected", entity);
+                auto screenPos = m_coordinates->feetToScreenUnits(transform.position);
+                int unitRight = screenPos.x + transform.selectionBoxWidth / 2;
+                int unitBottom = screenPos.y;
+                int unitLeft = screenPos.x - transform.selectionBoxWidth / 2;
+                int unitTop = screenPos.y - transform.selectionBoxHeight;
 
-                addEntitiesToSelection({entity});
-            }
-        });
+                bool intersects = !(unitRight < selectionLeft || unitLeft > selectionRight ||
+                                    unitBottom < selectionTop || unitTop > selectionBottom);
+
+                if (intersects)
+                {
+                    spdlog::info("Unit {} is selected", entity);
+
+                    addEntitiesToSelection({entity});
+                }
+            });
 
     if (m_currentUnitSelection.selectedEntities.size() > 0)
     {
@@ -332,8 +338,10 @@ void Simulator::resolveAction(const Vec2& screenPos)
     auto result = whatIsAt(screenPos);
     auto target = result.entity;
     auto layer = result.layer;
-    bool gatherable = GameState::getInstance().hasComponent<CompResource>(target);
-    bool construction = GameState::getInstance().hasComponent<CompBuilding>(target);
+    bool gatherable =
+        ServiceRegistry::getInstance().getService<GameState>()->hasComponent<CompResource>(target);
+    bool construction =
+        ServiceRegistry::getInstance().getService<GameState>()->hasComponent<CompBuilding>(target);
 
     for (auto entity : m_currentUnitSelection.selectedEntities)
     {
@@ -343,7 +351,8 @@ void Simulator::resolveAction(const Vec2& screenPos)
             // TODO: Ensure target is within the map
             // TODO: Ensure we have control over this unit
 
-            if (GameState::getInstance().hasComponent<CompUnit>(entity))
+            if (ServiceRegistry::getInstance().getService<GameState>()->hasComponent<CompUnit>(
+                    entity))
             {
                 auto worldPos = m_coordinates->screenUnitsToFeet(screenPos);
                 auto cmd = ObjectPool<CmdMove>::acquire();
@@ -376,13 +385,14 @@ void Simulator::resolveAction(const Vec2& screenPos)
 
 void Simulator::addEntitiesToSelection(const std::vector<uint32_t>& selectedEntities)
 {
-    auto& gameState = GameState::getInstance();
+    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
     for (auto entity : selectedEntities)
     {
-        if (gameState.hasComponent<CompSelectible>(entity)) [[likely]]
+        if (gameState->hasComponent<CompSelectible>(entity)) [[likely]]
         {
-            auto [dirty, select] =
-                GameState::getInstance().getComponents<CompDirty, CompSelectible>(entity);
+            auto [dirty, select] = ServiceRegistry::getInstance()
+                                       .getService<GameState>()
+                                       ->getComponents<CompDirty, CompSelectible>(entity);
 
             m_currentUnitSelection.selectedEntities.push_back(entity);
             select.isSelected = true;
@@ -403,8 +413,14 @@ void Simulator::clearSelection()
     // Clear any existing selections' addons
     for (auto& entity : m_currentUnitSelection.selectedEntities)
     {
-        GameState::getInstance().getComponent<CompSelectible>(entity).isSelected = false;
-        GameState::getInstance().getComponents<CompDirty>(entity).markDirty(entity);
+        ServiceRegistry::getInstance()
+            .getService<GameState>()
+            ->getComponent<CompSelectible>(entity)
+            .isSelected = false;
+        ServiceRegistry::getInstance()
+            .getService<GameState>()
+            ->getComponents<CompDirty>(entity)
+            .markDirty(entity);
     }
     m_currentUnitSelection.selectedEntities.clear();
 }
@@ -412,7 +428,7 @@ void Simulator::clearSelection()
 Simulator::TileMapQueryResult Simulator::whatIsAt(const Vec2& screenPos)
 {
     auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
-    auto& gameState = GameState::getInstance();
+    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
 
     auto clickedCellPos = m_coordinates->screenUnitsToTiles(screenPos);
 
@@ -429,15 +445,15 @@ Simulator::TileMapQueryResult Simulator::whatIsAt(const Vec2& screenPos)
     {
         for (pos.x = gridStartPos.x; pos.x >= clickedCellPos.x; pos.x--)
         {
-            if (gameState.gameMap.isOccupied(MapLayerType::STATIC, pos))
+            if (gameState->gameMap.isOccupied(MapLayerType::STATIC, pos))
             {
-                auto entity = gameState.gameMap.getEntity(MapLayerType::STATIC, pos);
+                auto entity = gameState->gameMap.getEntity(MapLayerType::STATIC, pos);
                 if (entity != entt::null)
                 {
-                    if (gameState.hasComponent<CompSelectible>(entity)) [[likely]]
+                    if (gameState->hasComponent<CompSelectible>(entity)) [[likely]]
                     {
                         auto [select, transform] =
-                            gameState.getComponents<CompSelectible, CompTransform>(entity);
+                            gameState->getComponents<CompSelectible, CompTransform>(entity);
                         auto entityScreenPos = m_coordinates->feetToScreenUnits(transform.position);
 
                         const auto& boundingBox = select.getBoundingBox(transform.getDirection());
@@ -450,7 +466,7 @@ Simulator::TileMapQueryResult Simulator::whatIsAt(const Vec2& screenPos)
                             return {.entity = entity, .layer = MapLayerType::STATIC};
                         }
                     }
-                    else if (gameState.hasComponent<CompBuilding>(entity))
+                    else if (gameState->hasComponent<CompBuilding>(entity))
                     {
                         spdlog::debug("A building at the clicked position");
                         return {.entity = entity, .layer = MapLayerType::STATIC};
@@ -462,12 +478,12 @@ Simulator::TileMapQueryResult Simulator::whatIsAt(const Vec2& screenPos)
                     }
                 }
             }
-            else if (gameState.gameMap.isOccupied(MapLayerType::ON_GROUND, pos))
+            else if (gameState->gameMap.isOccupied(MapLayerType::ON_GROUND, pos))
             {
-                auto entity = gameState.gameMap.getEntity(MapLayerType::ON_GROUND, pos);
+                auto entity = gameState->gameMap.getEntity(MapLayerType::ON_GROUND, pos);
                 if (entity != entt::null)
                 {
-                    if (gameState.hasComponent<CompBuilding>(entity))
+                    if (gameState->hasComponent<CompBuilding>(entity))
                     {
                         spdlog::debug("A construction site at the clicked position");
                         return {.entity = entity, .layer = MapLayerType::ON_GROUND};

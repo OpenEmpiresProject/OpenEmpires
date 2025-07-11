@@ -30,7 +30,7 @@ void CommandCenter::onEvent(const Event& e)
     {
         Command::incrementTotalTicks();
         std::list<Command*> newCommands;
-        GameState::getInstance().getEntities<CompUnit>().each(
+        ServiceRegistry::getInstance().getService<GameState>()->getEntities<CompUnit>().each(
             [this, &newCommands, &e](uint32_t entity, CompUnit& unit)
             {
                 if (!unit.commandQueue.empty())
@@ -68,7 +68,9 @@ void CommandCenter::onEvent(const Event& e)
             data.command->setPriority(Command::DEFAULT_PRIORITY + Command::CHILD_PRIORITY_OFFSET);
         data.command->setEntityID(data.entity);
 
-        CompUnit& unit = GameState::getInstance().getComponent<CompUnit>(data.entity);
+        CompUnit& unit =
+            ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompUnit>(
+                data.entity);
 
         // Remove all the components except the default one (i.e. idle)
         while (unit.commandQueue.size() > 1)

@@ -28,18 +28,20 @@ void ResourceManager::onTick(const Event& e)
 {
     for (auto entity : CompDirty::g_dirtyEntities)
     {
-        if (GameState::getInstance().hasComponent<CompResource>(entity))
+        if (ServiceRegistry::getInstance().getService<GameState>()->hasComponent<CompResource>(
+                entity))
         {
             auto [resource, dirty, info, select, transform] =
-                GameState::getInstance()
-                    .getComponents<CompResource, CompDirty, CompEntityInfo, CompSelectible,
-                                   CompTransform>(entity);
+                ServiceRegistry::getInstance()
+                    .getService<GameState>()
+                    ->getComponents<CompResource, CompDirty, CompEntityInfo, CompSelectible,
+                                    CompTransform>(entity);
 
             if (resource.resource.amount == 0)
             {
                 info.isDestroyed = true;
-                GameState::getInstance().gameMap.removeStaticEntity(transform.position.toTile(),
-                                                                    entity);
+                ServiceRegistry::getInstance().getService<GameState>()->gameMap.removeStaticEntity(
+                    transform.position.toTile(), entity);
             }
             else
             {

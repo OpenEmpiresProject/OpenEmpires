@@ -476,7 +476,9 @@ void RendererImpl::updateRenderingComponents()
 
     for (const auto& instruction : frameData)
     {
-        auto& rc = GameState::getInstance().getComponent<CompRendering>(instruction->entityID);
+        auto& rc =
+            ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompRendering>(
+                instruction->entityID);
         static_cast<CompGraphics&>(rc) = *instruction;
         rc.additionalZOffset = 0;
 

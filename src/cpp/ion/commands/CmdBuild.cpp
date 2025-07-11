@@ -98,7 +98,10 @@ void CmdBuild::moveCloser(std::list<Command*>& subCommands)
 {
     debug_assert(target != entt::null, "Proposed entity to build is null");
 
-    auto targetPosition = GameState::getInstance().getComponent<CompTransform>(target).position;
+    auto targetPosition = ServiceRegistry::getInstance()
+                              .getService<GameState>()
+                              ->getComponent<CompTransform>(target)
+                              .position;
 
     spdlog::debug("Target {} at {} is not close enough to build, moving...", target,
                   targetPosition.toString());

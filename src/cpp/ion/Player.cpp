@@ -70,7 +70,8 @@ void Player::addEntity(uint32_t entityId)
 {
     m_ownedEntities.insert(entityId);
 
-    if (GameState::getInstance().hasComponent<CompBuilding>(entityId))
+    if (ServiceRegistry::getInstance().getService<GameState>()->hasComponent<CompBuilding>(
+            entityId))
     {
         m_myBuildings.insert(entityId);
     }
@@ -80,7 +81,8 @@ void Player::removeEntity(uint32_t entityId)
 {
     m_ownedEntities.erase(entityId);
 
-    if (GameState::getInstance().hasComponent<CompBuilding>(entityId))
+    if (ServiceRegistry::getInstance().getService<GameState>()->hasComponent<CompBuilding>(
+            entityId))
     {
         m_myBuildings.erase(entityId);
     }

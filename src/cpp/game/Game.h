@@ -47,15 +47,17 @@ class Game
         settings->setWindowDimensions(1366, 768);
         ion::ServiceRegistry::getInstance().registerService(settings);
 
-        ion::GameState::getInstance().gameMap.init(settings->getWorldSizeInTiles().width,
-                                                   settings->getWorldSizeInTiles().height);
-
         std::stop_source stopSource;
         std::stop_token stopToken = stopSource.get_token();
 
         ion::ThreadSynchronizer<ion::FrameData> simulatorRendererSynchronizer;
         // game::GraphicsLoaderFromImages graphicsLoader;
         game::GraphicsLoaderFromDRS graphicsLoader;
+
+        auto gameState = std::make_shared<ion::GameState>();
+        gameState->gameMap.init(settings->getWorldSizeInTiles().width,
+                                settings->getWorldSizeInTiles().height);
+        ion::ServiceRegistry::getInstance().registerService(gameState);
 
         auto coordinates = std::make_shared<ion::Coordinates>(settings);
         ion::ServiceRegistry::getInstance().registerService(coordinates);

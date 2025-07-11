@@ -31,8 +31,9 @@ class CmdIdle : public Command
     bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) override
     {
         auto [action, animation, dirty] =
-            GameState::getInstance().getComponents<CompAction, CompAnimation, CompDirty>(
-                m_entityID);
+            ServiceRegistry::getInstance()
+                .getService<GameState>()
+                ->getComponents<CompAction, CompAnimation, CompDirty>(m_entityID);
         animate(action, animation, dirty);
         return false; // Idling never completes
     }

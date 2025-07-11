@@ -77,7 +77,7 @@ const std::vector<CompRendering*>& ZOrderStrategyWithSlicing::zOrder(const Coord
         m_objectsToRenderByLayer[i].clear();
     }
 
-    GameState::getInstance().getEntities<CompRendering>().each(
+    ServiceRegistry::getInstance().getService<GameState>()->getEntities<CompRendering>().each(
         [this, &coordinates](CompRendering& rc)
         {
             if (!rc.isBig())
