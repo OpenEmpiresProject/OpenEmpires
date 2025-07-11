@@ -2,6 +2,7 @@
 #define COMMAND_H
 
 #include "GameSettings.h"
+#include "GameState.h"
 #include "ServiceRegistry.h"
 #include "components/UnitComponentRefs.h"
 #include "utils/Types.h"
@@ -20,6 +21,7 @@ class Command
     Command()
     {
         m_settings = ServiceRegistry::getInstance().getService<GameSettings>();
+        m_gameState = ServiceRegistry::getInstance().getService<GameState>();
     }
 
     virtual ~Command() = default;
@@ -48,7 +50,7 @@ class Command
     void setEntityID(uint32_t entityID)
     {
         m_entityID = entityID;
-        m_components = std::make_shared<UnitComponentRefs>(entityID);
+        m_components = std::make_shared<UnitComponentRefs>(m_gameState, entityID);
     }
 
     inline bool isExecutedAtLeastOnce() const
@@ -65,6 +67,7 @@ class Command
     inline static int s_totalTicks = 0;
 
     std::shared_ptr<GameSettings> m_settings;
+    std::shared_ptr<GameState> m_gameState;
     int m_priority = -1;
     uint32_t m_entityID = entt::null;
     Ref<UnitComponentRefs> m_components;

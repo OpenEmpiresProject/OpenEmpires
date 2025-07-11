@@ -47,9 +47,9 @@ class CmdDropResource : public Command
 
     void onQueue() override
     {
-        auto& playerComp = Entity::getComponent<CompPlayer>(m_entityID);
+        auto& playerComp = m_gameState->getComponent<CompPlayer>(m_entityID);
         player = playerComp.player;
-        gatherer = &Entity::getComponent<CompResourceGatherer>(m_entityID);
+        gatherer = &(m_gameState->getComponent<CompResourceGatherer>(m_entityID));
     }
 
     bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) override
@@ -71,9 +71,7 @@ class CmdDropResource : public Command
     void animate()
     {
         auto [action, animation, dirty] =
-            ServiceRegistry::getInstance()
-                .getService<GameState>()
-                ->getComponents<CompAction, CompAnimation, CompDirty>(m_entityID);
+            m_gameState->getComponents<CompAction, CompAnimation, CompDirty>(m_entityID);
 
         action.action = gatherer->getCarryingAction(resourceType);
         auto& actionAnimation = animation.animations[action.action];
@@ -85,7 +83,7 @@ class CmdDropResource : public Command
     {
         if (dropOffEntity != entt::null)
         {
-            auto& dropOff = Entity::getComponent<CompTransform>(dropOffEntity);
+            auto& dropOff = m_gameState->getComponent<CompTransform>(dropOffEntity);
 
             spdlog::debug("Target {} at {} is not close enough to drop-off, moving...",
                           dropOffEntity, dropOff.position.toString());
@@ -102,9 +100,9 @@ class CmdDropResource : public Command
         if (dropOffEntity == entt::null)
             return false;
 
-        auto& transformMy = Entity::getComponent<CompTransform>(m_entityID);
+        auto& transformMy = m_gameState->getComponent<CompTransform>(m_entityID);
         auto [transform, building] =
-            Entity::getComponents<CompTransform, CompBuilding>(dropOffEntity);
+            m_gameState->getComponents<CompTransform, CompBuilding>(dropOffEntity);
         auto pos = transformMy.position;
         auto radiusSq = transformMy.goalRadiusSquared;
         auto rect = building.getLandInFeetRect(transform.position);
@@ -119,7 +117,7 @@ class CmdDropResource : public Command
     {
         if (dropOffEntity != entt::null)
         {
-            auto& info = Entity::getComponent<CompEntityInfo>(dropOffEntity);
+            auto& info = m_gameState->getComponent<CompEntityInfo>(dropOffEntity);
             return !info.isDestroyed && player->isBuildingOwned(dropOffEntity);
         }
         return false;
@@ -131,13 +129,13 @@ class CmdDropResource : public Command
             return;
 
         dropOffEntity = entt::null;
-        auto& unitTransform = Entity::getComponent<CompTransform>(m_entityID);
+        auto& unitTransform = m_gameState->getComponent<CompTransform>(m_entityID);
         float currentClosestDistance = std::numeric_limits<float>::max();
 
         for (auto buildingEntity : player->getMyBuildings())
         {
             auto [transform, building] =
-                Entity::getComponents<CompTransform, CompBuilding>(buildingEntity);
+                m_gameState->getComponents<CompTransform, CompBuilding>(buildingEntity);
 
             if (building.canDropOff(resourceType))
             {

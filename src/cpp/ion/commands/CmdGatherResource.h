@@ -49,34 +49,23 @@ class CmdGatherResource : public Command
         // TODO: Reset frame to zero (since this is a new command)
         setTarget(target);
 
-        auto& playerComp =
-            ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompPlayer>(
-                m_entityID);
+        auto& playerComp = m_gameState->getComponent<CompPlayer>(m_entityID);
         player = playerComp.player;
         coordinateSystem = ServiceRegistry::getInstance().getService<Coordinates>();
         collectedResourceAmount = 0;
-        gatherer = &ServiceRegistry::getInstance()
-                        .getService<GameState>()
-                        ->getComponent<CompResourceGatherer>(m_entityID);
+        gatherer = &(m_gameState->getComponent<CompResourceGatherer>(m_entityID));
     }
 
     void setTarget(uint32_t targetEntity)
     {
         target = targetEntity;
-        auto& transformTarget =
-            ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompTransform>(
-                target);
+        auto& transformTarget = m_gameState->getComponent<CompTransform>(target);
         targetPosition = transformTarget.position;
 
-        debug_assert(
-            ServiceRegistry::getInstance().getService<GameState>()->hasComponent<CompResource>(
-                target),
-            "Target entity is not a resource");
+        debug_assert(m_gameState->hasComponent<CompResource>(target),
+                     "Target entity is not a resource");
 
-        targetResource = &ServiceRegistry::getInstance()
-                              .getService<GameState>()
-                              ->getComponent<CompResource>(target)
-                              .resource;
+        targetResource = &(m_gameState->getComponent<CompResource>(target).resource);
     }
 
     bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) override
@@ -140,9 +129,7 @@ class CmdGatherResource : public Command
     {
         if (target != entt::null)
         {
-            CompEntityInfo info = ServiceRegistry::getInstance()
-                                      .getService<GameState>()
-                                      ->getComponent<CompEntityInfo>(target);
+            CompEntityInfo info = m_gameState->getComponent<CompEntityInfo>(target);
             return !info.isDestroyed;
         }
         return false;
@@ -150,9 +137,7 @@ class CmdGatherResource : public Command
 
     bool isCloseEnough()
     {
-        auto& transformMy =
-            ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompTransform>(
-                m_entityID);
+        auto& transformMy = m_gameState->getComponent<CompTransform>(m_entityID);
         auto threshold = transformMy.goalRadius + Constants::FEET_PER_TILE / 2;
         auto distanceSquared = transformMy.position.distanceSquared(targetPosition);
         // spdlog::debug("Check closeness. my {}, target {}", transformMy.position.toString(),
@@ -164,7 +149,8 @@ class CmdGatherResource : public Command
     void animate()
     {
         auto [transform, action, animation, dirty] =
-            Entity::getComponents<CompTransform, CompAction, CompAnimation, CompDirty>(m_entityID);
+            m_gameState->getComponents<CompTransform, CompAction, CompAnimation, CompDirty>(
+                m_entityID);
 
         action.action = gatherer->getGatheringAction(targetResource->type);
         auto& actionAnimation = animation.animations[action.action];
@@ -185,7 +171,7 @@ class CmdGatherResource : public Command
 
     void gather(int deltaTimeMs)
     {
-        auto& transform = Entity::getComponent<CompTransform>(m_entityID);
+        auto& transform = m_gameState->getComponent<CompTransform>(m_entityID);
 
         collectedResourceAmount += float(choppingSpeed) * deltaTimeMs / 1000.0f;
         uint32_t rounded = collectedResourceAmount;
@@ -197,19 +183,14 @@ class CmdGatherResource : public Command
             actualDelta = std::min(actualDelta, (gatherer->capacity - gatherer->gatheredAmount));
             targetResource->amount -= actualDelta;
             gatherer->gatheredAmount += actualDelta;
-            ServiceRegistry::getInstance()
-                .getService<GameState>()
-                ->getComponent<CompDirty>(target)
-                .markDirty(target);
+            m_gameState->getComponent<CompDirty>(target).markDirty(target);
         }
     }
 
     bool lookForAnotherSimilarResource()
     {
         spdlog::debug("Looking for another resource...");
-        auto& transformMy =
-            ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompTransform>(
-                m_entityID);
+        auto& transformMy = m_gameState->getComponent<CompTransform>(m_entityID);
         auto tilePos = transformMy.position.toTile();
 
         auto newResource = findClosestResource(targetResource->type, tilePos,
@@ -231,22 +212,16 @@ class CmdGatherResource : public Command
     bool hasResource(uint8_t resourceType, const Tile& posTile, uint32_t& resourceEntity)
     {
         resourceEntity = entt::null;
-        auto& map = ServiceRegistry::getInstance().getService<GameState>()->gameMap;
+        auto& map = m_gameState->gameMap;
         auto e = map.getEntity(MapLayerType::STATIC, posTile);
         if (e != entt::null)
         {
-            CompEntityInfo info = ServiceRegistry::getInstance()
-                                      .getService<GameState>()
-                                      ->getComponent<CompEntityInfo>(e);
+            CompEntityInfo info = m_gameState->getComponent<CompEntityInfo>(e);
             if (!info.isDestroyed)
             {
-                if (ServiceRegistry::getInstance()
-                        .getService<GameState>()
-                        ->hasComponent<CompResource>(e))
+                if (m_gameState->hasComponent<CompResource>(e))
                 {
-                    CompResource resource = ServiceRegistry::getInstance()
-                                                .getService<GameState>()
-                                                ->getComponent<CompResource>(e);
+                    CompResource resource = m_gameState->getComponent<CompResource>(e);
                     if (resource.resource.type == resourceType)
                     {
                         resourceEntity = e;

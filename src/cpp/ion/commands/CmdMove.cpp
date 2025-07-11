@@ -24,7 +24,7 @@ void CmdMove::onQueue()
     if (targetEntity != entt::null && gameState->hasComponent<CompBuilding>(targetEntity))
     {
         auto [building, buildingTransform] =
-            Entity::getComponents<CompBuilding, CompTransform>(targetEntity);
+            m_gameState->getComponents<CompBuilding, CompTransform>(targetEntity);
         auto rect = building.getLandInFeetRect(buildingTransform.position);
         auto& transform = gameState->getComponent<CompTransform>(m_entityID);
 
@@ -33,7 +33,7 @@ void CmdMove::onQueue()
     else if (targetEntity != entt::null && gameState->hasComponent<CompResource>(targetEntity))
     {
         auto [resource, resourceTransform] =
-            Entity::getComponents<CompResource, CompTransform>(targetEntity);
+            m_gameState->getComponents<CompResource, CompTransform>(targetEntity);
         auto rect = resource.getLandInFeetRect(resourceTransform.position);
         auto& transform = gameState->getComponent<CompTransform>(m_entityID);
 
@@ -51,7 +51,7 @@ void CmdMove::onQueue()
 
 #ifndef NDEBUG
         auto tileEntity = gameState->gameMap.getEntity(MapLayerType::GROUND, targetPos.toTile());
-        auto [graphics, dirty] = Entity::getComponents<CompGraphics, CompDirty>(tileEntity);
+        auto [graphics, dirty] = m_gameState->getComponents<CompGraphics, CompDirty>(tileEntity);
 
         graphics.debugOverlays.clear();
         DebugOverlay filledCircle;
@@ -70,7 +70,8 @@ bool CmdMove::onExecute(int deltaTimeMs, std::list<Command*>& subCommands)
     if (targetPos.isNull() == false) [[likely]]
     {
         auto [transform, action, animation, dirty] =
-            Entity::getComponents<CompTransform, CompAction, CompAnimation, CompDirty>(m_entityID);
+            m_gameState->getComponents<CompTransform, CompAction, CompAnimation, CompDirty>(
+                m_entityID);
 
         animate(action, animation, dirty, deltaTimeMs, m_entityID);
         return move(transform, deltaTimeMs);
@@ -147,7 +148,7 @@ bool CmdMove::move(CompTransform& transform, int deltaTimeMs)
             Feet finalDir = desiredDirection + separationForce + avoidanceForce;
 
 #ifndef NDEBUG
-            auto& debugOverlays = Entity::getComponent<CompGraphics>(m_entityID).debugOverlays;
+            auto& debugOverlays = m_gameState->getComponent<CompGraphics>(m_entityID).debugOverlays;
 
             if (separationForce != Feet(0, 0))
                 debugOverlays[1].arrowEnd =
@@ -197,17 +198,16 @@ void CmdMove::setPosition(CompTransform& transform, const Feet& newPosFeet)
 {
     auto oldTile = transform.position.toTile();
     auto newTile = newPosFeet.toTile();
-    auto state = ServiceRegistry::getInstance().getService<GameState>();
 
 #ifndef NDEBUG
-    Entity::getComponent<CompGraphics>(m_entityID).debugOverlays[0].arrowEnd =
+    m_gameState->getComponent<CompGraphics>(m_entityID).debugOverlays[0].arrowEnd =
         coordinates->feetToScreenUnits((newPosFeet + (transform.getVelocityVector() * 2)));
 #endif
 
     if (oldTile != newTile)
     {
-        state->gameMap.removeEntity(MapLayerType::UNITS, oldTile, m_entityID);
-        state->gameMap.addEntity(MapLayerType::UNITS, newTile, m_entityID);
+        m_gameState->gameMap.removeEntity(MapLayerType::UNITS, oldTile, m_entityID);
+        m_gameState->gameMap.addEntity(MapLayerType::UNITS, newTile, m_entityID);
 
         publishEvent(Event::Type::UNIT_TILE_MOVEMENT,
                      UnitTileMovementData{m_entityID, newTile, transform.position});
@@ -219,9 +219,8 @@ void CmdMove::setPosition(CompTransform& transform, const Feet& newPosFeet)
 
 bool CmdMove::hasLineOfSight(const Feet& target)
 {
-    auto state = ServiceRegistry::getInstance().getService<GameState>();
-    auto& transform = Entity::getComponent<CompTransform>(m_entityID);
-    return state->gameMap.intersectsStaticObstacle(transform.position, target) == false;
+    auto& transform = m_gameState->getComponent<CompTransform>(m_entityID);
+    return m_gameState->gameMap.intersectsStaticObstacle(transform.position, target) == false;
 }
 
 void CmdMove::refinePath()
@@ -260,14 +259,13 @@ void CmdMove::refinePath()
 
 std::list<Feet> CmdMove::findPath(const Feet& endPosInFeet, uint32_t entity)
 {
-    auto& transform = Entity::getComponent<CompTransform>(entity);
+    auto& transform = m_gameState->getComponent<CompTransform>(entity);
     Tile startPos = transform.position.toTile();
     auto endPos = endPosInFeet.toTile();
-    auto state = ServiceRegistry::getInstance().getService<GameState>();
 
-    TileMap map = state->gameMap;
+    TileMap map = m_gameState->gameMap;
     std::vector<Feet> newPath =
-        state->getPathFinder()->findPath(map, transform.position, endPosInFeet);
+        m_gameState->getPathFinder()->findPath(map, transform.position, endPosInFeet);
 
     if (newPath.empty())
     {
@@ -312,8 +310,7 @@ Feet CmdMove::resolveCollision(CompTransform& transform)
 {
     // Static collision resolution
     auto newTilePos = transform.position.toTile();
-    auto state = ServiceRegistry::getInstance().getService<GameState>();
-    auto& gameMap = state->gameMap;
+    auto& gameMap = m_gameState->gameMap;
     Feet totalAvoidance{0, 0};
 
     if (gameMap.isOccupied(MapLayerType::STATIC, newTilePos))
@@ -341,7 +338,7 @@ Feet CmdMove::resolveCollision(CompTransform& transform)
                 if (e == entt::null || e == m_entityID)
                     continue;
 
-                auto& otherTransform = state->getComponent<CompTransform>(e);
+                auto& otherTransform = m_gameState->getComponent<CompTransform>(e);
                 Feet toOther = otherTransform.position - transform.position;
 
                 float distSq = toOther.lengthSquared();
@@ -367,22 +364,21 @@ Feet CmdMove::resolveCollision(CompTransform& transform)
 
 Feet CmdMove::avoidCollision(CompTransform& transform)
 {
-    auto& unit =
-        ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompUnit>(m_entityID);
+    auto& unit = m_gameState->getComponent<CompUnit>(m_entityID);
     auto dir = transform.getVelocityVector().normalized();
 
     auto rayEnd = transform.position + (dir * (unit.lineOfSight / 2));
     auto unitToAvoid = intersectsUnits(m_entityID, transform, transform.position, rayEnd);
 
 #ifndef NDEBUG
-    Entity::getComponent<CompGraphics>(m_entityID).debugOverlays[3].arrowEnd =
+    m_gameState->getComponent<CompGraphics>(m_entityID).debugOverlays[3].arrowEnd =
         coordinates->feetToScreenUnits(rayEnd);
 #endif
 
     if (unitToAvoid != entt::null)
     {
         spam("Posible collision with entity {}", unitToAvoid);
-        auto& otherTransform = Entity::getComponent<CompTransform>(unitToAvoid);
+        auto& otherTransform = m_gameState->getComponent<CompTransform>(unitToAvoid);
 
         Feet dir = otherTransform.position - transform.position;
         auto forward = dir.normalized();
@@ -423,8 +419,7 @@ uint32_t CmdMove::intersectsUnits(uint32_t self,
                                   const Feet& start,
                                   const Feet& end) const
 {
-    auto state = ServiceRegistry::getInstance().getService<GameState>();
-    auto& gameMap = state->gameMap;
+    auto& gameMap = m_gameState->gameMap;
 
     float distance = start.distance(end);
     int numSteps =
@@ -448,7 +443,7 @@ uint32_t CmdMove::intersectsUnits(uint32_t self,
             {
                 if (otherUnit != entt::null && otherUnit != self)
                 {
-                    auto& otherTransform = Entity::getComponent<CompTransform>(otherUnit);
+                    auto& otherTransform = m_gameState->getComponent<CompTransform>(otherUnit);
                     double d = distancePointToSegment(start, end, otherTransform.position);
                     auto totalRadius = transform.collisionRadius + otherTransform.collisionRadius;
 
@@ -530,12 +525,12 @@ bool CmdMove::overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& b
 
 bool CmdMove::isTargetCloseEnough()
 {
-    auto& transformMy = Entity::getComponent<CompTransform>(m_entityID);
+    auto& transformMy = m_gameState->getComponent<CompTransform>(m_entityID);
 
     if (targetEntity != entt::null)
     {
         auto [transform, building] =
-            Entity::getComponents<CompTransform, CompBuilding>(targetEntity);
+            m_gameState->getComponents<CompTransform, CompBuilding>(targetEntity);
         auto pos = transformMy.position;
         auto radiusSq = transformMy.goalRadiusSquared;
         auto rect = building.getLandInFeetRect(transform.position);

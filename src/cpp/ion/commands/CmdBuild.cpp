@@ -59,7 +59,7 @@ bool CmdBuild::isCloseEnough()
 {
     debug_assert(target != entt::null, "Proposed entity to build is null");
 
-    auto [transform, building] = Entity::getComponents<CompTransform, CompBuilding>(target);
+    auto [transform, building] = m_gameState->getComponents<CompTransform, CompBuilding>(target);
     auto pos = m_components->transform.position;
     auto radiusSq = m_components->transform.goalRadiusSquared;
     auto rect = building.getLandInFeetRect(transform.position);
@@ -69,13 +69,13 @@ bool CmdBuild::isCloseEnough()
 
 bool CmdBuild::isComplete()
 {
-    return Entity::getComponent<CompBuilding>(target).constructionProgress == 100;
+    return m_gameState->getComponent<CompBuilding>(target).constructionProgress == 100;
 }
 
 void CmdBuild::build(int deltaTimeMs)
 {
-    auto [building, dirty] = Entity::getComponents<CompBuilding, CompDirty>(target);
-    auto& builder = Entity::getComponent<CompBuilder>(m_entityID);
+    auto [building, dirty] = m_gameState->getComponents<CompBuilding, CompDirty>(target);
+    auto& builder = m_gameState->getComponent<CompBuilder>(m_entityID);
 
     personalBuildingProgress += float(builder.buildSpeed) * deltaTimeMs / 1000.0f;
     uint32_t rounded = personalBuildingProgress;
@@ -98,10 +98,7 @@ void CmdBuild::moveCloser(std::list<Command*>& subCommands)
 {
     debug_assert(target != entt::null, "Proposed entity to build is null");
 
-    auto targetPosition = ServiceRegistry::getInstance()
-                              .getService<GameState>()
-                              ->getComponent<CompTransform>(target)
-                              .position;
+    auto targetPosition = m_gameState->getComponent<CompTransform>(target).position;
 
     spdlog::debug("Target {} at {} is not close enough to build, moving...", target,
                   targetPosition.toString());

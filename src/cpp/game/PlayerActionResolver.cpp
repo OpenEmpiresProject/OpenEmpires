@@ -92,25 +92,25 @@ uint32_t PlayerActionResolver::createBuilding(const Feet& targetFeetPos,
     auto entity = gameState->createEntity();
     auto transform = CompTransform(targetFeetPos);
     transform.face(Direction::NORTHWEST);
-    Entity::addComponent(entity, transform);
-    Entity::addComponent(entity, CompRendering());
+    gameState->addComponent(entity, transform);
+    gameState->addComponent(entity, CompRendering());
     CompGraphics gc;
     gc.entityID = entity;
     gc.entityType = buildingType;
     gc.layer = GraphicLayer::ENTITIES;
-    Entity::addComponent(entity, gc);
-    Entity::addComponent(entity, CompEntityInfo(buildingType));
+    gameState->addComponent(entity, gc);
+    gameState->addComponent(entity, CompEntityInfo(buildingType));
 
     auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
     auto player = playerManager->getViewingPlayer();
-    Entity::addComponent(entity, CompPlayer{player});
+    gameState->addComponent(entity, CompPlayer{player});
 
     CompBuilding building;
     building.size = size;
     building.lineOfSight = 256 * 5;
     building.addDropOff(resourceTypesAccept);
     building.visualVariationByProgress = {{33, 1}, {66, 2}, {99, 3}, {100, 0}};
-    Entity::addComponent(entity, building);
+    gameState->addComponent(entity, building);
 
     // auto box = getBoundingBox(m_drs, 1254, 1);
     // CompSelectible sc;
@@ -121,6 +121,6 @@ uint32_t PlayerActionResolver::createBuilding(const Feet& targetFeetPos,
 
     CompDirty dirty;
     dirty.markDirty(entity);
-    Entity::addComponent(entity, dirty);
+    gameState->addComponent(entity, dirty);
     return entity;
 }

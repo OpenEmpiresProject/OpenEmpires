@@ -19,6 +19,7 @@ using namespace ion;
 BuildingManager::BuildingManager(/* args */)
 {
     m_coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
+    m_gameState = ServiceRegistry::getInstance().getService<GameState>();
     registerCallback(Event::Type::BUILDING_REQUESTED, this, &BuildingManager::onBuildingRequest);
     registerCallback(Event::Type::KEY_UP, this, &BuildingManager::onKeyUp);
     registerCallback(Event::Type::MOUSE_MOVE, this, &BuildingManager::onMouseMove);
@@ -38,7 +39,7 @@ void BuildingManager::onBuildingRequest(const Event& e)
 
     for (auto entity : m_unitSelection.selectedEntities)
     {
-        auto& builder = Entity::getComponent<CompBuilder>(entity);
+        auto& builder = m_gameState->getComponent<CompBuilder>(entity);
         builder.target = m_currentBuildingPlacement.entity;
     }
     publishEvent(Event::Type::BUILDING_PLACEMENT_STARTED, m_currentBuildingPlacement);
@@ -60,7 +61,7 @@ void BuildingManager::onMouseMove(const Event& e)
     if (m_currentBuildingPlacement.entity != entt::null)
     {
         auto [transform, dirty, building] =
-            Entity::getComponents<CompTransform, CompDirty, CompBuilding>(
+            m_gameState->getComponents<CompTransform, CompDirty, CompBuilding>(
                 m_currentBuildingPlacement.entity);
 
         auto feet = m_coordinates->screenUnitsToFeet(m_lastMouseScreenPos);
@@ -83,8 +84,8 @@ void BuildingManager::onMouseButtonUp(const Event& e)
         if (m_currentBuildingPlacement.entity != entt::null)
         {
             auto [building, transform, player, info, dirty] =
-                Entity::getComponents<CompBuilding, CompTransform, CompPlayer, CompEntityInfo,
-                                      CompDirty>(m_currentBuildingPlacement.entity);
+                m_gameState->getComponents<CompBuilding, CompTransform, CompPlayer, CompEntityInfo,
+                                           CompDirty>(m_currentBuildingPlacement.entity);
 
             if (building.validPlacement)
                 confirmBuilding(transform, building, info, dirty);
@@ -108,7 +109,7 @@ void BuildingManager::onTick(const Event& e)
                 entity))
         {
             auto [transform, building, info, player] =
-                Entity::getComponents<CompTransform, CompBuilding, CompEntityInfo, CompPlayer>(
+                m_gameState->getComponents<CompTransform, CompBuilding, CompEntityInfo, CompPlayer>(
                     entity);
 
             info.variation = building.getVisualVariation();
@@ -176,8 +177,8 @@ void BuildingManager::cancelBuilding()
 {
     if (m_currentBuildingPlacement.entity != entt::null)
     {
-        auto [info, dirty] =
-            Entity::getComponents<CompEntityInfo, CompDirty>(m_currentBuildingPlacement.entity);
+        auto [info, dirty] = m_gameState->getComponents<CompEntityInfo, CompDirty>(
+            m_currentBuildingPlacement.entity);
 
         info.isDestroyed = true;
         dirty.markDirty(m_currentBuildingPlacement.entity);
@@ -196,7 +197,7 @@ void BuildingManager::confirmBuilding(CompTransform& transform,
 
     for (auto unit : m_unitSelection.selectedEntities)
     {
-        bool isABuilder = Entity::hasComponent<CompBuilder>(unit);
+        bool isABuilder = m_gameState->hasComponent<CompBuilder>(unit);
         if (isABuilder)
         {
             auto cmd = ObjectPool<CmdBuild>::acquire();

@@ -2,6 +2,7 @@
 #define PLAYERMANAGER_H
 
 #include "EventHandler.h"
+#include "GameState.h"
 #include "Player.h"
 #include "utils/Types.h"
 
@@ -36,6 +37,7 @@ class PlayerManager : public EventHandler
     std::vector<Ref<Player>> m_players;
     std::unordered_map<uint8_t, Ref<Player>> m_playersById;
     bool m_fowEnabled = true;
+    Ref<GameState> m_gameState;
 };
 
 } // namespace ion

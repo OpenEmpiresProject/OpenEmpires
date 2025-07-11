@@ -8,7 +8,6 @@
 #include "CompPlayer.h"
 #include "CompTransform.h"
 #include "CompUnit.h"
-#include "GameState.h"
 
 using namespace ion;
 
@@ -26,13 +25,13 @@ UnitComponentRefs::UnitComponentRefs(std::tuple<CompAction&,
 {
 }
 
-UnitComponentRefs::UnitComponentRefs(uint32_t entityID)
-    : UnitComponentRefs(Entity::getComponents<CompAction,
-                                              CompAnimation,
-                                              CompDirty,
-                                              CompEntityInfo,
-                                              CompPlayer,
-                                              CompTransform,
-                                              CompUnit>(entityID))
+UnitComponentRefs::UnitComponentRefs(Ref<GameState> gameState, uint32_t entityID)
+    : UnitComponentRefs(gameState->getComponents<CompAction,
+                                                 CompAnimation,
+                                                 CompDirty,
+                                                 CompEntityInfo,
+                                                 CompPlayer,
+                                                 CompTransform,
+                                                 CompUnit>(entityID))
 {
 }

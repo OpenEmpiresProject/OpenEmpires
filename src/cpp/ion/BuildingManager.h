@@ -19,6 +19,7 @@ class BuildingManager : public EventHandler
     BuildingPlacementData m_currentBuildingPlacement;
     Vec2 m_lastMouseScreenPos;
     Ref<Coordinates> m_coordinates;
+    Ref<GameState> m_gameState;
     UnitSelection m_unitSelection;
 
     void onMouseButtonUp(const Event& e);

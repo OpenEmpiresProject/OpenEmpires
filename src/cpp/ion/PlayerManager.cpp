@@ -1,6 +1,7 @@
 #include "PlayerManager.h"
 
 #include "GameState.h"
+#include "ServiceRegistry.h"
 #include "components/CompBuilding.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
@@ -16,6 +17,7 @@ using namespace ion;
 
 PlayerManager::PlayerManager()
 {
+    m_gameState = ServiceRegistry::getInstance().getService<GameState>();
     registerCallback(Event::Type::UNIT_TILE_MOVEMENT, this, &PlayerManager::onUnitTileMovement);
 }
 
@@ -61,7 +63,7 @@ uint8_t PlayerManager::getNextPlayerId() const
 void PlayerManager::onUnitTileMovement(const Event& e)
 {
     auto data = e.getData<UnitTileMovementData>();
-    auto [player, unit] = Entity::getComponents<CompPlayer, CompUnit>(data.unit);
+    auto [player, unit] = m_gameState->getComponents<CompPlayer, CompUnit>(data.unit);
 
     player.player->getFogOfWar()->markAsExplored(data.positionFeet, unit.lineOfSight);
 }
