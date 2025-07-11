@@ -1,10 +1,7 @@
 #ifndef FOGOFWAR_H
 #define FOGOFWAR_H
 
-#include "Feet.h"
 #include "Flat2DArray.h"
-#include "Tile.h"
-#include "utils/Size.h"
 #include "utils/Types.h"
 
 #include <cstdint>
@@ -12,6 +9,10 @@
 
 namespace ion
 {
+class Feet;
+class Tile;
+class Size;
+
 class FogOfWar
 {
   public:
@@ -25,15 +26,8 @@ class FogOfWar
 
     RevealStatus getRevealStatus(uint32_t tileX, uint32_t tileY) const;
     RevealStatus getRevealStatus(const Tile& tilePos) const;
-    inline bool isExplored(uint32_t tileX, uint32_t tileY) const
-    {
-        return m_map.at(tileX, tileY) == RevealStatus::EXPLORED;
-    }
-
-    inline bool isExplored(const Tile& tile) const
-    {
-        return m_map.at(tile.x, tile.y) == RevealStatus::EXPLORED;
-    }
+    bool isExplored(uint32_t tileX, uint32_t tileY) const;
+    bool isExplored(const Tile& tile) const;
 
     void setRevealMode(uint32_t tileX, uint32_t tileY, RevealStatus type);
 

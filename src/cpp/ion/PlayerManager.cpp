@@ -1,6 +1,7 @@
 #include "PlayerManager.h"
 
 #include "GameState.h"
+#include "Player.h"
 #include "ServiceRegistry.h"
 #include "components/CompBuilding.h"
 #include "components/CompDirty.h"

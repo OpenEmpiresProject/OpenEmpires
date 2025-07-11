@@ -2,13 +2,14 @@
 #define COORDINATES_H
 
 #include "Feet.h"
-#include "GameSettings.h"
 #include "Tile.h"
 
 #include <memory>
 
 namespace ion
 {
+class GameSettings;
+
 class Coordinates
 {
   public:

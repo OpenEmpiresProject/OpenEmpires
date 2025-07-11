@@ -2,8 +2,6 @@
 #define UI_H
 
 #include "Color.h"
-#include "Event.h"
-#include "GraphicsRegistry.h"
 #include "Rect.h"
 #include "utils/Types.h"
 
@@ -12,6 +10,9 @@
 
 namespace ion
 {
+class Event;
+class GraphicsID;
+
 namespace ui
 {
 struct Element : std::enable_shared_from_this<Element>

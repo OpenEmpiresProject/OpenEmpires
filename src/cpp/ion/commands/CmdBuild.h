@@ -1,18 +1,13 @@
 #ifndef CMDBUILD_H
 #define CMDBUILD_H
 
-#include "Feet.h"
-#include "GameState.h"
-#include "Rect.h"
 #include "commands/Command.h"
-#include "components/CompAction.h"
-#include "components/CompAnimation.h"
-#include "components/CompDirty.h"
-#include "utils/Logger.h"
-#include "utils/ObjectPool.h"
 
 namespace ion
 {
+class Feet;
+template <typename T> class Rect;
+
 class CmdBuild : public Command
 {
   public:

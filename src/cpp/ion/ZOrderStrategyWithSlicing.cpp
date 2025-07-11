@@ -1,5 +1,6 @@
 #include "ZOrderStrategyWithSlicing.h"
 
+#include "GameSettings.h"
 #include "GameState.h"
 #include "ServiceRegistry.h"
 #include "utils/ObjectPool.h"

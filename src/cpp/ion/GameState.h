@@ -1,9 +1,6 @@
 #ifndef GAMESTATE_H
 #define GAMESTATE_H
 
-#include "PathFinderBase.h"
-#include "ServiceRegistry.h"
-#include "SubSystem.h"
 #include "TileMap.h"
 
 #include <entt/entity/registry.hpp>
@@ -11,6 +8,8 @@
 
 namespace ion
 {
+class PathFinderBase;
+
 class GameState
 {
   public:

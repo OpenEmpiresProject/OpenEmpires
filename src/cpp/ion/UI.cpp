@@ -1,6 +1,7 @@
 #include "UI.h"
 
 #include "Coordinates.h"
+#include "Event.h"
 #include "GameState.h"
 #include "ServiceRegistry.h"
 #include "UIManager.h"

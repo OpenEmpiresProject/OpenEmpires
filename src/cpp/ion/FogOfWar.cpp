@@ -1,8 +1,11 @@
 #include "FogOfWar.h"
 
+#include "Feet.h"
 #include "GameState.h"
+#include "Tile.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
+#include "utils/Size.h"
 
 using namespace ion;
 
@@ -123,4 +126,14 @@ RevealStatus FogOfWar::getRevealStatus(const Tile& tilePos) const
 void FogOfWar::setRevealMode(uint32_t tileX, uint32_t tileY, RevealStatus type)
 {
     m_map.at(tileX, tileY) = type;
+}
+
+bool FogOfWar::isExplored(uint32_t tileX, uint32_t tileY) const
+{
+    return m_map.at(tileX, tileY) == RevealStatus::EXPLORED;
+}
+
+bool FogOfWar::isExplored(const Tile& tile) const
+{
+    return m_map.at(tile.x, tile.y) == RevealStatus::EXPLORED;
 }

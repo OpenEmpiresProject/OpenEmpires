@@ -129,7 +129,7 @@ SDL_Surface* frameToSurface(const Frame& frame)
         return nullptr;
     }
 
-    if (SDL_LockSurface(surface) < 0)
+    if (SDL_LockSurface(surface) == false)
     {
         SDL_Log("Failed to lock surface: %s", SDL_GetError());
         SDL_DestroySurface(surface);

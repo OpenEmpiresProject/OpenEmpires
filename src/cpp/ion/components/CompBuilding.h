@@ -3,6 +3,7 @@
 
 #include "Feet.h"
 #include "Rect.h"
+#include "Tile.h"
 #include "debug.h"
 #include "utils/Constants.h"
 #include "utils/Size.h"

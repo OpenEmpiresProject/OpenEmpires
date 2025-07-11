@@ -1,6 +1,7 @@
 #include "GameState.h"
 
 #include "PathFinderAStar.h"
+#include "PathFinderBase.h"
 
 using namespace ion;
 

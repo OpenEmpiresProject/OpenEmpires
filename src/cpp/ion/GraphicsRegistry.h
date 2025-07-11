@@ -1,7 +1,6 @@
 #ifndef GRAPHICSREGISTRY_H
 #define GRAPHICSREGISTRY_H
 
-#include "Feet.h"
 #include "utils/Size.h"
 #include "utils/Types.h"
 

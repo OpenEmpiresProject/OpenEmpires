@@ -1,21 +1,22 @@
 #ifndef CMDMOVE_H
 #define CMDMOVE_H
 
-#include "Coordinates.h"
 #include "Feet.h"
-#include "Player.h"
-#include "Rect.h"
 #include "commands/Command.h"
-#include "components/CompAction.h"
-#include "components/CompAnimation.h"
-#include "components/CompDirty.h"
-#include "components/CompTransform.h"
 
 #include <entt/entity/registry.hpp>
 #include <list>
 
 namespace ion
 {
+class Player;
+template <typename T> class Rect;
+class CompAction;
+class CompAnimation;
+class CompDirty;
+class CompTransform;
+class Coordinates;
+
 class CmdMove : public Command
 {
   public:

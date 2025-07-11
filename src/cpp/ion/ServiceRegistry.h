@@ -1,7 +1,9 @@
 #ifndef SERVICEREGISTRY_H
 #define SERVICEREGISTRY_H
 
+#include <format>
 #include <memory>
+#include <stdexcept>
 #include <typeindex>
 #include <unordered_map>
 

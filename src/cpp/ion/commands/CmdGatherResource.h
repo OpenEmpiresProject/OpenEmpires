@@ -9,6 +9,7 @@
 #include "commands/CmdDropResource.h"
 #include "commands/CmdMove.h"
 #include "commands/Command.h"
+#include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompPlayer.h"
 #include "components/CompResource.h"

@@ -2,16 +2,17 @@
 #define RENDERER_H
 
 #include "FrameData.h"
-#include "GraphicsLoader.h"
-#include "GraphicsRegistry.h"
 #include "SubSystem.h"
 #include "ThreadSynchronizer.h"
 
-#include <SDL3/SDL.h>
+class SDL_Renderer;
 
 namespace ion
 {
 class RendererImpl;
+class GraphicsRegistry;
+class GraphicsLoader;
+
 class Renderer : public SubSystem
 {
   public:

@@ -1,5 +1,6 @@
 #include "Coordinates.h"
 
+#include "GameSettings.h"
 #include "utils/Constants.h"
 #include "utils/Logger.h"
 

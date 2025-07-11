@@ -1,4 +1,5 @@
 #include "PathFinderAStar.h"
+#include "Tile.h"
 #include <gtest/gtest.h>
 
 using namespace ion;

@@ -1,10 +1,18 @@
 #include "CmdBuild.h"
 
+#include "Feet.h"
+#include "GameState.h"
+#include "Rect.h"
 #include "commands/CmdMove.h"
+#include "components/CompAction.h"
+#include "components/CompAnimation.h"
 #include "components/CompBuilder.h"
 #include "components/CompBuilding.h"
+#include "components/CompDirty.h"
 #include "components/CompTransform.h"
 #include "debug.h"
+#include "utils/Logger.h"
+#include "utils/ObjectPool.h"
 
 using namespace ion;
 

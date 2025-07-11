@@ -6,6 +6,8 @@
 #include "FPSCounter.h"
 #include "GameSettings.h"
 #include "GameState.h"
+#include "GraphicsLoader.h"
+#include "GraphicsRegistry.h"
 #include "Renderer.h"
 #include "SDL3_gfxPrimitives.h"
 #include "ServiceRegistry.h"

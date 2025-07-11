@@ -1,10 +1,7 @@
 #ifndef TILEMAP_H
 #define TILEMAP_H
 
-#include "Tile.h"
 #include "debug.h"
-#include "utils/Constants.h"
-#include "utils/Logger.h"
 #include "utils/Types.h"
 
 #include <algorithm>
@@ -13,34 +10,18 @@
 
 namespace ion
 {
+class Tile;
+class Feet;
+
 struct MapCell
 {
     std::list<uint32_t> entities; // List of entities occupying this cell
 
-    inline bool isOccupied() const
-    {
-        return !entities.empty();
-    }
-
-    void addEntity(uint32_t entity)
-    {
-        entities.push_back(entity);
-    }
-
-    uint32_t getEntity() const
-    {
-        return entities.front();
-    }
-
-    void removeEntity(uint32_t entity)
-    {
-        entities.remove(entity);
-    }
-
-    void removeAllEntities()
-    {
-        entities.clear();
-    }
+    bool isOccupied() const;
+    void addEntity(uint32_t entity);
+    uint32_t getEntity() const;
+    void removeEntity(uint32_t entity);
+    void removeAllEntities();
 };
 
 struct MapLayer
@@ -65,20 +46,9 @@ struct TileMap
     uint32_t height = 0;
     MapLayer* layers = nullptr;
 
-    MapCell** getMap(MapLayerType layerType)
-    {
-        return layers[toInt(layerType)].cells;
-    }
-
-    MapCell** getStaticMap()
-    {
-        return layers[toInt(MapLayerType::STATIC)].cells;
-    }
-
-    MapCell** getGroundMap()
-    {
-        return layers[toInt(MapLayerType::GROUND)].cells;
-    }
+    MapCell** getMap(MapLayerType layerType);
+    MapCell** getStaticMap();
+    MapCell** getGroundMap();
 
     /**
      * @brief Checks if a cell at the specified grid position is occupied in the given map layer.
@@ -93,44 +63,9 @@ struct TileMap
      * @param pos The 2D grid position to check for occupancy.
      * @return true if the cell is occupied; false otherwise or if the position is invalid.
      */
-    inline bool isOccupied(MapLayerType layerType, const Tile& pos) const
-    {
-        auto layerTypeInt = toInt(layerType);
+    bool isOccupied(MapLayerType layerType, const Tile& pos) const;
 
-        if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height) [[likely]]
-        {
-            return layers[layerTypeInt].cells[pos.x][pos.y].isOccupied();
-        }
-        else [[unlikely]]
-        {
-            spdlog::error("Invalid grid position: ({}, {})", pos.x, pos.y);
-            return false;
-        }
-    }
-
-    inline bool isOccupiedByAnother(MapLayerType layerType,
-                                    const Tile& pos,
-                                    uint32_t myEntity) const
-    {
-        auto layerTypeInt = toInt(layerType);
-
-        if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height) [[likely]]
-        {
-            if (layers[layerTypeInt].cells[pos.x][pos.y].isOccupied())
-            {
-                auto& entities = layers[layerTypeInt].cells[pos.x][pos.y].entities;
-
-                // Check if a value other than myEntity exist in the entities list
-                return std::any_of(entities.begin(), entities.end(),
-                                   [myEntity](uint32_t entity) { return entity != myEntity; });
-            }
-        }
-        else [[unlikely]]
-        {
-            spdlog::error("Invalid grid position: ({}, {})", pos.x, pos.y);
-            return false;
-        }
-    }
+    bool isOccupiedByAnother(MapLayerType layerType, const Tile& pos, uint32_t myEntity) const;
 
     /**
      * @brief Adds an entity to the specified map layer at the given grid position.
@@ -144,67 +79,11 @@ struct TileMap
      * @param pos The 2D grid position where the entity will be placed.
      * @param entity The unique identifier of the entity to add.
      */
-    void addEntity(MapLayerType layerType, const Tile& pos, uint32_t entity)
-    {
-        auto layerTypeInt = toInt(layerType);
+    void addEntity(MapLayerType layerType, const Tile& pos, uint32_t entity);
 
-        if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height) [[likely]]
-        {
-            layers[layerTypeInt].cells[pos.x][pos.y].addEntity(entity);
-        }
-        else [[unlikely]]
-        {
-            spdlog::error("Invalid grid position: ({}, {}) to add entity {}", pos.x, pos.y, entity);
-        }
-    }
-
-    void removeStaticEntity(const Tile& pos, uint32_t entity)
-    {
-        auto layerTypeInt = toInt(MapLayerType::STATIC);
-        int maxSize = Constants::MAX_STATIC_ENTITY_TILE_SIZE;
-        for (int dx = -maxSize + 1; dx < maxSize; ++dx)
-        {
-            for (int dy = -maxSize + 1; dy < maxSize; ++dy)
-            {
-                int nx = pos.x + dx;
-                int ny = pos.y + dy;
-                if (nx >= 0 && ny >= 0 && nx < static_cast<int>(width) &&
-                    ny < static_cast<int>(height))
-                {
-                    layers[layerTypeInt].cells[nx][ny].removeEntity(entity);
-                }
-            }
-        }
-    }
-
-    void removeEntity(MapLayerType layerType, const Tile& pos, uint32_t entity)
-    {
-        auto layerTypeInt = toInt(layerType);
-
-        if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height) [[likely]]
-        {
-            layers[layerTypeInt].cells[pos.x][pos.y].removeEntity(entity);
-        }
-        else [[unlikely]]
-        {
-            spdlog::error("Invalid grid position: ({}, {}) to remove entity {}", pos.x, pos.y,
-                          entity);
-        }
-    }
-
-    void removeAllEntities(MapLayerType layerType, const Tile& pos)
-    {
-        auto layerTypeInt = toInt(layerType);
-
-        if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height) [[likely]]
-        {
-            layers[layerTypeInt].cells[pos.x][pos.y].removeAllEntities();
-        }
-        else [[unlikely]]
-        {
-            spdlog::error("Invalid grid position: ({}, {}) to remove all entities", pos.x, pos.y);
-        }
-    }
+    void removeStaticEntity(const Tile& pos, uint32_t entity);
+    void removeEntity(MapLayerType layerType, const Tile& pos, uint32_t entity);
+    void removeAllEntities(MapLayerType layerType, const Tile& pos);
 
     /**
      * Retrieves the entity ID at the specified grid position and layer.
@@ -217,66 +96,10 @@ struct TileMap
      * Logs an error if the grid position is out of bounds.
      * Asserts that the layerType is valid.
      */
-    uint32_t getEntity(MapLayerType layerType, const Tile& pos) const
-    {
-        auto layerTypeInt = toInt(layerType);
+    uint32_t getEntity(MapLayerType layerType, const Tile& pos) const;
 
-        if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height) [[likely]]
-        {
-            auto& cell = layers[layerTypeInt].cells[pos.x][pos.y];
-            if (cell.isOccupied())
-            {
-                return cell.getEntity();
-            }
-            return entt::null;
-        }
-        else [[unlikely]]
-        {
-            spdlog::error("Invalid grid position: ({}, {})", pos.x, pos.y);
-            return entt::null;
-        }
-    }
-
-    const std::list<uint32_t>& getEntities(MapLayerType layerType, const Tile& pos) const
-    {
-        auto layerTypeInt = toInt(layerType);
-        static const std::list<uint32_t> empty;
-
-        if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height) [[likely]]
-        {
-            auto& cell = layers[layerTypeInt].cells[pos.x][pos.y];
-            return cell.entities;
-        }
-        else [[unlikely]]
-        {
-            spdlog::error("Invalid grid position: ({}, {})", pos.x, pos.y);
-            return empty;
-        }
-    }
-
-    bool intersectsStaticObstacle(const Feet& start, const Feet& end) const
-    {
-        float distance = start.distance(end);
-        int numSteps =
-            static_cast<int>(distance / (Constants::FEET_PER_TILE * 0.25f)); // Sample every ¼ tile
-
-        if (numSteps <= 0)
-            return false;
-
-        Feet step = (end - start) / static_cast<float>(numSteps);
-
-        for (int i = 0; i <= numSteps; ++i)
-        {
-            Feet point = start + step * static_cast<float>(i);
-            Tile tile = point.toTile();
-
-            if (isOccupied(MapLayerType::STATIC, tile))
-            {
-                return true; // Hit a static obstacle
-            }
-        }
-        return false; // Clear line
-    }
+    const std::list<uint32_t>& getEntities(MapLayerType layerType, const Tile& pos) const;
+    bool intersectsStaticObstacle(const Feet& start, const Feet& end) const;
 
     /**
      * @brief Initializes the grid map with the specified width and height.
@@ -290,23 +113,7 @@ struct TileMap
      * @param width The width of the grid map.
      * @param height The height of the grid map.
      */
-    void init(uint32_t width, uint32_t height)
-    {
-        this->width = width;
-        this->height = height;
-        int maxLayers = toInt(MapLayerType::MAX_LAYERS) + 1;
-        layers = new MapLayer[maxLayers];
-        for (size_t i = 0; i < maxLayers; i++)
-        {
-            auto& layer = layers[i];
-
-            layer.cells = new MapCell*[width];
-            for (uint32_t i = 0; i < width; ++i)
-            {
-                layer.cells[i] = new MapCell[height];
-            }
-        }
-    }
+    void init(uint32_t width, uint32_t height);
 };
 
 } // namespace ion

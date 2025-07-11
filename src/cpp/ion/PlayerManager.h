@@ -2,8 +2,6 @@
 #define PLAYERMANAGER_H
 
 #include "EventHandler.h"
-#include "GameState.h"
-#include "Player.h"
 #include "utils/Types.h"
 
 #include <unordered_map>
@@ -11,6 +9,9 @@
 
 namespace ion
 {
+class GameState;
+class Player;
+
 class PlayerManager : public EventHandler
 {
   public:

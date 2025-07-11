@@ -11,6 +11,7 @@
 #include "components/CompEntityInfo.h"
 #include "components/CompPlayer.h"
 #include "components/CompTransform.h"
+#include "utils/ObjectPool.h"
 
 #include <SDL3/SDL.h>
 
