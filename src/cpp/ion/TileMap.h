@@ -51,8 +51,8 @@ struct MapLayer
 enum class MapLayerType
 {
     GROUND = 0,
-    GROUND_DECOS, // walkable decorators on the ground
-    STATIC,       // doesn't move, not walkable
+    ON_GROUND, // walkable decorators/items on the ground
+    STATIC,    // doesn't move, not walkable
     UNITS,
     // Add more layers here
 

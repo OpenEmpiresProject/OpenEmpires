@@ -87,7 +87,7 @@ void BuildingManager::onMouseButtonUp(const Event& e)
                                       CompDirty>(m_currentBuildingPlacement.entity);
 
             if (building.validPlacement)
-                confirmBuilding(building, info, dirty);
+                confirmBuilding(transform, building, info, dirty);
             else
                 cancelBuilding();
         }
@@ -113,7 +113,7 @@ void BuildingManager::onTick(const Event& e)
             info.variation = building.getVisualVariation();
 
             if (building.constructionProgress >= 100)
-                onCompleteBuilding(building, transform, player);
+                onCompleteBuilding(entity, building, transform, player);
 
             if (building.constructionProgress > 1 && building.isInStaticMap == false)
             {
@@ -123,10 +123,13 @@ void BuildingManager::onTick(const Event& e)
                 {
                     for (size_t j = 0; j < building.size.height; j++)
                     {
-                        gameMap.addEntity(MapLayerType::STATIC, transform.position.toTile() - Tile(i, j),
-                                        entity);
+                        gameMap.addEntity(MapLayerType::STATIC,
+                                          transform.position.toTile() - Tile(i, j), entity);
+                        gameMap.removeEntity(MapLayerType::ON_GROUND,
+                                             transform.position.toTile() - Tile(i, j), entity);
                     }
                 }
+
                 building.isInStaticMap = true;
             }
         }
@@ -182,7 +185,8 @@ void BuildingManager::cancelBuilding()
     }
 }
 
-void BuildingManager::confirmBuilding(CompBuilding& building,
+void BuildingManager::confirmBuilding(CompTransform& transform,
+                                      CompBuilding& building,
                                       CompEntityInfo& info,
                                       CompDirty& dirty)
 {
@@ -203,16 +207,28 @@ void BuildingManager::confirmBuilding(CompBuilding& building,
     info.variation = building.getVisualVariation();
     dirty.markDirty(m_currentBuildingPlacement.entity);
 
+    auto& gameMap = GameState::getInstance().gameMap;
+
+    for (size_t i = 0; i < building.size.width; i++)
+    {
+        for (size_t j = 0; j < building.size.height; j++)
+        {
+            gameMap.addEntity(MapLayerType::ON_GROUND, transform.position.toTile() - Tile(i, j),
+                              m_currentBuildingPlacement.entity);
+        }
+    }
+
     // Building is permanent now, no need to track for placement
     m_currentBuildingPlacement = BuildingPlacementData();
 }
 
-void BuildingManager::onCompleteBuilding(const CompBuilding& building,
+void BuildingManager::onCompleteBuilding(uint32_t entity,
+                                         const CompBuilding& building,
                                          const CompTransform& transform,
                                          const CompPlayer& player)
 {
     player.player->getFogOfWar()->markAsExplored(transform.position.toTile().centerInFeet(),
                                                  building.size, building.lineOfSight);
 
-    player.player->addEntity(m_currentBuildingPlacement.entity);
+    player.player->addEntity(entity);
 }

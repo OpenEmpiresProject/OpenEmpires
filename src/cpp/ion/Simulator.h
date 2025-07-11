@@ -7,6 +7,7 @@
 #include "FrameData.h"
 #include "ThreadQueue.h"
 #include "ThreadSynchronizer.h"
+#include "TileMap.h"
 #include "UnitSelection.h"
 #include "commands/CmdMove.h"
 #include "components/CompBuilding.h"
@@ -22,6 +23,11 @@ class Simulator : public EventHandler
     ~Simulator() = default;
 
   private:
+    struct TileMapQueryResult
+    {
+        uint32_t entity = entt::null;
+        MapLayerType layer = MapLayerType::MAX_LAYERS;
+    };
     // EventHandler overrides
     void onInit(EventLoop* eventLoop) override;
 
@@ -48,7 +54,7 @@ class Simulator : public EventHandler
     bool canPlaceBuildingAt(const CompBuilding& building, const Feet& feet, bool& outOfMap);
     void addEntitiesToSelection(const std::vector<uint32_t>& selectedEntities);
     void clearSelection();
-    uint32_t whatIsAt(const Vec2& screenPos);
+    TileMapQueryResult whatIsAt(const Vec2& screenPos);
 
     std::shared_ptr<Coordinates> m_coordinates;
     ThreadSynchronizer<FrameData>& m_synchronizer;

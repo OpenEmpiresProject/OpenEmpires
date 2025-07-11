@@ -288,11 +288,11 @@ void Simulator::onClickToSelect(const Vec2& screenPos)
 {
     clearSelection();
 
-    auto entity = whatIsAt(screenPos);
+    auto result = whatIsAt(screenPos);
 
-    if (entity != entt::null)
+    if (result.entity != entt::null)
     {
-        addEntitiesToSelection({entity});
+        addEntitiesToSelection({result.entity});
     }
 }
 
@@ -329,7 +329,9 @@ void Simulator::resolveSelection(const Vec2& screenPos)
 
 void Simulator::resolveAction(const Vec2& screenPos)
 {
-    auto target = whatIsAt(screenPos);
+    auto result = whatIsAt(screenPos);
+    auto target = result.entity;
+    auto layer = result.layer;
     bool gatherable = GameState::getInstance().hasComponent<CompResource>(target);
     bool construction = GameState::getInstance().hasComponent<CompBuilding>(target);
 
@@ -407,7 +409,7 @@ void Simulator::clearSelection()
     m_currentUnitSelection.selectedEntities.clear();
 }
 
-uint32_t Simulator::whatIsAt(const Vec2& screenPos)
+Simulator::TileMapQueryResult Simulator::whatIsAt(const Vec2& screenPos)
 {
     auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
     auto& gameState = GameState::getInstance();
@@ -421,6 +423,7 @@ uint32_t Simulator::whatIsAt(const Vec2& screenPos)
                          settings->getWorldSizeInTiles().height - 1);
 
     Tile pos;
+    TileMapQueryResult result;
 
     for (pos.y = gridStartPos.y; pos.y >= clickedCellPos.y; pos.y--)
     {
@@ -444,12 +447,13 @@ uint32_t Simulator::whatIsAt(const Vec2& screenPos)
 
                         if (screenRect.contains(screenPos))
                         {
-                            return entity;
+                            return {.entity = entity, .layer = MapLayerType::STATIC};
                         }
                     }
                     else if (gameState.hasComponent<CompBuilding>(entity))
                     {
-
+                        spdlog::debug("A building at the clicked position");
+                        return {.entity = entity, .layer = MapLayerType::STATIC};
                     }
                     else [[unlikely]]
                     {
@@ -458,10 +462,21 @@ uint32_t Simulator::whatIsAt(const Vec2& screenPos)
                     }
                 }
             }
-            // TODO: Check entity layer as well
+            else if (gameState.gameMap.isOccupied(MapLayerType::ON_GROUND, pos))
+            {
+                auto entity = gameState.gameMap.getEntity(MapLayerType::ON_GROUND, pos);
+                if (entity != entt::null)
+                {
+                    if (gameState.hasComponent<CompBuilding>(entity))
+                    {
+                        spdlog::debug("A construction site at the clicked position");
+                        return {.entity = entity, .layer = MapLayerType::ON_GROUND};
+                    }
+                }
+            }
         }
     }
-    return entt::null;
+    return result;
 }
 
 void Simulator::sendGraphiInstruction(CompGraphics* instruction)

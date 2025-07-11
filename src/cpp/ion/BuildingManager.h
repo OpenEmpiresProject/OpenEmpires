@@ -29,8 +29,12 @@ class BuildingManager : public EventHandler
     void onUnitSelection(const Event& e);
     bool canPlaceBuildingAt(const CompBuilding& building, const Feet& feet, bool& outOfMap);
     void cancelBuilding();
-    void confirmBuilding(CompBuilding& building, CompEntityInfo& info, CompDirty& dirty);
-    void onCompleteBuilding(const CompBuilding& building,
+    void confirmBuilding(CompTransform& transform,
+                         CompBuilding& building,
+                         CompEntityInfo& info,
+                         CompDirty& dirty);
+    void onCompleteBuilding(uint32_t entity,
+                            const CompBuilding& building,
                             const CompTransform& transform,
                             const CompPlayer& player);
 };
