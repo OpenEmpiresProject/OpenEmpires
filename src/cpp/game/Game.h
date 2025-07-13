@@ -21,6 +21,7 @@
 #include "ThreadQueue.h"
 #include "ThreadSynchronizer.h"
 #include "UIManager.h"
+#include "UnitManager.h"
 #include "utils/Logger.h"
 #include "utils/Types.h"
 
@@ -111,7 +112,11 @@ class Game
         ion::ServiceRegistry::getInstance().registerService(cc);
 
         auto buildingMngr = std::make_shared<ion::BuildingManager>();
+        auto unitManager = std::make_shared<ion::UnitManager>();
         auto playerActionResolver = std::make_shared<game::PlayerActionResolver>();
+
+        if (params.eventHandler)
+            eventLoop->registerListener(std::move(params.eventHandler));
 
         eventLoop->registerListener(std::move(simulator));
         eventLoop->registerListener(std::move(cc));
@@ -120,10 +125,8 @@ class Game
         eventLoop->registerListener(std::move(resourceManager));
         eventLoop->registerListener(std::move(hud));
         eventLoop->registerListener(std::move(buildingMngr));
+        eventLoop->registerListener(std::move(unitManager));
         eventLoop->registerListener(std::move(playerActionResolver));
-
-        if (params.eventHandler)
-            eventLoop->registerListener(std::move(params.eventHandler));
 
         auto resourceLoader = std::make_shared<DemoWorldCreator>(
             &stopToken, settings, graphicsRegistry, renderer, params.populateWorld);
