@@ -1,6 +1,7 @@
 #ifndef GAMEAPI_H
 #define GAMEAPI_H
 
+#include "Feet.h"
 #include "utils/Types.h"
 
 #include <cstdint>
@@ -39,6 +40,7 @@ class GameAPI
     std::list<uint32_t> getVillagers();
     void commandToMove(uint32_t unit, const ion::Feet& target);
     int getCurrentAction(uint32_t unit);
+    ion::Feet getUnitPosition(uint32_t unit);
 
   private:
     std::shared_ptr<Synchronizer> m_sync;

@@ -1,11 +1,13 @@
 #include "GameAPI.h"
 
+#include "EventPublisher.h"
 #include "GameTypes.h"
 #include "PlayerManager.h"
 #include "Renderer.h"
 #include "ServiceRegistry.h"
 #include "SubSystemRegistry.h"
 #include "commands/CmdIdle.h"
+#include "commands/CmdMove.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
 #include "components/CompBuilder.h"
@@ -181,7 +183,15 @@ void GameAPI::commandToMove(uint32_t unit, const Feet& target)
 {
     ScopedSynchronizer sync(m_sync);
 
-    // TODO
+    auto subSys = SubSystemRegistry::getInstance().getSubSystem("EventLoop");
+    auto eventLoop = (EventLoop*) subSys;
+    auto eventPublisher = (EventPublisher*) eventLoop;
+
+    auto cmd = ObjectPool<CmdMove>::acquire();
+    cmd->targetPos = target;
+    Event event(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, unit});
+
+    eventPublisher->publish(event);
 }
 
 int GameAPI::getCurrentAction(uint32_t unit)
@@ -189,4 +199,11 @@ int GameAPI::getCurrentAction(uint32_t unit)
     auto gameState = ServiceRegistry::getInstance().getService<GameState>();
     auto& action = gameState->getComponent<CompAction>(unit);
     return action.action;
+}
+
+Feet GameAPI::getUnitPosition(uint32_t unit)
+{
+    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+    auto& transform = gameState->getComponent<CompTransform>(unit);
+    return transform.position;
 }

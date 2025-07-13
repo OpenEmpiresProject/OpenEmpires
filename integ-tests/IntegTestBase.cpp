@@ -1,5 +1,7 @@
 #include "IntegTestBase.h"
 
+#include <future>
+
 game::Game IntegTestBase::m_game;
 game::GameAPI* IntegTestBase::m_api = nullptr;
 std::thread* IntegTestBase::m_testThread = nullptr;
@@ -31,4 +33,25 @@ void IntegTestBase::TearDownTestSuite()
 void IntegTestBase::sleep(int ms)
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+}
+
+void IntegTestBase::waitFor(std::function<bool()> condition, int timeoutMs, const std::string& msg)
+{
+    std::promise<bool> promisedFinished; 
+    auto futureResult = promisedFinished.get_future();
+
+    std::thread([&condition](std::promise<bool>& finished) 
+    {
+        while (true) 
+        {
+            if (condition()) 
+            {
+                finished.set_value(true);
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    }, std::ref(promisedFinished)).detach();
+
+    EXPECT_TRUE(futureResult.wait_for(std::chrono::milliseconds(timeoutMs)) != std::future_status::timeout)<< msg;
 }

@@ -18,10 +18,18 @@ TEST_F(MovementsTest, BeingIdleAtCreation)
 
     ASSERT_EQ(villagers.size(), 1);
 
-    sleep(1000);
+    ASSERT_WAIT_FOR(m_api->getCurrentAction(villager) == UnitAction::IDLE, 1000);
+}
 
-    // Villager should be still idle after 1s
-    ASSERT_EQ(m_api->getCurrentAction(villager), UnitAction::IDLE);
+TEST_F(MovementsTest, VillagerWalk) 
+{
+    auto player = m_api->getPrimaryPlayer();
+    auto villager = m_api->createVillager(player, Feet(5000, 5000));
+    auto villagers = m_api->getVillagers();
+    m_api->commandToMove(villager, Feet(6000, 5000));
+
+    ASSERT_WAIT_FOR(m_api->getCurrentAction(villager) == UnitAction::MOVE, 1000);
+    ASSERT_WAIT_FOR((m_api->getUnitPosition(villager) - Feet(6000, 5000)).length() < 100, 5000);
 }
 
 #endif
