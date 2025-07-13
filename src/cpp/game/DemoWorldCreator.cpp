@@ -50,9 +50,10 @@ Rect<int> getBoundingBox(shared_ptr<DRSFile> drs, uint32_t slpId, uint32_t frame
 DemoWorldCreator::DemoWorldCreator(std::stop_token* stopToken,
                                    std::shared_ptr<GameSettings> settings,
                                    GraphicsRegistry& graphicsRegistry,
-                                   std::shared_ptr<Renderer> renderer)
+                                   std::shared_ptr<Renderer> renderer,
+                                   bool populateWorld)
     : SubSystem(stopToken), m_settings(std::move(settings)), m_graphicsRegistry(graphicsRegistry),
-      m_renderer(std::move(renderer))
+      m_renderer(std::move(renderer)), m_populateWorld(populateWorld)
 {
 }
 
@@ -77,13 +78,14 @@ void DemoWorldCreator::loadEntities()
         }
     }
 
-    generateMap(gameState->gameMap);
-    createStoneOrGoldCluster(EntityTypes::ET_STONE, gameState->gameMap, 30, 30, 4);
-    createStoneOrGoldCluster(EntityTypes::ET_GOLD, gameState->gameMap, 20, 30, 4);
-    // createTree(gameState->gameMap, 5, 5);
-
-    createVillager(player, Tile(25, 25));
-    createVillager(player, Tile(20, 20));
+    if (m_populateWorld)
+    {
+        generateMap(gameState->gameMap);
+        createStoneOrGoldCluster(EntityTypes::ET_STONE, gameState->gameMap, 30, 30, 4);
+        createStoneOrGoldCluster(EntityTypes::ET_GOLD, gameState->gameMap, 20, 30, 4);
+        createVillager(player, Tile(25, 25));
+        createVillager(player, Tile(20, 20));
+    }
 
     CompResourceGatherer::gatheringActions = {{ResourceType::WOOD, UnitAction::CHOPPING},
                                               {ResourceType::STONE, UnitAction::MINING},

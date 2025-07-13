@@ -34,7 +34,30 @@ namespace game
 class Game
 {
   public:
+    struct Params
+    {
+        bool populateWorld = true;
+        bool revealAll = false;
+        std::shared_ptr<ion::EventHandler> eventHandler;
+    };
+
     int run()
+    {
+        Params params{
+            .populateWorld = true,
+            .revealAll = false,
+        };
+        return runInternal(params);
+    }
+
+    int runIntegTestEnv(std::shared_ptr<ion::EventHandler> eventHandler)
+    {
+        Params params{.populateWorld = false, .revealAll = true, .eventHandler = eventHandler};
+        return runInternal(params);
+    }
+
+  private:
+    int runInternal(const Params& params)
     {
         ion::initLogger("logs/game.log");
 
@@ -45,6 +68,10 @@ class Game
 
         auto settings = std::make_shared<ion::GameSettings>();
         settings->setWindowDimensions(1366, 768);
+
+        if (params.revealAll)
+            settings->setFOWRevealStatus(ion::RevealStatus::EXPLORED);
+
         ion::ServiceRegistry::getInstance().registerService(settings);
 
         std::stop_source stopSource;
@@ -95,8 +122,11 @@ class Game
         eventLoop->registerListener(std::move(buildingMngr));
         eventLoop->registerListener(std::move(playerActionResolver));
 
-        auto resourceLoader =
-            std::make_shared<DemoWorldCreator>(&stopToken, settings, graphicsRegistry, renderer);
+        if (params.eventHandler)
+            eventLoop->registerListener(std::move(params.eventHandler));
+
+        auto resourceLoader = std::make_shared<DemoWorldCreator>(
+            &stopToken, settings, graphicsRegistry, renderer, params.populateWorld);
 
         ion::SubSystemRegistry::getInstance().registerSubSystem("Renderer", std::move(renderer));
         ion::SubSystemRegistry::getInstance().registerSubSystem("DemoWorldCreator",

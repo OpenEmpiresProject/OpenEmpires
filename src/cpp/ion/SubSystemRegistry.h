@@ -20,6 +20,7 @@ class SubSystemRegistry
     SubSystem* getSubSystem(const std::string& name);
     void initAll();
     void shutdownAll();
+    bool isAllInitialized() const;
 
   private:
     SubSystemRegistry() = default;
@@ -31,6 +32,8 @@ class SubSystemRegistry
     SubSystemRegistry& operator=(SubSystemRegistry&&) = delete;
 
     std::unordered_map<std::string, std::shared_ptr<SubSystem>> m_subSystems;
+
+    bool m_allInitialized = false;
 };
 } // namespace ion
 

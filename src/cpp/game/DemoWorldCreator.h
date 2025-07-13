@@ -21,7 +21,8 @@ class DemoWorldCreator : public ion::SubSystem
     DemoWorldCreator(std::stop_token* stopToken,
                      std::shared_ptr<ion::GameSettings> settings,
                      ion::GraphicsRegistry& graphicsRegistry,
-                     std::shared_ptr<ion::Renderer> renderer);
+                     std::shared_ptr<ion::Renderer> renderer,
+                     bool populateWorld);
     ~DemoWorldCreator() = default;
 
   private:
@@ -48,6 +49,7 @@ class DemoWorldCreator : public ion::SubSystem
     ion::GraphicsRegistry& m_graphicsRegistry;
     std::shared_ptr<ion::Renderer> m_renderer;
     std::shared_ptr<drs::DRSFile> m_drs;
+    bool m_populateWorld = false;
 };
 } // namespace game
 

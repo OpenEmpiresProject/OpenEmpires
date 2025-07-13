@@ -1,11 +1,11 @@
 # Directories
 BUILD_DIR := build
-TEST_DIR := tests
-GAME_EXEC := openEmpires  # Replace with your game's executable name
-TEST_EXEC := openEmpiresTests  # Replace with your test executable name
+GAME_EXEC := openEmpires
+TEST_EXEC := openEmpiresTests
+INTEG_TEST_EXEC := openEmpiresIntegTests
 
 # Targets
-.PHONY: configure build test run clean
+.PHONY: configure build test integ-test run clean
 
 # Default target
 .PHONY: default
@@ -34,7 +34,7 @@ build-verbose:
 	cmake --build $(BUILD_DIR) --verbose
 
 # Build Release
-release: configure-release
+build-release: configure-release
 	@echo "Building project (Release)..."
 	cmake --build $(BUILD_DIR) --config Release
 
@@ -52,6 +52,11 @@ cppcheck:
 test: build
 	@echo "Running tests..."
 	$(BUILD_DIR)/bin/Debug/$(TEST_EXEC)
+
+# Run the integration tests (directly execute the test binary)
+integ-test: build
+	@echo "Running integration tests..."
+	$(BUILD_DIR)/bin/Debug/$(INTEG_TEST_EXEC)
 
 # Run the game (directly execute the game binary)
 run: build

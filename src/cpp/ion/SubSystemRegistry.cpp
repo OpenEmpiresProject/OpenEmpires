@@ -33,6 +33,7 @@ void SubSystemRegistry::initAll()
     {
         subSystem->init();
     }
+    m_allInitialized = true;
 }
 
 void SubSystemRegistry::shutdownAll()
@@ -41,4 +42,9 @@ void SubSystemRegistry::shutdownAll()
     {
         subSystem->shutdown();
     }
+}
+
+bool SubSystemRegistry::isAllInitialized() const
+{
+    return m_allInitialized;
 }
