@@ -25,7 +25,6 @@ TEST_F(MovementsTest, VillagerWalk)
 {
     auto player = m_api->getPrimaryPlayer();
     auto villager = m_api->createVillager(player, Feet(5000, 5000));
-    auto villagers = m_api->getVillagers();
     m_api->commandToMove(villager, Feet(6000, 5000));
 
     ASSERT_WAIT_FOR(m_api->getCurrentAction(villager) == UnitAction::MOVE, 1000);
