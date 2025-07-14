@@ -14,8 +14,7 @@ IntegTestTickAssist::~IntegTestTickAssist()
 
 void IntegTestTickAssist::onTick(const ion::Event& e)
 {
-    aquireLock();
-    releaseLock();
+    std::lock_guard lock(m_syncMutex);
 }
 
 void IntegTestTickAssist::aquireLock()

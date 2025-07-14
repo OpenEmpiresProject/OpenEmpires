@@ -25,6 +25,11 @@ class EventLoop : public SubSystem, public EventPublisher
         return m_listeners.size();
     }
 
+    bool isReady() const
+    {
+        return m_isReady;
+    }
+
     static bool isPaused()
     {
         return s_isPaused;
@@ -55,6 +60,7 @@ class EventLoop : public SubSystem, public EventPublisher
     int m_previouseMouseY = 0;
 
     static bool s_isPaused;
+    bool m_isReady = false;
 };
 
 } // namespace ion

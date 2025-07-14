@@ -32,6 +32,7 @@ class UnitManager : public EventHandler
     void onMouseButtonDown(const Event& e);
     void onBuildingPlacementStarted(const Event& e);
     void onBuildingPlacementFinished(const Event& e);
+    void onUnitDeletion(const Event& e);
     void addEntitiesToSelection(const std::vector<uint32_t>& selectedEntities,
                                 UnitSelection& selection);
     void updateSelection(const UnitSelection& newSelection);

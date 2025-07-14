@@ -63,6 +63,11 @@ struct BuildingPlacementData
     uint32_t entity = entt::null;
 };
 
+struct EntityDeleteData
+{
+    uint32_t entity = entt::null;
+};
+
 struct Event
 {
     enum class Type
@@ -76,6 +81,7 @@ struct Event
         MOUSE_BTN_UP,
         UNIT_SELECTION,
         UNIT_TILE_MOVEMENT,
+        ENTITY_DELETE,
         BUILDING_REQUESTED,          // Use BuildingPlacementData
         BUILDING_PLACEMENT_STARTED,  // Use BuildingPlacementData
         BUILDING_PLACEMENT_FINISHED, // Use BuildingPlacementData
@@ -91,6 +97,7 @@ struct Event
                               UnitSelectionData,
                               CommandRequestData,
                               UnitTileMovementData,
+                              EntityDeleteData,
                               BuildingPlacementData>;
 
     const Type type = Type::NONE;

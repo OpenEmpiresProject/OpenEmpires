@@ -1,5 +1,7 @@
 #include "GameAPI.h"
 
+#include "DemoWorldCreator.h"
+#include "EventLoop.h"
 #include "EventPublisher.h"
 #include "GameTypes.h"
 #include "PlayerManager.h"
@@ -47,7 +49,11 @@ bool GameAPI::isReady()
 {
     auto redndererSubSystem = SubSystemRegistry::getInstance().getSubSystem("Renderer");
     auto renderer = (Renderer*) redndererSubSystem;
-    return renderer->getSDLRenderer() != nullptr;
+    auto creatorSubSystem = SubSystemRegistry::getInstance().getSubSystem("DemoWorldCreator");
+    auto creator = (DemoWorldCreator*) creatorSubSystem;
+    auto eventLoopSubSystem = SubSystemRegistry::getInstance().getSubSystem("EventLoop");
+    auto eventLoop = (EventLoop*) eventLoopSubSystem;
+    return renderer->isReady() && creator->isReady() && eventLoop->isReady();
 }
 
 void GameAPI::quit()
@@ -196,6 +202,8 @@ void GameAPI::commandToMove(uint32_t unit, const Feet& target)
 
 int GameAPI::getCurrentAction(uint32_t unit)
 {
+    ScopedSynchronizer sync(m_sync);
+
     auto gameState = ServiceRegistry::getInstance().getService<GameState>();
     auto& action = gameState->getComponent<CompAction>(unit);
     return action.action;
@@ -203,7 +211,22 @@ int GameAPI::getCurrentAction(uint32_t unit)
 
 Feet GameAPI::getUnitPosition(uint32_t unit)
 {
+    ScopedSynchronizer sync(m_sync);
+
     auto gameState = ServiceRegistry::getInstance().getService<GameState>();
     auto& transform = gameState->getComponent<CompTransform>(unit);
     return transform.position;
+}
+
+void GameAPI::deleteEntity(uint32_t entity)
+{
+    ScopedSynchronizer sync(m_sync);
+
+    auto subSys = SubSystemRegistry::getInstance().getSubSystem("EventLoop");
+    auto eventLoop = (EventLoop*) subSys;
+    auto eventPublisher = (EventPublisher*) eventLoop;
+
+    Event event(Event::Type::ENTITY_DELETE, EntityDeleteData{entity});
+
+    eventPublisher->publish(event);
 }

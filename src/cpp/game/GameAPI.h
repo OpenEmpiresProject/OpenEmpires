@@ -41,6 +41,7 @@ class GameAPI
     void commandToMove(uint32_t unit, const ion::Feet& target);
     int getCurrentAction(uint32_t unit);
     ion::Feet getUnitPosition(uint32_t unit);
+    void deleteEntity(uint32_t entity);
 
   private:
     std::shared_ptr<Synchronizer> m_sync;

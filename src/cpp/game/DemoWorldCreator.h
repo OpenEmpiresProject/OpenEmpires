@@ -25,6 +25,8 @@ class DemoWorldCreator : public ion::SubSystem
                      bool populateWorld);
     ~DemoWorldCreator() = default;
 
+    bool isReady() const;
+
   private:
     // SubSystem methods
     void init() override;
@@ -50,6 +52,7 @@ class DemoWorldCreator : public ion::SubSystem
     std::shared_ptr<ion::Renderer> m_renderer;
     std::shared_ptr<drs::DRSFile> m_drs;
     bool m_populateWorld = false;
+    bool m_isReady = false;
 };
 } // namespace game
 

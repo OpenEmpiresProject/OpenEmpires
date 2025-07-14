@@ -15,6 +15,7 @@ UnitManager::UnitManager() : m_coordinates(ServiceRegistry::getInstance().getSer
 {
     registerCallback(Event::Type::MOUSE_BTN_UP, this, &UnitManager::onMouseButtonUp);
     registerCallback(Event::Type::MOUSE_BTN_DOWN, this, &UnitManager::onMouseButtonDown);
+    registerCallback(Event::Type::ENTITY_DELETE, this, &UnitManager::onUnitDeletion);
     registerCallback(Event::Type::UNIT_SELECTION, this, &UnitManager::onUnitSelection);
     registerCallback(Event::Type::BUILDING_PLACEMENT_STARTED, this,
                      &UnitManager::onBuildingPlacementStarted);
@@ -34,6 +35,21 @@ void UnitManager::onBuildingPlacementStarted(const Event& e)
 void UnitManager::onBuildingPlacementFinished(const Event& e)
 {
     m_buildingPlacementInProgress = false;
+}
+
+void UnitManager::onUnitDeletion(const Event& e)
+{
+    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+
+    auto entity = e.getData<EntityDeleteData>().entity;
+    if (entity != entt::null && gameState->hasComponent<CompUnit>(entity))
+    {
+        auto [info, dirty, transform] =
+            gameState->getComponents<CompEntityInfo, CompDirty, CompTransform>(entity);
+        info.isDestroyed = true;
+        dirty.markDirty(entity);
+        gameState->gameMap.removeEntity(MapLayerType::UNITS, transform.position.toTile(), entity);
+    }
 }
 
 void UnitManager::onMouseButtonUp(const Event& e)

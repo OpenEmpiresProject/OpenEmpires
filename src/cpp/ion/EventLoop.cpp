@@ -59,6 +59,7 @@ void EventLoop::run()
 
         // Sleep for a short duration to avoid busy-waiting
         std::this_thread::sleep_for(milliseconds(1));
+        m_isReady = true;
     }
 
     spdlog::info("Shutting down event loop...");

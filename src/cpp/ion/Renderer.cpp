@@ -180,6 +180,7 @@ class RendererImpl
                                  Uint8 blue,
                                  Uint8 alpha);
     void loadFonts();
+    bool isReady() const;
 
     SDL_Window* m_window = nullptr;
     SDL_Renderer* m_renderer = nullptr;
@@ -228,6 +229,8 @@ class RendererImpl
     FontAtlas m_fontAtlas;
 
     bool m_showFogOfWar = true;
+
+    bool m_isReady = false;
 };
 } // namespace ion
 
@@ -321,6 +324,11 @@ void RendererImpl::initSDL()
     spdlog::info("SDL initialized successfully");
 }
 
+bool RendererImpl::isReady() const
+{
+    return m_isReady;
+}
+
 void RendererImpl::threadEntry()
 {
     initSDL();
@@ -377,6 +385,8 @@ void RendererImpl::renderingLoop()
 
         m_waitTime.resetIfCountIs(1000);
         m_frameTime.resetIfCountIs(1000);
+
+        m_isReady = true;
     }
 
     spdlog::info("Shutting down renderer...");
@@ -913,4 +923,9 @@ void Renderer::shutdown()
 SDL_Renderer* Renderer::getSDLRenderer()
 {
     return m_impl->getSDLRenderer();
+}
+
+bool Renderer::isReady() const
+{
+    return m_impl->isReady();
 }

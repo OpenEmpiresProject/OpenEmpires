@@ -19,7 +19,7 @@ void IntegTestBase::SetUpTestSuite()
         m_game.runIntegTestEnv(m_tickAssist);
     });
     while (ion::SubSystemRegistry::getInstance().isAllInitialized() == false) {}
-    m_api->isReady();
+    while (m_api->isReady() == false) {}
 }
 
 void IntegTestBase::TearDownTestSuite() 

@@ -23,6 +23,7 @@ class Renderer : public SubSystem
     ~Renderer();
 
     SDL_Renderer* getSDLRenderer();
+    bool isReady() const;
 
   private:
     // SubSystem methods

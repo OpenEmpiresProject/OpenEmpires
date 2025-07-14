@@ -57,6 +57,11 @@ DemoWorldCreator::DemoWorldCreator(std::stop_token* stopToken,
 {
 }
 
+bool DemoWorldCreator::isReady() const
+{
+    return m_isReady;
+}
+
 void DemoWorldCreator::loadEntities()
 {
     spdlog::info("Loading entities...");
@@ -486,6 +491,7 @@ void DemoWorldCreator::init()
     Resource::registerResourceType(ResourceType::STONE);
     Resource::registerResourceType(ResourceType::GOLD);
     loadEntities();
+    m_isReady = true;
 }
 
 void DemoWorldCreator::shutdown()
