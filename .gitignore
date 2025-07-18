@@ -27,3 +27,4 @@ vcpkg_installed
 *.VSCodeCounter
 *.csv
 *.drs
+*.pyc

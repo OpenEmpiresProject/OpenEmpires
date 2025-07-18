@@ -27,8 +27,11 @@ Element::Element(const GraphicsID& graphicsId, Ref<Element> parent)
     ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, graphics);
     ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, CompRendering());
     ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, CompDirty());
-    ServiceRegistry::getInstance().getService<GameState>()->addComponent(
-        id, CompEntityInfo(graphicsId.entityType, graphicsId.entitySubType, graphicsId.variation));
+
+    CompEntityInfo entityInfo(graphicsId.entityType, graphicsId.entitySubType,
+                              graphicsId.variation);
+    entityInfo.entityId = id;
+    ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, entityInfo);
 }
 
 void Element::feedInput(const Event& e)

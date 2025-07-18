@@ -27,6 +27,8 @@
 #include "utils/Logger.h"
 #include "utils/ObjectPool.h"
 #include "utils/Types.h"
+#include "EntityFactory.h"
+#include "GameTypes.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_surface.h>
@@ -89,7 +91,7 @@ void DemoWorldCreator::loadEntities()
         createStoneOrGoldCluster(EntityTypes::ET_STONE, gameState->gameMap, 30, 30, 4);
         createStoneOrGoldCluster(EntityTypes::ET_GOLD, gameState->gameMap, 20, 30, 4);
         createVillager(player, Tile(25, 25));
-        createVillager(player, Tile(20, 20));
+        //createVillager(player, Tile(20, 20));
     }
 
     CompResourceGatherer::gatheringActions = {{ResourceType::WOOD, UnitAction::CHOPPING},
@@ -144,7 +146,6 @@ void DemoWorldCreator::createTree(TileMap& map, uint32_t x, uint32_t y)
 
     auto tree = gameState->createEntity();
     auto transform = CompTransform(x * 256 + 128, y * 256 + 128);
-    transform.face(Direction::NORTHWEST);
     gameState->addComponent(tree, transform);
     gameState->addComponent(tree, CompRendering());
     CompGraphics gc;
@@ -155,7 +156,9 @@ void DemoWorldCreator::createTree(TileMap& map, uint32_t x, uint32_t y)
 
     gameState->addComponent(tree, gc);
     // TODO: Should not hard code
-    gameState->addComponent(tree, CompEntityInfo(EntityTypes::ET_TREE, 0, rand() % 10));
+    CompEntityInfo entityInfo(EntityTypes::ET_TREE, 0, rand() % 10);
+    entityInfo.entityId = tree;
+    gameState->addComponent(tree, entityInfo);
     gameState->addComponent(tree, CompDirty());
 
     // TODO: This doesn't work. Need to conslidate resource and graphic loading and handle this
@@ -181,7 +184,6 @@ void DemoWorldCreator::createStoneOrGold(EntityTypes entityType,
 
     auto stone = gameState->createEntity();
     auto transform = CompTransform(x * 256 + 128, y * 256 + 128);
-    transform.face(Direction::NORTHWEST);
     gameState->addComponent(stone, transform);
     gameState->addComponent(stone, CompRendering());
     CompGraphics gc;
@@ -191,7 +193,9 @@ void DemoWorldCreator::createStoneOrGold(EntityTypes entityType,
     gc.layer = GraphicLayer::ENTITIES;
 
     gameState->addComponent(stone, gc);
-    gameState->addComponent(stone, CompEntityInfo(entityType, 0, rand() % 7));
+    CompEntityInfo entityInfo(entityType, 0, rand() % 7);
+    entityInfo.entityId = stone;
+    gameState->addComponent(stone, entityInfo);
     gameState->addComponent(stone, CompDirty());
 
     // TODO: This doesn't work. Need to conslidate resource and graphic loading and handle this
@@ -215,93 +219,20 @@ void DemoWorldCreator::createStoneOrGold(EntityTypes entityType,
 void DemoWorldCreator::createVillager(Ref<ion::Player> player, const Tile& tilePos)
 {
     auto gameState = ServiceRegistry::getInstance().getService<GameState>();
-    auto villager = gameState->createEntity();
-    auto transform = CompTransform(tilePos.x * 256 + 128, tilePos.x * 256 + 50);
+    auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
+
+    auto villager = factory->createEntity(EntityTypes::ET_VILLAGER);
+    auto [transform, unit, selectible, playerComp] =
+        gameState->getComponents<CompTransform, CompUnit, CompSelectible, CompPlayer>(villager);
+
+    transform.position = Feet(tilePos.x * 256 + 128, tilePos.x * 256 + 50);
     transform.face(Direction::SOUTH);
-    transform.hasRotation = true;
-    transform.speed = 256;
-
-    CompAnimation anim;
-    anim.animations[UnitAction::IDLE].frames = 15;
-    anim.animations[UnitAction::IDLE].repeatable = true;
-    anim.animations[UnitAction::IDLE].speed = 10;
-
-    anim.animations[UnitAction::MOVE].frames = 15;
-    anim.animations[UnitAction::MOVE].repeatable = true;
-    anim.animations[UnitAction::MOVE].speed = 15;
-
-    anim.animations[UnitAction::CHOPPING].frames = 15;
-    anim.animations[UnitAction::CHOPPING].repeatable = true;
-    anim.animations[UnitAction::CHOPPING].speed = 15;
-
-    anim.animations[UnitAction::MINING].frames = 15;
-    anim.animations[UnitAction::MINING].repeatable = true;
-    anim.animations[UnitAction::MINING].speed = 15;
-
-    anim.animations[UnitAction::CARRYING_LUMBER].frames = 15;
-    anim.animations[UnitAction::CARRYING_LUMBER].repeatable = true;
-    anim.animations[UnitAction::CARRYING_LUMBER].speed = 15;
-
-    anim.animations[UnitAction::CARRYING_GOLD].frames = 15;
-    anim.animations[UnitAction::CARRYING_GOLD].repeatable = true;
-    anim.animations[UnitAction::CARRYING_GOLD].speed = 15;
-
-    anim.animations[UnitAction::CARRYING_STONE].frames = 15;
-    anim.animations[UnitAction::CARRYING_STONE].repeatable = true;
-    anim.animations[UnitAction::CARRYING_STONE].speed = 15;
-
-    anim.animations[UnitAction::BUILDING].frames = 15;
-    anim.animations[UnitAction::BUILDING].repeatable = true;
-    anim.animations[UnitAction::BUILDING].speed = 25;
-
-    gameState->addComponent(villager, transform);
-    gameState->addComponent(villager, CompRendering());
-    gameState->addComponent(villager, CompEntityInfo(3));
-    gameState->addComponent(villager, CompAction(0));
-    gameState->addComponent(villager, anim);
-    gameState->addComponent(villager, CompDirty());
-    gameState->addComponent(villager, CompBuilder(10));
-
-    // villager goes idle by default
-    CompUnit unit;
-    unit.lineOfSight = 256 * 5;
     unit.commandQueue.push(ObjectPool<CmdIdle>::acquire(villager));
-    gameState->addComponent(villager, unit);
-
-    CompGraphics gc;
-    gc.entityID = villager;
-    gc.entityType = EntityTypes::ET_VILLAGER;
-    gc.layer = GraphicLayer::ENTITIES;
-    gc.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::GREEN,
-                                DebugOverlay::FixedPosition::BOTTOM_CENTER,
-                                DebugOverlay::FixedPosition::CENTER});
-    gc.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::RED,
-                                DebugOverlay::FixedPosition::BOTTOM_CENTER,
-                                DebugOverlay::FixedPosition::CENTER});
-    gc.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::BLUE,
-                                DebugOverlay::FixedPosition::BOTTOM_CENTER,
-                                DebugOverlay::FixedPosition::CENTER});
-    gc.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::YELLOW,
-                                DebugOverlay::FixedPosition::BOTTOM_CENTER,
-                                DebugOverlay::FixedPosition::CENTER});
-    gc.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::BLACK,
-                                DebugOverlay::FixedPosition::BOTTOM_CENTER,
-                                DebugOverlay::FixedPosition::CENTER});
-    gameState->addComponent(villager, gc);
-
-    CompSelectible sc;
     auto box = getBoundingBox(m_drs, 1388, 1);
-    sc.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
-    sc.selectionIndicator = {GraphicAddon::Type::ISO_CIRCLE,
+    selectible.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
+    selectible.selectionIndicator = {GraphicAddon::Type::ISO_CIRCLE,
                              GraphicAddon::IsoCircle{10, Vec2(0, 0)}};
-
-    gameState->addComponent(villager, sc);
-    gameState->addComponent(villager, CompPlayer{player});
-
-    CompResourceGatherer gatherer{
-        .capacity = 100,
-    };
-    gameState->addComponent(villager, gatherer);
+    playerComp.player = player;
 
     auto newTile = transform.position.toTile();
     gameState->gameMap.addEntity(MapLayerType::UNITS, newTile, villager);
@@ -471,7 +402,10 @@ void DemoWorldCreator::createTile(uint32_t x,
     int newY = x;
     // AOE2 standard tiling rule. From OpenAge documentation
     int tileVariation = (newX % tc) + ((newY % tc) * tc) + 1;
-    gameState->addComponent(tile, CompEntityInfo(entityType, 0, tileVariation));
+
+    CompEntityInfo entityInfo(entityType, 0, tileVariation);
+    entityInfo.entityId = tile;
+    gameState->addComponent(tile, entityInfo);
 
     DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, ion::Color::GREY,
                          DebugOverlay::FixedPosition::BOTTOM_CENTER};

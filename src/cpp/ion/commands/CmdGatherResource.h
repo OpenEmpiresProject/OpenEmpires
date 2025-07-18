@@ -31,6 +31,7 @@ class CmdGatherResource : public Command
     uint32_t target = entt::null;
 
   private:
+    // TODO: This doesn't belong here, this should be in the components
     const int choppingSpeed = 10; // 10 wood per second
     // Cached values
     Feet targetPosition; // Use when target is absent by the time this command execute

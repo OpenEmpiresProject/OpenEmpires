@@ -57,6 +57,8 @@ class CompTransform
 
     void face(const Feet& target)
     {
+        hasRotation = true;
+
         // Calculate the angle to face the target position
         int deltaX = target.x - position.x;
         int deltaY = target.y - position.y;
@@ -70,6 +72,8 @@ class CompTransform
 
     void face(const Feet& relativeTo, const Feet& target)
     {
+        hasRotation = true;
+
         // Calculate the angle to face the target position relative to the
         // provided position rather than our own position
         int deltaX = target.x - relativeTo.x;
@@ -99,6 +103,8 @@ class CompTransform
 
     void face(Direction direction)
     {
+        hasRotation = true;
+
         rotation = 45 * static_cast<int>(direction);
     }
 

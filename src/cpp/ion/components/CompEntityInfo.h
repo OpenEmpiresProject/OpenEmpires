@@ -1,11 +1,16 @@
 #ifndef COMPENTITYINFO_H
 #define COMPENTITYINFO_H
 
+#include <cstdint>
+#include <entt/entity/registry.hpp>
+
+
 namespace ion
 {
 class CompEntityInfo
 {
   public:
+    uint32_t entityId = entt::null;
     int entityType = 0;
     int entitySubType = 0;
     int variation = 0;

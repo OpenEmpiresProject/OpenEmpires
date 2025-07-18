@@ -24,6 +24,7 @@
 #include "UnitManager.h"
 #include "utils/Logger.h"
 #include "utils/Types.h"
+#include "EntityDefinitionLoader.h"
 
 #include <iostream>
 #include <readerwriterqueue.h>
@@ -64,6 +65,7 @@ class Game
 
         spdlog::info("Game starting");
         spdlog::info("Initializing subsystems...");
+
 
         ion::GraphicsRegistry graphicsRegistry;
 
@@ -111,12 +113,17 @@ class Game
         auto cc = std::make_shared<ion::CommandCenter>();
         ion::ServiceRegistry::getInstance().registerService(cc);
 
+        auto entityDefLoader = std::make_shared<game::EntityDefinitionLoader>();
+        entityDefLoader->load();
+        std::shared_ptr<ion::EntityFactory> entityFactory = entityDefLoader;
+        ion::ServiceRegistry::getInstance().registerService(entityFactory);
+
         auto buildingMngr = std::make_shared<ion::BuildingManager>();
         auto unitManager = std::make_shared<ion::UnitManager>();
         auto playerActionResolver = std::make_shared<game::PlayerActionResolver>();
 
         if (params.eventHandler)
-            eventLoop->registerListener(std::move(params.eventHandler));
+            eventLoop->registerListener(params.eventHandler);
 
         eventLoop->registerListener(std::move(simulator));
         eventLoop->registerListener(std::move(cc));

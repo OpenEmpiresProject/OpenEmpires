@@ -18,6 +18,7 @@ struct CompResourceGatherer
 
     uint32_t capacity = 0;
     uint32_t gatheredAmount = 0;
+    uint32_t gatherSpeed = 10;
 
     bool canGather(uint8_t resourceType)
     {
