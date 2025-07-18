@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <entt/entity/registry.hpp>
 
-
 namespace ion
 {
 class CompEntityInfo

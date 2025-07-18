@@ -18,53 +18,50 @@
 #include "components/CompUnit.h"
 #include "utils/Types.h"
 
-#include <pybind11/embed.h>
 #include <iostream>
-#include <variant>
-#include <map>
 #include <list>
-
+#include <map>
+#include <pybind11/embed.h>
+#include <variant>
 
 namespace game
 {
-    
-using ComponentType = std::variant<std::monostate, 
-    ion::CompAction,
-    ion::CompAnimation,
-    ion::CompBuilder,
-    ion::CompBuilding,
-    ion::CompDirty,
-    ion::CompEntityInfo,
-    ion::CompGraphics,
-    ion::CompPlayer,
-    ion::CompRendering,
-    ion::CompResource,
-    ion::CompResourceGatherer,
-    ion::CompSelectible,
-    ion::CompTransform,
-    ion::CompUnit>;
 
-    class EntityDefinitionLoader : public ion::EntityFactory
-    {
-    public:
-        EntityDefinitionLoader(/* args */);
-        ~EntityDefinitionLoader();
+using ComponentType = std::variant<std::monostate,
+                                   ion::CompAction,
+                                   ion::CompAnimation,
+                                   ion::CompBuilder,
+                                   ion::CompBuilding,
+                                   ion::CompDirty,
+                                   ion::CompEntityInfo,
+                                   ion::CompGraphics,
+                                   ion::CompPlayer,
+                                   ion::CompRendering,
+                                   ion::CompResource,
+                                   ion::CompResourceGatherer,
+                                   ion::CompSelectible,
+                                   ion::CompTransform,
+                                   ion::CompUnit>;
 
-        void load();
+class EntityDefinitionLoader : public ion::EntityFactory
+{
+  public:
+    EntityDefinitionLoader(/* args */);
+    ~EntityDefinitionLoader();
 
-    private:
-        uint32_t createEntity(uint32_t entityType) override;
-        void createOrUpdateComponent(uint32_t entityType, pybind11::handle entityDefinition);
-        void addComponentsForUnit(uint32_t entityType);
-        void addComponentIfNotNull(uint32_t entityType, const ComponentType& comp);
+    void load();
 
-    private:
-        const std::string m_unitsFile = "units";
-        std::map<uint32_t, std::list<ComponentType>> m_componentsByEntityType;
-    };
-  
-    
-} // namespace ion
+  private:
+    uint32_t createEntity(uint32_t entityType) override;
+    void createOrUpdateComponent(uint32_t entityType, pybind11::handle entityDefinition);
+    void addComponentsForUnit(uint32_t entityType);
+    void addComponentIfNotNull(uint32_t entityType, const ComponentType& comp);
 
+  private:
+    const std::string m_unitsFile = "units";
+    std::map<uint32_t, std::list<ComponentType>> m_componentsByEntityType;
+};
+
+} // namespace game
 
 #endif

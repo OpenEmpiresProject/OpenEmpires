@@ -5,6 +5,7 @@
 #include "CommandCenter.h"
 #include "Coordinates.h"
 #include "DemoWorldCreator.h"
+#include "EntityDefinitionLoader.h"
 #include "EventLoop.h"
 #include "GameState.h"
 #include "GraphicsLoaderFromDRS.h"
@@ -24,7 +25,6 @@
 #include "UnitManager.h"
 #include "utils/Logger.h"
 #include "utils/Types.h"
-#include "EntityDefinitionLoader.h"
 
 #include <iostream>
 #include <readerwriterqueue.h>
@@ -65,7 +65,6 @@ class Game
 
         spdlog::info("Game starting");
         spdlog::info("Initializing subsystems...");
-
 
         ion::GraphicsRegistry graphicsRegistry;
 

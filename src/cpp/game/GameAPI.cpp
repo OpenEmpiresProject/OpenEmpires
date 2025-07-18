@@ -1,6 +1,7 @@
 #include "GameAPI.h"
 
 #include "DemoWorldCreator.h"
+#include "EntityFactory.h"
 #include "EventLoop.h"
 #include "EventPublisher.h"
 #include "GameTypes.h"
@@ -22,7 +23,6 @@
 #include "components/CompSelectible.h"
 #include "components/CompTransform.h"
 #include "components/CompUnit.h"
-#include "EntityFactory.h"
 
 using namespace game;
 using namespace ion;

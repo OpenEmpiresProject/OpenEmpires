@@ -9,8 +9,9 @@
 
 namespace ion
 {
-struct CompResourceGatherer
+class CompResourceGatherer
 {
+  public:
     // Gathering action per resource type
     static std::unordered_map<uint8_t, UnitAction> gatheringActions;
     // Resource carrying action per resource type

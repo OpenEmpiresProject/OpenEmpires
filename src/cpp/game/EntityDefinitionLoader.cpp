@@ -1,7 +1,8 @@
 #include "EntityDefinitionLoader.h"
-#include "utils/Logger.h"
+
 #include "GameTypes.h"
 #include "debug.h"
+#include "utils/Logger.h"
 
 #include <unordered_map>
 
@@ -10,19 +11,17 @@ using namespace game;
 using namespace std;
 namespace py = pybind11;
 
-
 UnitAction getAction(const std::string actionname)
 {
-    static unordered_map<string, UnitAction> actions =
-    {
-        { "idle", UnitAction::IDLE},
-        { "move", UnitAction::MOVE},
-        { "chop", UnitAction::CHOPPING},
-        { "mine", UnitAction::MINING},
-        { "carry_lumber", UnitAction::CARRYING_LUMBER},
-        { "carry_gold", UnitAction::CARRYING_GOLD},
-        { "carry_stone", UnitAction::CARRYING_STONE},
-        { "build", UnitAction::BUILDING},
+    static unordered_map<string, UnitAction> actions = {
+        {"idle", UnitAction::IDLE},
+        {"move", UnitAction::MOVE},
+        {"chop", UnitAction::CHOPPING},
+        {"mine", UnitAction::MINING},
+        {"carry_lumber", UnitAction::CARRYING_LUMBER},
+        {"carry_gold", UnitAction::CARRYING_GOLD},
+        {"carry_stone", UnitAction::CARRYING_STONE},
+        {"build", UnitAction::BUILDING},
     };
 
     debug_assert(actions.contains(actionname), "Unknown action {}", actionname);
@@ -30,19 +29,15 @@ UnitAction getAction(const std::string actionname)
     return actions[actionname];
 }
 
-
 uint32_t getEntityType(const std::string& entityName)
 {
-    static unordered_map<string, uint32_t> entityTypes =
-    {
-       { "villager", EntityTypes::ET_VILLAGER},
+    static unordered_map<string, uint32_t> entityTypes = {
+        {"villager", EntityTypes::ET_VILLAGER},
     };
     return entityTypes[entityName];
 }
 
-
-template <typename T>
-T readValue(pybind11::handle object, const std::string& key)
+template <typename T> T readValue(pybind11::handle object, const std::string& key)
 {
     if (py::hasattr(object, key.c_str()))
     {
@@ -58,14 +53,13 @@ T readValue(pybind11::handle object, const std::string& key)
     return T();
 }
 
-
 ComponentType createAnimation(pybind11::handle entityDefinition)
 {
     if (py::hasattr(entityDefinition, "animations") == false)
         return std::monostate{};
 
     CompAnimation comp;
-    for (auto py_anim : entityDefinition.attr("animations")) 
+    for (auto py_anim : entityDefinition.attr("animations"))
     {
         CompAnimation::ActionAnimation animation;
         animation.frames = readValue<int>(py_anim, "frame_count");
@@ -78,7 +72,6 @@ ComponentType createAnimation(pybind11::handle entityDefinition)
     return ComponentType(comp);
 }
 
-
 ComponentType creatBuilder(pybind11::handle entityDefinition)
 {
     if (py::hasattr(entityDefinition, "build_speed") == false)
@@ -87,7 +80,6 @@ ComponentType creatBuilder(pybind11::handle entityDefinition)
     auto buildSpeed = entityDefinition.attr("build_speed").cast<int>();
     return ComponentType(CompBuilder(buildSpeed));
 }
-
 
 ComponentType creatCompResourceGatherer(pybind11::handle entityDefinition)
 {
@@ -100,7 +92,6 @@ ComponentType creatCompResourceGatherer(pybind11::handle entityDefinition)
     return ComponentType(comp);
 }
 
-
 ComponentType creatCompUnit(pybind11::handle entityDefinition)
 {
     if (py::hasattr(entityDefinition, "line_of_sight") == false)
@@ -110,7 +101,6 @@ ComponentType creatCompUnit(pybind11::handle entityDefinition)
     comp.lineOfSight = entityDefinition.attr("line_of_sight").cast<int>();
     return ComponentType(comp);
 }
-
 
 ComponentType creatCompTransform(pybind11::handle entityDefinition)
 {
@@ -141,7 +131,8 @@ void EntityDefinitionLoader::load()
     py::object units_module = py::module_::import("units");
     py::list all_units = units_module.attr("all_units");
 
-    for (auto py_unit : all_units) {
+    for (auto py_unit : all_units)
+    {
         std::string name = py_unit.attr("name").cast<std::string>();
 
         auto entityType = getEntityType(name);
@@ -156,18 +147,22 @@ uint32_t EntityDefinitionLoader::createEntity(uint32_t entityType)
     auto entity = gameState->createEntity();
 
     auto it = m_componentsByEntityType.find(entityType);
-    if (it != m_componentsByEntityType.end()) 
+    if (it != m_componentsByEntityType.end())
     {
-        for (const auto& variantComponent : it->second) 
+        for (const auto& variantComponent : it->second)
         {
-            std::visit([&](auto&& comp) {
-                using T = std::decay_t<decltype(comp)>;
-                if constexpr (!std::is_same_v<T, std::monostate>) 
+            std::visit(
+                [&](auto&& comp)
                 {
-                    spdlog::debug("Adding component {}", typeid(comp).name());
-                    gameState->addComponent(entity, comp);
-                }
-            }, variantComponent);
+                    using T = std::decay_t<decltype(comp)>;
+                    if constexpr (!std::is_same_v<T, std::monostate>)
+                    {
+                        spdlog::debug("Adding component {} to entity {} of type {}",
+                                      typeid(comp).name(), entity, entityType);
+                        gameState->addComponent(entity, comp);
+                    }
+                },
+                variantComponent);
         }
     }
     gameState->getComponent<CompEntityInfo>(entity).entityId = entity;
@@ -175,7 +170,7 @@ uint32_t EntityDefinitionLoader::createEntity(uint32_t entityType)
 }
 
 void EntityDefinitionLoader::createOrUpdateComponent(uint32_t entityType,
-                                                           pybind11::handle entityDefinition)
+                                                     pybind11::handle entityDefinition)
 {
     py::dict fields = entityDefinition.attr("__dict__");
 
@@ -200,20 +195,20 @@ void EntityDefinitionLoader::addComponentsForUnit(uint32_t entityType)
     graphics.entityType = entityType;
     graphics.layer = GraphicLayer::ENTITIES;
     graphics.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::GREEN,
-                                DebugOverlay::FixedPosition::BOTTOM_CENTER,
-                                DebugOverlay::FixedPosition::CENTER});
+                                      DebugOverlay::FixedPosition::BOTTOM_CENTER,
+                                      DebugOverlay::FixedPosition::CENTER});
     graphics.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::RED,
-                                DebugOverlay::FixedPosition::BOTTOM_CENTER,
-                                DebugOverlay::FixedPosition::CENTER});
+                                      DebugOverlay::FixedPosition::BOTTOM_CENTER,
+                                      DebugOverlay::FixedPosition::CENTER});
     graphics.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::BLUE,
-                                DebugOverlay::FixedPosition::BOTTOM_CENTER,
-                                DebugOverlay::FixedPosition::CENTER});
+                                      DebugOverlay::FixedPosition::BOTTOM_CENTER,
+                                      DebugOverlay::FixedPosition::CENTER});
     graphics.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::YELLOW,
-                                DebugOverlay::FixedPosition::BOTTOM_CENTER,
-                                DebugOverlay::FixedPosition::CENTER});
+                                      DebugOverlay::FixedPosition::BOTTOM_CENTER,
+                                      DebugOverlay::FixedPosition::CENTER});
     graphics.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::BLACK,
-                                DebugOverlay::FixedPosition::BOTTOM_CENTER,
-                                DebugOverlay::FixedPosition::CENTER});
+                                      DebugOverlay::FixedPosition::BOTTOM_CENTER,
+                                      DebugOverlay::FixedPosition::CENTER});
     m_componentsByEntityType[entityType].push_back(graphics);
 }
 

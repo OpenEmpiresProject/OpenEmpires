@@ -5,13 +5,13 @@
 
 namespace ion
 {
-    class EntityFactory
-    {
-    public:
-       virtual  ~EntityFactory() = default;
+class EntityFactory
+{
+  public:
+    virtual ~EntityFactory() = default;
 
-        virtual uint32_t createEntity(uint32_t entityType) = 0;
-    };
+    virtual uint32_t createEntity(uint32_t entityType) = 0;
+};
 } // namespace ion
 
 #endif

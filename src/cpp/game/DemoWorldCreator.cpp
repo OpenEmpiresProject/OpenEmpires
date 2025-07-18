@@ -1,6 +1,7 @@
 #include "DemoWorldCreator.h"
 
 #include "Coordinates.h"
+#include "EntityFactory.h"
 #include "GameState.h"
 #include "GameTypes.h"
 #include "PlayerManager.h"
@@ -27,8 +28,6 @@
 #include "utils/Logger.h"
 #include "utils/ObjectPool.h"
 #include "utils/Types.h"
-#include "EntityFactory.h"
-#include "GameTypes.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_surface.h>
@@ -91,7 +90,7 @@ void DemoWorldCreator::loadEntities()
         createStoneOrGoldCluster(EntityTypes::ET_STONE, gameState->gameMap, 30, 30, 4);
         createStoneOrGoldCluster(EntityTypes::ET_GOLD, gameState->gameMap, 20, 30, 4);
         createVillager(player, Tile(25, 25));
-        //createVillager(player, Tile(20, 20));
+        // createVillager(player, Tile(20, 20));
     }
 
     CompResourceGatherer::gatheringActions = {{ResourceType::WOOD, UnitAction::CHOPPING},
@@ -231,7 +230,7 @@ void DemoWorldCreator::createVillager(Ref<ion::Player> player, const Tile& tileP
     auto box = getBoundingBox(m_drs, 1388, 1);
     selectible.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
     selectible.selectionIndicator = {GraphicAddon::Type::ISO_CIRCLE,
-                             GraphicAddon::IsoCircle{10, Vec2(0, 0)}};
+                                     GraphicAddon::IsoCircle{10, Vec2(0, 0)}};
     playerComp.player = player;
 
     auto newTile = transform.position.toTile();
