@@ -144,7 +144,6 @@ void DemoWorldCreator::createTree(TileMap& map, uint32_t x, uint32_t y)
 
     auto tree = gameState->createEntity();
     auto transform = CompTransform(x * 256 + 128, y * 256 + 128);
-    transform.face(Direction::NORTHWEST);
     gameState->addComponent(tree, transform);
     gameState->addComponent(tree, CompRendering());
     CompGraphics gc;
@@ -155,7 +154,9 @@ void DemoWorldCreator::createTree(TileMap& map, uint32_t x, uint32_t y)
 
     gameState->addComponent(tree, gc);
     // TODO: Should not hard code
-    gameState->addComponent(tree, CompEntityInfo(EntityTypes::ET_TREE, 0, rand() % 10));
+    CompEntityInfo entityInfo(EntityTypes::ET_TREE, 0, rand() % 10);
+    entityInfo.entityId = tree;
+    gameState->addComponent(tree, entityInfo);
     gameState->addComponent(tree, CompDirty());
 
     // TODO: This doesn't work. Need to conslidate resource and graphic loading and handle this
@@ -181,7 +182,6 @@ void DemoWorldCreator::createStoneOrGold(EntityTypes entityType,
 
     auto stone = gameState->createEntity();
     auto transform = CompTransform(x * 256 + 128, y * 256 + 128);
-    transform.face(Direction::NORTHWEST);
     gameState->addComponent(stone, transform);
     gameState->addComponent(stone, CompRendering());
     CompGraphics gc;
@@ -191,7 +191,9 @@ void DemoWorldCreator::createStoneOrGold(EntityTypes entityType,
     gc.layer = GraphicLayer::ENTITIES;
 
     gameState->addComponent(stone, gc);
-    gameState->addComponent(stone, CompEntityInfo(entityType, 0, rand() % 7));
+    CompEntityInfo entityInfo(entityType, 0, rand() % 7);
+    entityInfo.entityId = stone;
+    gameState->addComponent(stone, entityInfo);
     gameState->addComponent(stone, CompDirty());
 
     // TODO: This doesn't work. Need to conslidate resource and graphic loading and handle this
@@ -256,7 +258,10 @@ void DemoWorldCreator::createVillager(Ref<ion::Player> player, const Tile& tileP
 
     gameState->addComponent(villager, transform);
     gameState->addComponent(villager, CompRendering());
-    gameState->addComponent(villager, CompEntityInfo(3));
+
+    CompEntityInfo entityInfo(3);
+    entityInfo.entityId = villager;
+    gameState->addComponent(villager, entityInfo);
     gameState->addComponent(villager, CompAction(0));
     gameState->addComponent(villager, anim);
     gameState->addComponent(villager, CompDirty());
@@ -471,7 +476,10 @@ void DemoWorldCreator::createTile(uint32_t x,
     int newY = x;
     // AOE2 standard tiling rule. From OpenAge documentation
     int tileVariation = (newX % tc) + ((newY % tc) * tc) + 1;
-    gameState->addComponent(tile, CompEntityInfo(entityType, 0, tileVariation));
+
+    CompEntityInfo entityInfo(entityType, 0, tileVariation);
+    entityInfo.entityId = tile;
+    gameState->addComponent(tile, entityInfo);
 
     DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, ion::Color::GREY,
                          DebugOverlay::FixedPosition::BOTTOM_CENTER};

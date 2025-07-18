@@ -90,3 +90,14 @@ configure_file(
     @ONLY
 )
 set(GENERATED_DIR ${CMAKE_BINARY_DIR}/generated CACHE INTERNAL "")
+
+# Add all files in the assets directory
+file(GLOB_RECURSE ASSET_FILES
+    "${CMAKE_SOURCE_DIR}/assets/*"
+)
+
+# Add these as dummy sources so they show in IDE
+add_custom_target(Assets SOURCES ${ASSET_FILES})
+
+# Group them under "Assets" in Solution Explorer (Visual Studio)
+source_group(TREE "${CMAKE_SOURCE_DIR}/assets" PREFIX "Assets" FILES ${ASSET_FILES})

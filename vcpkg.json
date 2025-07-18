@@ -6,6 +6,7 @@
     "sdl3-ttf",
     "entt",
     "spdlog",
-    "readerwriterqueue"
+    "readerwriterqueue",
+    "pybind11"
   ]
 }

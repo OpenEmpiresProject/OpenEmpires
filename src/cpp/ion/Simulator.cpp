@@ -158,6 +158,7 @@ void Simulator::updateGraphicComponents()
         gc.entitySubType = entityInfo.entitySubType;
         gc.entityType = entityInfo.entityType;
         gc.isDestroyed = entityInfo.isDestroyed;
+        gc.entityID = entityInfo.entityId;
 
         if (state->hasComponent<CompSelectible>(entity))
         {

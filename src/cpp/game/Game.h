@@ -24,6 +24,7 @@
 #include "UnitManager.h"
 #include "utils/Logger.h"
 #include "utils/Types.h"
+#include "EntityDefinitionLoader.h"
 
 #include <iostream>
 #include <readerwriterqueue.h>
@@ -64,6 +65,7 @@ class Game
 
         spdlog::info("Game starting");
         spdlog::info("Initializing subsystems...");
+
 
         ion::GraphicsRegistry graphicsRegistry;
 
@@ -127,6 +129,9 @@ class Game
         eventLoop->registerListener(std::move(buildingMngr));
         eventLoop->registerListener(std::move(unitManager));
         eventLoop->registerListener(std::move(playerActionResolver));
+
+        game::EntityDefinitionLoader loader;
+        loader.load();
 
         auto resourceLoader = std::make_shared<DemoWorldCreator>(
             &stopToken, settings, graphicsRegistry, renderer, params.populateWorld);
