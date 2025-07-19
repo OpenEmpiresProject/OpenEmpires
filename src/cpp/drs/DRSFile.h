@@ -4,6 +4,7 @@
 #include "SLPFile.h"
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -23,6 +24,7 @@ class DRSFile
 
     std::ifstream m_file;
     std::unordered_map<uint32_t, std::shared_ptr<DRSResourceData>> m_resources;
+    std::mutex m_fileMutex;
 };
 } // namespace drs
 

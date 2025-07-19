@@ -1,6 +1,7 @@
 #include "UnitManager.h"
 
 #include "Coordinates.h"
+#include "EntityFactory.h"
 #include "commands/CmdBuild.h"
 #include "commands/CmdGatherResource.h"
 #include "commands/CmdMove.h"
@@ -16,6 +17,7 @@ UnitManager::UnitManager() : m_coordinates(ServiceRegistry::getInstance().getSer
     registerCallback(Event::Type::MOUSE_BTN_UP, this, &UnitManager::onMouseButtonUp);
     registerCallback(Event::Type::MOUSE_BTN_DOWN, this, &UnitManager::onMouseButtonDown);
     registerCallback(Event::Type::ENTITY_DELETE, this, &UnitManager::onUnitDeletion);
+    registerCallback(Event::Type::UNIT_REQUESTED, this, &UnitManager::onUnitRequested);
     registerCallback(Event::Type::UNIT_SELECTION, this, &UnitManager::onUnitSelection);
     registerCallback(Event::Type::BUILDING_PLACEMENT_STARTED, this,
                      &UnitManager::onBuildingPlacementStarted);
@@ -321,4 +323,29 @@ void UnitManager::completeSelectionBox(const Vec2& startScreenPos, const Vec2& e
 void UnitManager::onUnitSelection(const Event& e)
 {
     updateSelection(e.getData<UnitSelectionData>().selection);
+}
+
+void UnitManager::onUnitRequested(const Event& e)
+{
+    auto data = e.getData<UnitCreationData>();
+
+    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+    auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
+
+    auto unit = factory->createEntity(data.entityType);
+    auto [transform, unitComp, selectible, playerComp] =
+        gameState->getComponents<CompTransform, CompUnit, CompSelectible, CompPlayer>(unit);
+
+    transform.position = data.position;
+    transform.face(Direction::SOUTH);
+    /*auto box = getBoundingBox(m_drs, 1388, 1);
+    selectible.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
+    selectible.selectionIndicator = {GraphicAddon::Type::ISO_CIRCLE,
+                                     GraphicAddon::IsoCircle{10, Vec2(0, 0)}};*/
+    playerComp.player = data.player;
+
+    auto newTile = transform.position.toTile();
+    gameState->gameMap.addEntity(MapLayerType::UNITS, newTile, unit);
+
+    data.player->getFogOfWar()->markAsExplored(transform.position, unitComp.lineOfSight);
 }

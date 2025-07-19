@@ -226,7 +226,6 @@ void DemoWorldCreator::createVillager(Ref<ion::Player> player, const Tile& tileP
 
     transform.position = Feet(tilePos.x * 256 + 128, tilePos.x * 256 + 50);
     transform.face(Direction::SOUTH);
-    unit.commandQueue.push(ObjectPool<CmdIdle>::acquire(villager));
     auto box = getBoundingBox(m_drs, 1388, 1);
     selectible.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
     selectible.selectionIndicator = {GraphicAddon::Type::ISO_CIRCLE,

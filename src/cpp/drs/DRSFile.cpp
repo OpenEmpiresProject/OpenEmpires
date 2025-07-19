@@ -99,6 +99,8 @@ bool DRSFile::load(const std::string& filename)
 
 std::shared_ptr<DRSResourceData> DRSFile::getResource(uint32_t resourceId)
 {
+    std::lock_guard guard(m_fileMutex);
+
     auto it = m_resources.find(resourceId);
     if (it == m_resources.end())
         throw std::runtime_error("Resource not found");

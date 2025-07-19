@@ -1,8 +1,10 @@
 #include "GraphicsLoaderFromDRS.h"
 
 #include "DRSFile.h"
+#include "EntityDefinitionLoader.h"
 #include "GameTypes.h"
 #include "SLPFile.h"
+#include "ServiceRegistry.h"
 #include "debug.h"
 #include "utils/Logger.h"
 #include "utils/Types.h"
@@ -38,22 +40,7 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
     auto graphicsDRS = loadDRSFile("assets/graphics.drs");
 
     loadSLP(terrainDRS, 15001, 2, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Grass tiles
-    loadSLP(graphicsDRS, 1388, EntityTypes::ET_VILLAGER, 0, UnitAction::IDLE, renderer,
-            graphicsRegistry, atlasGenerator);
-    loadSLP(graphicsDRS, 1392, EntityTypes::ET_VILLAGER, 0, UnitAction::MOVE, renderer,
-            graphicsRegistry, atlasGenerator);
-    loadSLP(graphicsDRS, 1434, EntityTypes::ET_VILLAGER, 0, UnitAction::CHOPPING, renderer,
-            graphicsRegistry, atlasGenerator);
-    loadSLP(graphicsDRS, 1880, EntityTypes::ET_VILLAGER, 0, UnitAction::MINING, renderer,
-            graphicsRegistry, atlasGenerator);
-    loadSLP(graphicsDRS, 1883, EntityTypes::ET_VILLAGER, 0, UnitAction::CARRYING_LUMBER, renderer,
-            graphicsRegistry, atlasGenerator);
-    loadSLP(graphicsDRS, 2218, EntityTypes::ET_VILLAGER, 0, UnitAction::CARRYING_GOLD, renderer,
-            graphicsRegistry, atlasGenerator);
-    loadSLP(graphicsDRS, 1879, EntityTypes::ET_VILLAGER, 0, UnitAction::CARRYING_STONE, renderer,
-            graphicsRegistry, atlasGenerator);
-    loadSLP(graphicsDRS, 1874, EntityTypes::ET_VILLAGER, 0, UnitAction::BUILDING, renderer,
-            graphicsRegistry, atlasGenerator);
+
     loadSLP(graphicsDRS, 1254, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
             graphicsRegistry, atlasGenerator); // Tree
     loadSLP(graphicsDRS, 1256, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
@@ -98,6 +85,31 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
     registerDummyTexture(EntityTypes::ET_UI_ELEMENT, EntitySubTypes::UI_LABEL, graphicsRegistry);
     registerDummyTexture(EntityTypes::ET_UI_ELEMENT, EntitySubTypes::UI_BUTTON, graphicsRegistry);
 
+    adjustDirections(graphicsRegistry);
+}
+
+void GraphicsLoaderFromDRS::loadGraphics(SDL_Renderer* renderer,
+                                         GraphicsRegistry& graphicsRegistry,
+                                         AtlasGenerator& atlasGenerator,
+                                         const std::list<GraphicsID>& idsToLoad)
+{
+    auto entityFactory = ServiceRegistry::getInstance().getService<EntityFactory>();
+    Ref<EntityDefinitionLoader> defLoader =
+        dynamic_pointer_cast<EntityDefinitionLoader>(entityFactory);
+
+    for (auto& id : idsToLoad)
+    {
+        GraphicsID simpleId;
+        simpleId.entityType = id.entityType;
+        simpleId.action = id.action;
+
+        auto drsData = defLoader->getDRSData(simpleId);
+        if (drsData.drsFile != nullptr)
+        {
+            loadSLP(drsData.drsFile, drsData.slpId, id.entityType, id.entitySubType, id.action,
+                    renderer, graphicsRegistry, atlasGenerator);
+        }
+    }
     adjustDirections(graphicsRegistry);
 }
 
@@ -321,6 +333,7 @@ void adjustDirections(GraphicsRegistry& graphicsRegistry)
         id.direction =
             static_cast<Direction>(getFlippedDirection(id.direction)); // Flip the direction
 
-        graphicsRegistry.registerTexture(id, texture);
+        if (graphicsRegistry.hasTexture(id) == false)
+            graphicsRegistry.registerTexture(id, texture);
     }
 }

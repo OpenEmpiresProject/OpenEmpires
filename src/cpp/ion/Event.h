@@ -68,6 +68,13 @@ struct EntityDeleteData
     uint32_t entity = entt::null;
 };
 
+struct UnitCreationData
+{
+    Ref<Player> player;
+    Feet position;
+    uint32_t entityType = 0;
+};
+
 struct Event
 {
     enum class Type
@@ -79,6 +86,7 @@ struct Event
         MOUSE_MOVE,
         MOUSE_BTN_DOWN,
         MOUSE_BTN_UP,
+        UNIT_REQUESTED, // Use UnitCreationData
         UNIT_SELECTION,
         UNIT_TILE_MOVEMENT,
         ENTITY_DELETE,
@@ -98,6 +106,7 @@ struct Event
                               CommandRequestData,
                               UnitTileMovementData,
                               EntityDeleteData,
+                              UnitCreationData,
                               BuildingPlacementData>;
 
     const Type type = Type::NONE;

@@ -229,7 +229,7 @@ class RendererImpl
 
     bool m_showFogOfWar = true;
 
-    bool m_isReady = false;
+    volatile bool m_isReady = false;
 };
 } // namespace ion
 
@@ -484,12 +484,13 @@ void RendererImpl::updateRenderingComponents()
 {
     // spdlog::debug("Handling graphic instructions...");
     auto& frameData = m_synchronizer.getReceiverFrameData().graphicUpdates;
+    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+    std::list<GraphicsID> idsNeedToLoad;
+    std::list<CompGraphics*> lazyLoadedInstructions;
 
     for (const auto& instruction : frameData)
     {
-        auto& rc =
-            ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompRendering>(
-                instruction->entityID);
+        auto& rc = gameState->getComponent<CompRendering>(instruction->entityID);
         static_cast<CompGraphics&>(rc) = *instruction;
         rc.additionalZOffset = 0;
 
@@ -506,13 +507,28 @@ void RendererImpl::updateRenderingComponents()
             }
         }
 
-        rc.updateTextureDetails(m_graphicsRegistry);
-
-        m_zOrderStrategy->preProcess(rc);
-
+        if (m_graphicsRegistry.hasTexture(rc))
+        {
+            rc.updateTextureDetails(m_graphicsRegistry);
+            m_zOrderStrategy->preProcess(rc);
+        }
+        else
+        {
+            idsNeedToLoad.push_back(rc);
+            lazyLoadedInstructions.push_back(instruction);
+        }
         ObjectPool<CompGraphics>::release(instruction);
     }
     frameData.clear();
+
+    AtlasGeneratorBasic atlasGenerator;
+    m_graphicsLoader.loadGraphics(m_renderer, m_graphicsRegistry, atlasGenerator, idsNeedToLoad);
+    for (auto& instruction : lazyLoadedInstructions)
+    {
+        auto& rc = gameState->getComponent<CompRendering>(instruction->entityID);
+        static_cast<CompGraphics&>(rc) = *instruction;
+        m_zOrderStrategy->preProcess(rc);
+    }
 }
 
 void RendererImpl::renderDebugInfo(FPSCounter& counter)

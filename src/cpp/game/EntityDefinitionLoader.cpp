@@ -1,14 +1,17 @@
 #include "EntityDefinitionLoader.h"
 
 #include "GameTypes.h"
+#include "commands/CmdIdle.h"
 #include "debug.h"
 #include "utils/Logger.h"
+#include "utils/ObjectPool.h"
 
 #include <unordered_map>
 
 using namespace ion;
 using namespace game;
 using namespace std;
+using namespace drs;
 namespace py = pybind11;
 
 UnitAction getAction(const std::string actionname)
@@ -138,7 +141,18 @@ void EntityDefinitionLoader::load()
         auto entityType = getEntityType(name);
         addComponentsForUnit(entityType);
         createOrUpdateComponent(entityType, py_unit);
+        updateDRSData(entityType, py_unit);
     }
+}
+
+EntityDefinitionLoader::EntityDRSData EntityDefinitionLoader::getDRSData(const GraphicsID& id)
+{
+    auto it = m_DRSDataByGraphicsIdHash.find(id.hash());
+    if (it != m_DRSDataByGraphicsIdHash.end())
+        return it->second;
+    else
+        spdlog::warn("Could not find DRS data for id {}", id.toString());
+    return EntityDRSData();
 }
 
 uint32_t EntityDefinitionLoader::createEntity(uint32_t entityType)
@@ -166,6 +180,11 @@ uint32_t EntityDefinitionLoader::createEntity(uint32_t entityType)
         }
     }
     gameState->getComponent<CompEntityInfo>(entity).entityId = entity;
+
+    if (gameState->hasComponent<CompUnit>(entity))
+        gameState->getComponent<CompUnit>(entity).commandQueue.push(
+            ObjectPool<CmdIdle>::acquire(entity));
+
     return entity;
 }
 
@@ -216,4 +235,41 @@ void EntityDefinitionLoader::addComponentIfNotNull(uint32_t entityType, const Co
 {
     if (std::holds_alternative<std::monostate>(comp) == false)
         m_componentsByEntityType[entityType].push_back(comp);
+}
+
+Ref<DRSFile> loadDRSFile2(const string& drsFilename)
+{
+    auto drs = make_shared<DRSFile>();
+    if (!drs->load(drsFilename))
+    {
+        throw runtime_error("Failed to load DRS file: " + drsFilename);
+    }
+    return std::move(drs);
+}
+
+void EntityDefinitionLoader::updateDRSData(uint32_t entityType, pybind11::handle entityDefinition)
+{
+    if (py::hasattr(entityDefinition, "animations") == false)
+        return;
+
+    for (auto py_anim : entityDefinition.attr("animations"))
+    {
+        auto drsFileName = readValue<std::string>(py_anim, "drs_file");
+        auto slpId = readValue<int>(py_anim, "slp_id");
+
+        Ref<DRSFile> drsFile;
+        auto it = m_drsFilesByName.find(drsFileName);
+        if (it != m_drsFilesByName.end())
+            drsFile = it->second;
+        else
+            drsFile = loadDRSFile2("assets/" + drsFileName);
+
+        auto action = getAction(py_anim.attr("name").cast<std::string>());
+
+        GraphicsID id;
+        id.entityType = entityType;
+        id.action = action;
+
+        m_DRSDataByGraphicsIdHash[id.hash()] = EntityDRSData{drsFile, slpId};
+    }
 }

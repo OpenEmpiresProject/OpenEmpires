@@ -42,6 +42,7 @@ class UnitManager : public EventHandler
     void resolveAction(const Vec2& screenPos);
     void completeSelectionBox(const Vec2& startScreenPos, const Vec2& endScreenPos);
     void onUnitSelection(const Event& e);
+    void onUnitRequested(const Event& e);
 
     bool m_buildingPlacementInProgress = false;
     Vec2 m_selectionStartPosScreenUnits;

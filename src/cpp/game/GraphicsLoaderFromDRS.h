@@ -11,6 +11,10 @@ class GraphicsLoaderFromDRS : public ion::GraphicsLoader
     void loadAllGraphics(SDL_Renderer* renderer,
                          ion::GraphicsRegistry& graphicsRegistry,
                          ion::AtlasGenerator& atlasGenerator) override;
+    void loadGraphics(SDL_Renderer* renderer,
+                      ion::GraphicsRegistry& graphicsRegistry,
+                      ion::AtlasGenerator& atlasGenerator,
+                      const std::list<ion::GraphicsID>& idsToLoad) override;
 };
 
 } // namespace game
