@@ -62,6 +62,8 @@ class EntityDefinitionLoader : public ion::EntityFactory
 
   private:
     uint32_t createEntity(uint32_t entityType) override;
+    void loadUnits(pybind11::object module);
+    void loadNaturalResources(pybind11::object module);
     void createOrUpdateComponent(uint32_t entityType, pybind11::handle entityDefinition);
     void addComponentsForUnit(uint32_t entityType);
     void addComponentIfNotNull(uint32_t entityType, const ComponentType& comp);

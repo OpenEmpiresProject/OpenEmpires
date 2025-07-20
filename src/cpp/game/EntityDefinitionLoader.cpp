@@ -27,17 +27,28 @@ UnitAction getAction(const std::string actionname)
         {"build", UnitAction::BUILDING},
     };
 
-    debug_assert(actions.contains(actionname), "Unknown action {}", actionname);
-
-    return actions[actionname];
+    return actions.at(actionname);
 }
 
 uint32_t getEntityType(const std::string& entityName)
 {
     static unordered_map<string, uint32_t> entityTypes = {
         {"villager", EntityTypes::ET_VILLAGER},
+        {"wood", EntityTypes::ET_TREE},
+        {"gold", EntityTypes::ET_GOLD},
+        {"stone", EntityTypes::ET_STONE},
     };
-    return entityTypes[entityName];
+    return entityTypes.at(entityName);
+}
+
+ResourceType getResourceType(const std::string& name)
+{
+    static unordered_map<string, ResourceType> resTypes = {
+        {"wood", ResourceType::WOOD},
+        {"gold", ResourceType::GOLD},
+        {"stone", ResourceType::STONE},
+    };
+    return resTypes.at(name);
 }
 
 template <typename T> T readValue(pybind11::handle object, const std::string& key)
@@ -75,7 +86,7 @@ ComponentType createAnimation(pybind11::handle entityDefinition)
     return ComponentType(comp);
 }
 
-ComponentType creatBuilder(pybind11::handle entityDefinition)
+ComponentType createBuilder(pybind11::handle entityDefinition)
 {
     if (py::hasattr(entityDefinition, "build_speed") == false)
         return std::monostate{};
@@ -84,7 +95,7 @@ ComponentType creatBuilder(pybind11::handle entityDefinition)
     return ComponentType(CompBuilder(buildSpeed));
 }
 
-ComponentType creatCompResourceGatherer(pybind11::handle entityDefinition)
+ComponentType createCompResourceGatherer(pybind11::handle entityDefinition)
 {
     if (py::hasattr(entityDefinition, "gather_speed") == false)
         return std::monostate{};
@@ -95,7 +106,7 @@ ComponentType creatCompResourceGatherer(pybind11::handle entityDefinition)
     return ComponentType(comp);
 }
 
-ComponentType creatCompUnit(pybind11::handle entityDefinition)
+ComponentType createCompUnit(pybind11::handle entityDefinition)
 {
     if (py::hasattr(entityDefinition, "line_of_sight") == false)
         return std::monostate{};
@@ -105,7 +116,7 @@ ComponentType creatCompUnit(pybind11::handle entityDefinition)
     return ComponentType(comp);
 }
 
-ComponentType creatCompTransform(pybind11::handle entityDefinition)
+ComponentType createCompTransform(pybind11::handle entityDefinition)
 {
     if (py::hasattr(entityDefinition, "moving_speed") == false)
         return std::monostate{};
@@ -114,6 +125,17 @@ ComponentType creatCompTransform(pybind11::handle entityDefinition)
     comp.speed = entityDefinition.attr("moving_speed").cast<int>();
     comp.hasRotation = true;
     return ComponentType(comp);
+}
+
+ComponentType createCompResource(pybind11::handle entityDefinition)
+{
+    if (py::hasattr(entityDefinition, "resource_amount") == false)
+        return std::monostate{};
+
+    auto name = readValue<string>(entityDefinition, "name");
+    auto amount = readValue<int>(entityDefinition, "resource_amount");
+
+    return ComponentType(CompResource(Resource(getResourceType(name), amount)));
 }
 
 EntityDefinitionLoader::EntityDefinitionLoader(/* args */)
@@ -131,8 +153,14 @@ void EntityDefinitionLoader::load()
     py::module_ sys = py::module_::import("sys");
     sys.attr("path").attr("insert")(0, "./assets/scripts");
 
-    py::object units_module = py::module_::import("units");
-    py::list all_units = units_module.attr("all_units");
+    py::object module = py::module_::import("units");
+    loadUnits(module);
+    loadNaturalResources(module);
+}
+
+void EntityDefinitionLoader::loadUnits(py::object module)
+{
+    py::list all_units = module.attr("all_units");
 
     for (auto py_unit : all_units)
     {
@@ -142,6 +170,20 @@ void EntityDefinitionLoader::load()
         addComponentsForUnit(entityType);
         createOrUpdateComponent(entityType, py_unit);
         updateDRSData(entityType, py_unit);
+    }
+}
+
+void EntityDefinitionLoader::loadNaturalResources(py::object module)
+{
+    py::list entries = module.attr("all_natural_resources");
+
+    for (auto entry : entries)
+    {
+        std::string name = entry.attr("name").cast<std::string>();
+
+        auto entityType = getEntityType(name);
+        createOrUpdateComponent(entityType, entry);
+        updateDRSData(entityType, entry);
     }
 }
 
@@ -194,10 +236,11 @@ void EntityDefinitionLoader::createOrUpdateComponent(uint32_t entityType,
     py::dict fields = entityDefinition.attr("__dict__");
 
     addComponentIfNotNull(entityType, createAnimation(entityDefinition));
-    addComponentIfNotNull(entityType, creatBuilder(entityDefinition));
-    addComponentIfNotNull(entityType, creatCompResourceGatherer(entityDefinition));
-    addComponentIfNotNull(entityType, creatCompUnit(entityDefinition));
-    addComponentIfNotNull(entityType, creatCompTransform(entityDefinition));
+    addComponentIfNotNull(entityType, createBuilder(entityDefinition));
+    addComponentIfNotNull(entityType, createCompResourceGatherer(entityDefinition));
+    addComponentIfNotNull(entityType, createCompUnit(entityDefinition));
+    addComponentIfNotNull(entityType, createCompTransform(entityDefinition));
+    addComponentIfNotNull(entityType, createCompResource(entityDefinition));
     addComponentIfNotNull(entityType, CompEntityInfo(entityType));
 }
 
@@ -244,32 +287,54 @@ Ref<DRSFile> loadDRSFile2(const string& drsFilename)
     {
         throw runtime_error("Failed to load DRS file: " + drsFilename);
     }
-    return std::move(drs);
+    return drs;
 }
 
 void EntityDefinitionLoader::updateDRSData(uint32_t entityType, pybind11::handle entityDefinition)
 {
-    if (py::hasattr(entityDefinition, "animations") == false)
-        return;
-
-    for (auto py_anim : entityDefinition.attr("animations"))
+    if (py::hasattr(entityDefinition, "animations"))
     {
-        auto drsFileName = readValue<std::string>(py_anim, "drs_file");
-        auto slpId = readValue<int>(py_anim, "slp_id");
+        for (auto py_anim : entityDefinition.attr("animations"))
+        {
+            auto drsFileName = readValue<std::string>(py_anim, "drs_file");
+            auto slpId = readValue<int>(py_anim, "slp_id");
 
-        Ref<DRSFile> drsFile;
-        auto it = m_drsFilesByName.find(drsFileName);
-        if (it != m_drsFilesByName.end())
-            drsFile = it->second;
-        else
-            drsFile = loadDRSFile2("assets/" + drsFileName);
+            Ref<DRSFile> drsFile;
+            auto it = m_drsFilesByName.find(drsFileName);
+            if (it != m_drsFilesByName.end())
+                drsFile = it->second;
+            else
+                drsFile = loadDRSFile2("assets/" + drsFileName);
 
-        auto action = getAction(py_anim.attr("name").cast<std::string>());
+            auto action = getAction(py_anim.attr("name").cast<std::string>());
 
-        GraphicsID id;
-        id.entityType = entityType;
-        id.action = action;
+            GraphicsID id;
+            id.entityType = entityType;
+            id.action = action;
 
-        m_DRSDataByGraphicsIdHash[id.hash()] = EntityDRSData{drsFile, slpId};
+            m_DRSDataByGraphicsIdHash[id.hash()] = EntityDRSData{drsFile, slpId};
+        }
+    }
+
+    if (py::hasattr(entityDefinition, "graphics"))
+    {
+        py::dict graphicsDict = entityDefinition.attr("graphics");
+
+        for (auto [theme, graphicsEntry] : graphicsDict)
+        {
+            auto drsFileName = readValue<std::string>(graphicsEntry, "drs_file");
+            auto slpId = readValue<int>(graphicsEntry, "slp_id");
+
+            Ref<DRSFile> drsFile;
+            auto it = m_drsFilesByName.find(drsFileName);
+            if (it != m_drsFilesByName.end())
+                drsFile = it->second;
+            else
+                drsFile = loadDRSFile2("assets/" + drsFileName);
+
+            GraphicsID id;
+            id.entityType = entityType;
+            m_DRSDataByGraphicsIdHash[id.hash()] = EntityDRSData{drsFile, slpId};
+        }
     }
 }

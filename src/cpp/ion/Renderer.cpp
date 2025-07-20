@@ -511,23 +511,30 @@ void RendererImpl::updateRenderingComponents()
         {
             rc.updateTextureDetails(m_graphicsRegistry);
             m_zOrderStrategy->preProcess(rc);
+            ObjectPool<CompGraphics>::release(instruction);
         }
         else
         {
             idsNeedToLoad.push_back(rc);
             lazyLoadedInstructions.push_back(instruction);
         }
-        ObjectPool<CompGraphics>::release(instruction);
     }
     frameData.clear();
 
-    AtlasGeneratorBasic atlasGenerator;
-    m_graphicsLoader.loadGraphics(m_renderer, m_graphicsRegistry, atlasGenerator, idsNeedToLoad);
-    for (auto& instruction : lazyLoadedInstructions)
+    if (idsNeedToLoad.empty() == false)
     {
-        auto& rc = gameState->getComponent<CompRendering>(instruction->entityID);
-        static_cast<CompGraphics&>(rc) = *instruction;
-        m_zOrderStrategy->preProcess(rc);
+        AtlasGeneratorBasic atlasGenerator;
+        m_graphicsLoader.loadGraphics(m_renderer, m_graphicsRegistry, atlasGenerator,
+                                      idsNeedToLoad);
+        for (auto& instruction : lazyLoadedInstructions)
+        {
+            auto& rc = gameState->getComponent<CompRendering>(instruction->entityID);
+            static_cast<CompGraphics&>(rc) = *instruction;
+            rc.updateTextureDetails(m_graphicsRegistry);
+
+            m_zOrderStrategy->preProcess(rc);
+            ObjectPool<CompGraphics>::release(instruction);
+        }
     }
 }
 

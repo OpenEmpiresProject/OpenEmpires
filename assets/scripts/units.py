@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import Dict, List
 
 class Animation:
     name: str
@@ -50,4 +50,41 @@ all_units: List[BaseUnitType] = [
             Animation(name="build", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1874),
         ]
     )
+]
+
+class Graphic:
+    drs_file: str = "graphics.drs"
+    slp_id: int
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+
+class NaturalResource:
+    name: str
+    resource_amount: int
+    graphics: Dict[str, Graphic] # Graphics by theme
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+
+all_natural_resources: List[NaturalResource] = [
+    NaturalResource(
+        name="gold",
+        resource_amount=1000,
+        graphics={"default":Graphic(slp_id=4479)}
+    ),
+    NaturalResource(
+        name="stone",
+        resource_amount=1000,
+        graphics={"default":Graphic(slp_id=1034)}
+    ),
+    NaturalResource(
+        name="wood",
+        resource_amount=100,
+        graphics={"oak":Graphic(slp_id=435)}
+    ),
 ]

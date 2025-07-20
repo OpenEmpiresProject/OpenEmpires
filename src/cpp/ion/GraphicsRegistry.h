@@ -28,6 +28,15 @@ class GraphicsID
     int variation = 0;                     // 1,024 values
     int reserved = 0;                      // 512 values
 
+    GraphicsID getBaseId() const
+    {
+        return GraphicsID{.entityType = entityType,
+                          .entitySubType = entitySubType,
+                          .action = action,
+                          .direction = direction,
+                          .reserved = reserved};
+    }
+
     bool isValid() const
     {
         return entityType != 0;

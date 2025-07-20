@@ -9,6 +9,7 @@
 #include "utils/Logger.h"
 #include "utils/Types.h"
 
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -41,30 +42,6 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
 
     loadSLP(terrainDRS, 15001, 2, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Grass tiles
 
-    loadSLP(graphicsDRS, 1254, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
-            graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1256, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
-            graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1258, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
-            graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1260, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
-            graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1262, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
-            graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1264, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
-            graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1266, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
-            graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1268, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
-            graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1270, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
-            graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1272, EntityTypes::ET_TREE, EntitySubTypes::EST_DEFAULT, 0, renderer,
-            graphicsRegistry, atlasGenerator); // Tree
-    loadSLP(graphicsDRS, 1034, EntityTypes::ET_STONE, 0, 0, renderer, graphicsRegistry,
-            atlasGenerator);
-    loadSLP(graphicsDRS, 4479, EntityTypes::ET_GOLD, 0, 0, renderer, graphicsRegistry,
-            atlasGenerator);
     loadSLP(graphicsDRS, 3483, EntityTypes::ET_MILL, EntitySubTypes::EST_DEFAULT, 0, renderer,
             graphicsRegistry, atlasGenerator); // Mill
     loadSLP(graphicsDRS, 2278, EntityTypes::ET_MARKETPLACE, EntitySubTypes::EST_DEFAULT, 0,
@@ -97,17 +74,24 @@ void GraphicsLoaderFromDRS::loadGraphics(SDL_Renderer* renderer,
     Ref<EntityDefinitionLoader> defLoader =
         dynamic_pointer_cast<EntityDefinitionLoader>(entityFactory);
 
+    std::map<int64_t, GraphicsID> uniqueIds;
     for (auto& id : idsToLoad)
     {
+        auto baseId = id.getBaseId();
+        uniqueIds[baseId.hash()] = baseId;
+    }
+
+    for (auto& id : uniqueIds)
+    {
         GraphicsID simpleId;
-        simpleId.entityType = id.entityType;
-        simpleId.action = id.action;
+        simpleId.entityType = id.second.entityType;
+        simpleId.action = id.second.action;
 
         auto drsData = defLoader->getDRSData(simpleId);
         if (drsData.drsFile != nullptr)
         {
-            loadSLP(drsData.drsFile, drsData.slpId, id.entityType, id.entitySubType, id.action,
-                    renderer, graphicsRegistry, atlasGenerator);
+            loadSLP(drsData.drsFile, drsData.slpId, id.second.entityType, id.second.entitySubType,
+                    id.second.action, renderer, graphicsRegistry, atlasGenerator);
         }
     }
     adjustDirections(graphicsRegistry);
