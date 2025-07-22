@@ -60,11 +60,45 @@ class EntityDefinitionLoader : public ion::EntityFactory
     void load();
     EntityDRSData getDRSData(const ion::GraphicsID& id);
 
-  private:
+    template <typename T> 
+    static T readValue(pybind11::handle object, const std::string& key)
+    {
+        if (pybind11::hasattr(object, key.c_str()))
+        {
+            return object.attr(key.c_str()).cast<T>();
+        }
+        else
+        {
+            auto cls = object.get_type();
+
+            if (pybind11::hasattr(cls, key.c_str()))
+                return cls.attr(key.c_str()).cast<T>();
+        }
+        return T();
+    }
+
+    static ComponentType createAnimation(pybind11::object module,
+                                         pybind11::handle entityDefinition);
+    static ComponentType createBuilder(pybind11::object module, pybind11::handle entityDefinition);
+    static ComponentType createCompResourceGatherer(pybind11::object module,
+                                                    pybind11::handle entityDefinition);
+    static ComponentType createCompUnit(pybind11::object module, pybind11::handle entityDefinition);
+    static ComponentType createCompTransform(pybind11::object module,
+                                             pybind11::handle entityDefinition);
+    static ComponentType createCompResource(pybind11::object module,
+                                            pybind11::handle entityDefinition);
+    static ComponentType createCompBuilding(pybind11::object module,
+                                            pybind11::handle entityDefinition);
+
+
+  protected:
     uint32_t createEntity(uint32_t entityType) override;
     void loadUnits(pybind11::object module);
     void loadNaturalResources(pybind11::object module);
-    void createOrUpdateComponent(uint32_t entityType, pybind11::handle entityDefinition);
+    void loadBuildings(pybind11::object module);
+    void createOrUpdateComponent(pybind11::object module,
+                                 uint32_t entityType,
+                                 pybind11::handle entityDefinition);
     void addComponentsForUnit(uint32_t entityType);
     void addComponentIfNotNull(uint32_t entityType, const ComponentType& comp);
     void updateDRSData(uint32_t entityType, pybind11::handle entityDefinition);

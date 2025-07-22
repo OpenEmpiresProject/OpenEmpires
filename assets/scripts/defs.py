@@ -4,7 +4,7 @@ from typing import Dict, List
 class Animation:
     name: str
     frame_count: int = 15
-    speed: float = 10
+    speed: int = 10
     drs_file: str = "graphics.drs"
     slp_id: int
     repeatable: bool = True
@@ -14,14 +14,14 @@ class Animation:
             setattr(self, key, value)
 
 
-class BaseUnitType:
+class Unit:
     name: str
-    line_of_sight: float
-    moving_speed: float
+    line_of_sight: int
+    moving_speed: int
     animations: List[Animation]
 
 
-class Villager(BaseUnitType):
+class Villager(Unit):
     build_speed: int
     gather_speed: int
     resource_capacity: int
@@ -31,7 +31,7 @@ class Villager(BaseUnitType):
             setattr(self, key, value)
 
 
-all_units: List[BaseUnitType] = [
+all_units: List[Unit] = [
     Villager(
         name="villager",
         line_of_sight=256*5,
@@ -87,4 +87,41 @@ all_natural_resources: List[NaturalResource] = [
         resource_amount=100,
         graphics={"oak":Graphic(slp_id=435)}
     ),
+]
+
+class Building:
+    name: str
+    line_of_sight: int
+    size: str
+    graphics: Dict[str, Graphic] # Graphics by theme
+
+
+class ResourceDropOff:
+    accepted_resources: List[str]
+
+
+class SingleResourceDropOffPoint(Building, ResourceDropOff):
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+
+all_buildings: List[Building] = [
+    SingleResourceDropOffPoint(
+        name="mill", 
+        line_of_sight=256*5,
+        size="small",
+        accepted_resources=["food"], 
+        graphics={"default":Graphic(slp_id=3483)}
+    ),
+    SingleResourceDropOffPoint(
+        name="wood_camp", 
+        line_of_sight=256*5,
+        size="small",
+        accepted_resources=["wood"], 
+        graphics={"default":Graphic(slp_id=3505)}),
+    SingleResourceDropOffPoint(
+        name="mine_camp", 
+        line_of_sight=256*5,
+        size="small",
+        accepted_resources=["gold", "stone"], 
+        graphics={"default":Graphic(slp_id=3492)}),
 ]

@@ -50,8 +50,12 @@ cppcheck:
 	
 # Run the tests (directly execute the test binary)
 test: build
-	@echo "Running tests..."
-	$(BUILD_DIR)/bin/Debug/$(TEST_EXEC)
+	@echo Running tests...
+	@if defined FILTER ( \
+		$(BUILD_DIR)\bin\Debug\$(TEST_EXEC).exe --gtest_filter=$(FILTER) \
+	) else ( \
+		$(BUILD_DIR)\bin\Debug\$(TEST_EXEC).exe \
+	)
 
 # Run the integration tests (directly execute the test binary)
 integ-test: build
