@@ -28,6 +28,17 @@ class CmdIdle : public Command
     {
     }
 
+    /**
+     * Executes the idle command for the specified entity.
+     *
+     * This method performs the animation update. The idle command never completes, so it always
+     * returns false. As in it would be the fallback action. Any other action must have a higher
+     * priority to get executed.
+     *
+     * @param deltaTimeMs The elapsed time in milliseconds since the last execution.
+     * @param subCommands A list to which any sub-commands can be added (unused in idle).
+     * @return Always returns false, indicating the idle command never completes.
+     */
     bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) override
     {
         auto [action, animation, dirty] =

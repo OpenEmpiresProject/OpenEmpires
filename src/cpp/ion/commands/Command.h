@@ -26,8 +26,32 @@ class Command
 
     virtual ~Command() = default;
 
+    /**
+     * @brief Called when the command is started.
+     *
+     * This pure virtual function should be implemented by derived classes to define
+     * the behavior that occurs when the command begins execution.
+     */
     virtual void onStart() = 0;
+    /**
+     * @brief Called when the command is added to the execution queue.
+     *
+     * This pure virtual function should be implemented by derived classes to define
+     * behavior that occurs when the command is queued for execution.
+     */
     virtual void onQueue() = 0;
+    /**
+     * @brief Executes the command logic.
+     *
+     * This pure virtual function should be implemented by derived classes to define
+     * the specific behavior of the command when executed. It is called with the
+     * elapsed time since the last execution and a list to which sub-commands can be added.
+     *
+     * @param deltaTimeMs The time elapsed since the last execution, in milliseconds.
+     * @param subCommands A reference to a list where sub-commands generated during execution can be
+     * added.
+     * @return true if the command completed, false otherwise.
+     */
     virtual bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) = 0;
     virtual std::string toString() const = 0;
     virtual void destroy() = 0;

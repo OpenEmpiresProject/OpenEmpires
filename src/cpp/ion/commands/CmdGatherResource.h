@@ -70,6 +70,20 @@ class CmdGatherResource : public Command
         targetResource = &(m_gameState->getComponent<CompResource>(target).resource);
     }
 
+    /**
+     * @brief Executes the gather resource command logic.
+     *
+     * This method checks if the resource is available and attempts to find another similar resource
+     * if not. If the unit is close enough to the resource, it animates and gathers the resource for
+     * the given time delta. Otherwise, it moves closer to the resource. If the unit's inventory is
+     * full, it initiates a drop-off action.
+     *
+     * @param deltaTimeMs The elapsed time in milliseconds since the last execution.
+     * @param subCommands A list to which any sub-commands (such as movement or drop-off actions)
+     * may be added.
+     * @return true if the command is complete and should be removed from the queue, false
+     * otherwise.
+     */
     bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) override
     {
         if (isResourceAvailable() == false)
@@ -171,6 +185,15 @@ class CmdGatherResource : public Command
         return gatherer->gatheredAmount >= gatherer->capacity;
     }
 
+    /**
+     * @brief Gathers resources over time and updates the unit's collected amount.
+     *
+     * This function calculates the amount of resource gathered based on the gathering speed and
+     * elapsed time. It updates the target resource and unit's storage, and marks the target entity
+     * as dirty if any resource was gathered.
+     *
+     * @param deltaTimeMs The elapsed time in milliseconds since the last gather operation.
+     */
     void gather(int deltaTimeMs)
     {
         auto& transform = m_gameState->getComponent<CompTransform>(m_entityID);
@@ -189,6 +212,16 @@ class CmdGatherResource : public Command
         }
     }
 
+    /**
+     * @brief Attempts to find another resource of the same type near the unit.
+     *
+     * This function searches for the closest resource of the same type as the current target
+     * resource, within a predefined maximum lookup radius. If a suitable resource is found, it sets
+     * it as the new target.
+     *
+     * @return true if another similar resource was found and set as the new target; false
+     * otherwise.
+     */
     bool lookForAnotherSimilarResource()
     {
         spdlog::debug("Looking for another resource...");
@@ -211,7 +244,20 @@ class CmdGatherResource : public Command
         return newResource != entt::null;
     }
 
-    bool hasResource(uint8_t resourceType, const Tile& posTile, uint32_t& resourceEntity)
+    /**
+     * @brief Checks if the specified tile contains a resource of the given type.
+     *
+     * This function examines the tile at the provided position to determine if it contains
+     * a resource matching the specified resource type. If such a resource is found,
+     * the resource is returned via argument and the function returns true.
+     *
+     * @param resourceType The type of resource to check for.
+     * @param posTile The tile position to inspect.
+     * @param resourceEntity Output parameter that receives the entity ID of the resource if found;
+     * set to entt::null otherwise.
+     * @return true if the tile contains a resource of the specified type; false otherwise.
+     */
+    bool doesTileHaveResource(uint8_t resourceType, const Tile& posTile, uint32_t& resourceEntity)
     {
         resourceEntity = entt::null;
         auto& map = m_gameState->gameMap;
@@ -235,6 +281,19 @@ class CmdGatherResource : public Command
         return false;
     }
 
+    /**
+     * @brief Finds the closest resource entity of the specified type within a given radius from a
+     * starting tile.
+     *
+     * Performs a breadth-first search (BFS) starting from the provided tile, expanding outward up
+     * to maxRadius tiles. Returns the entity ID of the closest resource found, or entt::null if
+     * none is found within the radius.
+     *
+     * @param resourceType The type of resource to search for.
+     * @param startTile The tile from which to start the search.
+     * @param maxRadius The maximum search radius (in tiles).
+     * @return uint32_t The entity ID of the closest resource, or entt::null if not found.
+     */
     uint32_t findClosestResource(uint8_t resourceType, const Tile& startTile, int maxRadius)
     {
         std::queue<std::pair<Tile, int>> toVisit; // Pair: position, current distance
@@ -253,7 +312,7 @@ class CmdGatherResource : public Command
             auto [current, distance] = toVisit.front();
             toVisit.pop();
 
-            if (hasResource(resourceType, current, resourceEntity))
+            if (doesTileHaveResource(resourceType, current, resourceEntity))
             {
                 return resourceEntity;
             }
