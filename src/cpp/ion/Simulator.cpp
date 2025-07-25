@@ -140,7 +140,11 @@ void Simulator::sendGraphicsInstructions()
         auto& gc = state->getComponent<CompGraphics>(entity);
         auto instruction = ObjectPool<CompGraphics>::acquire();
         *instruction = gc;
-        sendGraphiInstruction(instruction);
+
+        if (gc.entityID != entt::null)
+            sendGraphiInstruction(instruction);
+        else
+            spdlog::error("Invalid entity found during simulation for id: {}", gc.toString());
     }
 }
 

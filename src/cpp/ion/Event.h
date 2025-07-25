@@ -60,6 +60,8 @@ struct UnitTileMovementData
 struct BuildingPlacementData
 {
     Ref<Player> player;
+    uint32_t entityType = 0;
+    Feet pos = Feet::null;
     uint32_t entity = entt::null;
 };
 

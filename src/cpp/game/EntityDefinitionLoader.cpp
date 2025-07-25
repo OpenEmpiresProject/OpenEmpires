@@ -6,6 +6,7 @@
 #include "utils/Logger.h"
 #include "utils/ObjectPool.h"
 
+#include <pybind11/stl.h>
 #include <unordered_map>
 
 using namespace ion;
@@ -40,8 +41,21 @@ uint32_t getEntityType(const std::string& entityName)
         {"mill", EntityTypes::ET_MILL},
         {"wood_camp", EntityTypes::ET_LUMBER_CAMP},
         {"mine_camp", EntityTypes::ET_MINING_CAMP},
+        {"construction_site", EntityTypes::ET_CONSTRUCTION_SITE},
     };
     return entityTypes.at(entityName);
+}
+
+uint32_t getEntitySubType(uint32_t entityType, const std::string& name)
+{
+    if (entityType == EntityTypes::ET_CONSTRUCTION_SITE)
+    {
+        if (name == "small")
+            return EntitySubTypes::EST_SMALL_SIZE;
+        else if (name == "medium")
+            return EntitySubTypes::EST_MEDIUM_SIZE;
+    }
+    return EntitySubTypes::EST_DEFAULT;
 }
 
 ResourceType getResourceType(const std::string& name)
@@ -57,9 +71,9 @@ ResourceType getResourceType(const std::string& name)
 Size getBuildingSize(const std::string& name)
 {
     if (name == "small")
-        return Size(2, 2);
+        return Size(1, 1);
     else if (name == "medium")
-        return Size(3, 3);
+        return Size(2, 2);
     else
     {
         debug_assert(false, "unknown building size");
@@ -160,7 +174,8 @@ ComponentType EntityDefinitionLoader::createCompBuilding(py::object module,
         {
             CompBuilding comp;
             comp.lineOfSight = readValue<int>(entityDefinition, "line_of_sight");
-            comp.size = getBuildingSize(readValue<std::string>(entityDefinition, "size"));
+            auto sizeStr = readValue<std::string>(entityDefinition, "size");
+            comp.size = getBuildingSize(sizeStr);
 
             return ComponentType(comp);
         }
@@ -186,6 +201,8 @@ void EntityDefinitionLoader::load()
     py::object module = py::module_::import("defs");
     loadUnits(module);
     loadNaturalResources(module);
+    loadConstructionSites(module);
+    loadBuildings(module);
 }
 
 void EntityDefinitionLoader::loadUnits(py::object module)
@@ -232,10 +249,35 @@ void EntityDefinitionLoader::loadBuildings(pybind11::object module)
         for (auto entry : entries)
         {
             std::string name = entry.attr("name").cast<std::string>();
+            std::string size = entry.attr("size").cast<std::string>();
 
             auto entityType = getEntityType(name);
+            addComponentsForBuilding(entityType);
             createOrUpdateComponent(module, entityType, entry);
             updateDRSData(entityType, entry);
+            attachedConstructionSites(entityType, size);
+        }
+    }
+}
+
+void EntityDefinitionLoader::loadConstructionSites(pybind11::object module)
+{
+    if (py::hasattr(module, "all_construction_sites"))
+    {
+        py::list entries = module.attr("all_construction_sites");
+
+        for (auto entry : entries)
+        {
+            std::string name = entry.attr("name").cast<std::string>();
+            ConstructionSiteData data;
+            auto sizeStr = readValue<std::string>(entry, "size");
+            data.size = getBuildingSize(sizeStr);
+            data.progressToFrames = entry.attr("progress_frame_map").cast<std::map<int, int>>();
+            m_constructionSitesBySize[sizeStr] = data;
+
+            auto entityType = getEntityType(name);
+            auto entitySubType = getEntitySubType(entityType, sizeStr);
+            updateDRSData(entityType, entitySubType, entry);
         }
     }
 }
@@ -329,6 +371,19 @@ void EntityDefinitionLoader::addComponentsForUnit(uint32_t entityType)
     m_componentsByEntityType[entityType].push_back(graphics);
 }
 
+void EntityDefinitionLoader::addComponentsForBuilding(uint32_t entityType)
+{
+    m_componentsByEntityType[entityType].push_back(CompRendering());
+    m_componentsByEntityType[entityType].push_back(CompDirty());
+    m_componentsByEntityType[entityType].push_back(CompTransform());
+    m_componentsByEntityType[entityType].push_back(CompPlayer());
+
+    CompGraphics graphics;
+    graphics.entityType = entityType;
+    graphics.layer = GraphicLayer::ENTITIES;
+    m_componentsByEntityType[entityType].push_back(graphics);
+}
+
 void EntityDefinitionLoader::addComponentIfNotNull(uint32_t entityType, const ComponentType& comp)
 {
     if (std::holds_alternative<std::monostate>(comp) == false)
@@ -346,6 +401,13 @@ Ref<DRSFile> loadDRSFile2(const string& drsFilename)
 }
 
 void EntityDefinitionLoader::updateDRSData(uint32_t entityType, pybind11::handle entityDefinition)
+{
+    updateDRSData(entityType, EntitySubTypes::EST_DEFAULT, entityDefinition);
+}
+
+void EntityDefinitionLoader::updateDRSData(uint32_t entityType,
+                                           uint32_t entitySubType,
+                                           pybind11::handle entityDefinition)
 {
     if (py::hasattr(entityDefinition, "animations"))
     {
@@ -365,6 +427,7 @@ void EntityDefinitionLoader::updateDRSData(uint32_t entityType, pybind11::handle
 
             GraphicsID id;
             id.entityType = entityType;
+            id.entitySubType = entitySubType;
             id.action = action;
 
             m_DRSDataByGraphicsIdHash[id.hash()] = EntityDRSData{drsFile, slpId};
@@ -377,7 +440,8 @@ void EntityDefinitionLoader::updateDRSData(uint32_t entityType, pybind11::handle
 
         for (auto [theme, graphicsEntry] : graphicsDict)
         {
-            auto drsFileName = EntityDefinitionLoader::readValue<std::string>(graphicsEntry, "drs_file");
+            auto drsFileName =
+                EntityDefinitionLoader::readValue<std::string>(graphicsEntry, "drs_file");
             auto slpId = EntityDefinitionLoader::readValue<int>(graphicsEntry, "slp_id");
 
             Ref<DRSFile> drsFile;
@@ -389,7 +453,65 @@ void EntityDefinitionLoader::updateDRSData(uint32_t entityType, pybind11::handle
 
             GraphicsID id;
             id.entityType = entityType;
+            id.entitySubType = entitySubType;
             m_DRSDataByGraphicsIdHash[id.hash()] = EntityDRSData{drsFile, slpId};
         }
     }
+}
+
+EntityDefinitionLoader::ConstructionSiteData EntityDefinitionLoader::getSite(
+    const std::string& sizeStr)
+{
+    return m_constructionSitesBySize.at(sizeStr);
+}
+
+void EntityDefinitionLoader::setSite(const std::string& sizeStr,
+                                     const std::map<int, int>& progressToFrames)
+{
+    m_constructionSitesBySize[sizeStr] = ConstructionSiteData{.progressToFrames = progressToFrames};
+}
+
+void EntityDefinitionLoader::attachedConstructionSites(uint32_t entityType,
+                                                       const std::string& sizeStr)
+{
+    // Approach: Find and attach construction site variants to the original
+    // building component for the entity type.
+    auto& components = m_componentsByEntityType.at(entityType);
+    auto siteData = m_constructionSitesBySize.at(sizeStr);
+
+    for (auto& comp : components)
+    {
+        if (std::holds_alternative<CompBuilding>(comp))
+        {
+            auto& buildingComp = std::get<CompBuilding>(comp);
+            buildingComp.constructionSiteEntitySubType =
+                getEntitySubType(EntityTypes::ET_CONSTRUCTION_SITE, sizeStr);
+            buildingComp.visualVariationByProgress = siteData.progressToFrames;
+            // Fallback to the main variation if the building progress is 100. This is used
+            // to switch to the main building texture instead of the construction site texture
+            // using entitySubType.
+            // So when entitySubType is resetted to default to display the main building, we
+            // need to default the variation also.
+            buildingComp.visualVariationByProgress[100] = 0;
+            break;
+        }
+    }
+
+    // Approach: Find the construction site DRS data and attach it to building entity
+    // as entity sub types.
+    GraphicsID siteId;
+    siteId.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
+    siteId.entitySubType = getEntitySubType(EntityTypes::ET_CONSTRUCTION_SITE, sizeStr);
+    auto siteDRSData = m_DRSDataByGraphicsIdHash.at(siteId.hash());
+
+    GraphicsID buildingAttachedSiteId;
+    buildingAttachedSiteId.entityType = entityType;
+    buildingAttachedSiteId.entitySubType = siteId.entitySubType;
+    m_DRSDataByGraphicsIdHash[buildingAttachedSiteId.hash()] = siteDRSData;
+    ;
+}
+
+void EntityDefinitionLoader::setDRSData(int64_t id, const EntityDRSData& data)
+{
+    m_DRSDataByGraphicsIdHash[id] = data;
 }

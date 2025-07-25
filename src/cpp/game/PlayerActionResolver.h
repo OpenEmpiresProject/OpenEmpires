@@ -20,10 +20,6 @@ class PlayerActionResolver : public ion::EventHandler
     void onEvent(const ion::Event& e) override;
     void onKeyUp(const ion::Event& e);
     void onMouseMove(const ion::Event& e);
-    uint32_t createBuilding(const ion::Feet& targetFeetPos,
-                            EntityTypes buildingType,
-                            ion::Size size,
-                            uint8_t resourceTypesAccept);
 };
 
 } // namespace game

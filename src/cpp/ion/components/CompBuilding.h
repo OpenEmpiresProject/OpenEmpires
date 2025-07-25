@@ -21,10 +21,11 @@ class CompBuilding
     uint32_t constructionProgress = 0; // out of 100
     // Lower bound represents the entity variation to be used based on the progress of the
     // construction.
-    std::map<uint32_t, uint32_t> visualVariationByProgress = {{0, 0}};
+    std::map<int, int> visualVariationByProgress = {{0, 0}};
+    uint32_t constructionSiteEntitySubType = 0;
     bool isInStaticMap = false;
 
-    uint32_t getVisualVariation() const
+    int getVisualVariation() const
     {
         debug_assert(visualVariationByProgress.size() > 0,
                      "Building's visual variation map is empty");

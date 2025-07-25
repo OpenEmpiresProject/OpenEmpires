@@ -26,6 +26,7 @@ class BuildingManager : public EventHandler
     void onMouseMove(const Event& e);
     void onKeyUp(const Event& e);
     void onBuildingRequest(const Event& e);
+    uint32_t createBuilding(const BuildingPlacementData& request);
     void onTick(const Event& e);
     void onUnitSelection(const Event& e);
     bool canPlaceBuildingAt(const CompBuilding& building, const Feet& feet, bool& outOfMap);

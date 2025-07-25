@@ -30,11 +30,8 @@ class GraphicsID
 
     GraphicsID getBaseId() const
     {
-        return GraphicsID{.entityType = entityType,
-                          .entitySubType = entitySubType,
-                          .action = action,
-                          .direction = direction,
-                          .reserved = reserved};
+        return GraphicsID{
+            .entityType = entityType, .entitySubType = entitySubType, .action = action};
     }
 
     bool isValid() const

@@ -1,6 +1,7 @@
 #include "BuildingManager.h"
 
 #include "Coordinates.h"
+#include "EntityFactory.h"
 #include "GameState.h"
 #include "PlayerManager.h"
 #include "ServiceRegistry.h"
@@ -9,7 +10,9 @@
 #include "components/CompBuilding.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
+#include "components/CompGraphics.h"
 #include "components/CompPlayer.h"
+#include "components/CompRendering.h"
 #include "components/CompTransform.h"
 #include "utils/ObjectPool.h"
 
@@ -37,6 +40,7 @@ void BuildingManager::onBuildingRequest(const Event& e)
 {
     cancelBuilding();
     m_currentBuildingPlacement = e.getData<BuildingPlacementData>();
+    m_currentBuildingPlacement.entity = createBuilding(m_currentBuildingPlacement);
 
     for (auto entity : m_unitSelection.selectedEntities)
     {
@@ -44,6 +48,19 @@ void BuildingManager::onBuildingRequest(const Event& e)
         builder.target = m_currentBuildingPlacement.entity;
     }
     publishEvent(Event::Type::BUILDING_PLACEMENT_STARTED, m_currentBuildingPlacement);
+}
+
+uint32_t BuildingManager::createBuilding(const BuildingPlacementData& request)
+{
+    auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
+    auto entity = factory->createEntity(request.entityType);
+
+    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+    auto [transform, playerComp] = gameState->getComponents<CompTransform, CompPlayer>(entity);
+
+    transform.position = request.pos;
+    playerComp.player = request.player;
+    return entity;
 }
 
 void BuildingManager::onKeyUp(const Event& e)
@@ -116,7 +133,15 @@ void BuildingManager::onTick(const Event& e)
             info.variation = building.getVisualVariation();
 
             if (building.constructionProgress >= 100)
+            {
                 onCompleteBuilding(entity, building, transform, player);
+                info.variation = 0;
+                info.entitySubType =
+                    0; // Reseting entity sub type will essentially remove construction site
+            }
+
+            spdlog::debug("Progress {}, Building subtype: {}, variation {}",
+                          building.constructionProgress, info.entitySubType, info.variation);
 
             if (building.constructionProgress > 1 && building.isInStaticMap == false)
             {
@@ -208,6 +233,7 @@ void BuildingManager::confirmBuilding(CompTransform& transform,
         }
     }
     building.constructionProgress = 0;
+    info.entitySubType = building.constructionSiteEntitySubType;
     info.variation = building.getVisualVariation();
     dirty.markDirty(m_currentBuildingPlacement.entity);
 

@@ -10,6 +10,41 @@ using namespace ion;
 using namespace game;
 namespace py = pybind11;
 
+
+class EntityDefinitionLoaderExposure : public EntityDefinitionLoader
+{
+  public:
+    void loadBuildings(pybind11::object module)
+    {
+        EntityDefinitionLoader::loadBuildings(module);
+    }
+
+    void loadConstructionSites(pybind11::object module)
+    {
+        EntityDefinitionLoader::loadConstructionSites(module);
+    }
+
+    EntityDefinitionLoader::ConstructionSiteData getSite(const std::string& sizeStr)
+    {
+        return EntityDefinitionLoader::getSite(sizeStr);
+    }
+
+    void setSite(const std::string& sizeStr, const std::map<int, int>& progressToFrame)
+    {
+        EntityDefinitionLoader::setSite(sizeStr, progressToFrame);
+    }
+
+    uint32_t createEntity(uint32_t entityType) override
+    {
+        return EntityDefinitionLoader::createEntity(entityType);
+    }
+
+    void setDRSData(int64_t id, const EntityDRSData& data)
+    {
+        EntityDefinitionLoader::setDRSData(id, data);
+    }
+};
+
 py::dict createAnimationEntry(std::string name, int frameCount, int speed, bool repeatable) {
         py::dict anim;
         anim["name"] = name;
@@ -133,7 +168,7 @@ class Building:
 class House(Building):
     def __init__(self):
         super().__init__()
-        self.size = 'small'
+        self.size = 'medium'
 
 entity = House()
     )");
@@ -141,7 +176,9 @@ entity = House()
     py::object houseDef = py::globals()["entity"];
     py::object module = py::module_::import("__main__");
 
-    ComponentType result = EntityDefinitionLoader::createCompBuilding(module, houseDef);
+    EntityDefinitionLoaderExposure loader;
+    loader.setSite("medium", std::map<int, int>());
+    ComponentType result = loader.createCompBuilding(module, houseDef);
     ASSERT_TRUE(std::holds_alternative<CompBuilding>(result));
     EXPECT_EQ(std::get<CompBuilding>(result).lineOfSight, 5);
     EXPECT_EQ(std::get<CompBuilding>(result).size.width, 2);
@@ -160,7 +197,8 @@ class NotABuilding:
     py::object notBuilding = py::eval("NotABuilding()");
     py::object module = py::module_::import("__main__");
 
-    ComponentType result = EntityDefinitionLoader::createCompBuilding(module, notBuilding);
+    EntityDefinitionLoaderExposure loader;
+    ComponentType result = loader.createCompBuilding(module, notBuilding);
     ASSERT_TRUE(std::holds_alternative<std::monostate>(result));
 }
 
@@ -193,17 +231,127 @@ entity = Villager()
     EXPECT_EQ(std::get<CompUnit>(result).lineOfSight, 100);
 }
 
-class EntityDefinitionLoaderExposure : public EntityDefinitionLoader
-{
-  public:
-      void loadBuildings(pybind11::object module)
-      {
-          EntityDefinitionLoader::loadBuildings(module);
-      }
-};
 
 
 TEST(EntityDefinitionLoaderTest, LoadAllBuilding)
+{
+    // Arrange
+    py::scoped_interpreter guard{};
+
+    py::exec(R"(
+class Graphic:
+    drs_file = "graphics.drs"
+    slp_id = 0
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+
+class Building:
+    name = ''
+    line_of_sight = 0
+    size = ''
+    graphics = []
+
+class ResourceDropOff:
+    accepted_resources = []
+
+class SingleResourceDropOffPoint(Building, ResourceDropOff):
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+all_buildings= [
+    SingleResourceDropOffPoint(
+        name='mill', 
+        line_of_sight=256,
+        size='medium',
+        accepted_resources=['food'], 
+        graphics={'default':Graphic(slp_id=3483)}
+    )]
+    )");
+
+    py::object module = py::module_::import("__main__");
+
+    EntityDefinitionLoaderExposure loader;
+    loader.setSite("medium", std::map<int, int>());
+    GraphicsID siteId;
+    siteId.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
+    siteId.entitySubType = 2;
+    loader.setDRSData(siteId.hash(), EntityDefinitionLoader::EntityDRSData{.slpId = 111});
+
+    // Act
+    loader.loadBuildings(module);
+
+    // Assert
+    // Main building
+    EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType=EntityTypes::ET_MILL}).slpId, 3483);
+    // One of construction sites
+    EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType=EntityTypes::ET_MILL, .entitySubType=2}).slpId, 111);
+}
+
+TEST(EntityDefinitionLoaderTest, LoadAllConstructionSites)
+{
+    py::scoped_interpreter guard{};
+
+    py::exec(R"(
+class Graphic:
+    drs_file = "graphics.drs"
+    slp_id = 0
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+
+class ConstructionSite:
+    name = 'construction_site'
+    size = ''
+    graphics = {}
+    progress_frame_map = {}
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+
+all_construction_sites= [
+    ConstructionSite(
+        size='small',
+        progress_frame_map={33:1, 66:2, 99:3}, 
+        graphics={'default':Graphic(slp_id=236)}
+    ),
+    ConstructionSite(
+        size='medium',
+        progress_frame_map={33:1, 66:2, 99:3}, 
+        graphics={'default':Graphic(slp_id=237)}
+    )]
+    )");
+
+    py::object module = py::module_::import("__main__");
+
+    EntityDefinitionLoaderExposure loader;
+    loader.loadConstructionSites(module);
+
+    {
+        GraphicsID id;
+        id.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
+        id.entitySubType = EntitySubTypes::EST_SMALL_SIZE;
+        auto drsData = loader.getDRSData(id);
+        EXPECT_EQ(drsData.slpId, 236);
+
+        auto sideData = loader.getSite("small");
+        EXPECT_EQ(sideData.size.width, 1);
+        EXPECT_EQ(sideData.size.height, 1);
+        EXPECT_EQ(sideData.progressToFrames.at(33), 1);
+    }
+
+    {
+        GraphicsID id;
+        id.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
+        id.entitySubType = EntitySubTypes::EST_MEDIUM_SIZE;
+        auto drsData = loader.getDRSData(id);
+        EXPECT_EQ(drsData.slpId, 237);
+
+        auto sideData = loader.getSite("medium");
+        EXPECT_EQ(sideData.size.width, 2);
+        EXPECT_EQ(sideData.size.height, 2);
+        EXPECT_EQ(sideData.progressToFrames.at(66), 2);
+    }
+
+}
+
+TEST(EntityDefinitionLoaderTest, LoadBuildingsWithConstructionSiteLinks)
 {
     py::scoped_interpreter guard{};
 
@@ -230,19 +378,43 @@ all_buildings= [
     SingleResourceDropOffPoint(
         name='mill', 
         line_of_sight=256,
-        size='small',
+        size='medium',
         accepted_resources=['food'], 
         graphics={'default':Graphic(slp_id=3483)}
+    )]
+
+class ConstructionSite:
+    name = 'construction_site'
+    size = ''
+    graphics = {}
+    progress_frame_map = {}
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+
+all_construction_sites= [
+    ConstructionSite(
+        size='medium',
+        progress_frame_map={33:1, 66:2, 99:3}, 
+        graphics={'default':Graphic(slp_id=237)}
     )]
     )");
 
     py::object module = py::module_::import("__main__");
 
     EntityDefinitionLoaderExposure loader;
+    loader.loadConstructionSites(module);
     loader.loadBuildings(module);
 
     GraphicsID id;
     id.entityType = EntityTypes::ET_MILL;
     auto drsData = loader.getDRSData(id);
     EXPECT_EQ(drsData.slpId, 3483);
+
+    auto gameState = std::make_shared<ion::GameState>();
+    ion::ServiceRegistry::getInstance().registerService(gameState);
+
+    auto mill = loader.createEntity(EntityTypes::ET_MILL);
+
+    auto building = gameState->getComponent<CompBuilding>(mill);
+    EXPECT_EQ(building.visualVariationByProgress.at(66), 2);
 }

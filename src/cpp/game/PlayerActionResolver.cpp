@@ -37,13 +37,14 @@ void PlayerActionResolver::onMouseMove(const ion::Event& e)
     m_lastMouseScreenPos = e.getData<MouseMoveData>().screenPos;
 }
 
-BuildingPlacementData createBuildingRequestData(uint32_t entity)
+BuildingPlacementData createBuildingRequestData(uint32_t entityType, const Feet& pos)
 {
     auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
 
     BuildingPlacementData data;
     data.player = playerManager->getViewingPlayer();
-    data.entity = entity;
+    data.entityType = entityType;
+    data.pos = pos;
     return data;
 }
 
@@ -53,74 +54,19 @@ void PlayerActionResolver::onKeyUp(const ion::Event& e)
     auto coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
     auto worldPos = coordinates->screenUnitsToFeet(m_lastMouseScreenPos);
 
-    if (scancode == SDL_SCANCODE_B)
+    if (scancode == SDL_SCANCODE_M)
     {
-        auto entity =
-            createBuilding(worldPos, EntityTypes::ET_MILL, Size(2, 2), ResourceType::RT_NONE);
-        auto data = createBuildingRequestData(entity);
-        publishEvent(Event::Type::BUILDING_REQUESTED, data);
-    }
-    else if (scancode == SDL_SCANCODE_N)
-    {
-        auto entity = createBuilding(worldPos, EntityTypes::ET_MARKETPLACE, Size(4, 4),
-                                     ResourceType::RT_NONE);
-        auto data = createBuildingRequestData(entity);
-        publishEvent(Event::Type::BUILDING_REQUESTED, data);
-    }
-    else if (scancode == SDL_SCANCODE_M)
-    {
-        auto entity =
-            createBuilding(worldPos, EntityTypes::ET_LUMBER_CAMP, Size(2, 2), ResourceType::WOOD);
-        auto data = createBuildingRequestData(entity);
+        auto data = createBuildingRequestData(EntityTypes::ET_MILL, worldPos);
         publishEvent(Event::Type::BUILDING_REQUESTED, data);
     }
     else if (scancode == SDL_SCANCODE_L)
     {
-        auto entity = createBuilding(worldPos, EntityTypes::ET_MINING_CAMP, Size(2, 2),
-                                     ResourceType::GOLD | ResourceType::STONE);
-        auto data = createBuildingRequestData(entity);
+        auto data = createBuildingRequestData(EntityTypes::ET_LUMBER_CAMP, worldPos);
         publishEvent(Event::Type::BUILDING_REQUESTED, data);
     }
-}
-
-uint32_t PlayerActionResolver::createBuilding(const Feet& targetFeetPos,
-                                              EntityTypes buildingType,
-                                              Size size,
-                                              uint8_t resourceTypesAccept)
-{
-    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
-    auto entity = gameState->createEntity();
-    auto transform = CompTransform(targetFeetPos);
-    transform.face(Direction::NORTHWEST);
-    gameState->addComponent(entity, transform);
-    gameState->addComponent(entity, CompRendering());
-    CompGraphics gc;
-    gc.entityID = entity;
-    gc.entityType = buildingType;
-    gc.layer = GraphicLayer::ENTITIES;
-    gameState->addComponent(entity, gc);
-    gameState->addComponent(entity, CompEntityInfo(buildingType));
-
-    auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
-    auto player = playerManager->getViewingPlayer();
-    gameState->addComponent(entity, CompPlayer{player});
-
-    CompBuilding building;
-    building.size = size;
-    building.lineOfSight = 256 * 5;
-    building.addDropOff(resourceTypesAccept);
-    building.visualVariationByProgress = {{33, 1}, {66, 2}, {99, 3}, {100, 0}};
-    gameState->addComponent(entity, building);
-
-    // auto box = getBoundingBox(m_drs, 1254, 1);
-    // CompSelectible sc;
-    // sc.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
-    // sc.selectionIndicator = {
-    //     GraphicAddon::Type::RHOMBUS,
-    //     GraphicAddon::Rhombus{Constants::TILE_PIXEL_WIDTH, Constants::TILE_PIXEL_HEIGHT}};
-
-    CompDirty dirty;
-    dirty.markDirty(entity);
-    gameState->addComponent(entity, dirty);
-    return entity;
+    else if (scancode == SDL_SCANCODE_N)
+    {
+        auto data = createBuildingRequestData(EntityTypes::ET_MINING_CAMP, worldPos);
+        publishEvent(Event::Type::BUILDING_REQUESTED, data);
+    }
 }

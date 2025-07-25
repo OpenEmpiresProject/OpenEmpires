@@ -42,18 +42,6 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
 
     loadSLP(terrainDRS, 15001, 2, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Grass tiles
 
-    loadSLP(graphicsDRS, 3483, EntityTypes::ET_MILL, EntitySubTypes::EST_DEFAULT, 0, renderer,
-            graphicsRegistry, atlasGenerator); // Mill
-    loadSLP(graphicsDRS, 2278, EntityTypes::ET_MARKETPLACE, EntitySubTypes::EST_DEFAULT, 0,
-            renderer, graphicsRegistry, atlasGenerator);
-    loadSLP(graphicsDRS, 3505, EntityTypes::ET_LUMBER_CAMP, EntitySubTypes::EST_DEFAULT, 0,
-            renderer, graphicsRegistry, atlasGenerator);
-    loadSLP(graphicsDRS, 3492, EntityTypes::ET_MINING_CAMP, EntitySubTypes::EST_DEFAULT, 0,
-            renderer, graphicsRegistry, atlasGenerator);
-    loadSLP(graphicsDRS, 237, EntityTypes::ET_LUMBER_CAMP, EntitySubTypes::EST_DEFAULT, 0, renderer,
-            graphicsRegistry, atlasGenerator); // medium construction site
-    loadSLP(graphicsDRS, 237, EntityTypes::ET_MINING_CAMP, EntitySubTypes::EST_DEFAULT, 0, renderer,
-            graphicsRegistry, atlasGenerator); // medium construction site
     loadSLP(graphicsDRS, 1252, EntityTypes::ET_TREE, EntitySubTypes::EST_CHOPPED_TREE, 0, renderer,
             graphicsRegistry, atlasGenerator); // Chopped tree
     loadSLP(interfaceDRS, 51101, EntityTypes::ET_UI_ELEMENT, EntitySubTypes::UI_WINDOW, 0, renderer,
@@ -83,11 +71,7 @@ void GraphicsLoaderFromDRS::loadGraphics(SDL_Renderer* renderer,
 
     for (auto& id : uniqueIds)
     {
-        GraphicsID simpleId;
-        simpleId.entityType = id.second.entityType;
-        simpleId.action = id.second.action;
-
-        auto drsData = defLoader->getDRSData(simpleId);
+        auto drsData = defLoader->getDRSData(id.second);
         if (drsData.drsFile != nullptr)
         {
             loadSLP(drsData.drsFile, drsData.slpId, id.second.entityType, id.second.entitySubType,
@@ -249,9 +233,7 @@ void loadSLP(shared_ptr<DRSFile> drs,
                 id.direction = Direction::NORTH;
             }
         }
-        else if (entityType == EntityTypes::ET_TREE || entityType == EntityTypes::ET_STONE ||
-                 entityType == EntityTypes::ET_GOLD || entityType == EntityTypes::ET_LUMBER_CAMP ||
-                 entityType == EntityTypes::ET_MINING_CAMP)
+        else
         {
             for (size_t i = 0; i < 100; i++)
             {
