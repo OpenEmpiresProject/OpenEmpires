@@ -140,8 +140,8 @@ void BuildingManager::onTick(const Event& e)
                     0; // Reseting entity sub type will essentially remove construction site
             }
 
-            spdlog::debug("Progress {}, Building subtype: {}, variation {}",
-                          building.constructionProgress, info.entitySubType, info.variation);
+            spam("Progress {}, Building subtype: {}, variation {}", building.constructionProgress,
+                 info.entitySubType, info.variation);
 
             if (building.constructionProgress > 1 && building.isInStaticMap == false)
             {

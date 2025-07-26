@@ -28,6 +28,11 @@ class EntityDefinitionLoaderExposure : public EntityDefinitionLoader
     {
         EntityDefinitionLoader::loadTileSets(module);
     }
+    
+    void loadNaturalResources(pybind11::object module)
+    {
+        EntityDefinitionLoader::loadNaturalResources(module);
+    }
 
     EntityDefinitionLoader::ConstructionSiteData getSite(const std::string& sizeStr)
     {
@@ -289,6 +294,49 @@ all_buildings= [
     EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType=EntityTypes::ET_MILL, .entitySubType=2}).slpId, 111);
 }
 
+TEST(EntityDefinitionLoaderTest, BuildingResourceAcceptance)
+{
+    // Arrange
+    py::scoped_interpreter guard{};
+
+    py::exec(R"(
+class Graphic:
+    drs_file = "graphics.drs"
+    slp_id = 0
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+
+class Building:
+    name = ''
+    line_of_sight = 0
+    size = ''
+    graphics = []
+
+class ResourceDropOff:
+    accepted_resources = []
+
+class SingleResourceDropOffPoint(Building, ResourceDropOff):
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+mill = SingleResourceDropOffPoint(
+        name='mill', 
+        line_of_sight=256,
+        size='medium',
+        accepted_resources=['food'], 
+        graphics={'default':Graphic(slp_id=3483)}
+    )
+    )");
+
+    py::object millDef = py::globals()["mill"];
+    py::object module = py::module_::import("__main__");
+
+    EntityDefinitionLoaderExposure loader;
+    loader.setSite("medium", std::map<int, int>());
+    ComponentType result = loader.createCompBuilding(module, millDef);
+
+    ASSERT_TRUE(std::get<CompBuilding>(result).canDropOff(ResourceType::FOOD));
+}
+
 TEST(EntityDefinitionLoaderTest, LoadAllConstructionSites)
 {
     py::scoped_interpreter guard{};
@@ -455,4 +503,49 @@ all_tilesets = [
     auto resources =
         loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_TILE}).drsFile->listResources();
     EXPECT_TRUE(std::find(resources.begin(), resources.end(), 15001) != resources.end());
+}
+
+TEST(EntityDefinitionLoaderTest, LoadTreeWithStump)
+{
+    // Arrange
+    py::scoped_interpreter guard{};
+
+    py::exec(R"(
+class Graphic:
+    drs_file = "graphics.drs"
+    slp_id = 0
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+class NaturalResource:
+    name = ''
+    resource_amount = 100
+    graphics = {}
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+
+class Tree(NaturalResource):
+    shadow_graphics = {}
+    stump = None
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+all_natural_resources= [
+    Tree(
+        name="wood",
+        resource_amount=100,
+        graphics={"oak":Graphic(slp_id=435)},
+        stump=NaturalResource(name="stump", graphics={"oak":Graphic(slp_id=1252)})
+    )]
+    )");
+
+    py::object module = py::module_::import("__main__");
+
+    // Act
+    EntityDefinitionLoaderExposure loader;
+    loader.loadNaturalResources(module);
+
+    // Assert
+    EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_TREE}).slpId, 435);
+    EXPECT_EQ(loader.getDRSData(
+        GraphicsID{.entityType = EntityTypes::ET_TREE, .entitySubType=EntitySubTypes::EST_CHOPPED_TREE}).slpId, 
+        1252);
 }

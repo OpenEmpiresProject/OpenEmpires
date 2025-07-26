@@ -40,6 +40,7 @@ enum ResourceType : uint8_t
     WOOD = 1 << 0,  // 00000001
     STONE = 1 << 1, // 00000010
     GOLD = 1 << 2,  // 00000100
+    FOOD = 1 << 3,  // 00001000
 };
 
 } // namespace game

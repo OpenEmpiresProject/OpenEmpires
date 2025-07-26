@@ -39,8 +39,6 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
     auto interfaceDRS = loadDRSFile("assets/interfac.drs");
     auto graphicsDRS = loadDRSFile("assets/graphics.drs");
 
-    loadSLP(graphicsDRS, 1252, EntityTypes::ET_TREE, EntitySubTypes::EST_CHOPPED_TREE, 0, renderer,
-            graphicsRegistry, atlasGenerator); // Chopped tree
     loadSLP(interfaceDRS, 51101, EntityTypes::ET_UI_ELEMENT, EntitySubTypes::UI_WINDOW, 0, renderer,
             graphicsRegistry, atlasGenerator, Size(400, 25)); // Resource HUD
 

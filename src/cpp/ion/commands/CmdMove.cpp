@@ -731,13 +731,28 @@ bool CmdMove::isTargetCloseEnough()
 
     if (targetEntity != entt::null)
     {
-        auto [transform, building] =
-            m_gameState->getComponents<CompTransform, CompBuilding>(targetEntity);
-        auto pos = transformMy.position;
-        auto radiusSq = transformMy.goalRadiusSquared;
-        auto rect = building.getLandInFeetRect(transform.position);
+        if (m_gameState->hasComponent<CompBuilding>(targetEntity))
+        {
+            auto [transform, building] =
+                m_gameState->getComponents<CompTransform, CompBuilding>(targetEntity);
+            auto pos = transformMy.position;
+            auto radiusSq = transformMy.goalRadiusSquared;
+            auto rect = building.getLandInFeetRect(transform.position);
 
-        return overlaps(pos, radiusSq, rect);
+            return overlaps(pos, radiusSq, rect);
+        }
+        else if (m_gameState->hasComponent<CompResource>(targetEntity))
+        {
+            auto [transform, resource] =
+                m_gameState->getComponents<CompTransform, CompResource>(targetEntity);
+            auto pos = transformMy.position;
+            auto radiusSq = transformMy.goalRadiusSquared;
+            auto rect = resource.getLandInFeetRect(transform.position);
+
+            return overlaps(pos, radiusSq, rect);
+        }
+        debug_assert(false, "Unknown entity type for target {}", targetEntity);
+        return true;
     }
     else
     {

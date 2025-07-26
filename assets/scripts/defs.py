@@ -43,6 +43,13 @@ class NaturalResource:
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
 
+class Tree(NaturalResource):
+    shadow_graphics: Dict[str, Graphic] # Shadow by same theme as tree
+    stump: NaturalResource
+
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+
 class Building:
     name: str
     line_of_sight: int
@@ -105,10 +112,11 @@ all_natural_resources: List[NaturalResource] = [
         resource_amount=1000,
         graphics={"default":Graphic(slp_id=1034)}
     ),
-    NaturalResource(
+    Tree(
         name="wood",
         resource_amount=100,
-        graphics={"oak":Graphic(slp_id=435)}
+        graphics={"oak":Graphic(slp_id=435)},
+        stump=NaturalResource(name="stump", graphics={"oak":Graphic(slp_id=1252)})
     ),
 ]
 

@@ -55,6 +55,11 @@ uint32_t getEntitySubType(uint32_t entityType, const std::string& name)
         else if (name == "medium")
             return EntitySubTypes::EST_MEDIUM_SIZE;
     }
+    else if (entityType == EntityTypes::ET_TREE)
+    {
+        if (name == "stump")
+            return EntitySubTypes::EST_CHOPPED_TREE;
+    }
     return EntitySubTypes::EST_DEFAULT;
 }
 
@@ -64,6 +69,7 @@ ResourceType getResourceType(const std::string& name)
         {"wood", ResourceType::WOOD},
         {"gold", ResourceType::GOLD},
         {"stone", ResourceType::STONE},
+        {"food", ResourceType::FOOD},
     };
     return resTypes.at(name);
 }
@@ -177,6 +183,21 @@ ComponentType EntityDefinitionLoader::createCompBuilding(py::object module,
             auto sizeStr = readValue<std::string>(entityDefinition, "size");
             comp.size = getBuildingSize(sizeStr);
 
+            if (py::hasattr(module, "ResourceDropOff"))
+            {
+                py::object dropOffClass = module.attr("ResourceDropOff");
+                if (py::isinstance(entityDefinition, dropOffClass))
+                {
+                    auto acceptedResources =
+                        readValue<std::list<std::string>>(entityDefinition, "accepted_resources");
+
+                    for (auto& resStr : acceptedResources)
+                    {
+                        auto resType = getResourceType(resStr);
+                        comp.addDropOff(resType);
+                    }
+                }
+            }
             return ComponentType(comp);
         }
     }
@@ -237,6 +258,14 @@ void EntityDefinitionLoader::loadNaturalResources(py::object module)
             auto entityType = getEntityType(name);
             createOrUpdateComponent(module, entityType, entry);
             updateDRSData(entityType, entry);
+
+            py::object treeClass = module.attr("Tree");
+            if (py::isinstance(entry, treeClass))
+            {
+                auto stumpSubType = getEntitySubType(entityType, "stump");
+                py::object stump = entry.attr("stump");
+                updateDRSData(entityType, stumpSubType, stump);
+            }
         }
     }
 }
