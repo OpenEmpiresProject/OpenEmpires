@@ -103,7 +103,7 @@ ComponentType EntityDefinitionLoader::createAnimation(py::object module,
         auto name = EntityDefinitionLoader::readValue<string>(py_anim, "name");
         auto action = getAction(name);
 
-        comp.animations[action] = animation;
+        PropertyInitializer::set(comp.animations[action], animation);
     }
     return ComponentType(comp);
 }
@@ -115,7 +115,9 @@ ComponentType EntityDefinitionLoader::createBuilder(py::object module,
         return std::monostate{};
 
     auto buildSpeed = entityDefinition.attr("build_speed").cast<int>();
-    return ComponentType(CompBuilder(buildSpeed));
+    CompBuilder builder;
+    PropertyInitializer::set(builder.buildSpeed, buildSpeed);
+    return ComponentType(builder);
 }
 
 ComponentType EntityDefinitionLoader::createCompResourceGatherer(py::object module,
@@ -125,8 +127,10 @@ ComponentType EntityDefinitionLoader::createCompResourceGatherer(py::object modu
         return std::monostate{};
 
     CompResourceGatherer comp;
-    comp.gatherSpeed = entityDefinition.attr("gather_speed").cast<int>();
-    comp.capacity = entityDefinition.attr("resource_capacity").cast<int>();
+    PropertyInitializer::set<uint32_t>(comp.gatherSpeed,
+                                       entityDefinition.attr("gather_speed").cast<int>());
+    PropertyInitializer::set<uint32_t>(comp.capacity,
+                                       entityDefinition.attr("resource_capacity").cast<int>());
     return ComponentType(comp);
 }
 
@@ -139,7 +143,8 @@ ComponentType EntityDefinitionLoader::createCompUnit(py::object module,
         if (py::isinstance(entityDefinition, unitClass))
         {
             CompUnit comp;
-            comp.lineOfSight = entityDefinition.attr("line_of_sight").cast<int>();
+            PropertyInitializer::set<uint32_t>(comp.lineOfSight,
+                                               entityDefinition.attr("line_of_sight").cast<int>());
             return ComponentType(comp);
         }
     }
@@ -153,8 +158,9 @@ ComponentType EntityDefinitionLoader::createCompTransform(py::object module,
         return std::monostate{};
 
     CompTransform comp;
-    comp.speed = entityDefinition.attr("moving_speed").cast<int>();
-    comp.hasRotation = true;
+    PropertyInitializer::set<uint32_t>(comp.speed,
+                                       entityDefinition.attr("moving_speed").cast<int>());
+    PropertyInitializer::set(comp.hasRotation, true);
     return ComponentType(comp);
 }
 
@@ -166,8 +172,11 @@ ComponentType EntityDefinitionLoader::createCompResource(py::object module,
 
     auto name = EntityDefinitionLoader::readValue<string>(entityDefinition, "name");
     auto amount = EntityDefinitionLoader::readValue<int>(entityDefinition, "resource_amount");
+    CompResource comp;
+    PropertyInitializer::set<Resource>(comp.original, Resource(getResourceType(name), amount));
+    comp.remainingAmount = comp.original.value().amount;
 
-    return ComponentType(CompResource(Resource(getResourceType(name), amount)));
+    return ComponentType(comp);
 }
 
 ComponentType EntityDefinitionLoader::createCompBuilding(py::object module,
@@ -179,9 +188,13 @@ ComponentType EntityDefinitionLoader::createCompBuilding(py::object module,
         if (py::isinstance(entityDefinition, buildingClass))
         {
             CompBuilding comp;
-            comp.lineOfSight = readValue<int>(entityDefinition, "line_of_sight");
+
+            auto lineOfSight = readValue<int>(entityDefinition, "line_of_sight");
             auto sizeStr = readValue<std::string>(entityDefinition, "size");
-            comp.size = getBuildingSize(sizeStr);
+            auto size = getBuildingSize(sizeStr);
+
+            PropertyInitializer::set<uint32_t>(comp.lineOfSight, lineOfSight);
+            PropertyInitializer::set<Size>(comp.size, size);
 
             if (py::hasattr(module, "ResourceDropOff"))
             {
@@ -191,11 +204,13 @@ ComponentType EntityDefinitionLoader::createCompBuilding(py::object module,
                     auto acceptedResources =
                         readValue<std::list<std::string>>(entityDefinition, "accepted_resources");
 
+                    uint8_t acceptedResourceFlag = 0;
                     for (auto& resStr : acceptedResources)
                     {
                         auto resType = getResourceType(resStr);
-                        comp.addDropOff(resType);
+                        acceptedResourceFlag |= resType;
                     }
+                    PropertyInitializer::set(comp.dropOffForResourceType, acceptedResourceFlag);
                 }
             }
             return ComponentType(comp);

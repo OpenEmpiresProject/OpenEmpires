@@ -7,6 +7,7 @@
 #include "GameTypes.h"
 #include "GraphicsRegistry.h"
 #include "Player.h"
+#include "Property.h"
 #include "Renderer.h"
 #include "SubSystem.h"
 #include "Tile.h"
@@ -15,7 +16,7 @@
 #include <memory>
 namespace game
 {
-class DemoWorldCreator : public ion::SubSystem
+class DemoWorldCreator : public ion::SubSystem, public ion::PropertyInitializer
 {
   public:
     DemoWorldCreator(std::stop_token* stopToken,

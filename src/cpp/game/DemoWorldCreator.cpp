@@ -169,7 +169,9 @@ void DemoWorldCreator::createTree(TileMap& map, uint32_t x, uint32_t y)
         GraphicAddon::Rhombus{Constants::TILE_PIXEL_WIDTH, Constants::TILE_PIXEL_HEIGHT}};
 
     gameState->addComponent(tree, sc);
-    gameState->addComponent(tree, CompResource(Resource(ResourceType::WOOD, 100)));
+    CompResource compRes;
+    PropertyInitializer::set(compRes.original, Resource(ResourceType::WOOD, 100));
+    gameState->addComponent(tree, compRes);
 
     map.addEntity(MapLayerType::STATIC, Tile(x, y), tree);
 }
@@ -210,7 +212,10 @@ void DemoWorldCreator::createStoneOrGold(EntityTypes entityType,
     ResourceType resourceType = ResourceType::STONE;
     if (entityType == EntityTypes::ET_GOLD)
         resourceType = ResourceType::GOLD;
-    gameState->addComponent(stone, CompResource(Resource(resourceType, 1000)));
+
+    CompResource compRes;
+    PropertyInitializer::set(compRes.original, Resource(resourceType, 1000));
+    gameState->addComponent(stone, compRes);
 
     gameMap.addEntity(MapLayerType::STATIC, Tile(x, y), stone);
 }

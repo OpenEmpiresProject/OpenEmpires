@@ -4,6 +4,7 @@
 #include "DRSFile.h"
 #include "EntityFactory.h"
 #include "GraphicsRegistry.h"
+#include "Property.h"
 #include "Rect.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
@@ -48,7 +49,7 @@ using ComponentType = std::variant<std::monostate,
                                    ion::CompTransform,
                                    ion::CompUnit>;
 
-class EntityDefinitionLoader : public ion::EntityFactory
+class EntityDefinitionLoader : public ion::EntityFactory, public ion::PropertyInitializer
 {
   public:
     struct EntityDRSData

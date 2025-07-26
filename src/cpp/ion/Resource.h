@@ -14,14 +14,16 @@ struct Resource
     const uint8_t type = Constants::RESOURCE_TYPE_NONE;
     uint32_t amount = 0;
 
+    Resource() = default;
+
+    Resource(uint8_t type, uint32_t amount) : type(type), amount(amount)
+    {
+    }
+
     Resource& operator=(const Resource& other)
     {
         amount = other.amount;
         return *this;
-    }
-
-    Resource(uint8_t type, uint32_t amount) : type(type), amount(amount)
-    {
     }
 
     static void registerResourceType(uint8_t type)

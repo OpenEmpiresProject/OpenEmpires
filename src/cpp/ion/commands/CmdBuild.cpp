@@ -76,12 +76,12 @@ void CmdBuild::animate(int deltaTimeMs)
     m_components->action.action = UnitAction::BUILDING;
     auto& actionAnimation = m_components->animation.animations[m_components->action.action];
 
-    auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.speed;
+    auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.value().speed;
     if (s_totalTicks % ticksPerFrame == 0)
     {
         m_components->dirty.markDirty(m_entityID);
         m_components->animation.frame++;
-        m_components->animation.frame %= actionAnimation.frames; // Building is repeatable
+        m_components->animation.frame %= actionAnimation.value().frames; // Building is repeatable
     }
 }
 

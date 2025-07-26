@@ -1,6 +1,7 @@
 #ifndef COMPRESOURCE_H
 #define COMPRESOURCE_H
 
+#include "Property.h"
 #include "Rect.h"
 #include "Resource.h"
 #include "utils/Constants.h"
@@ -9,14 +10,13 @@
 
 namespace ion
 {
-struct CompResource
+class CompResource
 {
-    Resource resource;
-    uint32_t originalAmount = 0;
+  public:
+    Property<Resource> original;
 
-    CompResource(const Resource& resource) : resource(resource), originalAmount(resource.amount)
-    {
-    }
+  public:
+    uint32_t remainingAmount;
 
     // Relying on externally provided own position to avoid coupling CompTransform with this class
     Rect<float> getLandInFeetRect(const Feet& position) const

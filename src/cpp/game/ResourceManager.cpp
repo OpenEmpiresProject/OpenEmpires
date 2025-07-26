@@ -37,7 +37,7 @@ void ResourceManager::onTick(const Event& e)
                     ->getComponents<CompResource, CompDirty, CompEntityInfo, CompSelectible,
                                     CompTransform>(entity);
 
-            if (resource.resource.amount == 0)
+            if (resource.remainingAmount == 0)
             {
                 info.isDestroyed = true;
                 ServiceRegistry::getInstance().getService<GameState>()->gameMap.removeStaticEntity(

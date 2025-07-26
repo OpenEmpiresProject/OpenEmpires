@@ -62,12 +62,12 @@ class CmdIdle : public Command
         action.action = UnitAction::IDLE;
         auto& actionAnimation = animation.animations[action.action];
 
-        auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.speed;
+        auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.value().speed;
         if (s_totalTicks % ticksPerFrame == 0)
         {
             dirty.markDirty(m_entityID);
             animation.frame++;
-            animation.frame %= actionAnimation.frames; // Idle is always repeatable
+            animation.frame %= actionAnimation.value().frames; // Idle is always repeatable
         }
     }
 };

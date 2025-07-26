@@ -1,6 +1,7 @@
 #ifndef COMPANIMATION_H
 #define COMPANIMATION_H
 
+#include "Property.h"
 #include "utils/Constants.h"
 
 namespace ion
@@ -14,9 +15,10 @@ class CompAnimation
         int speed = 10;
         bool repeatable = false;
     };
+    Property<ActionAnimation> animations[Constants::MAX_ANIMATIONS] = {};
 
+  public:
     int frame = 0;
-    ActionAnimation animations[Constants::MAX_ANIMATIONS] = {};
 };
 } // namespace ion
 

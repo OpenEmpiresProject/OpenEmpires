@@ -2,6 +2,7 @@
 #define COMPTRANSFORM_H
 
 #include "Feet.h"
+#include "Property.h"
 #include "Tile.h"
 #include "utils/Types.h"
 
@@ -20,10 +21,12 @@ inline float toRadians(float degrees)
 class CompTransform
 {
   public:
+    Property<uint32_t> speed; // Feet per second
+    Property<bool> hasRotation;
+
+  public:
     Feet position{0, 0}; // Position in feet
     int rotation = 0;    // Rotation in degrees from feet North (0 degrees is up)
-    bool hasRotation = false;
-    int speed = 0; // Speed in feet per second
     int goalRadiusSquared = 150 ^ 2;
     int goalRadius = 150;
     int selectionBoxWidth = 15;
@@ -57,8 +60,6 @@ class CompTransform
 
     void face(const Feet& target)
     {
-        hasRotation = true;
-
         // Calculate the angle to face the target position
         int deltaX = target.x - position.x;
         int deltaY = target.y - position.y;
@@ -72,8 +73,6 @@ class CompTransform
 
     void face(const Feet& relativeTo, const Feet& target)
     {
-        hasRotation = true;
-
         // Calculate the angle to face the target position relative to the
         // provided position rather than our own position
         int deltaX = target.x - relativeTo.x;
@@ -103,8 +102,6 @@ class CompTransform
 
     void face(Direction direction)
     {
-        hasRotation = true;
-
         rotation = 45 * static_cast<int>(direction);
     }
 

@@ -1,6 +1,7 @@
 #ifndef COMPUNIT_H
 #define COMPUNIT_H
 
+#include "Property.h"
 #include "commands/Command.h"
 
 #include <queue>
@@ -13,8 +14,8 @@ using CommandQueueType = std::priority_queue<Command*, std::vector<Command*>, Co
 class CompUnit
 {
   public:
+    Property<uint32_t> lineOfSight; // In Feet
     CommandQueueType commandQueue;
-    uint32_t lineOfSight = 0; // LOS in feet
 };
 
 } // namespace ion

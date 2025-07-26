@@ -134,12 +134,12 @@ void CmdMove::animate(CompAction& action,
     action.action = actionOverride;
     auto& actionAnimation = animation.animations[action.action];
 
-    auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.speed;
+    auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.value().speed;
     if (s_totalTicks % ticksPerFrame == 0)
     {
         dirty.markDirty(entityId);
         animation.frame++;
-        animation.frame %= actionAnimation.frames;
+        animation.frame %= actionAnimation.value().frames;
     }
 }
 

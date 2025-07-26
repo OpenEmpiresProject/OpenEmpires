@@ -147,9 +147,9 @@ void BuildingManager::onTick(const Event& e)
             {
                 auto& gameMap = ServiceRegistry::getInstance().getService<GameState>()->gameMap;
 
-                for (size_t i = 0; i < building.size.width; i++)
+                for (size_t i = 0; i < building.size.value().width; i++)
                 {
-                    for (size_t j = 0; j < building.size.height; j++)
+                    for (size_t j = 0; j < building.size.value().height; j++)
                     {
                         gameMap.addEntity(MapLayerType::STATIC,
                                           transform.position.toTile() - Tile(i, j), entity);
@@ -181,9 +181,9 @@ bool BuildingManager::canPlaceBuildingAt(const CompBuilding& building,
 
     outOfMap = false;
 
-    for (int i = 0; i < building.size.width; i++)
+    for (int i = 0; i < building.size.value().width; i++)
     {
-        for (int j = 0; j < building.size.height; j++)
+        for (int j = 0; j < building.size.value().height; j++)
         {
             if (!isValidTile({tile.x - i, tile.y - j}))
             {
@@ -239,9 +239,9 @@ void BuildingManager::confirmBuilding(CompTransform& transform,
 
     auto& gameMap = ServiceRegistry::getInstance().getService<GameState>()->gameMap;
 
-    for (size_t i = 0; i < building.size.width; i++)
+    for (size_t i = 0; i < building.size.value().width; i++)
     {
-        for (size_t j = 0; j < building.size.height; j++)
+        for (size_t j = 0; j < building.size.value().height; j++)
         {
             gameMap.addEntity(MapLayerType::ON_GROUND, transform.position.toTile() - Tile(i, j),
                               m_currentBuildingPlacement.entity);

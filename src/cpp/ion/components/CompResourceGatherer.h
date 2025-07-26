@@ -1,6 +1,7 @@
 #ifndef COMPRESOURCEGATHERER_H
 #define COMPRESOURCEGATHERER_H
 
+#include "Property.h"
 #include "Resource.h"
 #include "utils/Constants.h"
 #include "utils/Types.h"
@@ -17,9 +18,10 @@ class CompResourceGatherer
     // Resource carrying action per resource type
     static std::unordered_map<uint8_t, UnitAction> carryingActions;
 
-    uint32_t capacity = 0;
+    Property<uint32_t> capacity;
+    Property<uint32_t> gatherSpeed;
+
     uint32_t gatheredAmount = 0;
-    uint32_t gatherSpeed = 10;
 
     bool canGather(uint8_t resourceType)
     {

@@ -7,6 +7,7 @@
 #include "GraphicsLoader.h"
 #include "GraphicsLoaderFromDRS.h"
 #include "GraphicsRegistry.h"
+#include "Property.h"
 #include "SDL3_gfxPrimitives.h"
 #include "commands/CmdIdle.h"
 #include "components/CompAction.h"
@@ -30,7 +31,7 @@ using namespace std;
 
 namespace game
 {
-class Studio
+class Studio : public PropertyInitializer
 {
   public:
     Studio(/* args */);
@@ -66,7 +67,7 @@ class Studio
                     last = now;
                     animation.frame++;
                     auto& actionAnimation = animation.animations[action.action];
-                    animation.frame %= actionAnimation.frames;
+                    animation.frame %= actionAnimation.value().frames;
                 }
             }
 
@@ -160,7 +161,7 @@ class Studio
 
                     animation.frame++;
                     auto& actionAnimation = animation.animations[action.action];
-                    animation.frame %= actionAnimation.frames;
+                    animation.frame %= actionAnimation.value().frames;
                 }
                 else if (event.key.scancode == SDL_SCANCODE_LEFT)
                 {
@@ -171,7 +172,7 @@ class Studio
                     animation.frame--;
                     auto& actionAnimation = animation.animations[action.action];
                     if (animation.frame < 0)
-                        animation.frame = actionAnimation.frames - 1;
+                        animation.frame = actionAnimation.value().frames - 1;
                 }
                 else if (event.key.scancode == SDL_SCANCODE_UP)
                 {
@@ -182,7 +183,7 @@ class Studio
                     animation.frame--;
                     auto& actionAnimation = animation.animations[action.action];
                     if (animation.frame < 0)
-                        animation.frame = actionAnimation.frames - 1;
+                        animation.frame = actionAnimation.value().frames - 1;
                 }
                 else if (event.key.scancode == SDL_SCANCODE_0)
                 {
@@ -223,25 +224,19 @@ class Studio
         m_villager = gameState->createEntity();
         auto transform = CompTransform(100, 100);
         transform.face(Direction::SOUTH);
-        transform.hasRotation = true;
-        transform.speed = 256;
+        PropertyInitializer::set(transform.hasRotation, true);
+        PropertyInitializer::set<uint32_t>(transform.speed, 256);
 
         CompAnimation anim;
-        anim.animations[UnitAction::IDLE].frames = 15;
-        anim.animations[UnitAction::IDLE].repeatable = true;
-        anim.animations[UnitAction::IDLE].speed = 10;
 
-        anim.animations[UnitAction::MOVE].frames = 15;
-        anim.animations[UnitAction::MOVE].repeatable = true;
-        anim.animations[UnitAction::MOVE].speed = 15;
-
-        anim.animations[UnitAction::CHOPPING].frames = 15;
-        anim.animations[UnitAction::CHOPPING].repeatable = true;
-        anim.animations[UnitAction::CHOPPING].speed = 15;
-
-        anim.animations[UnitAction::MINING].frames = 15;
-        anim.animations[UnitAction::MINING].repeatable = true;
-        anim.animations[UnitAction::MINING].speed = 15;
+        PropertyInitializer::set(anim.animations[UnitAction::IDLE],
+                                 CompAnimation::ActionAnimation{15, 10, true});
+        PropertyInitializer::set(anim.animations[UnitAction::MOVE],
+                                 CompAnimation::ActionAnimation{15, 15, true});
+        PropertyInitializer::set(anim.animations[UnitAction::CHOPPING],
+                                 CompAnimation::ActionAnimation{15, 10, true});
+        PropertyInitializer::set(anim.animations[UnitAction::MINING],
+                                 CompAnimation::ActionAnimation{15, 10, true});
 
         gameState->addComponent(m_villager, transform);
         gameState->addComponent(m_villager, m_rc);

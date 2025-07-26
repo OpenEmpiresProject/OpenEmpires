@@ -126,7 +126,7 @@ void Simulator::onUnitSelection(const Event& e)
             auto resource =
                 ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompResource>(
                     resourceEntity);
-            spdlog::info("Selected entity has {} resources", resource.resource.amount);
+            spdlog::info("Selected entity has {} resources", resource.remainingAmount);
         }
     }
 }
