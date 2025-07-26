@@ -4,6 +4,7 @@
 #include "DRSFile.h"
 #include "EntityFactory.h"
 #include "GraphicsRegistry.h"
+#include "Rect.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
 #include "components/CompBuilder.h"
@@ -54,6 +55,7 @@ class EntityDefinitionLoader : public ion::EntityFactory
     {
         ion::Ref<drs::DRSFile> drsFile;
         int slpId = -1;
+        ion::Rect<int> clipRect;
     };
     EntityDefinitionLoader(/* args */);
     ~EntityDefinitionLoader();
@@ -103,6 +105,7 @@ class EntityDefinitionLoader : public ion::EntityFactory
     void loadBuildings(pybind11::object module);
     void loadConstructionSites(pybind11::object module);
     void loadTileSets(pybind11::object module);
+    void loadUIElements(pybind11::object module);
     void createOrUpdateComponent(pybind11::object module,
                                  uint32_t entityType,
                                  pybind11::handle entityDefinition);

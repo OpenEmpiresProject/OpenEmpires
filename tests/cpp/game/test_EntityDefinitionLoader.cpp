@@ -34,6 +34,11 @@ class EntityDefinitionLoaderExposure : public EntityDefinitionLoader
         EntityDefinitionLoader::loadNaturalResources(module);
     }
 
+    void loadUIElements(pybind11::object module)
+    {
+        EntityDefinitionLoader::loadUIElements(module);
+    }
+
     EntityDefinitionLoader::ConstructionSiteData getSite(const std::string& sizeStr)
     {
         return EntityDefinitionLoader::getSite(sizeStr);
@@ -548,4 +553,37 @@ all_natural_resources= [
     EXPECT_EQ(loader.getDRSData(
         GraphicsID{.entityType = EntityTypes::ET_TREE, .entitySubType=EntitySubTypes::EST_CHOPPED_TREE}).slpId, 
         1252);
+}
+
+TEST(EntityDefinitionLoaderTest, LoadUIElements)
+{
+    py::scoped_interpreter guard{};
+
+    py::exec(R"(
+class Rect:
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+class Graphic:
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+class UIElement:
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+all_ui_elements = [
+    UIElement(name="resource_panel", graphics={"default":Graphic(drs_file="interfac.drs", slp_id=51101, clip_rect=Rect(w=400, h=25))})
+]
+    )");
+
+    py::object module = py::module_::import("__main__");
+
+    // Act
+    EntityDefinitionLoaderExposure loader;
+    loader.loadUIElements(module);
+
+    // Assert
+    EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_UI_ELEMENT}).slpId, 51101);
+    EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_UI_ELEMENT}).clipRect.w,
+              400);
+    EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_UI_ELEMENT}).clipRect.h,
+              25);
 }

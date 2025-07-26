@@ -225,6 +225,7 @@ void EntityDefinitionLoader::load()
     loadConstructionSites(module);
     loadBuildings(module);
     loadTileSets(module);
+    loadUIElements(module);
 }
 
 void EntityDefinitionLoader::loadUnits(py::object module)
@@ -321,6 +322,19 @@ void EntityDefinitionLoader::loadTileSets(pybind11::object module)
         for (auto entry : entries)
         {
             updateDRSData(EntityTypes::ET_TILE, entry);
+        }
+    }
+}
+
+void EntityDefinitionLoader::loadUIElements(pybind11::object module)
+{
+    if (py::hasattr(module, "all_ui_elements"))
+    {
+        py::list entries = module.attr("all_ui_elements");
+
+        for (auto entry : entries)
+        {
+            updateDRSData(EntityTypes::ET_UI_ELEMENT, EntitySubTypes::UI_WINDOW, entry);
         }
     }
 }
@@ -494,10 +508,20 @@ void EntityDefinitionLoader::updateDRSData(uint32_t entityType,
             else
                 drsFile = loadDRSFile2("assets/" + drsFileName);
 
+            Rect<int> clipRect;
+            if (py::hasattr(graphicsEntry, "clip_rect"))
+            {
+                py::object rect = graphicsEntry.attr("clip_rect");
+                clipRect.x = readValue<int>(rect, "x");
+                clipRect.y = readValue<int>(rect, "y");
+                clipRect.w = readValue<int>(rect, "w");
+                clipRect.h = readValue<int>(rect, "h");
+            }
+
             GraphicsID id;
             id.entityType = entityType;
             id.entitySubType = entitySubType;
-            m_DRSDataByGraphicsIdHash[id.hash()] = EntityDRSData{drsFile, slpId};
+            m_DRSDataByGraphicsIdHash[id.hash()] = EntityDRSData{drsFile, slpId, clipRect};
         }
     }
 }

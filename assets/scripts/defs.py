@@ -28,9 +28,18 @@ class Villager(Unit):
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
 
+class Rect:
+    x: int
+    y: int
+    w: int
+    h: int
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+
 class Graphic:
     drs_file: str = "graphics.drs"
     slp_id: int
+    clip_rect: Rect
 
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
@@ -77,6 +86,12 @@ class ConstructionSite:
 class TileSet:
     graphics: Dict[str, Graphic] # Graphics by theme
 
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+
+class UIElement:
+    name: str
+    graphics: Dict[str, Graphic] # Graphics by theme
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
 
@@ -151,4 +166,8 @@ all_construction_sites: List[ConstructionSite] = [
 
 all_tilesets: List[TileSet] = [
     TileSet(graphics={"grass":Graphic(drs_file="terrain.drs", slp_id=15001)})
+]
+
+all_ui_elements: List[UIElement] = [
+    UIElement(name="resource_panel", graphics={"default":Graphic(drs_file="interfac.drs", slp_id=51101, clip_rect=Rect(w=400, h=25))})
 ]

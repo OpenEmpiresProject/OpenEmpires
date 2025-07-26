@@ -36,16 +36,8 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
                                             GraphicsRegistry& graphicsRegistry,
                                             AtlasGenerator& atlasGenerator)
 {
-    auto interfaceDRS = loadDRSFile("assets/interfac.drs");
-    auto graphicsDRS = loadDRSFile("assets/graphics.drs");
-
-    loadSLP(interfaceDRS, 51101, EntityTypes::ET_UI_ELEMENT, EntitySubTypes::UI_WINDOW, 0, renderer,
-            graphicsRegistry, atlasGenerator, Size(400, 25)); // Resource HUD
-
     registerDummyTexture(EntityTypes::ET_UI_ELEMENT, EntitySubTypes::UI_LABEL, graphicsRegistry);
     registerDummyTexture(EntityTypes::ET_UI_ELEMENT, EntitySubTypes::UI_BUTTON, graphicsRegistry);
-
-    adjustDirections(graphicsRegistry);
 }
 
 void GraphicsLoaderFromDRS::loadGraphics(SDL_Renderer* renderer,
@@ -70,7 +62,8 @@ void GraphicsLoaderFromDRS::loadGraphics(SDL_Renderer* renderer,
         if (drsData.drsFile != nullptr)
         {
             loadSLP(drsData.drsFile, drsData.slpId, id.second.entityType, id.second.entitySubType,
-                    id.second.action, renderer, graphicsRegistry, atlasGenerator);
+                    id.second.action, renderer, graphicsRegistry, atlasGenerator,
+                    Size(drsData.clipRect.w, drsData.clipRect.h));
         }
     }
     adjustDirections(graphicsRegistry);
@@ -140,7 +133,7 @@ shared_ptr<DRSFile> loadDRSFile(const string& drsFilename)
     {
         throw runtime_error("Failed to load DRS file: " + drsFilename);
     }
-    return std::move(drs);
+    return drs;
 }
 
 void loadSLP(shared_ptr<DRSFile> drs,
