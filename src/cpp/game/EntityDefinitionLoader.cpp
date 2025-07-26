@@ -203,6 +203,7 @@ void EntityDefinitionLoader::load()
     loadNaturalResources(module);
     loadConstructionSites(module);
     loadBuildings(module);
+    loadTileSets(module);
 }
 
 void EntityDefinitionLoader::loadUnits(py::object module)
@@ -278,6 +279,19 @@ void EntityDefinitionLoader::loadConstructionSites(pybind11::object module)
             auto entityType = getEntityType(name);
             auto entitySubType = getEntitySubType(entityType, sizeStr);
             updateDRSData(entityType, entitySubType, entry);
+        }
+    }
+}
+
+void EntityDefinitionLoader::loadTileSets(pybind11::object module)
+{
+    if (py::hasattr(module, "all_tilesets"))
+    {
+        py::list entries = module.attr("all_tilesets");
+
+        for (auto entry : entries)
+        {
+            updateDRSData(EntityTypes::ET_TILE, entry);
         }
     }
 }

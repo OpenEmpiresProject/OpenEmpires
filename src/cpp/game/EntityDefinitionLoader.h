@@ -102,6 +102,7 @@ class EntityDefinitionLoader : public ion::EntityFactory
     void loadNaturalResources(pybind11::object module);
     void loadBuildings(pybind11::object module);
     void loadConstructionSites(pybind11::object module);
+    void loadTileSets(pybind11::object module);
     void createOrUpdateComponent(pybind11::object module,
                                  uint32_t entityType,
                                  pybind11::handle entityDefinition);

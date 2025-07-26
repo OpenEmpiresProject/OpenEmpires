@@ -24,6 +24,11 @@ class EntityDefinitionLoaderExposure : public EntityDefinitionLoader
         EntityDefinitionLoader::loadConstructionSites(module);
     }
 
+    void loadTileSets(pybind11::object module)
+    {
+        EntityDefinitionLoader::loadTileSets(module);
+    }
+
     EntityDefinitionLoader::ConstructionSiteData getSite(const std::string& sizeStr)
     {
         return EntityDefinitionLoader::getSite(sizeStr);
@@ -231,8 +236,6 @@ entity = Villager()
     EXPECT_EQ(std::get<CompUnit>(result).lineOfSight, 100);
 }
 
-
-
 TEST(EntityDefinitionLoaderTest, LoadAllBuilding)
 {
     // Arrange
@@ -417,4 +420,39 @@ all_construction_sites= [
 
     auto building = gameState->getComponent<CompBuilding>(mill);
     EXPECT_EQ(building.visualVariationByProgress.at(66), 2);
+}
+
+TEST(EntityDefinitionLoaderTest, LoadTileSets)
+{
+    // Arrange
+    py::scoped_interpreter guard{};
+
+    py::exec(R"(
+class Graphic:
+    drs_file = ""
+    slp_id = 0
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+class TileSet:
+    graphics = {}
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+all_tilesets = [
+    TileSet(graphics={"grass":Graphic(drs_file="terrain.drs", slp_id=15001)})
+]
+    )");
+
+    py::object module = py::module_::import("__main__");
+
+    EntityDefinitionLoaderExposure loader;
+
+    // Act
+    loader.loadTileSets(module);
+
+    // Assert
+    EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_TILE}).slpId, 15001);
+
+    auto resources =
+        loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_TILE}).drsFile->listResources();
+    EXPECT_TRUE(std::find(resources.begin(), resources.end(), 15001) != resources.end());
 }

@@ -67,6 +67,12 @@ class ConstructionSite:
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
 
+class TileSet:
+    graphics: Dict[str, Graphic] # Graphics by theme
+
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+
 all_units: List[Unit] = [
     Villager(
         name="villager",
@@ -133,4 +139,8 @@ all_construction_sites: List[ConstructionSite] = [
         size="medium", 
         graphics={"default": Graphic(slp_id=237)}, 
         progress_frame_map={33:0, 66:1, 99:2})
+]
+
+all_tilesets: List[TileSet] = [
+    TileSet(graphics={"grass":Graphic(drs_file="terrain.drs", slp_id=15001)})
 ]

@@ -37,10 +37,7 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
                                             AtlasGenerator& atlasGenerator)
 {
     auto interfaceDRS = loadDRSFile("assets/interfac.drs");
-    auto terrainDRS = loadDRSFile("assets/terrain.drs");
     auto graphicsDRS = loadDRSFile("assets/graphics.drs");
-
-    loadSLP(terrainDRS, 15001, 2, 0, 0, renderer, graphicsRegistry, atlasGenerator); // Grass tiles
 
     loadSLP(graphicsDRS, 1252, EntityTypes::ET_TREE, EntitySubTypes::EST_CHOPPED_TREE, 0, renderer,
             graphicsRegistry, atlasGenerator); // Chopped tree
