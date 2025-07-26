@@ -50,7 +50,7 @@ We use milestone versions for planning. Early versions are experimental. Feature
 - [ ] Building queue system
 - [ ] Population limit system
 - [ ] Multiple player support (not networking)
-- [ ] Scripting for entity definition
+- [x] Scripting for entity definition
 - [ ] Unit abilities modeling
 - [ ] Garrison
 - [ ] Walls and gates
