@@ -35,7 +35,9 @@ void ion::GameState::destroyAllPendingEntities()
 
 bool GameState::isEntityValid(uint32_t entity) const
 {
-    return m_registry.valid(entity);
+    return m_registry.valid(entity) &&
+           std::find(m_entitiesToDestroy.begin(), m_entitiesToDestroy.end(), entity) ==
+               m_entitiesToDestroy.end();
 }
 
 void GameState::clearAll()

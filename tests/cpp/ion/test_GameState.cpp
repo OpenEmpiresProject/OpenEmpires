@@ -10,7 +10,7 @@ namespace ion
 {
     TEST(GameStateTest, CreateEntity)
     {
-        auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+        auto gameState = new GameState();
 
         uint32_t entity = gameState->createEntity();
         EXPECT_TRUE(gameState->isEntityValid(entity)) << "Entity should be valid after creation";
@@ -18,7 +18,7 @@ namespace ion
 
     TEST(GameStateTest, DestroyEntity)
     {
-        auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+        auto gameState = new GameState();
 
         uint32_t entity = gameState->createEntity();
         gameState->destroyEntity(entity);
@@ -27,7 +27,7 @@ namespace ion
 
     TEST(GameStateTest, IsEntityValid)
     {
-        auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+        auto gameState = new GameState();
 
         uint32_t entity = gameState->createEntity();
         EXPECT_TRUE(gameState->isEntityValid(entity)) << "Entity should be valid after creation";
@@ -38,7 +38,7 @@ namespace ion
 
     TEST(GameStateTest, AddComponent)
     {
-        auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+        auto gameState = new GameState();
 
         uint32_t entity = gameState->createEntity();
         struct TestComponent { int value; };
@@ -50,7 +50,7 @@ namespace ion
 
     TEST(GameStateTest, HasComponent)
     {
-        auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+        auto gameState = new GameState();
         uint32_t entity = gameState->createEntity();
         struct TestComponent { int value; };
         EXPECT_FALSE(gameState->hasComponent<TestComponent>(entity)) << "Entity should not have TestComponent initially";
@@ -61,7 +61,7 @@ namespace ion
 
     TEST(GameStateTest, GetComponent)
     {
-        auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+        auto gameState = new GameState();
 
         uint32_t entity = gameState->createEntity();
         struct TestComponent { int value; };
@@ -73,7 +73,7 @@ namespace ion
 
     TEST(GameStateTest, GetComponents)
     {
-        auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+        auto gameState = new GameState();
 
         uint32_t entity = gameState->createEntity();
         struct TestComponent { int value; };
@@ -89,7 +89,7 @@ namespace ion
 
     TEST(GameStateTest, ClearAll)
     {
-        auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+        auto gameState = new GameState();
 
         uint32_t entity1 = gameState->createEntity();
         uint32_t entity2 = gameState->createEntity();

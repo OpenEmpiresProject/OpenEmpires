@@ -75,6 +75,11 @@ void CommandCenter::onEvent(const Event& e)
         // Remove all the components except the default one (i.e. idle)
         while (unit.commandQueue.size() > 1)
         {
+            debug_assert(unit.commandQueue.top()->getPriority() < 0,
+                         "Command {} for entity {} has invalid priority set",
+                         unit.commandQueue.top()->toString(),
+                         unit.commandQueue.top()->getEntityID());
+
             if (unit.commandQueue.top()->getPriority() > Command::DEFAULT_PRIORITY)
             {
                 unit.commandQueue.pop();

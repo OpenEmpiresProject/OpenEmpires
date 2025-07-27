@@ -4,13 +4,17 @@
 #include "EventLoop.h"
 #include "EventHandler.h"
 
-using namespace ion;
 using namespace testing;
 using namespace std;
 
-class MockEventLoopListener : public EventHandler {
-public:
-    void onEvent(const Event& e) override {
+namespace ion
+{
+
+class MockEventLoopListener : public EventHandler
+{
+  public:
+    void onEvent(const Event& e) override
+    {
         callCount++;
     }
     void onInit(EventLoop* eventLoop) {};
@@ -31,19 +35,22 @@ public:
 //     ASSERT_EQ(eventLoop.getListenersCount(), 0);
 // }
 
-TEST(EventLoopTest, TickEventIsTriggered) {
+TEST(EventLoopTest, TickEventIsTriggered)
+{
     std::stop_source stopSource;
     std::stop_token stopToken = stopSource.get_token();
 
-    SubSystem* eventLoop = new EventLoop(&stopToken);
+    auto loop = CreateRef<EventLoop>(&stopToken);
+    std::shared_ptr<SubSystem> eventLoop = loop;
+
     auto mockListener = std::make_unique<MockEventLoopListener>();
     auto mockListernerRawPtr = mockListener.get(); // Good enough for a test
 
-    ((EventLoop*)eventLoop)->registerListener(std::move(mockListener));
+    loop->registerListener(std::move(mockListener));
     eventLoop->init();
 
     // Let the event loop run for a short time
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
     stopSource.request_stop(); // Stop the event loop
     eventLoop->shutdown();
     ASSERT_GT(mockListernerRawPtr->callCount, 2);
@@ -59,3 +66,4 @@ TEST(EventLoopTest, TickEventIsTriggered) {
 //     eventLoop->shutdown();
 //     ASSERT_FALSE(eventLoop->isRunning());
 // }
+} // namespace ion

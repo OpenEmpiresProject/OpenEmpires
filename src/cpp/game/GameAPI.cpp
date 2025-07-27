@@ -86,7 +86,6 @@ uint32_t GameAPI::createVillager(Ref<ion::Player> player, const Feet& pos)
 
     transform.position = Feet(tilePos.x * 256 + 128, tilePos.x * 256 + 50);
     transform.face(Direction::SOUTH);
-    unit.commandQueue.push(ObjectPool<CmdIdle>::acquire(villager));
     playerComp.player = player;
 
     auto newTile = transform.position.toTile();

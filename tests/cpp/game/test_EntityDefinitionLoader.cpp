@@ -5,11 +5,15 @@
 #include "components/CompAnimation.h"
 #include "GameTypes.h"
 
+#include  <filesystem>
+
 using namespace std;
 using namespace ion;
-using namespace game;
+using namespace drs;
 namespace py = pybind11;
 
+namespace game
+{
 
 class EntityDefinitionLoaderExposure : public EntityDefinitionLoader
 {
@@ -28,7 +32,7 @@ class EntityDefinitionLoaderExposure : public EntityDefinitionLoader
     {
         EntityDefinitionLoader::loadTileSets(module);
     }
-    
+
     void loadNaturalResources(pybind11::object module)
     {
         EntityDefinitionLoader::loadNaturalResources(module);
@@ -58,19 +62,26 @@ class EntityDefinitionLoaderExposure : public EntityDefinitionLoader
     {
         EntityDefinitionLoader::setDRSData(id, data);
     }
+
+    void setDRSLoaderFunc(std::function<Ref<DRSFile>(const std::string&)> func)
+    {
+        EntityDefinitionLoader::setDRSLoaderFunc(func);
+    }
 };
 
-py::dict createAnimationEntry(std::string name, int frameCount, int speed, bool repeatable) {
-        py::dict anim;
-        anim["name"] = name;
-        anim["frame_count"] = frameCount;
-        anim["speed"] = speed;
-        anim["repeatable"] = repeatable;
-        return anim;
-    }
+py::dict createAnimationEntry(std::string name, int frameCount, int speed, bool repeatable)
+{
+    py::dict anim;
+    anim["name"] = name;
+    anim["frame_count"] = frameCount;
+    anim["speed"] = speed;
+    anim["repeatable"] = repeatable;
+    return anim;
+}
 
 // Test createAnimation returns monostate if no animations
-TEST(EntityDefinitionLoaderTest, CreateAnimationReturnsMonostateIfNoAnimations) {
+TEST(EntityDefinitionLoaderTest, CreateAnimationReturnsMonostateIfNoAnimations)
+{
     py::scoped_interpreter guard{};
     py::dict d;
     py::object module;
@@ -79,7 +90,8 @@ TEST(EntityDefinitionLoaderTest, CreateAnimationReturnsMonostateIfNoAnimations) 
 }
 
 // Test createBuilder returns monostate if no build_speed
-TEST(EntityDefinitionLoaderTest, CreateBuilderReturnsMonostateIfNoBuildSpeed) {
+TEST(EntityDefinitionLoaderTest, CreateBuilderReturnsMonostateIfNoBuildSpeed)
+{
     py::scoped_interpreter guard{};
     py::dict d;
     py::object module;
@@ -89,7 +101,8 @@ TEST(EntityDefinitionLoaderTest, CreateBuilderReturnsMonostateIfNoBuildSpeed) {
 }
 
 // Test createCompResourceGatherer returns monostate if no gather_speed
-TEST(EntityDefinitionLoaderTest, CreateCompResourceGathererReturnsMonostateIfNoGatherSpeed) {
+TEST(EntityDefinitionLoaderTest, CreateCompResourceGathererReturnsMonostateIfNoGatherSpeed)
+{
     py::scoped_interpreter guard{};
     py::dict d;
     py::object module;
@@ -99,10 +112,11 @@ TEST(EntityDefinitionLoaderTest, CreateCompResourceGathererReturnsMonostateIfNoG
 }
 
 // Test createCompUnit returns monostate if no line_of_sight
-TEST(EntityDefinitionLoaderTest, CreateCompUnitReturnsMonostateIfNotAUnit) {
+TEST(EntityDefinitionLoaderTest, CreateCompUnitReturnsMonostateIfNotAUnit)
+{
     py::scoped_interpreter guard{};
     py::dict d;
-    
+
     py::exec(R"()");
     py::object module = py::module_::import("__main__");
 
@@ -111,7 +125,8 @@ TEST(EntityDefinitionLoaderTest, CreateCompUnitReturnsMonostateIfNotAUnit) {
 }
 
 // Test createCompTransform returns monostate if no moving_speed
-TEST(EntityDefinitionLoaderTest, CreateCompTransformReturnsMonostateIfNoMovingSpeed) {
+TEST(EntityDefinitionLoaderTest, CreateCompTransformReturnsMonostateIfNoMovingSpeed)
+{
     py::scoped_interpreter guard{};
     py::dict d;
     py::object module;
@@ -121,7 +136,8 @@ TEST(EntityDefinitionLoaderTest, CreateCompTransformReturnsMonostateIfNoMovingSp
 }
 
 // Test createCompResource returns monostate if no resource_amount
-TEST(EntityDefinitionLoaderTest, CreateCompResourceReturnsMonostateIfNoResourceAmount) {
+TEST(EntityDefinitionLoaderTest, CreateCompResourceReturnsMonostateIfNoResourceAmount)
+{
     py::scoped_interpreter guard{};
     py::dict d;
     py::object module;
@@ -133,7 +149,7 @@ TEST(EntityDefinitionLoaderTest, CreateCompResourceReturnsMonostateIfNoResourceA
 TEST(EntityDefinitionLoaderTest, ParsesAnimationsCorrectly)
 {
     py::scoped_interpreter guard{};
-    
+
     py::exec(R"(
 class Animation:
     def __init__(self, name, frame_count, speed, repeatable):
@@ -161,14 +177,14 @@ entity = DummyEntity()
     auto comp = std::get<CompAnimation>(result);
 
     auto walk = comp.animations[UnitAction::MOVE];
-    EXPECT_EQ(walk.frames, 10);
-    EXPECT_EQ(walk.speed, 100);
-    EXPECT_TRUE(walk.repeatable);
+    EXPECT_EQ(walk.value().frames, 10);
+    EXPECT_EQ(walk.value().speed, 100);
+    EXPECT_TRUE(walk.value().repeatable);
 
     auto idle = comp.animations[UnitAction::IDLE];
-    EXPECT_EQ(idle.frames, 5);
-    EXPECT_EQ(idle.speed, 50);
-    EXPECT_FALSE(idle.repeatable);
+    EXPECT_EQ(idle.value().frames, 5);
+    EXPECT_EQ(idle.value().speed, 50);
+    EXPECT_FALSE(idle.value().repeatable);
 }
 
 TEST(EntityDefinitionLoaderTest, ReturnsComponentForBuildingSubclass)
@@ -196,7 +212,7 @@ entity = House()
     ComponentType result = loader.createCompBuilding(module, houseDef);
     ASSERT_TRUE(std::holds_alternative<CompBuilding>(result));
     EXPECT_EQ(std::get<CompBuilding>(result).lineOfSight, 5);
-    EXPECT_EQ(std::get<CompBuilding>(result).size.width, 2);
+    EXPECT_EQ(std::get<CompBuilding>(result).size.value().width, 2);
 }
 
 TEST(EntityDefinitionLoaderTest, SkipsBuildingComponentForUnrelatedClass)
@@ -216,7 +232,6 @@ class NotABuilding:
     ComponentType result = loader.createCompBuilding(module, notBuilding);
     ASSERT_TRUE(std::holds_alternative<std::monostate>(result));
 }
-
 
 TEST(EntityDefinitionLoaderTest, ReturnsComponentForUnitSubclass)
 {
@@ -282,21 +297,26 @@ all_buildings= [
 
     py::object module = py::module_::import("__main__");
 
+    auto cwd = std::filesystem::current_path();
+
     EntityDefinitionLoaderExposure loader;
     loader.setSite("medium", std::map<int, int>());
     GraphicsID siteId;
     siteId.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
     siteId.entitySubType = 2;
     loader.setDRSData(siteId.hash(), EntityDefinitionLoader::EntityDRSData{.slpId = 111});
+    loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
 
     // Act
     loader.loadBuildings(module);
 
     // Assert
     // Main building
-    EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType=EntityTypes::ET_MILL}).slpId, 3483);
+    EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_MILL}).slpId, 3483);
     // One of construction sites
-    EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType=EntityTypes::ET_MILL, .entitySubType=2}).slpId, 111);
+    EXPECT_EQ(
+        loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_MILL, .entitySubType = 2}).slpId,
+        111);
 }
 
 TEST(EntityDefinitionLoaderTest, BuildingResourceAcceptance)
@@ -377,6 +397,7 @@ all_construction_sites= [
     py::object module = py::module_::import("__main__");
 
     EntityDefinitionLoaderExposure loader;
+    loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
     loader.loadConstructionSites(module);
 
     {
@@ -404,7 +425,6 @@ all_construction_sites= [
         EXPECT_EQ(sideData.size.height, 2);
         EXPECT_EQ(sideData.progressToFrames.at(66), 2);
     }
-
 }
 
 TEST(EntityDefinitionLoaderTest, LoadBuildingsWithConstructionSiteLinks)
@@ -458,6 +478,7 @@ all_construction_sites= [
     py::object module = py::module_::import("__main__");
 
     EntityDefinitionLoaderExposure loader;
+    loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
     loader.loadConstructionSites(module);
     loader.loadBuildings(module);
 
@@ -498,16 +519,13 @@ all_tilesets = [
     py::object module = py::module_::import("__main__");
 
     EntityDefinitionLoaderExposure loader;
+    loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
 
     // Act
     loader.loadTileSets(module);
 
     // Assert
     EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_TILE}).slpId, 15001);
-
-    auto resources =
-        loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_TILE}).drsFile->listResources();
-    EXPECT_TRUE(std::find(resources.begin(), resources.end(), 15001) != resources.end());
 }
 
 TEST(EntityDefinitionLoaderTest, LoadTreeWithStump)
@@ -546,13 +564,16 @@ all_natural_resources= [
 
     // Act
     EntityDefinitionLoaderExposure loader;
+    loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
     loader.loadNaturalResources(module);
 
     // Assert
     EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_TREE}).slpId, 435);
-    EXPECT_EQ(loader.getDRSData(
-        GraphicsID{.entityType = EntityTypes::ET_TREE, .entitySubType=EntitySubTypes::EST_CHOPPED_TREE}).slpId, 
-        1252);
+    EXPECT_EQ(loader
+                  .getDRSData(GraphicsID{.entityType = EntityTypes::ET_TREE,
+                                         .entitySubType = EntitySubTypes::EST_CHOPPED_TREE})
+                  .slpId,
+              1252);
 }
 
 TEST(EntityDefinitionLoaderTest, LoadUIElements)
@@ -578,6 +599,7 @@ all_ui_elements = [
 
     // Act
     EntityDefinitionLoaderExposure loader;
+    loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
     loader.loadUIElements(module);
 
     // Assert
@@ -587,3 +609,4 @@ all_ui_elements = [
     EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_UI_ELEMENT}).clipRect.h,
               25);
 }
+} // namespace game

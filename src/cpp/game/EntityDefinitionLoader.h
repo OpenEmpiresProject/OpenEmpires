@@ -121,6 +121,7 @@ class EntityDefinitionLoader : public ion::EntityFactory, public ion::PropertyIn
     void setSite(const std::string& sizeStr, const std::map<int, int>& progressToFrames);
     void attachedConstructionSites(uint32_t entityType, const std::string& sizeStr);
     void setDRSData(int64_t id, const EntityDRSData& data);
+    void setDRSLoaderFunc(std::function<ion::Ref<drs::DRSFile>(const std::string&)> func);
 
   private:
     const std::string m_unitsFile = "units";
@@ -128,6 +129,7 @@ class EntityDefinitionLoader : public ion::EntityFactory, public ion::PropertyIn
     std::unordered_map<int64_t, EntityDRSData> m_DRSDataByGraphicsIdHash;
     std::unordered_map<std::string, ion::Ref<drs::DRSFile>> m_drsFilesByName;
     std::map<std::string /*size*/, ConstructionSiteData> m_constructionSitesBySize;
+    std::function<ion::Ref<drs::DRSFile>(const std::string&)> m_drsLoadFunc;
 };
 
 } // namespace game

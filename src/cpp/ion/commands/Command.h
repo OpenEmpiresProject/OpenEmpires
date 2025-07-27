@@ -77,6 +77,11 @@ class Command
         m_components = std::make_shared<UnitComponentRefs>(m_gameState, entityID);
     }
 
+    uint32_t getEntityID() const
+    {
+        return m_entityID;
+    }
+
     inline bool isExecutedAtLeastOnce() const
     {
         return m_executedAtLeastOnce;

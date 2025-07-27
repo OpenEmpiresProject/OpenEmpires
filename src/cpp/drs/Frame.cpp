@@ -240,7 +240,7 @@ void decodeSLPRow(const uint8_t* cmdStream,
             }
             for (int j = 0; j < pixelCount; ++j)
             {
-                auto color = paletteLookup(cmdStream[++i]);
+                auto color = playerColorLookup(cmdStream[++i]);
                 outPixels.push_back(color);
             }
         }
@@ -269,7 +269,7 @@ void decodeSLPRow(const uint8_t* cmdStream,
             {
                 pixelCount = cmdStream[++i];
             }
-            auto color = paletteLookup(cmdStream[++i]);
+            auto color = playerColorLookup(cmdStream[++i]);
 
             for (int j = 0; j < pixelCount; ++j)
             {

@@ -116,7 +116,7 @@ ComponentType EntityDefinitionLoader::createBuilder(py::object module,
 
     auto buildSpeed = entityDefinition.attr("build_speed").cast<int>();
     CompBuilder builder;
-    PropertyInitializer::set(builder.buildSpeed, buildSpeed);
+    PropertyInitializer::set<uint32_t>(builder.buildSpeed, buildSpeed);
     return ComponentType(builder);
 }
 
@@ -221,6 +221,15 @@ ComponentType EntityDefinitionLoader::createCompBuilding(py::object module,
 
 EntityDefinitionLoader::EntityDefinitionLoader(/* args */)
 {
+    m_drsLoadFunc = [](const std::string& drsFilename) -> Ref<DRSFile>
+    {
+        auto drs = std::make_shared<DRSFile>();
+        if (!drs->load(drsFilename))
+        {
+            throw std::runtime_error("Failed to load DRS file: " + drsFilename);
+        }
+        return drs;
+    };
 }
 
 EntityDefinitionLoader::~EntityDefinitionLoader()
@@ -391,9 +400,11 @@ uint32_t EntityDefinitionLoader::createEntity(uint32_t entityType)
     gameState->getComponent<CompEntityInfo>(entity).entityId = entity;
 
     if (gameState->hasComponent<CompUnit>(entity))
-        gameState->getComponent<CompUnit>(entity).commandQueue.push(
-            ObjectPool<CmdIdle>::acquire(entity));
-
+    {
+        auto idleCmd = ObjectPool<CmdIdle>::acquire(entity);
+        idleCmd->setPriority(Command::DEFAULT_PRIORITY);
+        gameState->getComponent<CompUnit>(entity).commandQueue.push(idleCmd);
+    }
     return entity;
 }
 
@@ -462,16 +473,6 @@ void EntityDefinitionLoader::addComponentIfNotNull(uint32_t entityType, const Co
         m_componentsByEntityType[entityType].push_back(comp);
 }
 
-Ref<DRSFile> loadDRSFile2(const string& drsFilename)
-{
-    auto drs = make_shared<DRSFile>();
-    if (!drs->load(drsFilename))
-    {
-        throw runtime_error("Failed to load DRS file: " + drsFilename);
-    }
-    return drs;
-}
-
 void EntityDefinitionLoader::updateDRSData(uint32_t entityType, pybind11::handle entityDefinition)
 {
     updateDRSData(entityType, EntitySubTypes::EST_DEFAULT, entityDefinition);
@@ -493,7 +494,7 @@ void EntityDefinitionLoader::updateDRSData(uint32_t entityType,
             if (it != m_drsFilesByName.end())
                 drsFile = it->second;
             else
-                drsFile = loadDRSFile2("assets/" + drsFileName);
+                drsFile = m_drsLoadFunc("assets/" + drsFileName);
 
             auto action = getAction(py_anim.attr("name").cast<std::string>());
 
@@ -521,7 +522,7 @@ void EntityDefinitionLoader::updateDRSData(uint32_t entityType,
             if (it != m_drsFilesByName.end())
                 drsFile = it->second;
             else
-                drsFile = loadDRSFile2("assets/" + drsFileName);
+                drsFile = m_drsLoadFunc("assets/" + drsFileName);
 
             Rect<int> clipRect;
             if (py::hasattr(graphicsEntry, "clip_rect"))
@@ -596,4 +597,9 @@ void EntityDefinitionLoader::attachedConstructionSites(uint32_t entityType,
 void EntityDefinitionLoader::setDRSData(int64_t id, const EntityDRSData& data)
 {
     m_DRSDataByGraphicsIdHash[id] = data;
+}
+
+void EntityDefinitionLoader::setDRSLoaderFunc(std::function<Ref<DRSFile>(const std::string&)> func)
+{
+    m_drsLoadFunc = func;
 }

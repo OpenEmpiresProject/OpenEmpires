@@ -2,20 +2,31 @@
 #include "gtest/gtest.h"
 #include <memory>
 
-using namespace ion;
+namespace ion
+{
 
-class MockComponent : public SubSystem {
-public:
+class MockComponent : public SubSystem
+{
+  public:
     // Override SubSystem's methods with mock implementations
-    MockComponent() : SubSystem((std::stop_token*)nullptr) {}
-    void init() {initCount++;}
-    void shutdown() {shutdownCount++;}
+    MockComponent() : SubSystem((std::stop_token*) nullptr)
+    {
+    }
+    void init()
+    {
+        initCount++;
+    }
+    void shutdown()
+    {
+        shutdownCount++;
+    }
 
     int initCount = 0;
     int shutdownCount = 0;
 };
 
-TEST(ComponentRegistryTest, RegisterAndRetrieveComponent) {
+TEST(ComponentRegistryTest, RegisterAndRetrieveComponent)
+{
     SubSystemRegistry& registry = SubSystemRegistry::getInstance();
     auto mockComponent = std::make_unique<MockComponent>();
     MockComponent* mockComponentPtr = mockComponent.get();
@@ -26,14 +37,16 @@ TEST(ComponentRegistryTest, RegisterAndRetrieveComponent) {
     EXPECT_EQ(retrievedComponent, mockComponentPtr);
 }
 
-TEST(ComponentRegistryTest, RetrieveNonExistentComponent) {
+TEST(ComponentRegistryTest, RetrieveNonExistentComponent)
+{
     SubSystemRegistry& registry = SubSystemRegistry::getInstance();
     SubSystem* retrievedComponent = registry.getSubSystem("NonExistentComponent");
 
     EXPECT_EQ(retrievedComponent, nullptr);
 }
 
-TEST(ComponentRegistryTest, InitAllComponents) {
+TEST(ComponentRegistryTest, InitAllComponents)
+{
     SubSystemRegistry& registry = SubSystemRegistry::getInstance();
     auto mockComponent = std::make_unique<MockComponent>();
     MockComponent* mockComponentPtr = mockComponent.get();
@@ -44,7 +57,8 @@ TEST(ComponentRegistryTest, InitAllComponents) {
     ASSERT_EQ(mockComponentPtr->initCount, 1);
 }
 
-TEST(ComponentRegistryTest, ShutdownAllComponents) {
+TEST(ComponentRegistryTest, ShutdownAllComponents)
+{
     SubSystemRegistry& registry = SubSystemRegistry::getInstance();
     auto mockComponent = std::make_unique<MockComponent>();
     MockComponent* mockComponentPtr = mockComponent.get();
@@ -54,3 +68,4 @@ TEST(ComponentRegistryTest, ShutdownAllComponents) {
 
     ASSERT_EQ(mockComponentPtr->shutdownCount, 1);
 }
+} // namespace ion
