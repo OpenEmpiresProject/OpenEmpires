@@ -1,4 +1,4 @@
-# Directories
+﻿# Directories
 BUILD_DIR := build
 GAME_EXEC := openEmpires
 TEST_EXEC := openEmpiresTests
@@ -75,3 +75,8 @@ run-release: release
 clean:
 	@echo "Cleaning build directory..."
 	rm -rf $(BUILD_DIR)
+
+# Run formatting, unit tests, and integration tests
+.PHONY: pre-commit
+pre-commit: format test integ-test
+	@echo "All checks passed. Ready to commit!"
