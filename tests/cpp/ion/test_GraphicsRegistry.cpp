@@ -4,9 +4,11 @@
 #include "GraphicsRegistry.h"
 #include <gtest/gtest.h>
 
-namespace ion {
+namespace ion 
+{
 
-TEST(GraphicsIDTest, DefaultConstructor) {
+TEST(GraphicsIDTest, DefaultConstructor) 
+{
     using namespace ion;
 
     GraphicsID defaultID;
@@ -19,26 +21,8 @@ TEST(GraphicsIDTest, DefaultConstructor) {
     EXPECT_EQ(defaultID.reserved, 0);
 }
 
-// TEST(GraphicsIDTest, ParameterizedConstructors) {
-//     using namespace ion;
-
-//     GraphicsID id1(1, 2);
-//     EXPECT_EQ(id1.entityType, 1);
-//     EXPECT_EQ(id1.action, 2);
-
-//     GraphicsID id2(3, 4, 5);
-//     EXPECT_EQ(id2.entityType, 3);
-//     EXPECT_EQ(id2.action, 4);
-//     EXPECT_EQ(id2.frame, 5);
-
-//     GraphicsID id3(6, 7, 8, Direction::SOUTH);
-//     EXPECT_EQ(id3.entityType, 6);
-//     EXPECT_EQ(id3.action, 7);
-//     EXPECT_EQ(id3.frame, 8);
-//     EXPECT_EQ(id3.direction, Direction::SOUTH);
-// }
-
-TEST(GraphicsIDTest, HashAndFromHash) {
+TEST(GraphicsIDTest, HashAndFromHash) 
+{
     using namespace ion;
 
     GraphicsID id3{6, 7, 8, 9, Direction::SOUTH};
@@ -48,7 +32,8 @@ TEST(GraphicsIDTest, HashAndFromHash) {
 }
 
 
-TEST(GraphicsIDTest, DuplicatedHashDueToDirection) {
+TEST(GraphicsIDTest, DuplicatedHashDueToDirection) 
+{
     // This was an actual issue happened during game run. 
     GraphicsID id1{3, 0, 8, 0, Direction::SOUTH};
     GraphicsID id2{3, 0, 0, 0, Direction::NORTHWEST};
@@ -59,8 +44,8 @@ TEST(GraphicsIDTest, DuplicatedHashDueToDirection) {
     EXPECT_NE(hashValue1, hashValue2);
 }
 
-
-TEST(GraphicsIDTest, ToString) {
+TEST(GraphicsIDTest, ToString) 
+{
     using namespace ion;
 
     GraphicsID id3{6, 7, 8, 0, Direction::SOUTH};
@@ -68,7 +53,73 @@ TEST(GraphicsIDTest, ToString) {
     std::cout << "GraphicsID toString: " << idStr << std::endl;
 }
 
-TEST(GraphicsRegistryTest, RegisterAndRetrieveGraphic) {
+TEST(GraphicsIDTest, PlayerIdIsEncodedInHash)
+{
+    using namespace ion;
+
+    GraphicsID id;
+    id.entityType = 1;
+    id.entitySubType = 2;
+    id.action = 3;
+    id.frame = 4;
+    id.direction = Direction::EAST;
+    id.variation = 5;
+    id.playerId = 12;
+    id.reserved = 15;
+
+    int64_t hash = id.hash();
+    GraphicsID fromHash = GraphicsID::fromHash(hash);
+
+    EXPECT_EQ(fromHash.playerId, 12);
+    EXPECT_EQ(fromHash.reserved, 15);
+    EXPECT_EQ(fromHash, id);
+}
+
+TEST(GraphicsIDTest, PlayerIdAffectsHash)
+{
+    using namespace ion;
+
+    GraphicsID id1{6, 7, 8, 9, Direction::SOUTH};
+    id1.playerId = 1;
+
+    GraphicsID id2 = id1;
+    id2.playerId = 2;
+
+    EXPECT_NE(id1.hash(), id2.hash());
+    EXPECT_NE(id1, id2);
+}
+
+TEST(GraphicsIDTest, PlayerIdInToString)
+{
+    using namespace ion;
+
+    GraphicsID id;
+    id.entityType = 1;
+    id.entitySubType = 2;
+    id.action = 3;
+    id.frame = 4;
+    id.direction = Direction::WEST;
+    id.variation = 5;
+    id.playerId = 6;
+    id.reserved = 7;
+
+    std::string str = id.toString();
+    std::cout << "GraphicsID toString: " << str << std::endl;
+
+    // Check for player ID and reserved fields in output
+    EXPECT_NE(str.find("P6"), std::string::npos);
+    EXPECT_NE(str.find("R7"), std::string::npos);
+}
+TEST(GraphicsIDTest, DefaultPlayerIdIsZero)
+{
+    using namespace ion;
+
+    GraphicsID id;
+    EXPECT_EQ(id.playerId, 0);
+}
+
+TEST(GraphicsRegistryTest, RegisterAndRetrieveGraphic) 
+{
     using namespace ion;
 
     GraphicsRegistry registry;
@@ -83,7 +134,8 @@ TEST(GraphicsRegistryTest, RegisterAndRetrieveGraphic) {
     EXPECT_EQ(retrievedEntry.anchor.y, 20);
 }
 
-TEST(GraphicsRegistryTest, GetGraphicsCount) {
+TEST(GraphicsRegistryTest, GetGraphicsCount) 
+{
     using namespace ion;
 
     GraphicsRegistry registry;

@@ -209,9 +209,17 @@ void Simulator::updateGraphicComponents()
             auto ui = state->getComponent<CompUIElement>(entity);
             if (ui.type == UIRenderingType::TEXT)
             {
-                GraphicAddon addon{GraphicAddon::Type::TEXT, GraphicAddon::Text{ui.text}};
+                GraphicAddon addon;
+                addon.type = GraphicAddon::Type::TEXT;
+                addon.data = GraphicAddon::Text{.text = ui.text, .color = ui.color};
                 gc.addons = {addon};
             }
+        }
+
+        if (state->hasComponent<CompPlayer>(entity))
+        {
+            auto& comp = state->getComponent<CompPlayer>(entity);
+            gc.playerId = comp.player->getId();
         }
     }
 }

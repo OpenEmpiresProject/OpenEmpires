@@ -14,8 +14,8 @@ class SLPFile
 {
   public:
     size_t getFrameCount() const;
-    Frame getFrame(uint32_t id) const;
-    std::vector<Frame> getFrames() const;
+    Frame getFrame(uint32_t id, uint32_t playerId) const;
+    std::vector<Frame> getFrames(uint32_t playerId = 0) const;
     void writeAllFramesToBMP(const std::string& prefix) const;
     uint32_t getId() const
     {

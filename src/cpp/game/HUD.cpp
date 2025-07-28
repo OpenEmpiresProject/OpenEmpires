@@ -45,6 +45,7 @@ void HUD::onTick(const Event& e)
     updateLabelRef(m_woodLabel, "wood");
     updateLabelRef(m_stoneabel, "stone");
     updateLabelRef(m_goldLabel, "gold");
+    updateLabelRef(m_playerIdLabel, "player");
 
     if (m_woodLabel != nullptr)
     {
@@ -77,5 +78,16 @@ void HUD::onTick(const Event& e)
     else
     {
         spdlog::error("Could not find gold label in resource panel window.");
+    }
+
+    if (m_playerIdLabel != nullptr)
+    {
+        auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
+        auto player = playerManager->getViewingPlayer();
+        m_playerIdLabel->text = "Player " + std::to_string(player->getId());
+    }
+    else
+    {
+        spdlog::error("Could not find player label in resource panel window.");
     }
 }

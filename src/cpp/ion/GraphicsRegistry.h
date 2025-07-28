@@ -14,11 +14,11 @@ class GraphicsID
 {
   public:
     // Bit layout
-    // 63            49 48         39 38        29 28     24 23       19 18         9 8          0
-    //  +---------------+-------------+-------------+---------+-----------+-----------+----------+
-    //  |  entityType   | entitySubTp |   action    | frame   | direction | variation | reserved |
-    //  |   (15 bits)   |  (10 bits)  |  (10 bits)  | (5 bits)|  (4 bits) | (10 bits) | (9 bits) |
-    //  +---------------+-------------+-------------+---------+-----------+-----------+----------+
+    // 63            49 48         39 38        29 28     24 23       19 18         9 8      5 4      0
+    //  +---------------+-------------+-------------+---------+-----------+-----------+--------+--------+
+    //  |  entityType   | entitySubTp |   action    | frame   | direction | variation |playerId|reserved|
+    //  |   (15 bits)   |  (10 bits)  |  (10 bits)  | (5 bits)|  (4 bits) | (10 bits) |(4 bits)|(5 bits)|
+    //  +---------------+-------------+-------------+---------+-----------+-----------+--------+--------+
 
     int entityType = 0;                    // 32,768 values
     int entitySubType = 0;                 // 1,024 values
@@ -26,12 +26,13 @@ class GraphicsID
     int frame = 0;                         // 32 values
     Direction direction = Direction::NONE; // 16 values
     int variation = 0;                     // 1,024 values
-    int reserved = 0;                      // 512 values
+    int playerId = 0;                      // 16 values
+    int reserved = 0;                      // 32 values
 
     GraphicsID getBaseId() const
     {
         return GraphicsID{
-            .entityType = entityType, .entitySubType = entitySubType, .action = action};
+            .entityType = entityType, .entitySubType = entitySubType, .action = action, .playerId = playerId};
     }
 
     bool isValid() const
@@ -44,6 +45,7 @@ class GraphicsID
         return entityType == other.entityType && action == other.action &&
                direction == other.direction && frame == other.frame &&
                entitySubType == other.entitySubType && variation == other.variation &&
+               playerId == other.playerId &&
                reserved == other.reserved;
     }
 
@@ -59,7 +61,8 @@ class GraphicsID
         return (static_cast<int64_t>(entityType) << 49) |
                (static_cast<int64_t>(entitySubType) << 39) | (static_cast<int64_t>(action) << 29) |
                (static_cast<int64_t>(frame) << 24) | (static_cast<int64_t>(direction) << 19) |
-               (static_cast<int64_t>(variation) << 9) | static_cast<int64_t>(reserved);
+               (static_cast<int64_t>(variation) << 9) | (static_cast<int64_t>(playerId) << 5) |
+               static_cast<int64_t>(reserved);
     }
 
     std::string toString() const
@@ -67,7 +70,7 @@ class GraphicsID
         return "GraphicsID(T" + std::to_string(entityType) + ", S" + std::to_string(entitySubType) +
                ", A" + std::to_string(action) + ", F" + std::to_string(frame) + ", D" +
                std::to_string(static_cast<int>(direction)) + ", V" + std::to_string(variation) +
-               ", " + std::to_string(reserved) + ")";
+               ", P" + std::to_string(playerId) + ", R" + std::to_string(reserved) + ")";
     }
 
     static GraphicsID fromHash(int64_t hash)
@@ -79,7 +82,8 @@ class GraphicsID
         id.frame = (hash >> 24) & 0x1F;                            // 5 bits
         id.direction = static_cast<Direction>((hash >> 19) & 0xF); // 4 bits
         id.variation = (hash >> 9) & 0x3FF;                        // 10 bits
-        id.reserved = hash & 0x1FF;                                // 9 bits
+        id.playerId = (hash >> 5) & 0xF;                           // 4 bits
+        id.reserved = hash & 0x1F;                                 // 5 bits
         return id;
     }
 };

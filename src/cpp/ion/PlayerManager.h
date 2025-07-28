@@ -27,11 +27,11 @@ class PlayerManager : public EventHandler
 
     Ref<Player> getViewingPlayer()
     {
-        // TODO: Change according to the viewing
-        return m_playersById[0];
+        return m_playersById[m_currentPlayer];
     }
 
   private:
+    void onKeyUp(const Event& e);
     uint8_t getNextPlayerId() const;
     void onUnitTileMovement(const Event& e);
 
@@ -39,6 +39,7 @@ class PlayerManager : public EventHandler
     std::unordered_map<uint8_t, Ref<Player>> m_playersById;
     bool m_fowEnabled = true;
     Ref<GameState> m_gameState;
+    uint8_t m_currentPlayer = 1;
 };
 
 } // namespace ion

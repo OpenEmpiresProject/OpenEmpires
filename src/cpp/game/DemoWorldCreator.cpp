@@ -71,6 +71,7 @@ void DemoWorldCreator::loadEntities()
 
     auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
     auto player = playerManager->createPlayer();
+    auto player2 = playerManager->createPlayer();
 
     auto gameState = ServiceRegistry::getInstance().getService<GameState>();
 
@@ -89,8 +90,8 @@ void DemoWorldCreator::loadEntities()
         generateMap(gameState->gameMap);
         createStoneOrGoldCluster(EntityTypes::ET_STONE, gameState->gameMap, 30, 30, 4);
         createStoneOrGoldCluster(EntityTypes::ET_GOLD, gameState->gameMap, 20, 30, 4);
-        createVillager(player, Tile(25, 25));
-        // createVillager(player, Tile(20, 20));
+        createVillager(player2, Tile(25, 25));
+        createVillager(player, Tile(20, 20));
     }
 
     CompResourceGatherer::gatheringActions = {{ResourceType::WOOD, UnitAction::CHOPPING},
@@ -135,6 +136,16 @@ void DemoWorldCreator::loadEntities()
     goldLabel->text = "0";
     goldLabel->rect = Rect<int>(195, 5, 50, 20);
     goldLabel->name = "gold";
+
+    GraphicsID playerIdLabelId{
+        .entityType = EntityTypes::ET_UI_ELEMENT,
+        .entitySubType = EntitySubTypes::UI_LABEL,
+    };
+    auto playerIdLabel = window->createChild<ui::Label>(playerIdLabelId);
+    playerIdLabel->text = "";
+    playerIdLabel->rect = Rect<int>(420, 5, 50, 20);
+    playerIdLabel->name = "player";
+    playerIdLabel->background = ion::Color::WHITE;
 
     spdlog::info("Entity loading successfully.");
 }
