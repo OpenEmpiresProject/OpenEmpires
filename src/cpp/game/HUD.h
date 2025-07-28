@@ -20,6 +20,7 @@ class HUD : public ion::EventHandler
     ion::Ref<ion::ui::Label> m_woodLabel;
     ion::Ref<ion::ui::Label> m_stoneabel;
     ion::Ref<ion::ui::Label> m_goldLabel;
+    ion::Ref<ion::ui::Label> m_playerIdLabel;
 };
 
 } // namespace game

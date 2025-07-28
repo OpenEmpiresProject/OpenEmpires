@@ -60,7 +60,7 @@ const std::string& drs::Frame::getFQID() const
     return m_fqid;
 }
 
-void Frame::load(std::span<const uint8_t> data)
+void Frame::load(std::span<const uint8_t> data, uint32_t playerId)
 {
     auto paletteLookup = [&](uint8_t index) -> Color
     {
@@ -70,7 +70,7 @@ void Frame::load(std::span<const uint8_t> data)
 
     auto playerColorLookup = [&](uint8_t index) -> Color
     {
-        size_t playerIndex = 0; // Assuming player index is 0 for now
+        size_t playerIndex = playerId;
         auto& palette = PaletteCollection::palettes.at(m_frameInfo.paletteOffset);
         return palette.colors.at(index + playerIndex * 16);
     };

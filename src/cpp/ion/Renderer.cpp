@@ -444,11 +444,11 @@ bool RendererImpl::handleEvents()
             if (event.key.scancode == SDL_SCANCODE_1)
             {
             }
-            else if (event.key.scancode == SDL_SCANCODE_2)
+            else if (event.key.scancode == SDL_SCANCODE_9)
             {
                 m_showDebugInfo = !m_showDebugInfo;
             }
-            else if (event.key.scancode == SDL_SCANCODE_3)
+            else if (event.key.scancode == SDL_SCANCODE_0)
             {
                 m_showFogOfWar = !m_showFogOfWar;
             }
@@ -625,7 +625,7 @@ void RendererImpl::renderText(const Vec2& screenPos, const std::string& text, co
         SDL_FRect dstRect = {x, screenPos.y, src.w, src.h};
         x += src.w + 1;
 
-        // TODO Handle color
+        SDL_SetTextureColorMod(m_fontAtlas.texture, color.r, color.g, color.b);
         SDL_RenderTextureRotated(m_renderer, m_fontAtlas.texture, &srcRect, &dstRect, 0, nullptr,
                                  SDL_FLIP_NONE);
     }

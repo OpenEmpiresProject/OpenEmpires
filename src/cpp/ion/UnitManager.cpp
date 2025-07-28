@@ -2,6 +2,7 @@
 
 #include "Coordinates.h"
 #include "EntityFactory.h"
+#include "PlayerManager.h"
 #include "commands/CmdBuild.h"
 #include "commands/CmdGatherResource.h"
 #include "commands/CmdMove.h"
@@ -162,7 +163,7 @@ void UnitManager::addEntitiesToSelection(const std::vector<uint32_t>& selectedEn
     auto gameState = ServiceRegistry::getInstance().getService<GameState>();
     for (auto entity : selectedEntities)
     {
-        if (gameState->hasComponent<CompSelectible>(entity)) [[likely]]
+        if (gameState->hasComponent<CompUnit>(entity)) [[likely]]
         {
             auto [dirty, select] = ServiceRegistry::getInstance()
                                        .getService<GameState>()
@@ -202,6 +203,7 @@ void UnitManager::onClickToSelect(const Vec2& screenPos)
 
     auto result = whatIsAt(screenPos);
 
+    // FIXME: Doesn't work for units
     if (result.entity != entt::null)
     {
         addEntitiesToSelection({result.entity}, selection);
@@ -281,6 +283,7 @@ UnitManager::TileMapQueryResult UnitManager::whatIsAt(const Vec2& screenPos)
 
 void UnitManager::completeSelectionBox(const Vec2& startScreenPos, const Vec2& endScreenPos)
 {
+    // FIXME: Doing multiple drag selection seems to break the selection logic
     UnitSelection selection;
 
     int selectionLeft = std::min(startScreenPos.x, endScreenPos.x);
@@ -288,13 +291,21 @@ void UnitManager::completeSelectionBox(const Vec2& startScreenPos, const Vec2& e
     int selectionTop = std::min(startScreenPos.y, endScreenPos.y);
     int selectionBottom = std::max(startScreenPos.y, endScreenPos.y);
 
+    auto player = ServiceRegistry::getInstance().getService<PlayerManager>()->getViewingPlayer();
+
+    // TODO: Optimize this by using tilemap
     ServiceRegistry::getInstance()
         .getService<GameState>()
-        ->getEntities<CompUnit, CompTransform, CompDirty>()
+        ->getEntities<CompUnit, CompTransform, CompDirty, CompPlayer>()
         .each(
-            [this, &selection, selectionLeft, selectionRight, selectionTop, selectionBottom](
-                uint32_t entity, CompUnit& unit, CompTransform& transform, CompDirty& dirty)
+            [this, &selection, selectionLeft, selectionRight, selectionTop, selectionBottom,
+             &player](uint32_t entity, CompUnit& unit, CompTransform& transform, CompDirty& dirty,
+                      CompPlayer& playerComp)
             {
+                // Cannot select other players' units
+                if (playerComp.player != player)
+                    return;
+
                 auto screenPos = m_coordinates->feetToScreenUnits(transform.position);
                 int unitRight = screenPos.x + transform.selectionBoxWidth / 2;
                 int unitBottom = screenPos.y;

@@ -29,21 +29,21 @@ size_t SLPFile::getFrameCount() const
     return m_frameInfos.size();
 }
 
-Frame SLPFile::getFrame(uint32_t id) const
+Frame SLPFile::getFrame(uint32_t id, uint32_t playerId) const
 {
     const FrameInfo& fi = m_frameInfos[id - 1];
     Frame frame(m_id, id, fi);
-    frame.load(m_slpData);
+    frame.load(m_slpData, playerId);
     return frame;
 }
 
-std::vector<Frame> SLPFile::getFrames() const
+std::vector<Frame> SLPFile::getFrames(uint32_t playerId) const
 {
     std::vector<Frame> frames;
 
     for (int i = 1; i <= getFrameCount(); ++i)
     {
-        frames.push_back(getFrame(i));
+        frames.push_back(getFrame(i, playerId));
     }
     return frames;
 }

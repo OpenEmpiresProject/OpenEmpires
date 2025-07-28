@@ -30,7 +30,7 @@ class Frame
     Frame(uint32_t parentId,
           uint32_t id,
           const FrameInfo& fi); // Will be constructed only by SLPFile
-    void load(std::span<const uint8_t> slpData);
+    void load(std::span<const uint8_t> slpData, uint32_t playerId);
     void writeToBMP(const std::string& filename) const;
 
     std::vector<std::vector<Color>> m_image;

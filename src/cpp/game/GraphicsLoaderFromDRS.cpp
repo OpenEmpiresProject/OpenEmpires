@@ -24,6 +24,7 @@ void loadSLP(shared_ptr<DRSFile> drs,
              uint32_t entityType,
              uint32_t entitySubType,
              uint32_t action,
+             uint32_t playerId,
              SDL_Renderer* renderer,
              GraphicsRegistry& graphicsRegistry,
              AtlasGenerator& atlasGenerator,
@@ -49,21 +50,24 @@ void GraphicsLoaderFromDRS::loadGraphics(SDL_Renderer* renderer,
     Ref<EntityDefinitionLoader> defLoader =
         dynamic_pointer_cast<EntityDefinitionLoader>(entityFactory);
 
-    std::map<int64_t, GraphicsID> uniqueIds;
+    std::map<int64_t, GraphicsID> uniqueBaseIds;
     for (auto& id : idsToLoad)
     {
         auto baseId = id.getBaseId();
-        uniqueIds[baseId.hash()] = baseId;
+        uniqueBaseIds[baseId.hash()] = id;
     }
 
-    for (auto& id : uniqueIds)
+    for (auto& id : uniqueBaseIds)
     {
-        auto drsData = defLoader->getDRSData(id.second);
+        auto baseId = GraphicsID::fromHash(id.first);
+        baseId.playerId = 0;
+
+        auto drsData = defLoader->getDRSData(baseId);
         if (drsData.drsFile != nullptr)
         {
             loadSLP(drsData.drsFile, drsData.slpId, id.second.entityType, id.second.entitySubType,
-                    id.second.action, renderer, graphicsRegistry, atlasGenerator,
-                    Size(drsData.clipRect.w, drsData.clipRect.h));
+                    id.second.action, id.second.playerId, renderer, graphicsRegistry,
+                    atlasGenerator, Size(drsData.clipRect.w, drsData.clipRect.h));
         }
     }
     adjustDirections(graphicsRegistry);
@@ -141,6 +145,7 @@ void loadSLP(shared_ptr<DRSFile> drs,
              uint32_t entityType,
              uint32_t entitySubType,
              uint32_t action,
+             uint32_t playerId,
              SDL_Renderer* renderer,
              GraphicsRegistry& graphicsRegistry,
              AtlasGenerator& atlasGenerator,
@@ -150,7 +155,7 @@ void loadSLP(shared_ptr<DRSFile> drs,
 
     std::vector<SDL_Surface*> surfaces;
 
-    auto frames = slp.getFrames();
+    auto frames = slp.getFrames(playerId);
     for (auto& frame : frames)
     {
         auto surface = frameToSurface(frame);
@@ -182,6 +187,14 @@ void loadSLP(shared_ptr<DRSFile> drs,
         id.entityType = entityType;
         id.entitySubType = entitySubType;
         id.action = action;
+        id.playerId = playerId;
+
+        if (playerId == 1)
+            int rerer = 0;
+
+        if (playerId == 2)
+            int rerer = 0;
+
         auto anchorPair = frames[i].getAnchor();
         Vec2 anchor(anchorPair.first, anchorPair.second);
 

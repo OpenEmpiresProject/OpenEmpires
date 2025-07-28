@@ -49,7 +49,7 @@ We use milestone versions for planning. Early versions are experimental. Feature
 - [ ] Town center, house and barracks mechanics
 - [ ] Building queue system
 - [ ] Population limit system
-- [ ] Multiple player support (not networking)
+- [x] Multiple player support (not networking)
 - [x] Scripting for entity definition
 - [x] Unit abilities modeling
 - [ ] Garrison
