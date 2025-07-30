@@ -59,6 +59,8 @@ uint32_t getEntitySubType(uint32_t entityType, const std::string& name)
     {
         if (name == "stump")
             return EntitySubTypes::EST_CHOPPED_TREE;
+        if (name == "shadow")
+            return EntitySubTypes::EST_TREE_SHADOW;
     }
     return EntitySubTypes::EST_DEFAULT;
 }
@@ -287,9 +289,19 @@ void EntityDefinitionLoader::loadNaturalResources(py::object module)
             py::object treeClass = module.attr("Tree");
             if (py::isinstance(entry, treeClass))
             {
-                auto stumpSubType = getEntitySubType(entityType, "stump");
-                py::object stump = entry.attr("stump");
-                updateDRSData(entityType, stumpSubType, stump);
+                if (py::hasattr(entry, "stump"))
+                {
+                    auto stumpSubType = getEntitySubType(entityType, "stump");
+                    py::object stump = entry.attr("stump");
+                    updateDRSData(entityType, stumpSubType, stump);
+                }
+
+                if (py::hasattr(entry, "shadow"))
+                {
+                    auto shadowSubType = getEntitySubType(entityType, "shadow");
+                    py::object stump = entry.attr("shadow");
+                    updateDRSData(entityType, shadowSubType, stump);
+                }
             }
         }
     }

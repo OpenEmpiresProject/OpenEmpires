@@ -260,7 +260,7 @@ void decodeSLPRow(const uint8_t* cmdStream,
                 outPixels.push_back(color);
             }
         }
-        else if (lowerNibble == 0x0A) // Fill player folow
+        else if (lowerNibble == 0x0A) // Fill player color
         {
             // draw the player color for 'count' times
 
@@ -285,11 +285,10 @@ void decodeSLPRow(const uint8_t* cmdStream,
             {
                 pixelCount = cmdStream[++i];
             }
-            auto color = paletteLookup(cmdStream[++i]);
 
             for (int j = 0; j < pixelCount; ++j)
             {
-                outPixels.push_back(color);
+                outPixels.push_back(Color{255, 0, 254});
             }
         }
         else if (lowerNibble == 0x0E) // Extended commands

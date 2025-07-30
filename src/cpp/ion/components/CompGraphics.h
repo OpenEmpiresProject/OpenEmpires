@@ -50,13 +50,15 @@ enum class GraphicLayer
 {
     NONE = -1,
     GROUND,
+    ON_GROUND,
     ENTITIES,
     SKY,
     UI
 };
 
-inline constexpr std::array<GraphicLayer, 4> GraphicLayersOrder{
-    GraphicLayer::GROUND, GraphicLayer::ENTITIES, GraphicLayer::SKY, GraphicLayer::UI};
+inline constexpr std::array<GraphicLayer, 5> GraphicLayersOrder{
+    GraphicLayer::GROUND, GraphicLayer::ON_GROUND, GraphicLayer::ENTITIES, GraphicLayer::SKY,
+    GraphicLayer::UI};
 // Component will be owned by the Simulator
 class CompGraphics : public GraphicsID
 {

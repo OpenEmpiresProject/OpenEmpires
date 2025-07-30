@@ -16,7 +16,7 @@ class CompResource
     Property<Resource> original;
 
   public:
-    uint32_t remainingAmount;
+    uint32_t remainingAmount = 0;
 
     // Relying on externally provided own position to avoid coupling CompTransform with this class
     Rect<float> getLandInFeetRect(const Feet& position) const

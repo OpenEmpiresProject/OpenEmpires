@@ -153,38 +153,63 @@ void DemoWorldCreator::loadEntities()
 void DemoWorldCreator::createTree(TileMap& map, uint32_t x, uint32_t y)
 {
     auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+    int variation = rand() % 10;
 
-    auto tree = gameState->createEntity();
-    auto transform = CompTransform(x * 256 + 128, y * 256 + 128);
-    gameState->addComponent(tree, transform);
-    gameState->addComponent(tree, CompRendering());
-    CompGraphics gc;
-    gc.entityID = tree;
-    gc.entityType = EntityTypes::ET_TREE;
-    gc.entitySubType = 0; // 0=main tree, 1=chopped
-    gc.layer = GraphicLayer::ENTITIES;
+    {
+        auto tree = gameState->createEntity();
+        auto transform = CompTransform(x * 256 + 128, y * 256 + 128);
+        gameState->addComponent(tree, transform);
+        gameState->addComponent(tree, CompRendering());
+        CompGraphics gc;
+        gc.entityID = tree;
+        gc.entityType = EntityTypes::ET_TREE;
+        gc.entitySubType = 0; // 0=main tree, 1=chopped
+        gc.layer = GraphicLayer::ENTITIES;
 
-    gameState->addComponent(tree, gc);
-    // TODO: Should not hard code
-    CompEntityInfo entityInfo(EntityTypes::ET_TREE, 0, rand() % 10);
-    entityInfo.entityId = tree;
-    gameState->addComponent(tree, entityInfo);
-    gameState->addComponent(tree, CompDirty());
+        gameState->addComponent(tree, gc);
+        // TODO: Should not hard code
+        CompEntityInfo entityInfo(EntityTypes::ET_TREE, 0, variation);
+        entityInfo.entityId = tree;
+        gameState->addComponent(tree, entityInfo);
+        gameState->addComponent(tree, CompDirty());
 
-    // TODO: This doesn't work. Need to conslidate resource and graphic loading and handle this
-    auto box = getBoundingBox(m_drs, 1254, 1);
-    CompSelectible sc;
-    sc.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
-    sc.selectionIndicator = {
-        GraphicAddon::Type::RHOMBUS,
-        GraphicAddon::Rhombus{Constants::TILE_PIXEL_WIDTH, Constants::TILE_PIXEL_HEIGHT}};
+        // TODO: This doesn't work. Need to conslidate resource and graphic loading and handle this
+        auto box = getBoundingBox(m_drs, 1254, 1);
+        CompSelectible sc;
+        sc.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
+        sc.selectionIndicator = {
+            GraphicAddon::Type::RHOMBUS,
+            GraphicAddon::Rhombus{Constants::TILE_PIXEL_WIDTH, Constants::TILE_PIXEL_HEIGHT}};
 
-    gameState->addComponent(tree, sc);
-    CompResource compRes;
-    PropertyInitializer::set(compRes.original, Resource(ResourceType::WOOD, 100));
-    gameState->addComponent(tree, compRes);
+        gameState->addComponent(tree, sc);
+        CompResource compRes;
+        PropertyInitializer::set(compRes.original, Resource(ResourceType::WOOD, 100));
+        compRes.remainingAmount = 100;
+        gameState->addComponent(tree, compRes);
 
-    map.addEntity(MapLayerType::STATIC, Tile(x, y), tree);
+        map.addEntity(MapLayerType::STATIC, Tile(x, y), tree);
+    }
+
+    // Add shadow
+    {
+        auto shadow = gameState->createEntity();
+
+        auto transform = CompTransform(x * 256 + 128, y * 256 + 128);
+        gameState->addComponent(shadow, transform);
+        gameState->addComponent(shadow, CompRendering());
+        CompGraphics gc;
+        gc.entityID = shadow;
+        gc.entityType = EntityTypes::ET_TREE;
+        gc.entitySubType = EntitySubTypes::EST_TREE_SHADOW;
+        gc.layer = GraphicLayer::ON_GROUND;
+        gameState->addComponent(shadow, gc);
+
+        CompEntityInfo entityInfo(EntityTypes::ET_TREE, EntitySubTypes::EST_TREE_SHADOW, variation);
+        entityInfo.entityId = shadow;
+        gameState->addComponent(shadow, entityInfo);
+        gameState->addComponent(shadow, CompDirty());
+        map.addEntity(MapLayerType::ON_GROUND, Tile(x, y), shadow);
+    }
 }
 
 void DemoWorldCreator::createStoneOrGold(EntityTypes entityType,

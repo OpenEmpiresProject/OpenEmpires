@@ -31,7 +31,8 @@ enum EntitySubTypes
     EST_MEDIUM_SIZE = 2,
 
     EST_DEFAULT = 0,
-    EST_CHOPPED_TREE = 1
+    EST_CHOPPED_TREE = 1,
+    EST_TREE_SHADOW = 2
 };
 
 enum ResourceType : uint8_t

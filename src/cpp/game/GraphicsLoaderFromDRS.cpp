@@ -113,8 +113,8 @@ SDL_Surface* frameToSurface(const Frame& frame)
 
     auto formatDetails = SDL_GetPixelFormatDetails(surface->format);
     auto palette = SDL_GetSurfacePalette(surface);
-    auto rgb = SDL_MapRGB(formatDetails, palette, 0xFF, 0, 0xFF); // magenta key
-    SDL_SetSurfaceColorKey(surface, true, rgb);
+    auto keyColor = SDL_MapRGBA(formatDetails, palette, 0xFF, 0, 0xFF, 0xFF); // magenta key
+    SDL_SetSurfaceColorKey(surface, true, keyColor);
 
     for (int y = 0; y < height; ++y)
     {
@@ -122,7 +122,15 @@ SDL_Surface* frameToSurface(const Frame& frame)
         for (int x = 0; x < width; ++x)
         {
             const drs::Color& c = image[y][x];
-            row[x] = SDL_MapRGB(formatDetails, palette, c.r, c.g, c.b);
+            /*
+             * DRS library uses two key colors;
+             *   1) 255,0,255 for typical background removal
+             *   2) 255,0,254 for semi-transparent black color drawing (currently used for shadows)
+             */
+            if (c.r == 0xFF && c.g == 0 && c.b == 0xFE)
+                row[x] = SDL_MapRGBA(formatDetails, palette, 0, 0, 0, 100);
+            else
+                row[x] = SDL_MapRGBA(formatDetails, palette, c.r, c.g, c.b, 0xFF);
         }
     }
 

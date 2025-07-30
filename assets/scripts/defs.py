@@ -53,7 +53,7 @@ class NaturalResource:
 
 
 class Tree(NaturalResource):
-    shadow_graphics: Dict[str, Graphic] # Shadow by same theme as tree
+    shadow: NaturalResource
     stump: NaturalResource
 
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
@@ -130,8 +130,9 @@ all_natural_resources: List[NaturalResource] = [
     Tree(
         name="wood",
         resource_amount=100,
-        graphics={"oak":Graphic(slp_id=435)},
-        stump=NaturalResource(name="stump", graphics={"oak":Graphic(slp_id=1252)})
+        graphics={"oak":Graphic(slp_id=4652)},
+        stump=NaturalResource(name="stump", graphics={"oak":Graphic(slp_id=1252)}),
+        shadow=NaturalResource(name="shadow", graphics={"oak":Graphic(slp_id=2296)})
     ),
 ]
 
