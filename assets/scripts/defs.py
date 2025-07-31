@@ -170,5 +170,6 @@ all_tilesets: List[TileSet] = [
 ]
 
 all_ui_elements: List[UIElement] = [
-    UIElement(name="resource_panel", graphics={"default":Graphic(drs_file="interfac.drs", slp_id=51101, clip_rect=Rect(w=400, h=25))})
+    UIElement(name="resource_panel", graphics={"default":Graphic(drs_file="interfac.drs", slp_id=51101, clip_rect=Rect(w=400, h=25))}),
+    UIElement(name="info_panel", graphics={"default":Graphic(drs_file="interfac.drs", slp_id=51101, clip_rect=Rect(y=454, w=506, h=145))})
 ]

@@ -35,6 +35,13 @@ enum EntitySubTypes
     EST_TREE_SHADOW = 2
 };
 
+enum UIElements
+{
+    UI_ELEMENT_UNKNOWN = 0,
+    UI_ELEMENT_RESOURCE_PANEL = 1,
+    UI_ELEMENT_INFO_PANEL
+};
+
 enum ResourceType : uint8_t
 {
     RT_NONE = 0,

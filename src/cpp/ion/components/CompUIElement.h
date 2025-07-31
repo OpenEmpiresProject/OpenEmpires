@@ -21,6 +21,7 @@ class CompUIElement
     std::string text;
     Rect<int> rect;
     Color color;
+    uint32_t id = 0;
 };
 } // namespace ion
 

@@ -116,6 +116,7 @@ class EntityDefinitionLoader : public ion::EntityFactory, public ion::PropertyIn
     void updateDRSData(uint32_t entityType, pybind11::handle entityDefinition);
     void updateDRSData(uint32_t entityType,
                        uint32_t entitySubType,
+                       uint32_t action,
                        pybind11::handle entityDefinition);
     ConstructionSiteData getSite(const std::string& sizeStr);
     void setSite(const std::string& sizeStr, const std::map<int, int>& progressToFrames);

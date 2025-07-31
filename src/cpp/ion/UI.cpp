@@ -18,7 +18,9 @@ using namespace ion::ui;
 Element::Element(const GraphicsID& graphicsId, Ref<Element> parent)
     : id(ServiceRegistry::getInstance().getService<GameState>()->createEntity()), parent(parent)
 {
-    ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, CompUIElement());
+    CompUIElement compUI;
+    compUI.id = graphicsId.action;
+    ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, compUI);
     ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, CompTransform());
 
     CompGraphics graphics;
@@ -78,11 +80,30 @@ void Element::updateGraphicCommand()
 
 Rect<int> Element::getAbsoluteRect() const
 {
+    auto negativeTranslated = rect;
+
     if (parent != nullptr)
     {
-        return rect.translated(parent->getAbsoluteRect());
+        auto parentAbsRect = parent->getAbsoluteRect();
+
+        if (rect.x < 0)
+            negativeTranslated.x = parentAbsRect.w + rect.x - rect.w;
+        if (rect.y < 0)
+            negativeTranslated.y = parentAbsRect.h + rect.y - rect.h;
+
+        return negativeTranslated.translated(parentAbsRect);
     }
-    return rect;
+
+    if (rect.x < 0 || rect.y < 0)
+    {
+        auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
+
+        if (rect.x < 0)
+            negativeTranslated.x = settings->getWindowDimensions().width + rect.x - rect.w;
+        if (rect.y < 0)
+            negativeTranslated.y = settings->getWindowDimensions().height + rect.y - rect.h;
+    }
+    return negativeTranslated;
 }
 
 bool Element::inside(const Vec2& pos) const

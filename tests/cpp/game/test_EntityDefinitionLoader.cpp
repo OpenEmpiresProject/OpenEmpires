@@ -603,10 +603,13 @@ all_ui_elements = [
     loader.loadUIElements(module);
 
     // Assert
-    EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_UI_ELEMENT}).slpId, 51101);
-    EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_UI_ELEMENT}).clipRect.w,
+    GraphicsID id;
+    id.entityType = EntityTypes::ET_UI_ELEMENT;
+    id.action = 1;
+    EXPECT_EQ(loader.getDRSData(id).slpId, 51101);
+    EXPECT_EQ(loader.getDRSData(id).clipRect.w,
               400);
-    EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_UI_ELEMENT}).clipRect.h,
+    EXPECT_EQ(loader.getDRSData(id).clipRect.h,
               25);
 }
 } // namespace game

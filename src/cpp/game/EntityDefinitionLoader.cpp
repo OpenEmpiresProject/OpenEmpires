@@ -65,6 +65,15 @@ uint32_t getEntitySubType(uint32_t entityType, const std::string& name)
     return EntitySubTypes::EST_DEFAULT;
 }
 
+UIElements getUIElement(const std::string& name)
+{
+    if (name == "resource_panel")
+        return UIElements::UI_ELEMENT_RESOURCE_PANEL;
+    else if (name == "info_panel")
+        return UIElements::UI_ELEMENT_INFO_PANEL;
+    return UIElements::UI_ELEMENT_UNKNOWN;
+}
+
 ResourceType getResourceType(const std::string& name)
 {
     static unordered_map<string, ResourceType> resTypes = {
@@ -293,14 +302,14 @@ void EntityDefinitionLoader::loadNaturalResources(py::object module)
                 {
                     auto stumpSubType = getEntitySubType(entityType, "stump");
                     py::object stump = entry.attr("stump");
-                    updateDRSData(entityType, stumpSubType, stump);
+                    updateDRSData(entityType, stumpSubType, 0, stump);
                 }
 
                 if (py::hasattr(entry, "shadow"))
                 {
                     auto shadowSubType = getEntitySubType(entityType, "shadow");
                     py::object stump = entry.attr("shadow");
-                    updateDRSData(entityType, shadowSubType, stump);
+                    updateDRSData(entityType, shadowSubType, 0, stump);
                 }
             }
         }
@@ -344,7 +353,7 @@ void EntityDefinitionLoader::loadConstructionSites(pybind11::object module)
 
             auto entityType = getEntityType(name);
             auto entitySubType = getEntitySubType(entityType, sizeStr);
-            updateDRSData(entityType, entitySubType, entry);
+            updateDRSData(entityType, entitySubType, 0, entry);
         }
     }
 }
@@ -370,7 +379,10 @@ void EntityDefinitionLoader::loadUIElements(pybind11::object module)
 
         for (auto entry : entries)
         {
-            updateDRSData(EntityTypes::ET_UI_ELEMENT, EntitySubTypes::UI_WINDOW, entry);
+            auto name = readValue<std::string>(entry, "name");
+
+            auto element = getUIElement(name);
+            updateDRSData(EntityTypes::ET_UI_ELEMENT, EntitySubTypes::UI_WINDOW, element, entry);
         }
     }
 }
@@ -487,11 +499,12 @@ void EntityDefinitionLoader::addComponentIfNotNull(uint32_t entityType, const Co
 
 void EntityDefinitionLoader::updateDRSData(uint32_t entityType, pybind11::handle entityDefinition)
 {
-    updateDRSData(entityType, EntitySubTypes::EST_DEFAULT, entityDefinition);
+    updateDRSData(entityType, EntitySubTypes::EST_DEFAULT, 0, entityDefinition);
 }
 
 void EntityDefinitionLoader::updateDRSData(uint32_t entityType,
                                            uint32_t entitySubType,
+                                           uint32_t action,
                                            pybind11::handle entityDefinition)
 {
     if (py::hasattr(entityDefinition, "animations"))
@@ -549,6 +562,7 @@ void EntityDefinitionLoader::updateDRSData(uint32_t entityType,
             GraphicsID id;
             id.entityType = entityType;
             id.entitySubType = entitySubType;
+            id.action = action;
             m_DRSDataByGraphicsIdHash[id.hash()] = EntityDRSData{drsFile, slpId, clipRect};
         }
     }

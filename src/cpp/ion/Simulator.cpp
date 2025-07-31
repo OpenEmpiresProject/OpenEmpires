@@ -189,6 +189,11 @@ void Simulator::updateGraphicComponents()
             auto action = state->getComponent<CompAction>(entity);
             gc.action = action.action;
         }
+        else if (state->hasComponent<CompUIElement>(entity))
+        {
+            auto element = state->getComponent<CompUIElement>(entity);
+            gc.action = element.id;
+        }
 
         if (state->hasComponent<CompBuilding>(entity))
         {

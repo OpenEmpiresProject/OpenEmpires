@@ -28,7 +28,7 @@ void loadSLP(shared_ptr<DRSFile> drs,
              SDL_Renderer* renderer,
              GraphicsRegistry& graphicsRegistry,
              AtlasGenerator& atlasGenerator,
-             Size clipSize = Size());
+             Rect<int> clipRect = Rect<int>());
 shared_ptr<DRSFile> loadDRSFile(const string& drsFilename);
 void adjustDirections(GraphicsRegistry& graphicsRegistry);
 void registerDummyTexture(int entityType, int entitySubType, GraphicsRegistry& graphicsRegistry);
@@ -67,7 +67,7 @@ void GraphicsLoaderFromDRS::loadGraphics(SDL_Renderer* renderer,
         {
             loadSLP(drsData.drsFile, drsData.slpId, id.second.entityType, id.second.entitySubType,
                     id.second.action, id.second.playerId, renderer, graphicsRegistry,
-                    atlasGenerator, Size(drsData.clipRect.w, drsData.clipRect.h));
+                    atlasGenerator, drsData.clipRect);
         }
     }
     adjustDirections(graphicsRegistry);
@@ -157,7 +157,7 @@ void loadSLP(shared_ptr<DRSFile> drs,
              SDL_Renderer* renderer,
              GraphicsRegistry& graphicsRegistry,
              AtlasGenerator& atlasGenerator,
-             Size clipSize)
+             Rect<int> clipRect)
 {
     auto slp = drs->getSLPFile(slpId);
 
@@ -183,10 +183,13 @@ void loadSLP(shared_ptr<DRSFile> drs,
     {
         auto& srcRect = srcRects[i];
 
-        if (clipSize.width != 0 && clipSize.height != 0)
+        if (clipRect.w != 0 && clipRect.h != 0)
         {
-            srcRect.w = min(clipSize.width, srcRect.w);
-            srcRect.h = min(clipSize.height, srcRect.h);
+            srcRect.w = min(clipRect.w, srcRect.w);
+            srcRect.h = min(clipRect.h, srcRect.h);
+
+            srcRect.x = clipRect.x;
+            srcRect.y = clipRect.y;
         }
 
         Size imageSize = {srcRect.w, srcRect.h};

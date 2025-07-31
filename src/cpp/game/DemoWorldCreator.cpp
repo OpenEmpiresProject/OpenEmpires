@@ -104,6 +104,7 @@ void DemoWorldCreator::loadEntities()
     GraphicsID resourcePanelBackground{
         .entityType = EntityTypes::ET_UI_ELEMENT,
         .entitySubType = EntitySubTypes::UI_WINDOW,
+        .action = UIElements::UI_ELEMENT_RESOURCE_PANEL,
     };
 
     auto window = CreateRef<ui::Window>(resourcePanelBackground);
@@ -146,6 +147,16 @@ void DemoWorldCreator::loadEntities()
     playerIdLabel->rect = Rect<int>(420, 5, 50, 20);
     playerIdLabel->name = "player";
     playerIdLabel->background = ion::Color::WHITE;
+
+    GraphicsID infoPanelBackground{
+        .entityType = EntityTypes::ET_UI_ELEMENT,
+        .entitySubType = EntitySubTypes::UI_WINDOW,
+        .action = UIElements::UI_ELEMENT_INFO_PANEL,
+    };
+    auto infoPanel = CreateRef<ui::Window>(infoPanelBackground);
+    infoPanel->name = "infoPanel";
+    infoPanel->rect = Rect<int>(0, -1, 506, 145); // -1 is to attach to bottom of screen
+    ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(infoPanel);
 
     spdlog::info("Entity loading successfully.");
 }
