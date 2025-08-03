@@ -80,7 +80,7 @@ uint32_t GameAPI::createVillager(Ref<ion::Player> player, const Feet& pos)
     auto gameState = ServiceRegistry::getInstance().getService<GameState>();
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
-    auto villager = factory->createEntity(EntityTypes::ET_VILLAGER);
+    auto villager = factory->createEntity(EntityTypes::ET_VILLAGER, 0);
     auto [transform, unit, selectible, playerComp] =
         gameState->getComponents<CompTransform, CompUnit, CompSelectible, CompPlayer>(villager);
 

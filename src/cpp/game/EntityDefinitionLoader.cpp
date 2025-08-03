@@ -96,177 +96,7 @@ Size getBuildingSize(const std::string& name)
     }
 }
 
-ComponentType EntityDefinitionLoader::createAnimation(py::object module,
-                                                      pybind11::handle entityDefinition)
-{
-    if (py::hasattr(entityDefinition, "animations") == false)
-        return std::monostate{};
-
-    CompAnimation comp;
-    for (auto py_anim : entityDefinition.attr("animations"))
-    {
-        CompAnimation::ActionAnimation animation;
-        animation.frames = EntityDefinitionLoader::readValue<int>(py_anim, "frame_count");
-        animation.speed = EntityDefinitionLoader::readValue<int>(py_anim, "speed");
-        animation.repeatable = EntityDefinitionLoader::readValue<bool>(py_anim, "repeatable");
-        auto name = EntityDefinitionLoader::readValue<string>(py_anim, "name");
-        auto action = getAction(name);
-
-        PropertyInitializer::set(comp.animations[action], animation);
-    }
-    return ComponentType(comp);
-}
-
-ComponentType EntityDefinitionLoader::createBuilder(py::object module,
-                                                    pybind11::handle entityDefinition)
-{
-    if (py::hasattr(entityDefinition, "build_speed") == false)
-        return std::monostate{};
-
-    auto buildSpeed = entityDefinition.attr("build_speed").cast<int>();
-    CompBuilder builder;
-    PropertyInitializer::set<uint32_t>(builder.buildSpeed, buildSpeed);
-    return ComponentType(builder);
-}
-
-ComponentType EntityDefinitionLoader::createCompResourceGatherer(py::object module,
-                                                                 pybind11::handle entityDefinition)
-{
-    if (py::hasattr(entityDefinition, "gather_speed") == false)
-        return std::monostate{};
-
-    CompResourceGatherer comp;
-    PropertyInitializer::set<uint32_t>(comp.gatherSpeed,
-                                       entityDefinition.attr("gather_speed").cast<int>());
-    PropertyInitializer::set<uint32_t>(comp.capacity,
-                                       entityDefinition.attr("resource_capacity").cast<int>());
-    return ComponentType(comp);
-}
-
-ComponentType EntityDefinitionLoader::createCompUnit(py::object module,
-                                                     pybind11::handle entityDefinition)
-{
-    if (py::hasattr(module, "Unit"))
-    {
-        py::object unitClass = module.attr("Unit");
-        if (py::isinstance(entityDefinition, unitClass))
-        {
-            CompUnit comp;
-            PropertyInitializer::set<uint32_t>(comp.lineOfSight,
-                                               entityDefinition.attr("line_of_sight").cast<int>());
-            return ComponentType(comp);
-        }
-    }
-    return std::monostate{};
-}
-
-ComponentType EntityDefinitionLoader::createCompTransform(py::object module,
-                                                          pybind11::handle entityDefinition)
-{
-    if (py::hasattr(entityDefinition, "moving_speed") == false)
-        return std::monostate{};
-
-    CompTransform comp;
-    PropertyInitializer::set<uint32_t>(comp.speed,
-                                       entityDefinition.attr("moving_speed").cast<int>());
-    PropertyInitializer::set(comp.hasRotation, true);
-    return ComponentType(comp);
-}
-
-ComponentType EntityDefinitionLoader::createCompResource(py::object module,
-                                                         pybind11::handle entityDefinition)
-{
-    if (py::hasattr(entityDefinition, "resource_amount") == false)
-        return std::monostate{};
-
-    auto name = EntityDefinitionLoader::readValue<string>(entityDefinition, "name");
-    auto amount = EntityDefinitionLoader::readValue<int>(entityDefinition, "resource_amount");
-    CompResource comp;
-    PropertyInitializer::set<Resource>(comp.original, Resource(getResourceType(name), amount));
-    comp.remainingAmount = comp.original.value().amount;
-
-    return ComponentType(comp);
-}
-
-bool isInstanceOf(py::object module,
-                  pybind11::handle entityDefinition,
-                  const std::string& baseClass)
-{
-    if (py::hasattr(module, baseClass.c_str()))
-    {
-        py::object cls = module.attr(baseClass.c_str());
-        if (py::isinstance(entityDefinition, cls))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-ComponentType EntityDefinitionLoader::createCompSelectible(py::object module,
-                                                           pybind11::handle entityDefinition)
-{
-    if (isInstanceOf(module, entityDefinition, "Unit") ||
-        isInstanceOf(module, entityDefinition, "Building"))
-    {
-        auto iconHash = readIconDef(EntitySubTypes::UI_UNIT_ICON, entityDefinition);
-
-        CompSelectible comp;
-        PropertyInitializer::set<ImageId>(comp.icon, iconHash);
-        return ComponentType(comp);
-    }
-    else if (isInstanceOf(module, entityDefinition, "NaturalResource"))
-    {
-        auto iconHash = readIconDef(EntitySubTypes::UI_NATURAL_RESOURCE_ICON, entityDefinition);
-
-        CompSelectible comp;
-        PropertyInitializer::set<ImageId>(comp.icon, iconHash);
-        return ComponentType(comp);
-    }
-    return std::monostate{};
-}
-
-ComponentType EntityDefinitionLoader::createCompBuilding(py::object module,
-                                                         pybind11::handle entityDefinition)
-{
-    if (py::hasattr(module, "Building"))
-    {
-        py::object buildingClass = module.attr("Building");
-        if (py::isinstance(entityDefinition, buildingClass))
-        {
-            CompBuilding comp;
-
-            auto lineOfSight = readValue<int>(entityDefinition, "line_of_sight");
-            auto sizeStr = readValue<std::string>(entityDefinition, "size");
-            auto size = getBuildingSize(sizeStr);
-
-            PropertyInitializer::set<uint32_t>(comp.lineOfSight, lineOfSight);
-            PropertyInitializer::set<Size>(comp.size, size);
-
-            if (py::hasattr(module, "ResourceDropOff"))
-            {
-                py::object dropOffClass = module.attr("ResourceDropOff");
-                if (py::isinstance(entityDefinition, dropOffClass))
-                {
-                    auto acceptedResources =
-                        readValue<std::list<std::string>>(entityDefinition, "accepted_resources");
-
-                    uint8_t acceptedResourceFlag = 0;
-                    for (auto& resStr : acceptedResources)
-                    {
-                        auto resType = getResourceType(resStr);
-                        acceptedResourceFlag |= resType;
-                    }
-                    PropertyInitializer::set(comp.dropOffForResourceType, acceptedResourceFlag);
-                }
-            }
-            return ComponentType(comp);
-        }
-    }
-    return std::monostate{};
-}
-
-EntityDefinitionLoader::EntityDefinitionLoader(/* args */)
+EntityDefinitionLoader::EntityDefinitionLoader()
 {
     m_drsLoadFunc = [](const std::string& drsFilename) -> Ref<DRSFile>
     {
@@ -328,6 +158,7 @@ void EntityDefinitionLoader::loadNaturalResources(py::object module)
             std::string name = entry.attr("name").cast<std::string>();
 
             auto entityType = getEntityType(name);
+            addComponentsForNaturalResource(entityType);
             createOrUpdateComponent(module, entityType, entry);
             loadDRSForStillImage(entityType, EntitySubTypes::EST_DEFAULT, entry);
 
@@ -346,6 +177,21 @@ void EntityDefinitionLoader::loadNaturalResources(py::object module)
                     auto shadowSubType = getEntitySubType(entityType, "shadow");
                     py::object stump = entry.attr("shadow");
                     loadDRSForStillImage(entityType, shadowSubType, stump);
+
+                    CompGraphics graphics;
+                    graphics.layer = GraphicLayer::ON_GROUND;
+
+                    CompEntityInfo info(entityType);
+                    info.entitySubType = shadowSubType;
+
+                    auto entityTypeAndSubType =
+                        entityType + m_entitySubTypeMapKeyOffset * shadowSubType;
+
+                    addComponentIfNotNull(entityTypeAndSubType, graphics);
+                    addComponentIfNotNull(entityTypeAndSubType, info);
+                    addComponentIfNotNull(entityTypeAndSubType, CompRendering());
+                    addComponentIfNotNull(entityTypeAndSubType, CompTransform());
+                    addComponentIfNotNull(entityTypeAndSubType, CompDirty());
                 }
             }
         }
@@ -402,6 +248,7 @@ void EntityDefinitionLoader::loadTileSets(pybind11::object module)
 
         for (auto entry : entries)
         {
+            addComponentsForTileset(EntityTypes::ET_TILE);
             loadDRSForStillImage(EntityTypes::ET_TILE, EntitySubTypes::EST_DEFAULT, entry);
         }
     }
@@ -433,12 +280,14 @@ EntityDefinitionLoader::EntityDRSData EntityDefinitionLoader::getDRSData(const G
     return EntityDRSData();
 }
 
-uint32_t EntityDefinitionLoader::createEntity(uint32_t entityType)
+uint32_t EntityDefinitionLoader::createEntity(uint32_t entityType, uint32_t entitySubType)
 {
     auto gameState = ServiceRegistry::getInstance().getService<GameState>();
     auto entity = gameState->createEntity();
 
-    auto it = m_componentsByEntityType.find(entityType);
+    auto mapKey = entityType + entitySubType * m_entitySubTypeMapKeyOffset;
+
+    auto it = m_componentsByEntityType.find(mapKey);
     if (it != m_componentsByEntityType.end())
     {
         for (const auto& variantComponent : it->second)
@@ -449,8 +298,8 @@ uint32_t EntityDefinitionLoader::createEntity(uint32_t entityType)
                     using T = std::decay_t<decltype(comp)>;
                     if constexpr (!std::is_same_v<T, std::monostate>)
                     {
-                        spdlog::debug("Adding component {} to entity {} of type {}",
-                                      typeid(comp).name(), entity, entityType);
+                        spam("Adding component {} to entity {} of type {} subtype {}",
+                             typeid(comp).name(), entity, entityType, entitySubType);
                         gameState->addComponent(entity, comp);
                     }
                 },
@@ -487,13 +336,7 @@ void EntityDefinitionLoader::createOrUpdateComponent(py::object module,
 
 void EntityDefinitionLoader::addComponentsForUnit(uint32_t entityType)
 {
-    m_componentsByEntityType[entityType].push_back(CompRendering());
-    m_componentsByEntityType[entityType].push_back(CompAction(UnitAction::IDLE));
-    m_componentsByEntityType[entityType].push_back(CompDirty());
-    m_componentsByEntityType[entityType].push_back(CompPlayer());
-
     CompGraphics graphics;
-    graphics.entityType = entityType;
     graphics.layer = GraphicLayer::ENTITIES;
     graphics.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::GREEN,
                                       DebugOverlay::FixedPosition::BOTTOM_CENTER,
@@ -510,20 +353,52 @@ void EntityDefinitionLoader::addComponentsForUnit(uint32_t entityType)
     graphics.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::BLACK,
                                       DebugOverlay::FixedPosition::BOTTOM_CENTER,
                                       DebugOverlay::FixedPosition::CENTER});
-    m_componentsByEntityType[entityType].push_back(graphics);
+
+    addComponentIfNotNull(entityType, CompRendering());
+    addComponentIfNotNull(entityType, CompAction(UnitAction::IDLE));
+    addComponentIfNotNull(entityType, CompDirty());
+    addComponentIfNotNull(entityType, CompPlayer());
+    addComponentIfNotNull(entityType, graphics);
 }
 
 void EntityDefinitionLoader::addComponentsForBuilding(uint32_t entityType)
 {
-    m_componentsByEntityType[entityType].push_back(CompRendering());
-    m_componentsByEntityType[entityType].push_back(CompDirty());
-    m_componentsByEntityType[entityType].push_back(CompTransform());
-    m_componentsByEntityType[entityType].push_back(CompPlayer());
-
     CompGraphics graphics;
-    graphics.entityType = entityType;
     graphics.layer = GraphicLayer::ENTITIES;
-    m_componentsByEntityType[entityType].push_back(graphics);
+
+    addComponentIfNotNull(entityType, CompRendering());
+    addComponentIfNotNull(entityType, CompDirty());
+    addComponentIfNotNull(entityType, CompPlayer());
+    addComponentIfNotNull(entityType, CompTransform());
+    addComponentIfNotNull(entityType, graphics);
+}
+
+void EntityDefinitionLoader::addComponentsForNaturalResource(uint32_t entityType)
+{
+    CompGraphics graphics;
+    graphics.layer = GraphicLayer::ENTITIES;
+
+    addComponentIfNotNull(entityType, graphics);
+    addComponentIfNotNull(entityType, CompRendering());
+    addComponentIfNotNull(entityType, CompTransform());
+    addComponentIfNotNull(entityType, CompDirty());
+}
+
+void EntityDefinitionLoader::addComponentsForTileset(uint32_t entityType)
+{
+    CompGraphics graphics;
+    graphics.layer = GraphicLayer::GROUND;
+    DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, ion::Color::GREY,
+                         DebugOverlay::FixedPosition::BOTTOM_CENTER};
+    overlay.customPos1 = DebugOverlay::FixedPosition::CENTER_LEFT;
+    overlay.customPos2 = DebugOverlay::FixedPosition::CENTER_RIGHT;
+    graphics.debugOverlays.push_back(overlay);
+
+    addComponentIfNotNull(entityType, graphics);
+    addComponentIfNotNull(entityType, CompRendering());
+    addComponentIfNotNull(entityType, CompTransform());
+    addComponentIfNotNull(entityType, CompEntityInfo(entityType));
+    addComponentIfNotNull(entityType, CompDirty());
 }
 
 void EntityDefinitionLoader::addComponentIfNotNull(uint32_t entityType, const ComponentType& comp)
@@ -715,4 +590,178 @@ int64_t EntityDefinitionLoader::readIconDef(uint32_t entitySubType,
         return icon.hash();
     }
     return 0;
+}
+
+ComponentType EntityDefinitionLoader::createAnimation(py::object module,
+                                                      pybind11::handle entityDefinition)
+{
+    if (py::hasattr(entityDefinition, "animations") == false)
+        return std::monostate{};
+
+    CompAnimation comp;
+    for (auto py_anim : entityDefinition.attr("animations"))
+    {
+        CompAnimation::ActionAnimation animation;
+        animation.frames = EntityDefinitionLoader::readValue<int>(py_anim, "frame_count");
+        animation.speed = EntityDefinitionLoader::readValue<int>(py_anim, "speed");
+        animation.repeatable = EntityDefinitionLoader::readValue<bool>(py_anim, "repeatable");
+        auto name = EntityDefinitionLoader::readValue<string>(py_anim, "name");
+        auto action = getAction(name);
+
+        PropertyInitializer::set(comp.animations[action], animation);
+    }
+    return ComponentType(comp);
+}
+
+ComponentType EntityDefinitionLoader::createBuilder(py::object module,
+                                                    pybind11::handle entityDefinition)
+{
+    if (py::hasattr(entityDefinition, "build_speed") == false)
+        return std::monostate{};
+
+    auto buildSpeed = entityDefinition.attr("build_speed").cast<int>();
+    CompBuilder builder;
+    PropertyInitializer::set<uint32_t>(builder.buildSpeed, buildSpeed);
+    return ComponentType(builder);
+}
+
+ComponentType EntityDefinitionLoader::createCompResourceGatherer(py::object module,
+                                                                 pybind11::handle entityDefinition)
+{
+    if (py::hasattr(entityDefinition, "gather_speed") == false)
+        return std::monostate{};
+
+    CompResourceGatherer comp;
+    PropertyInitializer::set<uint32_t>(comp.gatherSpeed,
+                                       entityDefinition.attr("gather_speed").cast<int>());
+    PropertyInitializer::set<uint32_t>(comp.capacity,
+                                       entityDefinition.attr("resource_capacity").cast<int>());
+    return ComponentType(comp);
+}
+
+ComponentType EntityDefinitionLoader::createCompUnit(py::object module,
+                                                     pybind11::handle entityDefinition)
+{
+    if (py::hasattr(module, "Unit"))
+    {
+        py::object unitClass = module.attr("Unit");
+        if (py::isinstance(entityDefinition, unitClass))
+        {
+            CompUnit comp;
+            PropertyInitializer::set<uint32_t>(comp.lineOfSight,
+                                               entityDefinition.attr("line_of_sight").cast<int>());
+            return ComponentType(comp);
+        }
+    }
+    return std::monostate{};
+}
+
+ComponentType EntityDefinitionLoader::createCompTransform(py::object module,
+                                                          pybind11::handle entityDefinition)
+{
+    if (py::hasattr(entityDefinition, "moving_speed") == false)
+        return std::monostate{};
+
+    CompTransform comp;
+    PropertyInitializer::set<uint32_t>(comp.speed,
+                                       entityDefinition.attr("moving_speed").cast<int>());
+    PropertyInitializer::set(comp.hasRotation, true);
+    return ComponentType(comp);
+}
+
+ComponentType EntityDefinitionLoader::createCompResource(py::object module,
+                                                         pybind11::handle entityDefinition)
+{
+    if (py::hasattr(entityDefinition, "resource_amount") == false)
+        return std::monostate{};
+
+    auto name = EntityDefinitionLoader::readValue<string>(entityDefinition, "name");
+    auto amount = EntityDefinitionLoader::readValue<int>(entityDefinition, "resource_amount");
+    CompResource comp;
+    PropertyInitializer::set<Resource>(comp.original, Resource(getResourceType(name), amount));
+    comp.remainingAmount = comp.original.value().amount;
+
+    return ComponentType(comp);
+}
+
+bool isInstanceOf(py::object module,
+                  pybind11::handle entityDefinition,
+                  const std::string& baseClass)
+{
+    if (py::hasattr(module, baseClass.c_str()))
+    {
+        py::object cls = module.attr(baseClass.c_str());
+        if (py::isinstance(entityDefinition, cls))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+ComponentType EntityDefinitionLoader::createCompSelectible(py::object module,
+                                                           pybind11::handle entityDefinition)
+{
+    if (isInstanceOf(module, entityDefinition, "Unit") ||
+        isInstanceOf(module, entityDefinition, "Building"))
+    {
+        auto iconHash = readIconDef(EntitySubTypes::UI_UNIT_ICON, entityDefinition);
+
+        CompSelectible comp;
+        PropertyInitializer::set<ImageId>(comp.icon, iconHash);
+        return ComponentType(comp);
+    }
+    else if (isInstanceOf(module, entityDefinition, "NaturalResource"))
+    {
+        auto iconHash = readIconDef(EntitySubTypes::UI_NATURAL_RESOURCE_ICON, entityDefinition);
+
+        CompSelectible comp;
+        PropertyInitializer::set<ImageId>(comp.icon, iconHash);
+        comp.selectionIndicator = {
+            GraphicAddon::Type::RHOMBUS,
+            GraphicAddon::Rhombus{Constants::TILE_PIXEL_WIDTH, Constants::TILE_PIXEL_HEIGHT}};
+
+        return ComponentType(comp);
+    }
+    return std::monostate{};
+}
+
+ComponentType EntityDefinitionLoader::createCompBuilding(py::object module,
+                                                         pybind11::handle entityDefinition)
+{
+    if (py::hasattr(module, "Building"))
+    {
+        py::object buildingClass = module.attr("Building");
+        if (py::isinstance(entityDefinition, buildingClass))
+        {
+            CompBuilding comp;
+
+            auto lineOfSight = readValue<int>(entityDefinition, "line_of_sight");
+            auto sizeStr = readValue<std::string>(entityDefinition, "size");
+            auto size = getBuildingSize(sizeStr);
+
+            PropertyInitializer::set<uint32_t>(comp.lineOfSight, lineOfSight);
+            PropertyInitializer::set<Size>(comp.size, size);
+
+            if (py::hasattr(module, "ResourceDropOff"))
+            {
+                py::object dropOffClass = module.attr("ResourceDropOff");
+                if (py::isinstance(entityDefinition, dropOffClass))
+                {
+                    auto acceptedResources =
+                        readValue<std::list<std::string>>(entityDefinition, "accepted_resources");
+
+                    uint8_t acceptedResourceFlag = 0;
+                    for (auto& resStr : acceptedResources)
+                    {
+                        auto resType = getResourceType(resStr);
+                        acceptedResourceFlag |= resType;
+                    }
+                    PropertyInitializer::set(comp.dropOffForResourceType, acceptedResourceFlag);
+                }
+            }
+            return ComponentType(comp);
+        }
+    }
+    return std::monostate{};
 }

@@ -53,7 +53,7 @@ void BuildingManager::onBuildingRequest(const Event& e)
 uint32_t BuildingManager::createBuilding(const BuildingPlacementData& request)
 {
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
-    auto entity = factory->createEntity(request.entityType);
+    auto entity = factory->createEntity(request.entityType, 0);
 
     auto gameState = ServiceRegistry::getInstance().getService<GameState>();
     auto [transform, playerComp] = gameState->getComponents<CompTransform, CompPlayer>(entity);

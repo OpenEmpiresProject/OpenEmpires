@@ -353,7 +353,7 @@ void UnitManager::onUnitRequested(const Event& e)
     auto gameState = ServiceRegistry::getInstance().getService<GameState>();
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
-    auto unit = factory->createEntity(data.entityType);
+    auto unit = factory->createEntity(data.entityType, 0);
     auto [transform, unitComp, selectible, playerComp] =
         gameState->getComponents<CompTransform, CompUnit, CompSelectible, CompPlayer>(unit);
 

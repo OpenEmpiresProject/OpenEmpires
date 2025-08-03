@@ -53,9 +53,9 @@ class EntityDefinitionLoaderExposure : public EntityDefinitionLoader
         EntityDefinitionLoader::setSite(sizeStr, progressToFrame);
     }
 
-    uint32_t createEntity(uint32_t entityType) override
+    uint32_t createEntity(uint32_t entityType, uint32_t entitySubType) override
     {
-        return EntityDefinitionLoader::createEntity(entityType);
+        return EntityDefinitionLoader::createEntity(entityType, entitySubType);
     }
 
     void setDRSData(int64_t id, const EntityDRSData& data)
@@ -490,7 +490,7 @@ all_construction_sites= [
     auto gameState = std::make_shared<ion::GameState>();
     ion::ServiceRegistry::getInstance().registerService(gameState);
 
-    auto mill = loader.createEntity(EntityTypes::ET_MILL);
+    auto mill = loader.createEntity(EntityTypes::ET_MILL, 0);
 
     auto building = gameState->getComponent<CompBuilding>(mill);
     EXPECT_EQ(building.visualVariationByProgress.at(66), 2);

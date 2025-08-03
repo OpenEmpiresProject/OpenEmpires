@@ -58,7 +58,7 @@ class EntityDefinitionLoader : public ion::EntityFactory, public ion::PropertyIn
         int slpId = -1;
         ion::Rect<int> clipRect;
     };
-    EntityDefinitionLoader(/* args */);
+    EntityDefinitionLoader();
     ~EntityDefinitionLoader();
 
     void load();
@@ -93,7 +93,7 @@ class EntityDefinitionLoader : public ion::EntityFactory, public ion::PropertyIn
     ComponentType createCompSelectible(pybind11::object module, pybind11::handle entityDefinition);
     static ComponentType createCompBuilding(pybind11::object module,
                                             pybind11::handle entityDefinition);
-    uint32_t createEntity(uint32_t entityType) override;
+    uint32_t createEntity(uint32_t entityType, uint32_t entitySubType) override;
 
   protected:
     struct ConstructionSiteData
@@ -113,6 +113,8 @@ class EntityDefinitionLoader : public ion::EntityFactory, public ion::PropertyIn
                                  pybind11::handle entityDefinition);
     void addComponentsForUnit(uint32_t entityType);
     void addComponentsForBuilding(uint32_t entityType);
+    void addComponentsForNaturalResource(uint32_t entityType);
+    void addComponentsForTileset(uint32_t entityType);
     void addComponentIfNotNull(uint32_t entityType, const ComponentType& comp);
     void loadDRSForAnimations(uint32_t entityType,
                               uint32_t entitySubType,
@@ -137,6 +139,8 @@ class EntityDefinitionLoader : public ion::EntityFactory, public ion::PropertyIn
     std::unordered_map<std::string, ion::Ref<drs::DRSFile>> m_drsFilesByName;
     std::map<std::string /*size*/, ConstructionSiteData> m_constructionSitesBySize;
     std::function<ion::Ref<drs::DRSFile>(const std::string&)> m_drsLoadFunc;
+
+    const int m_entitySubTypeMapKeyOffset = 100000;
 };
 
 } // namespace game

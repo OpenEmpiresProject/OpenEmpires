@@ -159,74 +159,29 @@ void DemoWorldCreator::loadEntities()
 void DemoWorldCreator::createTree(TileMap& map, uint32_t x, uint32_t y)
 {
     auto gameState = ServiceRegistry::getInstance().getService<GameState>();
-    // auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
+    auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
-    // auto tree = factory->createEntity(EntityTypes::ET_TREE);
-    // auto [transform, unit, selectible] =
-    //     gameState->getComponents<CompTransform, CompUnit, CompSelectible>(tree);
+    auto tree = factory->createEntity(EntityTypes::ET_TREE, 0);
+    auto [transform, selectible, info] =
+        gameState->getComponents<CompTransform, CompSelectible, CompEntityInfo>(tree);
 
     int variation = rand() % 10;
 
-    {
-        auto tree = gameState->createEntity();
-        auto transform = CompTransform(x * 256 + 128, y * 256 + 128);
-        gameState->addComponent(tree, transform);
-        gameState->addComponent(tree, CompRendering());
-        CompGraphics gc;
-        gc.entityID = tree;
-        gc.entityType = EntityTypes::ET_TREE;
-        gc.entitySubType = 0; // 0=main tree, 1=chopped
-        gc.layer = GraphicLayer::ENTITIES;
+    transform.position = Feet(x * 256 + 128, y * 256 + 128);
+    info.variation = variation;
+    selectible.boundingBoxes[static_cast<int>(Direction::NONE)] = getBoundingBox(m_drs, 1254, 1);
 
-        gameState->addComponent(tree, gc);
-        // TODO: Should not hard code
-        CompEntityInfo entityInfo(EntityTypes::ET_TREE, 0, variation);
-        entityInfo.entityId = tree;
-        gameState->addComponent(tree, entityInfo);
-        gameState->addComponent(tree, CompDirty());
-
-        // TODO: This doesn't work. Need to conslidate resource and graphic loading and handle this
-        auto box = getBoundingBox(m_drs, 1254, 1);
-        CompSelectible sc;
-        GraphicsID icon;
-        icon.entityType = EntityTypes::ET_UI_ELEMENT;
-        icon.entitySubType = EntitySubTypes::UI_NATURAL_RESOURCE_ICON;
-        icon.imageIndex = 0;
-        PropertyInitializer::set(sc.icon, icon.hash());
-        sc.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
-        sc.selectionIndicator = {
-            GraphicAddon::Type::RHOMBUS,
-            GraphicAddon::Rhombus{Constants::TILE_PIXEL_WIDTH, Constants::TILE_PIXEL_HEIGHT}};
-
-        gameState->addComponent(tree, sc);
-        CompResource compRes;
-        PropertyInitializer::set(compRes.original, Resource(ResourceType::WOOD, 100));
-        compRes.remainingAmount = 100;
-        gameState->addComponent(tree, compRes);
-
-        map.addEntity(MapLayerType::STATIC, Tile(x, y), tree);
-    }
+    map.addEntity(MapLayerType::STATIC, Tile(x, y), tree);
 
     // Add shadow
-    {
-        auto shadow = gameState->createEntity();
+    auto shadow = factory->createEntity(EntityTypes::ET_TREE, EntitySubTypes::EST_TREE_SHADOW);
+    auto [transformShadow, infoShadow] =
+        gameState->getComponents<CompTransform, CompEntityInfo>(shadow);
 
-        auto transform = CompTransform(x * 256 + 128, y * 256 + 128);
-        gameState->addComponent(shadow, transform);
-        gameState->addComponent(shadow, CompRendering());
-        CompGraphics gc;
-        gc.entityID = shadow;
-        gc.entityType = EntityTypes::ET_TREE;
-        gc.entitySubType = EntitySubTypes::EST_TREE_SHADOW;
-        gc.layer = GraphicLayer::ON_GROUND;
-        gameState->addComponent(shadow, gc);
+    infoShadow.variation = variation;
+    transformShadow.position = Feet(x * 256 + 128, y * 256 + 128);
 
-        CompEntityInfo entityInfo(EntityTypes::ET_TREE, EntitySubTypes::EST_TREE_SHADOW, variation);
-        entityInfo.entityId = shadow;
-        gameState->addComponent(shadow, entityInfo);
-        gameState->addComponent(shadow, CompDirty());
-        map.addEntity(MapLayerType::ON_GROUND, Tile(x, y), shadow);
-    }
+    map.addEntity(MapLayerType::ON_GROUND, Tile(x, y), shadow);
 }
 
 void DemoWorldCreator::createStoneOrGold(EntityTypes entityType,
@@ -235,47 +190,17 @@ void DemoWorldCreator::createStoneOrGold(EntityTypes entityType,
                                          uint32_t y)
 {
     auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+    auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
-    auto stone = gameState->createEntity();
-    auto transform = CompTransform(x * 256 + 128, y * 256 + 128);
-    gameState->addComponent(stone, transform);
-    gameState->addComponent(stone, CompRendering());
-    CompGraphics gc;
-    gc.entityID = stone;
-    gc.entityType = entityType;
-    gc.entitySubType = 0;
-    gc.layer = GraphicLayer::ENTITIES;
+    auto entity = factory->createEntity(entityType, 0);
+    auto [transform, selectible, info] =
+        gameState->getComponents<CompTransform, CompSelectible, CompEntityInfo>(entity);
 
-    gameState->addComponent(stone, gc);
-    CompEntityInfo entityInfo(entityType, 0, rand() % 7);
-    entityInfo.entityId = stone;
-    gameState->addComponent(stone, entityInfo);
-    gameState->addComponent(stone, CompDirty());
+    transform.position = Feet(x * 256 + 128, y * 256 + 128);
+    info.variation = rand() % 7;
+    selectible.boundingBoxes[static_cast<int>(Direction::NONE)] = getBoundingBox(m_drs, 1034, 1);
 
-    // TODO: This doesn't work. Need to conslidate resource and graphic loading and handle this
-    auto box = getBoundingBox(m_drs, 1034, 1);
-    CompSelectible sc;
-    GraphicsID icon;
-    icon.entityType = EntityTypes::ET_UI_ELEMENT;
-    icon.entitySubType = EntitySubTypes::UI_NATURAL_RESOURCE_ICON;
-    icon.imageIndex = entityType == EntityTypes::ET_STONE ? 1 : 3;
-    PropertyInitializer::set(sc.icon, icon.hash());
-    sc.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
-    sc.selectionIndicator = {
-        GraphicAddon::Type::RHOMBUS,
-        GraphicAddon::Rhombus{Constants::TILE_PIXEL_WIDTH, Constants::TILE_PIXEL_HEIGHT}};
-
-    gameState->addComponent(stone, sc);
-
-    ResourceType resourceType = ResourceType::STONE;
-    if (entityType == EntityTypes::ET_GOLD)
-        resourceType = ResourceType::GOLD;
-
-    CompResource compRes;
-    PropertyInitializer::set(compRes.original, Resource(resourceType, 1000));
-    gameState->addComponent(stone, compRes);
-
-    gameMap.addEntity(MapLayerType::STATIC, Tile(x, y), stone);
+    gameMap.addEntity(MapLayerType::STATIC, Tile(x, y), entity);
 }
 
 void DemoWorldCreator::createVillager(Ref<ion::Player> player, const Tile& tilePos)
@@ -283,7 +208,7 @@ void DemoWorldCreator::createVillager(Ref<ion::Player> player, const Tile& tileP
     auto gameState = ServiceRegistry::getInstance().getService<GameState>();
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
-    auto villager = factory->createEntity(EntityTypes::ET_VILLAGER);
+    auto villager = factory->createEntity(EntityTypes::ET_VILLAGER, 0);
     auto [transform, unit, selectible, playerComp] =
         gameState->getComponents<CompTransform, CompUnit, CompSelectible, CompPlayer>(villager);
 
@@ -448,15 +373,11 @@ void DemoWorldCreator::createTile(uint32_t x,
 {
     auto size = m_settings->getWorldSizeInTiles();
 
-    auto tile = gameState->createEntity();
-    gameState->addComponent(tile, CompTransform(x * 256, y * 256));
-    gameState->addComponent(tile, CompRendering());
-    gameState->addComponent(tile, CompDirty());
+    auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
-    CompGraphics gc;
-    gc.entityID = tile;
-    gc.entityType = entityType;
-    // tc = sqrt(total_tile_frame_count)
+    auto entity = factory->createEntity(entityType, 0);
+    auto [transform, info] = gameState->getComponents<CompTransform, CompEntityInfo>(entity);
+
     int tc = 10;
     // Convet our top corner based coordinate to left corner based coordinate
     int newX = size.height - y;
@@ -464,20 +385,10 @@ void DemoWorldCreator::createTile(uint32_t x,
     // AOE2 standard tiling rule. From OpenAge documentation
     int tileVariation = (newX % tc) + ((newY % tc) * tc) + 1;
 
-    CompEntityInfo entityInfo(entityType, 0, tileVariation);
-    entityInfo.entityId = tile;
-    gameState->addComponent(tile, entityInfo);
+    transform.position = Feet(x * 256, y * 256);
+    info.variation = tileVariation;
 
-    DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, ion::Color::GREY,
-                         DebugOverlay::FixedPosition::BOTTOM_CENTER};
-    overlay.customPos1 = DebugOverlay::FixedPosition::CENTER_LEFT;
-    overlay.customPos2 = DebugOverlay::FixedPosition::CENTER_RIGHT;
-    gc.debugOverlays.push_back(overlay);
-    gc.layer = GraphicLayer::GROUND;
-
-    auto map = gameState->gameMap;
-    map.addEntity(MapLayerType::GROUND, Tile(x, y), tile);
-    gameState->addComponent(tile, gc);
+    gameState->gameMap.addEntity(MapLayerType::GROUND, Tile(x, y), entity);
 }
 
 void DemoWorldCreator::init()
@@ -493,16 +404,6 @@ void DemoWorldCreator::shutdown()
 {
     // Cleanup code for resource loading
 }
-
-// shared_ptr<DRSFile> loadDRSFile2(const string& drsFilename)
-// {
-//     auto drs = make_shared<DRSFile>();
-//     if (!drs->load(drsFilename))
-//     {
-//         throw runtime_error("Failed to load DRS file: " + drsFilename);
-//     }
-//     return std::move(drs);
-// }
 
 Rect<int> getBoundingBox(shared_ptr<DRSFile> drs, uint32_t slpId, uint32_t frameId)
 {

@@ -130,12 +130,14 @@ all_natural_resources: List[NaturalResource] = [
     NaturalResource(
         name="gold",
         resource_amount=1000,
-        graphics={"default":Graphic(slp_id=4479)}
+        graphics={"default":Graphic(slp_id=4479)},
+        icon=Icon(drs_file="interfac.drs", slp_id=50731, index=3),
     ),
     NaturalResource(
         name="stone",
         resource_amount=1000,
-        graphics={"default":Graphic(slp_id=1034)}
+        graphics={"default":Graphic(slp_id=1034)},
+        icon=Icon(drs_file="interfac.drs", slp_id=50731, index=1),
     ),
     Tree(
         name="wood",
@@ -143,7 +145,7 @@ all_natural_resources: List[NaturalResource] = [
         graphics={"oak":Graphic(slp_id=4652)},
         stump=NaturalResource(name="stump", graphics={"oak":Graphic(slp_id=1252)}),
         shadow=NaturalResource(name="shadow", graphics={"oak":Graphic(slp_id=2296)}),
-        icon=Icon(drs_file="interfac.drs", slp_id=50731, index=1),
+        icon=Icon(drs_file="interfac.drs", slp_id=50731, index=0),
     ),
 ]
 
