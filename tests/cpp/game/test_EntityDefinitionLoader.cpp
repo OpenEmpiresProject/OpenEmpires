@@ -605,7 +605,7 @@ all_ui_elements = [
     // Assert
     GraphicsID id;
     id.entityType = EntityTypes::ET_UI_ELEMENT;
-    id.action = 1;
+    id.entitySubType = EntitySubTypes::EST_UI_RESOURCE_PANEL;
     EXPECT_EQ(loader.getDRSData(id).slpId, 51101);
     EXPECT_EQ(loader.getDRSData(id).clipRect.w,
               400);

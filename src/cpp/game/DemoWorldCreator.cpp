@@ -101,62 +101,57 @@ void DemoWorldCreator::loadEntities()
                                              {ResourceType::STONE, UnitAction::CARRYING_STONE},
                                              {ResourceType::GOLD, UnitAction::CARRYING_GOLD}};
 
-    GraphicsID resourcePanelBackground{
-        .entityType = EntityTypes::ET_UI_ELEMENT,
-        .entitySubType = EntitySubTypes::UI_WINDOW,
-        .action = UIElements::UI_ELEMENT_RESOURCE_PANEL,
-    };
-
-    auto window = CreateRef<ui::Window>(resourcePanelBackground);
-    window->name = "resourcePanel";
+    ui::Widget::s_entityType = EntityTypes::ET_UI_ELEMENT;
+    ui::Widget::s_entitySubType = EntitySubTypes::EST_DEFAULT;
+    GraphicsID resourcePanelBackground{.entityType = EntityTypes::ET_UI_ELEMENT,
+                                       .entitySubType = EntitySubTypes::EST_UI_RESOURCE_PANEL};
+    auto window = CreateRef<ui::Window>();
+    window->setName("resourcePanel");
+    window->setBackgroundImage(resourcePanelBackground.hash());
     ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(window);
 
-    GraphicsID woodAmountLabel{
-        .entityType = EntityTypes::ET_UI_ELEMENT,
-        .entitySubType = EntitySubTypes::UI_LABEL,
-    };
-    auto woodLabel = window->createChild<ui::Label>(woodAmountLabel);
-    woodLabel->text = "0";
-    woodLabel->rect = Rect<int>(35, 5, 50, 20);
-    woodLabel->name = "wood";
+    auto woodLabel = window->createChild<ui::Label>();
+    woodLabel->setText("0");
+    woodLabel->setRect(Rect<int>(35, 5, 50, 20));
+    woodLabel->setName("wood");
 
-    GraphicsID stoneAmountLabel{
-        .entityType = EntityTypes::ET_UI_ELEMENT,
-        .entitySubType = EntitySubTypes::UI_LABEL,
-    };
-    auto stoneLabel = window->createChild<ui::Label>(stoneAmountLabel);
-    stoneLabel->text = "0";
-    stoneLabel->rect = Rect<int>(265, 5, 50, 20);
-    stoneLabel->name = "stone";
+    auto stoneLabel = window->createChild<ui::Label>();
+    stoneLabel->setText("0");
+    stoneLabel->setRect(Rect<int>(265, 5, 50, 20));
+    stoneLabel->setName("stone");
 
-    GraphicsID goldAmountLabel{
-        .entityType = EntityTypes::ET_UI_ELEMENT,
-        .entitySubType = EntitySubTypes::UI_LABEL,
-    };
-    auto goldLabel = window->createChild<ui::Label>(goldAmountLabel);
-    goldLabel->text = "0";
-    goldLabel->rect = Rect<int>(195, 5, 50, 20);
-    goldLabel->name = "gold";
+    auto goldLabel = window->createChild<ui::Label>();
+    goldLabel->setText("0");
+    goldLabel->setRect(Rect<int>(195, 5, 50, 20));
+    goldLabel->setName("gold");
 
-    GraphicsID playerIdLabelId{
-        .entityType = EntityTypes::ET_UI_ELEMENT,
-        .entitySubType = EntitySubTypes::UI_LABEL,
-    };
-    auto playerIdLabel = window->createChild<ui::Label>(playerIdLabelId);
-    playerIdLabel->text = "";
-    playerIdLabel->rect = Rect<int>(420, 5, 50, 20);
-    playerIdLabel->name = "player";
-    playerIdLabel->background = ion::Color::WHITE;
+    auto playerIdLabel = window->createChild<ui::Label>();
+    playerIdLabel->setRect(Rect<int>(420, 5, 50, 20));
+    playerIdLabel->setName("player");
+    playerIdLabel->setTextColor(ion::Color::WHITE);
 
-    GraphicsID infoPanelBackground{
-        .entityType = EntityTypes::ET_UI_ELEMENT,
-        .entitySubType = EntitySubTypes::UI_WINDOW,
-        .action = UIElements::UI_ELEMENT_INFO_PANEL,
-    };
-    auto infoPanel = CreateRef<ui::Window>(infoPanelBackground);
-    infoPanel->name = "infoPanel";
-    infoPanel->rect = Rect<int>(0, -1, 506, 145); // -1 is to attach to bottom of screen
-    ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(infoPanel);
+    GraphicsID controlPanelBackground{.entityType = EntityTypes::ET_UI_ELEMENT,
+                                      .entitySubType = EntitySubTypes::EST_UI_CONTROL_PANEL};
+    auto controlPanel = CreateRef<ui::Window>();
+    controlPanel->setName("controlPanel");
+    controlPanel->setBackgroundImage(controlPanelBackground.hash());
+    controlPanel->setRect(Rect<int>(0, -1, 506, 145)); // -1 is to attach to bottom of screen
+    ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(controlPanel);
+
+    auto hLayout = controlPanel->createChild<ui::Layout>();
+
+    auto commandsLayout = hLayout->createChild<ui::Layout>();
+    commandsLayout->setRect(Rect<int>(0, 0, 210, 145)); // TODO: Can we simplify this?
+
+    auto infoLayout = hLayout->createChild<ui::Layout>();
+    infoLayout->setRect(Rect<int>(0, 0, 290, 145)); // TODO: Can we simplify this?
+    infoLayout->setMargin(20);
+    infoLayout->setSpacing(10);
+
+    auto selectedIcon = infoLayout->createChild<ui::Label>();
+    selectedIcon->setRect(Rect<int>(0, 0, 50, 50));
+    selectedIcon->setName("selected_icon");
+    selectedIcon->setVisible(false);
 
     spdlog::info("Entity loading successfully.");
 }
@@ -164,6 +159,12 @@ void DemoWorldCreator::loadEntities()
 void DemoWorldCreator::createTree(TileMap& map, uint32_t x, uint32_t y)
 {
     auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+    // auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
+
+    // auto tree = factory->createEntity(EntityTypes::ET_TREE);
+    // auto [transform, unit, selectible] =
+    //     gameState->getComponents<CompTransform, CompUnit, CompSelectible>(tree);
+
     int variation = rand() % 10;
 
     {
@@ -187,6 +188,11 @@ void DemoWorldCreator::createTree(TileMap& map, uint32_t x, uint32_t y)
         // TODO: This doesn't work. Need to conslidate resource and graphic loading and handle this
         auto box = getBoundingBox(m_drs, 1254, 1);
         CompSelectible sc;
+        GraphicsID icon;
+        icon.entityType = EntityTypes::ET_UI_ELEMENT;
+        icon.entitySubType = EntitySubTypes::UI_NATURAL_RESOURCE_ICON;
+        icon.imageIndex = 0;
+        PropertyInitializer::set(sc.icon, icon.hash());
         sc.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
         sc.selectionIndicator = {
             GraphicAddon::Type::RHOMBUS,
@@ -249,6 +255,11 @@ void DemoWorldCreator::createStoneOrGold(EntityTypes entityType,
     // TODO: This doesn't work. Need to conslidate resource and graphic loading and handle this
     auto box = getBoundingBox(m_drs, 1034, 1);
     CompSelectible sc;
+    GraphicsID icon;
+    icon.entityType = EntityTypes::ET_UI_ELEMENT;
+    icon.entitySubType = EntitySubTypes::UI_NATURAL_RESOURCE_ICON;
+    icon.imageIndex = entityType == EntityTypes::ET_STONE ? 1 : 3;
+    PropertyInitializer::set(sc.icon, icon.hash());
     sc.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
     sc.selectionIndicator = {
         GraphicAddon::Type::RHOMBUS,

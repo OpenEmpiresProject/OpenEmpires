@@ -4,6 +4,7 @@
 #include "PlayerManager.h"
 #include "ServiceRegistry.h"
 #include "UIManager.h"
+#include "components/CompSelectible.h"
 #include "utils/Logger.h"
 
 using namespace game;
@@ -11,6 +12,7 @@ using namespace ion;
 
 HUD::HUD(/* args */)
 {
+    registerCallback(Event::Type::UNIT_SELECTION, this, &HUD::onUnitSelection);
     registerCallback(Event::Type::TICK, this, &HUD::onTick);
 }
 
@@ -26,15 +28,11 @@ void HUD::updateLabelRef(Ref<ion::ui::Label>& label, const std::string& text)
         auto& windows = uiManager->getWindows();
         for (auto window : windows)
         {
-            if (window->name == "resourcePanel")
+            auto child = window->findChild(text);
+            if (child != nullptr)
             {
-                for (auto child : window->children)
-                {
-                    if (child->name == text)
-                    {
-                        label = std::static_pointer_cast<ui::Label>(child);
-                    }
-                }
+                label = std::static_pointer_cast<ui::Label>(child);
+                break;
             }
         }
     }
@@ -51,7 +49,7 @@ void HUD::onTick(const Event& e)
     {
         auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
         auto player = playerManager->getViewingPlayer();
-        m_woodLabel->text = std::to_string(player->getResourceAmount(ResourceType::WOOD));
+        m_woodLabel->setText(std::to_string(player->getResourceAmount(ResourceType::WOOD)));
     }
     else
     {
@@ -62,7 +60,7 @@ void HUD::onTick(const Event& e)
     {
         auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
         auto player = playerManager->getViewingPlayer();
-        m_stoneabel->text = std::to_string(player->getResourceAmount(ResourceType::STONE));
+        m_stoneabel->setText(std::to_string(player->getResourceAmount(ResourceType::STONE)));
     }
     else
     {
@@ -73,7 +71,7 @@ void HUD::onTick(const Event& e)
     {
         auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
         auto player = playerManager->getViewingPlayer();
-        m_goldLabel->text = std::to_string(player->getResourceAmount(ResourceType::GOLD));
+        m_goldLabel->setText(std::to_string(player->getResourceAmount(ResourceType::GOLD)));
     }
     else
     {
@@ -84,10 +82,34 @@ void HUD::onTick(const Event& e)
     {
         auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
         auto player = playerManager->getViewingPlayer();
-        m_playerIdLabel->text = "Player " + std::to_string(player->getId());
+        m_playerIdLabel->setText("Player " + std::to_string(player->getId()));
     }
     else
     {
         spdlog::error("Could not find player label in resource panel window.");
+    }
+}
+
+void HUD::onUnitSelection(const Event& e)
+{
+    updateLabelRef(m_selectedIcon, "selected_icon");
+    m_selectedIcon->setVisible(false);
+
+    auto selectionData = e.getData<UnitSelectionData>();
+    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+
+    for (auto unit : selectionData.selection.selectedEntities)
+    {
+        auto comSelectible = gameState->getComponent<CompSelectible>(unit);
+        if (m_selectedIcon != nullptr)
+        {
+            m_selectedIcon->setVisible(true);
+            m_selectedIcon->setBackgroundImage(comSelectible.icon);
+        }
+        else
+        {
+            spdlog::error("Could not find selected-icon label in info panel window.");
+        }
+        break;
     }
 }

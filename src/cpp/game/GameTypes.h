@@ -23,9 +23,10 @@ enum EntityTypes
 
 enum EntitySubTypes
 {
-    UI_WINDOW = 0,
-    UI_BUTTON = 1,
-    UI_LABEL = 2,
+    EST_UI_RESOURCE_PANEL = 1,
+    EST_UI_CONTROL_PANEL = 2,
+    UI_UNIT_ICON = 3,
+    UI_NATURAL_RESOURCE_ICON = 4,
 
     EST_SMALL_SIZE = 1,
     EST_MEDIUM_SIZE = 2,
@@ -33,13 +34,6 @@ enum EntitySubTypes
     EST_DEFAULT = 0,
     EST_CHOPPED_TREE = 1,
     EST_TREE_SHADOW = 2
-};
-
-enum UIElements
-{
-    UI_ELEMENT_UNKNOWN = 0,
-    UI_ELEMENT_RESOURCE_PANEL = 1,
-    UI_ELEMENT_INFO_PANEL
 };
 
 enum ResourceType : uint8_t

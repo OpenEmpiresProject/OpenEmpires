@@ -98,7 +98,7 @@ void Simulator::onTickStart()
 
 void Simulator::onTickEnd()
 {
-    CompDirty::globalDirtyVersion++;
+    // CompDirty::globalDirtyVersion++;
     m_frame++;
     // TODO: Use a better method to find the displaying player
     auto player = ServiceRegistry::getInstance().getService<PlayerManager>()->getViewingPlayer();
@@ -162,6 +162,8 @@ void Simulator::updateGraphicComponents()
         gc.entitySubType = entityInfo.entitySubType;
         gc.entityType = entityInfo.entityType;
         gc.isDestroyed = entityInfo.isDestroyed;
+        gc.isEnabled = entityInfo.isEnabled;
+        // TODO: add isHidden concept as well
         gc.entityID = entityInfo.entityId;
 
         if (state->hasComponent<CompSelectible>(entity))
@@ -189,11 +191,6 @@ void Simulator::updateGraphicComponents()
             auto action = state->getComponent<CompAction>(entity);
             gc.action = action.action;
         }
-        else if (state->hasComponent<CompUIElement>(entity))
-        {
-            auto element = state->getComponent<CompUIElement>(entity);
-            gc.action = element.id;
-        }
 
         if (state->hasComponent<CompBuilding>(entity))
         {
@@ -212,12 +209,24 @@ void Simulator::updateGraphicComponents()
             gc.positionInScreenUnits = {transform.position.x, transform.position.y};
 
             auto ui = state->getComponent<CompUIElement>(entity);
+            gc.isEnabled = ui.isVisible;
+
             if (ui.type == UIRenderingType::TEXT)
             {
                 GraphicAddon addon;
                 addon.type = GraphicAddon::Type::TEXT;
                 addon.data = GraphicAddon::Text{.text = ui.text, .color = ui.color};
                 gc.addons = {addon};
+            }
+            else if (ui.type == UIRenderingType::TEXTURE)
+            {
+                if (ui.backgroundImage != 0)
+                {
+                    auto backgroundImageId = GraphicsID::fromHash(ui.backgroundImage);
+                    gc.entityType = backgroundImageId.entityType;
+                    gc.entitySubType = backgroundImageId.entitySubType;
+                    gc.variation = backgroundImageId.variation;
+                }
             }
         }
 

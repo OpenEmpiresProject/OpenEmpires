@@ -128,7 +128,7 @@ ZOrderStrategyWithSlicing::~ZOrderStrategyWithSlicing()
 void ZOrderStrategyWithSlicing::addRenderingCompToZBuckets(CompRendering* rc,
                                                            const Coordinates& coordinates)
 {
-    if (rc->isDestroyed)
+    if (rc->isDestroyed || rc->isEnabled == false)
     {
         return;
     }

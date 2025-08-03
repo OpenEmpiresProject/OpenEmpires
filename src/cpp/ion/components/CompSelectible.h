@@ -3,6 +3,7 @@
 
 #include "Feet.h"
 #include "GraphicAddon.h"
+#include "Property.h"
 #include "Rect.h"
 #include "utils/Size.h"
 #include "utils/Types.h"
@@ -11,6 +12,9 @@ namespace ion
 {
 class CompSelectible
 {
+  public:
+    Property<ImageId> icon;
+
   public:
     // NOTE: Rect's x, y doesn't represent the position of the rect, but only the local
     // anchor. Bounding box alone doesn't have a location concept anyhow, location comes

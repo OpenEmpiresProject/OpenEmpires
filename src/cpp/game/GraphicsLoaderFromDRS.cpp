@@ -37,8 +37,7 @@ void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
                                             GraphicsRegistry& graphicsRegistry,
                                             AtlasGenerator& atlasGenerator)
 {
-    registerDummyTexture(EntityTypes::ET_UI_ELEMENT, EntitySubTypes::UI_LABEL, graphicsRegistry);
-    registerDummyTexture(EntityTypes::ET_UI_ELEMENT, EntitySubTypes::UI_BUTTON, graphicsRegistry);
+    registerDummyTexture(EntityTypes::ET_UI_ELEMENT, EntitySubTypes::EST_DEFAULT, graphicsRegistry);
 }
 
 void GraphicsLoaderFromDRS::loadGraphics(SDL_Renderer* renderer,
@@ -247,7 +246,7 @@ void loadSLP(shared_ptr<DRSFile> drs,
         }
         else
         {
-            for (size_t i = 0; i < 100; i++)
+            for (size_t i = 0; i < 1024; i++)
             {
                 id.variation = i;
                 if (!graphicsRegistry.hasTexture(id))

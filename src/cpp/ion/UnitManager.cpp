@@ -173,6 +173,16 @@ void UnitManager::addEntitiesToSelection(const std::vector<uint32_t>& selectedEn
             select.isSelected = true;
             dirty.markDirty(entity);
         }
+        else if (gameState->hasComponent<CompResource>(entity)) [[likely]]
+        {
+            auto [dirty, select] = ServiceRegistry::getInstance()
+                                       .getService<GameState>()
+                                       ->getComponents<CompDirty, CompSelectible>(entity);
+
+            selection.selectedEntities.push_back(entity);
+            select.isSelected = true;
+            dirty.markDirty(entity);
+        }
         else [[unlikely]]
         {
             spdlog::error("Failed to select entity {}, entity is not selectible", entity);

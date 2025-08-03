@@ -90,6 +90,7 @@ class EntityDefinitionLoader : public ion::EntityFactory, public ion::PropertyIn
                                              pybind11::handle entityDefinition);
     static ComponentType createCompResource(pybind11::object module,
                                             pybind11::handle entityDefinition);
+    ComponentType createCompSelectible(pybind11::object module, pybind11::handle entityDefinition);
     static ComponentType createCompBuilding(pybind11::object module,
                                             pybind11::handle entityDefinition);
     uint32_t createEntity(uint32_t entityType) override;
@@ -113,11 +114,16 @@ class EntityDefinitionLoader : public ion::EntityFactory, public ion::PropertyIn
     void addComponentsForUnit(uint32_t entityType);
     void addComponentsForBuilding(uint32_t entityType);
     void addComponentIfNotNull(uint32_t entityType, const ComponentType& comp);
-    void updateDRSData(uint32_t entityType, pybind11::handle entityDefinition);
-    void updateDRSData(uint32_t entityType,
-                       uint32_t entitySubType,
-                       uint32_t action,
-                       pybind11::handle entityDefinition);
+    void loadDRSForAnimations(uint32_t entityType,
+                              uint32_t entitySubType,
+                              pybind11::handle entityDefinition);
+    void loadDRSForStillImage(uint32_t entityType,
+                              uint32_t entitySubType,
+                              pybind11::handle entityDefinition);
+    void loadDRSForIcon(uint32_t entityType,
+                        uint32_t entitySubType,
+                        pybind11::handle entityDefinition);
+    int64_t readIconDef(uint32_t entitySubType, pybind11::handle entityDefinition);
     ConstructionSiteData getSite(const std::string& sizeStr);
     void setSite(const std::string& sizeStr, const std::map<int, int>& progressToFrames);
     void attachedConstructionSites(uint32_t entityType, const std::string& sizeStr);

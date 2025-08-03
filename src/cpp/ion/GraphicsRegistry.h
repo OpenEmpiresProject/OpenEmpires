@@ -16,18 +16,26 @@ class GraphicsID
     // Bit layout
     // 63            49 48         39 38        29 28     24 23       19 18         9 8      5 4      0
     //  +---------------+-------------+-------------+---------+-----------+-----------+--------+--------+
-    //  |  entityType   | entitySubTp |   action    | frame   | direction | variation |playerId|reserved|
+    //  |  entityType   | entitySubTp |   action    | frame   | direction | variation
     //  |   (15 bits)   |  (10 bits)  |  (10 bits)  | (5 bits)|  (4 bits) | (10 bits) |(4 bits)|(5 bits)|
     //  +---------------+-------------+-------------+---------+-----------+-----------+--------+--------+
 
-    int entityType = 0;                    // 32,768 values
-    int entitySubType = 0;                 // 1,024 values
-    int action = 0;                        // 1,024 values
+    int entityType = 0;    // 32,768 values
+    int entitySubType = 0; // 1,024 values
+    union                  // 1,024 values
+    {
+        int action = 0;
+        int uiElement;
+    };
     int frame = 0;                         // 32 values
     Direction direction = Direction::NONE; // 16 values
-    int variation = 0;                     // 1,024 values
-    int playerId = 0;                      // 16 values
-    int reserved = 0;                      // 32 values
+    union                                  // 1,024 values
+    {
+        int variation = 0;
+        int imageIndex;
+    };
+    int playerId = 0; // 16 values
+    int reserved = 0; // 32 values
 
     GraphicsID getBaseId() const
     {

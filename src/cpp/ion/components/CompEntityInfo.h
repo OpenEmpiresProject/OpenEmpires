@@ -14,6 +14,7 @@ class CompEntityInfo
     int entitySubType = 0;
     int variation = 0;
     bool isDestroyed = false;
+    bool isEnabled = true;
 
     CompEntityInfo(int entityType) : entityType(entityType)
     {

@@ -9,9 +9,9 @@ namespace ion
 {
 enum class UIRenderingType
 {
+    NONE,
     TEXT,
-    TEXTURE,
-    RECT
+    TEXTURE
 };
 
 class CompUIElement
@@ -22,6 +22,8 @@ class CompUIElement
     Rect<int> rect;
     Color color;
     uint32_t id = 0;
+    int64_t backgroundImage = 0;
+    bool isVisible = true;
 };
 } // namespace ion
 

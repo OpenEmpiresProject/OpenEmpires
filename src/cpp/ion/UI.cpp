@@ -15,12 +15,10 @@
 using namespace ion;
 using namespace ion::ui;
 
-Element::Element(const GraphicsID& graphicsId, Ref<Element> parent)
+Widget::Widget(Ref<Widget> parent)
     : id(ServiceRegistry::getInstance().getService<GameState>()->createEntity()), parent(parent)
 {
-    CompUIElement compUI;
-    compUI.id = graphicsId.action;
-    ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, compUI);
+    ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, CompUIElement());
     ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, CompTransform());
 
     CompGraphics graphics;
@@ -30,13 +28,12 @@ Element::Element(const GraphicsID& graphicsId, Ref<Element> parent)
     ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, CompRendering());
     ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, CompDirty());
 
-    CompEntityInfo entityInfo(graphicsId.entityType, graphicsId.entitySubType,
-                              graphicsId.variation);
+    CompEntityInfo entityInfo(s_entityType, s_entitySubType, 0);
     entityInfo.entityId = id;
     ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, entityInfo);
 }
 
-void Element::feedInput(const Event& e)
+void Widget::feedInput(const Event& e)
 {
     if (visible && enabled)
     {
@@ -56,21 +53,30 @@ void Element::feedInput(const Event& e)
     }
 }
 
-void Element::updateGraphicCommand()
+void Widget::updateGraphicCommand()
 {
-    auto coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
-    auto [ui, transform, info, dirty] =
-        ServiceRegistry::getInstance()
-            .getService<GameState>()
-            ->getComponents<CompUIElement, CompTransform, CompEntityInfo, CompDirty>(id);
-    auto pixelPos = getAbsoluteRect().position();
-    // HACK: We are hacking transform's position to carry UI element positions as well.
-    // But it is usually meant to carry positions in Feet.
-    transform.position = {pixelPos.x, pixelPos.y};
-    ui.rect = getAbsoluteRect();
-    ui.color = background;
-    ui.type = UIRenderingType::RECT;
-    dirty.markDirty(id); // TODO: not optimal
+    if (dirty)
+    {
+        auto coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
+        auto [ui, transform, info, dirty] =
+            ServiceRegistry::getInstance()
+                .getService<GameState>()
+                ->getComponents<CompUIElement, CompTransform, CompEntityInfo, CompDirty>(id);
+        auto pixelPos = getAbsoluteRect().position();
+        // HACK: We are hacking transform's position to carry UI element positions as well.
+        // But it is usually meant to carry positions in Feet.
+        transform.position = {pixelPos.x, pixelPos.y};
+        ui.rect = getAbsoluteRect();
+        ui.backgroundImage = backgroundImage;
+        ui.isVisible = visible;
+        if (backgroundImage != 0)
+            ui.type = UIRenderingType::TEXTURE;
+        else
+            ui.type = UIRenderingType::NONE;
+
+        dirty.markDirty(id); // TODO: not optimal
+        this->dirty = false;
+    }
 
     for (auto& child : children)
     {
@@ -78,7 +84,7 @@ void Element::updateGraphicCommand()
     }
 }
 
-Rect<int> Element::getAbsoluteRect() const
+Rect<int> Widget::getAbsoluteRect() const
 {
     auto negativeTranslated = rect;
 
@@ -106,26 +112,60 @@ Rect<int> Element::getAbsoluteRect() const
     return negativeTranslated;
 }
 
-bool Element::inside(const Vec2& pos) const
+bool Widget::inside(const Vec2& pos) const
 {
     return getAbsoluteRect().contains(pos);
 }
 
-Label::Label(const GraphicsID& id, Ref<Element> parent) : Element(id, parent)
+Ref<Widget> Widget::findChild(const std::string& name) const
+{
+    for (auto& child : children)
+    {
+        if (child->name == name)
+        {
+            return child;
+        }
+        else
+        {
+            auto match = child->findChild(name);
+            if (match != nullptr)
+                return match;
+        }
+    }
+    return nullptr;
+}
+
+Label::Label(Ref<Widget> parent) : Widget(parent)
 {
 }
 
 void Label::updateGraphicCommand()
 {
-    Element::updateGraphicCommand();
-
+    /*
+     *   Approach: Determine whether the label is dirty by checking previous value (from Component)
+     *   and new value (from UI element). Then perform common operations in Widget. If earlier, it
+     *   was determined that the label is dirty, Widget::updateGraphicCommand will update the
+     *   ECS and mark the entity as dirty, so that Simulator would pick it up to send graphic
+     *   instructions.
+     *   NOTE: Override ui.type has to be done after Widget::updateGraphicCommand, since Widget
+     *   only knows to draw rectangles.
+     *
+     */
     auto& ui =
         ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompUIElement>(id);
+    // if (ui.text != text || ui.backgroundImage != backgroundImage)
+    //     dirty = true;
+
+    Widget::updateGraphicCommand(); //  This will reset dirty flag
+
     ui.text = text;
-    ui.type = UIRenderingType::TEXT;
+    ui.color = textColor;
+
+    if (ui.text.empty() == false)
+        ui.type = UIRenderingType::TEXT;
 }
 
-Button::Button(const GraphicsID& id, Ref<Element> parent) : Element(id, parent)
+Button::Button(Ref<Widget> parent) : Widget(parent)
 {
 }
 
@@ -145,6 +185,39 @@ void Button::feedInput(const Event& e)
     }
 }
 
-Window::Window(const GraphicsID& id) : Element(id, nullptr)
+Window::Window() : Widget(nullptr)
 {
+}
+
+Layout::Layout(Ref<Widget> parent) : Widget(parent)
+{
+}
+
+void Layout::updateGraphicCommand()
+{
+    if (direction == LayoutDirection::Horizontal)
+    {
+        int newX = margin;
+        for (auto& child : children)
+        {
+            auto& rect = child->getRect();
+            rect.x = newX;
+            rect.y = margin;
+            child->setRect(rect);
+            newX += rect.w + spacing;
+        }
+    }
+    else if (direction == LayoutDirection::Vertical)
+    {
+        int newY = margin;
+        for (auto& child : children)
+        {
+            auto& rect = child->getRect();
+            rect.y = newY;
+            rect.x = margin;
+            child->setRect(rect);
+            newY += rect.h + spacing;
+        }
+    }
+    Widget::updateGraphicCommand();
 }

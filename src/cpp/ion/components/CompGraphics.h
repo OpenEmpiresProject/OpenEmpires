@@ -71,6 +71,7 @@ class CompGraphics : public GraphicsID
     Color shading;
     Size landSize{0, 0};
     bool isDestroyed = false;
+    bool isEnabled = true;
     GraphicLayer layer = GraphicLayer::NONE;
 
     CompGraphics()

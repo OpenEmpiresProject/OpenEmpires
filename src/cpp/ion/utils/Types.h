@@ -25,6 +25,7 @@ struct GenericTag
 {
 };
 using Vec2 = Vec2Base<float, GenericTag>;
+using ImageId = int64_t;
 
 enum class WorldSizeType
 {
