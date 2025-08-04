@@ -6,7 +6,6 @@ namespace ion
 class CompAction
 {
   public:
-    // TODO: Temp
     int action = 0;
 
     CompAction(int action) : action(action)

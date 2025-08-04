@@ -8,14 +8,6 @@
 
 using namespace ion;
 
-CommandCenter::CommandCenter()
-{
-}
-
-CommandCenter::~CommandCenter()
-{
-}
-
 void CommandCenter::onInit(EventLoop* eventLoop)
 {
 }

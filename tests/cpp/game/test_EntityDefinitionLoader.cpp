@@ -67,6 +67,12 @@ class EntityDefinitionLoaderExposure : public EntityDefinitionLoader
     {
         EntityDefinitionLoader::setDRSLoaderFunc(func);
     }
+
+    void setBoundingBoxReadFunc(
+        std::function<ion::Rect<int>(ion::Ref<drs::DRSFile>, uint32_t)> func)
+    {
+        EntityDefinitionLoader::setBoundingBoxReadFunc(func);
+    }
 };
 
 py::dict createAnimationEntry(std::string name, int frameCount, int speed, bool repeatable)
@@ -306,6 +312,8 @@ all_buildings= [
     siteId.entitySubType = 2;
     loader.setDRSData(siteId.hash(), EntityDefinitionLoader::EntityDRSData{.slpId = 111});
     loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
+    loader.setBoundingBoxReadFunc([](ion::Ref<drs::DRSFile>, uint32_t) -> ion::Rect<int>
+                                  { return ion::Rect<int>(); });
 
     // Act
     loader.loadBuildings(module);
@@ -358,8 +366,7 @@ mill = SingleResourceDropOffPoint(
     EntityDefinitionLoaderExposure loader;
     loader.setSite("medium", std::map<int, int>());
     ComponentType result = loader.createCompBuilding(module, millDef);
-
-    ASSERT_TRUE(std::get<CompBuilding>(result).canDropOff(ResourceType::FOOD));
+    ASSERT_TRUE(std::get<CompBuilding>(result).acceptResource(ResourceType::FOOD));
 }
 
 TEST(EntityDefinitionLoaderTest, LoadAllConstructionSites)
@@ -398,6 +405,8 @@ all_construction_sites= [
 
     EntityDefinitionLoaderExposure loader;
     loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
+    loader.setBoundingBoxReadFunc([](ion::Ref<drs::DRSFile>, uint32_t) -> ion::Rect<int>
+                                  { return ion::Rect<int>(); });
     loader.loadConstructionSites(module);
 
     {
@@ -479,6 +488,8 @@ all_construction_sites= [
 
     EntityDefinitionLoaderExposure loader;
     loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
+    loader.setBoundingBoxReadFunc([](ion::Ref<drs::DRSFile>, uint32_t) -> ion::Rect<int>
+                                  { return ion::Rect<int>(); });
     loader.loadConstructionSites(module);
     loader.loadBuildings(module);
 
@@ -520,6 +531,8 @@ all_tilesets = [
 
     EntityDefinitionLoaderExposure loader;
     loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
+    loader.setBoundingBoxReadFunc([](ion::Ref<drs::DRSFile>, uint32_t) -> ion::Rect<int>
+                                  { return ion::Rect<int>(); });
 
     // Act
     loader.loadTileSets(module);
@@ -565,6 +578,8 @@ all_natural_resources= [
     // Act
     EntityDefinitionLoaderExposure loader;
     loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
+    loader.setBoundingBoxReadFunc([](ion::Ref<drs::DRSFile>, uint32_t) -> ion::Rect<int>
+                                  { return ion::Rect<int>(); });
     loader.loadNaturalResources(module);
 
     // Assert
@@ -600,6 +615,8 @@ all_ui_elements = [
     // Act
     EntityDefinitionLoaderExposure loader;
     loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
+    loader.setBoundingBoxReadFunc([](ion::Ref<drs::DRSFile>, uint32_t) -> ion::Rect<int>
+                                  { return ion::Rect<int>(); });
     loader.loadUIElements(module);
 
     // Assert

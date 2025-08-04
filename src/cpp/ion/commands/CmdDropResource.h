@@ -30,10 +30,10 @@ class CmdDropResource : public Command
     uint8_t resourceType = Constants::RESOURCE_TYPE_NONE;
 
   private:
-    uint32_t dropOffEntity = entt::null;
-    Ref<Player> player;
-    CompResourceGatherer* gatherer = nullptr;
+    uint32_t m_dropOffEntity = entt::null;
+    CompResourceGatherer* m_gatherer = nullptr;
 
+  private:
     std::string toString() const override
     {
         return "drop-resource";
@@ -52,9 +52,7 @@ class CmdDropResource : public Command
 
     void onQueue() override
     {
-        auto& playerComp = m_gameState->getComponent<CompPlayer>(m_entityID);
-        player = playerComp.player;
-        gatherer = &(m_gameState->getComponent<CompResourceGatherer>(m_entityID));
+        m_gatherer = &(m_gameState->getComponent<CompResourceGatherer>(m_entityID));
     }
 
     /**
@@ -95,8 +93,7 @@ class CmdDropResource : public Command
         auto [action, animation, dirty] =
             m_gameState->getComponents<CompAction, CompAnimation, CompDirty>(m_entityID);
 
-        action.action = gatherer->getCarryingAction(resourceType);
-        auto& actionAnimation = animation.animations[action.action];
+        action.action = m_gatherer->getCarryingAction(resourceType);
         animation.frame = 0;
         dirty.markDirty(m_entityID);
     }
@@ -111,17 +108,17 @@ class CmdDropResource : public Command
      */
     void goToDropOffBuilding(std::list<Command*>& subCommands)
     {
-        if (dropOffEntity != entt::null)
+        if (m_dropOffEntity != entt::null)
         {
-            auto& dropOff = m_gameState->getComponent<CompTransform>(dropOffEntity);
+            const auto& dropOff = m_gameState->getComponent<CompTransform>(m_dropOffEntity);
 
             spdlog::debug("Target {} at {} is not close enough to drop-off, moving...",
-                          dropOffEntity, dropOff.position.toString());
-            auto move = ObjectPool<CmdMove>::acquire();
-            move->targetEntity = dropOffEntity;
-            move->actionOverride = gatherer->getCarryingAction(resourceType);
-            move->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
-            subCommands.push_back(move);
+                          m_dropOffEntity, dropOff.position.toString());
+            auto moveCmd = ObjectPool<CmdMove>::acquire();
+            moveCmd->targetEntity = m_dropOffEntity;
+            moveCmd->actionOverride = m_gatherer->getCarryingAction(resourceType);
+            moveCmd->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
+            subCommands.push_back(moveCmd);
         }
     }
 
@@ -135,22 +132,20 @@ class CmdDropResource : public Command
      *
      * @return true if the drop-off entity is close enough; false otherwise.
      */
-    bool isDropOffCloseEnough()
+    bool isDropOffCloseEnough() const
     {
-        if (dropOffEntity == entt::null)
-            return false;
+        if (m_dropOffEntity != entt::null)
+        {
+            const auto& transformMy = m_gameState->getComponent<CompTransform>(m_entityID);
+            auto [transform, building] =
+                m_gameState->getComponents<CompTransform, CompBuilding>(m_dropOffEntity);
+            auto pos = transformMy.position;
+            auto radiusSq = transformMy.goalRadiusSquared;
+            auto rect = building.getLandInFeetRect(transform.position);
 
-        auto& transformMy = m_gameState->getComponent<CompTransform>(m_entityID);
-        auto [transform, building] =
-            m_gameState->getComponents<CompTransform, CompBuilding>(dropOffEntity);
-        auto pos = transformMy.position;
-        auto radiusSq = transformMy.goalRadiusSquared;
-        auto rect = building.getLandInFeetRect(transform.position);
-
-        spdlog::debug("building rect {}, unit pos {}, unit radiusSq {}", rect.toString(),
-                      pos.toString(), radiusSq);
-
-        return overlaps(pos, radiusSq, rect);
+            return overlaps(pos, radiusSq, rect);
+        }
+        return false;
     }
 
     /**
@@ -162,19 +157,20 @@ class CmdDropResource : public Command
      *
      * @return true if the drop-off entity is found and valid; false otherwise.
      */
-    bool isDropOffFoundAndValid()
+    bool isDropOffFoundAndValid() const
     {
-        if (dropOffEntity != entt::null)
+        if (m_dropOffEntity != entt::null)
         {
-            auto& info = m_gameState->getComponent<CompEntityInfo>(dropOffEntity);
-            return !info.isDestroyed && player->isBuildingOwned(dropOffEntity);
+            const auto& info = m_gameState->getComponent<CompEntityInfo>(m_dropOffEntity);
+            return !info.isDestroyed &&
+                   m_components->player.player->isBuildingOwned(m_dropOffEntity);
         }
         return false;
     }
 
     /**
      * @brief Finds the closest valid drop-off building for the current unit and updates
-     * dropOffEntity.
+     * m_dropOffEntity.
      *
      * This function searches through all buildings owned by the player to find the nearest building
      * that can accept the specified resource type as a drop-off point. It calculates the squared
@@ -190,30 +186,30 @@ class CmdDropResource : public Command
         if (isDropOffFoundAndValid())
             return;
 
-        dropOffEntity = entt::null;
-        auto& unitTransform = m_gameState->getComponent<CompTransform>(m_entityID);
+        m_dropOffEntity = entt::null;
         float currentClosestDistance = std::numeric_limits<float>::max();
 
-        for (auto buildingEntity : player->getMyBuildings())
+        for (auto buildingEntity : m_components->player.player->getMyBuildings())
         {
             auto [transform, building] =
                 m_gameState->getComponents<CompTransform, CompBuilding>(buildingEntity);
 
-            if (building.canDropOff(resourceType))
+            if (building.acceptResource(resourceType))
             {
-                auto distance = transform.position.distanceSquared(unitTransform.position);
+                auto distance =
+                    transform.position.distanceSquared(m_components->transform.position);
 
                 if (distance < currentClosestDistance)
                 {
                     currentClosestDistance = distance;
-                    dropOffEntity = buildingEntity;
+                    m_dropOffEntity = buildingEntity;
                 }
             }
         }
 
-        if (dropOffEntity != entt::null)
+        if (m_dropOffEntity != entt::null)
         {
-            spdlog::debug("Selected {} at distance sq {} as the drop off building", dropOffEntity,
+            spdlog::debug("Selected {} at distance sq {} as the drop off building", m_dropOffEntity,
                           currentClosestDistance);
         }
         // Not being able to find a drop-off point is a valid scenario
@@ -228,10 +224,10 @@ class CmdDropResource : public Command
      */
     void dropResource()
     {
-        spdlog::debug("Resource {} of type {} is dropping off...", gatherer->gatheredAmount,
+        spdlog::debug("Resource {} of type {} is dropping off...", m_gatherer->gatheredAmount,
                       resourceType);
-        player->grantResource(resourceType, gatherer->gatheredAmount);
-        gatherer->gatheredAmount = 0;
+        m_components->player.player->grantResource(resourceType, m_gatherer->gatheredAmount);
+        m_gatherer->gatheredAmount = 0;
     }
 
     /**
@@ -248,15 +244,15 @@ class CmdDropResource : public Command
      * @param buildingRect The rectangle representing the building's area.
      * @return true if the circle overlaps or touches the rectangle, false otherwise.
      */
-    bool overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& buildingRect)
+    static bool overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& buildingRect)
     {
-        float x_min = buildingRect.x;
-        float x_max = buildingRect.x + buildingRect.w;
-        float y_min = buildingRect.y;
-        float y_max = buildingRect.y + buildingRect.h;
+        float xMin = buildingRect.x;
+        float xMax = buildingRect.x + buildingRect.w;
+        float yMin = buildingRect.y;
+        float yMax = buildingRect.y + buildingRect.h;
 
-        float closestX = std::clamp(unitPos.x, x_min, x_max);
-        float closestY = std::clamp(unitPos.y, y_min, y_max);
+        float closestX = std::clamp(unitPos.x, xMin, xMax);
+        float closestY = std::clamp(unitPos.y, yMin, yMax);
 
         float dx = unitPos.x - closestX;
         float dy = unitPos.y - closestY;

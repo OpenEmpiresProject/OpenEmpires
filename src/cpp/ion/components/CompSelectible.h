@@ -20,9 +20,7 @@ class CompSelectible
     // anchor. Bounding box alone doesn't have a location concept anyhow, location comes
     // from the tranform component
     Rect<int> boundingBoxes[static_cast<int>(Direction::NONE) + 1];
-
     GraphicAddon selectionIndicator;
-
     bool isSelected = false;
 
     const Rect<int>& getBoundingBox(Direction direction) const

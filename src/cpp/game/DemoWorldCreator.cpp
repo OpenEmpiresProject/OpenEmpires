@@ -43,18 +43,10 @@ using namespace ion;
 using namespace drs;
 using namespace std;
 
-// TODO: This is a duplication of GraphicsLoaderFromDRS. Need to refactor to consolidate
-shared_ptr<DRSFile> loadDRSFile(const string& drsFilename);
-// frameId is 1 based but not 0 based
-Rect<int> getBoundingBox(shared_ptr<DRSFile> drs, uint32_t slpId, uint32_t frameId);
-
 DemoWorldCreator::DemoWorldCreator(std::stop_token* stopToken,
                                    std::shared_ptr<GameSettings> settings,
-                                   GraphicsRegistry& graphicsRegistry,
-                                   std::shared_ptr<Renderer> renderer,
                                    bool populateWorld)
-    : SubSystem(stopToken), m_settings(std::move(settings)), m_graphicsRegistry(graphicsRegistry),
-      m_renderer(std::move(renderer)), m_populateWorld(populateWorld)
+    : SubSystem(stopToken), m_settings(std::move(settings)), m_populateWorld(populateWorld)
 {
 }
 
@@ -66,8 +58,6 @@ bool DemoWorldCreator::isReady() const
 void DemoWorldCreator::loadEntities()
 {
     spdlog::info("Loading entities...");
-
-    m_drs = loadDRSFile("assets/graphics.drs");
 
     auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
     auto player = playerManager->createPlayer();
@@ -169,7 +159,6 @@ void DemoWorldCreator::createTree(TileMap& map, uint32_t x, uint32_t y)
 
     transform.position = Feet(x * 256 + 128, y * 256 + 128);
     info.variation = variation;
-    selectible.boundingBoxes[static_cast<int>(Direction::NONE)] = getBoundingBox(m_drs, 1254, 1);
 
     map.addEntity(MapLayerType::STATIC, Tile(x, y), tree);
 
@@ -198,7 +187,6 @@ void DemoWorldCreator::createStoneOrGold(EntityTypes entityType,
 
     transform.position = Feet(x * 256 + 128, y * 256 + 128);
     info.variation = rand() % 7;
-    selectible.boundingBoxes[static_cast<int>(Direction::NONE)] = getBoundingBox(m_drs, 1034, 1);
 
     gameMap.addEntity(MapLayerType::STATIC, Tile(x, y), entity);
 }
@@ -214,8 +202,6 @@ void DemoWorldCreator::createVillager(Ref<ion::Player> player, const Tile& tileP
 
     transform.position = Feet(tilePos.x * 256 + 128, tilePos.x * 256 + 50);
     transform.face(Direction::SOUTH);
-    auto box = getBoundingBox(m_drs, 1388, 1);
-    selectible.boundingBoxes[static_cast<int>(Direction::NONE)] = box;
     selectible.selectionIndicator = {GraphicAddon::Type::ISO_CIRCLE,
                                      GraphicAddon::IsoCircle{10, Vec2(0, 0)}};
     playerComp.player = player;
@@ -403,12 +389,4 @@ void DemoWorldCreator::init()
 void DemoWorldCreator::shutdown()
 {
     // Cleanup code for resource loading
-}
-
-Rect<int> getBoundingBox(shared_ptr<DRSFile> drs, uint32_t slpId, uint32_t frameId)
-{
-    auto frameInfos = drs->getSLPFile(slpId).getFrameInfos();
-    auto frame = frameInfos[frameId - 1];
-    Rect<int> box(frame.hotspot_x, frame.hotspot_y, frame.width, frame.height);
-    return box;
 }

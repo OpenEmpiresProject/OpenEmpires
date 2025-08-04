@@ -43,19 +43,19 @@ class CompTransform
     CompTransform(const CompTransform&) = default;
     CompTransform& operator=(const CompTransform&) = default;
 
-    Feet getVelocityVector()
+    Feet getVelocityVector() const
     {
         if (!hasRotation || speed == 0)
-            return Feet(0, 0);
+            return {0, 0};
 
-        float angleDeg = static_cast<float>(rotation);
-        float angleRad = toRadians(angleDeg);
+        auto angleDeg = static_cast<float>(rotation);
+        auto angleRad = toRadians(angleDeg);
 
         // 0 degrees = North = -Y
         float dx = std::sin(angleRad);
         float dy = -std::cos(angleRad); // flipped to make 0° point upward (-Y)
 
-        return Feet(dx * speed, dy * speed);
+        return {dx * speed, dy * speed};
     }
 
     void face(const Feet& target)
@@ -94,10 +94,7 @@ class CompTransform
             int isoRotation = static_cast<int>(std::round((rotation + 45) / 45.0)) % 8;
             return static_cast<Direction>(isoRotation);
         }
-        else
-        {
-            return Direction::NONE;
-        }
+        return Direction::NONE;
     }
 
     void face(Direction direction)
@@ -111,16 +108,13 @@ class CompTransform
         {
             return static_cast<Direction>((rotation % 360) / 45);
         }
-        else
-        {
-            return Direction::NONE;
-        }
+        return Direction::NONE;
     }
 
     Tile getTilePosition() const
     {
-        return Tile(static_cast<int>(position.x / Constants::FEET_PER_TILE),
-                    static_cast<int>(position.y / Constants::FEET_PER_TILE));
+        return {static_cast<int>(position.x / Constants::FEET_PER_TILE),
+                static_cast<int>(position.y / Constants::FEET_PER_TILE)};
     }
 };
 } // namespace ion

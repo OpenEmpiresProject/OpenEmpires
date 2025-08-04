@@ -134,8 +134,8 @@ class Game
         eventLoop->registerListener(std::move(unitManager));
         eventLoop->registerListener(std::move(playerActionResolver));
 
-        auto resourceLoader = std::make_shared<DemoWorldCreator>(
-            &stopToken, settings, graphicsRegistry, renderer, params.populateWorld);
+        auto resourceLoader =
+            std::make_shared<DemoWorldCreator>(&stopToken, settings, params.populateWorld);
 
         ion::SubSystemRegistry::getInstance().registerSubSystem("Renderer", std::move(renderer));
         ion::SubSystemRegistry::getInstance().registerSubSystem("DemoWorldCreator",

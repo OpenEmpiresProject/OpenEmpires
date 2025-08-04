@@ -21,8 +21,6 @@ class DemoWorldCreator : public ion::SubSystem, public ion::PropertyInitializer
   public:
     DemoWorldCreator(std::stop_token* stopToken,
                      std::shared_ptr<ion::GameSettings> settings,
-                     ion::GraphicsRegistry& graphicsRegistry,
-                     std::shared_ptr<ion::Renderer> renderer,
                      bool populateWorld);
     ~DemoWorldCreator() = default;
 
@@ -49,9 +47,6 @@ class DemoWorldCreator : public ion::SubSystem, public ion::PropertyInitializer
     void createVillager(ion::Ref<ion::Player> player, const ion::Tile& pos);
 
     std::shared_ptr<ion::GameSettings> m_settings;
-    ion::GraphicsRegistry& m_graphicsRegistry;
-    std::shared_ptr<ion::Renderer> m_renderer;
-    std::shared_ptr<drs::DRSFile> m_drs;
     bool m_populateWorld = false;
     bool m_isReady = false;
 };

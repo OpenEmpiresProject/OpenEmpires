@@ -25,31 +25,26 @@ class CmdMove : public Command
     UnitAction actionOverride = UnitAction::MOVE;
 
   private:
-    std::list<Feet> path;
-    Ref<Coordinates> coordinates;
-    Ref<Player> player;
-    Feet nextIntermediateGoal = Feet::null;
+    std::list<Feet> m_path;
+    Ref<Coordinates> m_coordinates;
+    Feet m_nextIntermediateGoal = Feet::null;
 
+  private:
     void onStart() override;
     void onQueue() override;
     bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) override;
     std::string toString() const override;
     void destroy() override;
 
-    void animate(CompAction& action,
-                 CompAnimation& animation,
-                 CompDirty& dirty,
-                 int deltaTimeMs,
-                 uint32_t entityId);
+    void animate(int deltaTimeMs);
 
-    bool move(CompTransform& transform, int deltaTimeMs);
-    std::list<Feet> findPath(const Feet& endPosInFeet, uint32_t entity);
-    Feet resolveCollision(CompTransform& transform);
-    Feet avoidCollision(CompTransform& transform);
+    bool move(int deltaTimeMs);
+    std::list<Feet> findPath(const Feet& endPosInFeet);
+    Feet resolveCollision();
+    Feet avoidCollision();
     double distancePointToSegment(const Feet& p0, const Feet& p1, const Feet& q) const;
-    Feet calculateNewPosition(CompTransform& transform, int timeMs);
-    void setPosition(CompTransform& transform, const Feet& newPosFeet);
-    bool hasLineOfSight(const Feet& target);
+    void setPosition(const Feet& newPosFeet);
+    bool hasLineOfSight(const Feet& target) const;
     void refinePath();
     uint32_t intersectsUnits(uint32_t self,
                              CompTransform& transform,
@@ -61,9 +56,9 @@ class CmdMove : public Command
                               float radius) const;
     Feet findClosestEdgeOfStaticEntity(uint32_t staticEntity,
                                        const Feet& fromPos,
-                                       const Rect<float>& land);
-    bool overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& buildingRect);
-    bool isTargetCloseEnough();
+                                       const Rect<float>& land) const;
+    bool overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& buildingRect) const;
+    bool isTargetCloseEnough() const;
 };
 } // namespace ion
 

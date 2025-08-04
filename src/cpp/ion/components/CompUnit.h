@@ -15,6 +15,8 @@ class CompUnit
 {
   public:
     Property<uint32_t> lineOfSight; // In Feet
+
+  public:
     CommandQueueType commandQueue;
 };
 

@@ -14,6 +14,8 @@
 #include "utils/Logger.h"
 #include "utils/ObjectPool.h"
 
+#include <algorithm>
+
 using namespace ion;
 
 void CmdBuild::onStart()
@@ -22,7 +24,7 @@ void CmdBuild::onStart()
 
 void CmdBuild::onQueue()
 {
-    personalBuildingProgress = 0;
+    m_constructionContribution = 0;
 }
 
 /**
@@ -133,17 +135,14 @@ void CmdBuild::build(int deltaTimeMs)
     auto [building, dirty] = m_gameState->getComponents<CompBuilding, CompDirty>(target);
     auto& builder = m_gameState->getComponent<CompBuilder>(m_entityID);
 
-    personalBuildingProgress += float(builder.buildSpeed) * deltaTimeMs / 1000.0f;
-    uint32_t rounded = personalBuildingProgress;
-    personalBuildingProgress -= rounded;
+    m_constructionContribution += float(builder.buildSpeed) * deltaTimeMs / 1000.0f;
+    uint32_t roundedContribution = m_constructionContribution;
+    m_constructionContribution -= roundedContribution;
 
-    if (rounded != 0)
+    if (roundedContribution != 0)
     {
-        building.constructionProgress += rounded;
-        if (building.constructionProgress >= 100)
-        {
-            building.constructionProgress = 100;
-        }
+        building.constructionProgress += roundedContribution;
+        building.constructionProgress = std::min(building.constructionProgress, 100u);
 
         if (building.constructionProgress % 10 == 0)
             dirty.markDirty(target);
@@ -162,14 +161,14 @@ void CmdBuild::moveCloser(std::list<Command*>& subCommands)
 {
     debug_assert(target != entt::null, "Proposed entity to build is null");
 
-    auto targetPosition = m_gameState->getComponent<CompTransform>(target).position;
+    const auto& targetPosition = m_gameState->getComponent<CompTransform>(target).position;
 
     spdlog::debug("Target {} at {} is not close enough to build, moving...", target,
                   targetPosition.toString());
-    auto move = ObjectPool<CmdMove>::acquire();
-    move->targetEntity = target;
-    move->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
-    subCommands.push_back(move);
+    auto moveCmd = ObjectPool<CmdMove>::acquire();
+    moveCmd->targetEntity = target;
+    moveCmd->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
+    subCommands.push_back(moveCmd);
 }
 
 /**
@@ -188,13 +187,13 @@ void CmdBuild::moveCloser(std::list<Command*>& subCommands)
  */
 bool CmdBuild::overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& buildingRect)
 {
-    float x_min = buildingRect.x;
-    float x_max = buildingRect.x + buildingRect.w;
-    float y_min = buildingRect.y;
-    float y_max = buildingRect.y + buildingRect.h;
+    float xMin = buildingRect.x;
+    float xMax = buildingRect.x + buildingRect.w;
+    float yMin = buildingRect.y;
+    float yMax = buildingRect.y + buildingRect.h;
 
-    float closestX = std::clamp(unitPos.x, x_min, x_max);
-    float closestY = std::clamp(unitPos.y, y_min, y_max);
+    float closestX = std::clamp(unitPos.x, xMin, xMax);
+    float closestY = std::clamp(unitPos.y, yMin, yMax);
 
     float dx = unitPos.x - closestX;
     float dy = unitPos.y - closestY;

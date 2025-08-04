@@ -14,6 +14,9 @@ class CmdBuild : public Command
     uint32_t target = entt::null;
 
   private:
+    float m_constructionContribution = 0;
+
+  private:
     void onStart() override;
     void onQueue() override;
     bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) override;
@@ -24,9 +27,7 @@ class CmdBuild : public Command
     bool isComplete();
     void build(int deltaTimeMs);
     void moveCloser(std::list<Command*>& subCommands);
-    bool overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& buildingRect);
-
-    float personalBuildingProgress = 0;
+    static bool overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& buildingRect);
 };
 } // namespace ion
 

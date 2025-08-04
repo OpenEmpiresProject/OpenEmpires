@@ -12,8 +12,7 @@ class CompPlayer;
 class BuildingManager : public EventHandler
 {
   public:
-    BuildingManager(/* args */);
-    ~BuildingManager();
+    BuildingManager();
 
   private:
     BuildingPlacementData m_currentBuildingPlacement;
@@ -22,6 +21,7 @@ class BuildingManager : public EventHandler
     Ref<GameState> m_gameState;
     UnitSelection m_unitSelection;
 
+  private:
     void onMouseButtonUp(const Event& e);
     void onMouseMove(const Event& e);
     void onKeyUp(const Event& e);

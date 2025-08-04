@@ -31,7 +31,7 @@ class CompBuilding
     uint32_t constructionSiteEntitySubType = 0;
     bool isInStaticMap = false;
 
-    int getVisualVariation() const
+    int getVariationByConstructionProgress() const
     {
         debug_assert(visualVariationByProgress.size() > 0,
                      "Building's visual variation map is empty");
@@ -41,9 +41,9 @@ class CompBuilding
     }
 
     // Check if the building supports drop-off for a specific resource type
-    inline bool canDropOff(uint8_t type) const
+    inline bool acceptResource(uint8_t resourceType) const
     {
-        return dropOffForResourceType & type;
+        return dropOffForResourceType & resourceType;
     }
 
     // Relying on externally provided own position to avoid coupling CompTransform with this class
@@ -53,7 +53,7 @@ class CompBuilding
         Tile tile = position.toTile() + 1;
         Feet corner = tile.toFeet();
 
-        auto& sizeVal = size.value();
+        const auto& sizeVal = size.value();
 
         float x = corner.x - sizeVal.width * Constants::FEET_PER_TILE;
         float y = corner.y - sizeVal.height * Constants::FEET_PER_TILE;

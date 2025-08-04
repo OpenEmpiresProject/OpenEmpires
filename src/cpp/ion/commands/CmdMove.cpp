@@ -47,28 +47,28 @@ void CmdMove::onQueue()
         auto [building, buildingTransform] =
             m_gameState->getComponents<CompBuilding, CompTransform>(targetEntity);
         auto rect = building.getLandInFeetRect(buildingTransform.position);
-        auto& transform = m_gameState->getComponent<CompTransform>(m_entityID);
 
-        targetPos = findClosestEdgeOfStaticEntity(targetEntity, transform.position, rect);
+        targetPos =
+            findClosestEdgeOfStaticEntity(targetEntity, m_components->transform.position, rect);
     }
     else if (targetEntity != entt::null && m_gameState->hasComponent<CompResource>(targetEntity))
     {
         auto [resource, resourceTransform] =
             m_gameState->getComponents<CompResource, CompTransform>(targetEntity);
         auto rect = resource.getLandInFeetRect(resourceTransform.position);
-        auto& transform = m_gameState->getComponent<CompTransform>(m_entityID);
 
-        targetPos = findClosestEdgeOfStaticEntity(targetEntity, transform.position, rect);
+        targetPos =
+            findClosestEdgeOfStaticEntity(targetEntity, m_components->transform.position, rect);
     }
 
     if (targetPos.isNull() == false)
     {
-        path = findPath(targetPos, m_entityID);
+        m_path = findPath(targetPos);
         refinePath();
-        if (path.empty() == false)
-            nextIntermediateGoal = path.front();
+        if (m_path.empty() == false)
+            m_nextIntermediateGoal = m_path.front();
         else
-            nextIntermediateGoal = Feet::null;
+            m_nextIntermediateGoal = Feet::null;
 
 #ifndef NDEBUG
         auto tileEntity = m_gameState->gameMap.getEntity(MapLayerType::GROUND, targetPos.toTile());
@@ -83,7 +83,7 @@ void CmdMove::onQueue()
         dirty.markDirty(tileEntity);
 #endif
     }
-    coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
+    m_coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
 }
 
 /**
@@ -101,12 +101,8 @@ bool CmdMove::onExecute(int deltaTimeMs, std::list<Command*>& subCommands)
 {
     if (targetPos.isNull() == false) [[likely]]
     {
-        auto [transform, action, animation, dirty] =
-            m_gameState->getComponents<CompTransform, CompAction, CompAnimation, CompDirty>(
-                m_entityID);
-
-        animate(action, animation, dirty, deltaTimeMs, m_entityID);
-        return move(transform, deltaTimeMs);
+        animate(deltaTimeMs);
+        return move(deltaTimeMs);
     }
     else [[unlikely]]
     {
@@ -125,21 +121,17 @@ void CmdMove::destroy()
     ObjectPool<CmdMove>::release(this);
 }
 
-void CmdMove::animate(CompAction& action,
-                      CompAnimation& animation,
-                      CompDirty& dirty,
-                      int deltaTimeMs,
-                      uint32_t entityId)
+void CmdMove::animate(int deltaTimeMs)
 {
-    action.action = actionOverride;
-    auto& actionAnimation = animation.animations[action.action];
+    m_components->action.action = actionOverride;
+    const auto& actionAnimation = m_components->animation.animations[m_components->action.action];
 
     auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.value().speed;
     if (s_totalTicks % ticksPerFrame == 0)
     {
-        dirty.markDirty(entityId);
-        animation.frame++;
-        animation.frame %= actionAnimation.value().frames;
+        m_components->dirty.markDirty(m_entityID);
+        m_components->animation.frame++;
+        m_components->animation.frame %= actionAnimation.value().frames;
     }
 }
 
@@ -157,7 +149,7 @@ void CmdMove::animate(CompAction& action,
  * @param deltaTimeMs Time elapsed since the last update, in milliseconds.
  * @return true if the move command is completed (target reached), false otherwise.
  */
-bool CmdMove::move(CompTransform& transform, int deltaTimeMs)
+bool CmdMove::move(int deltaTimeMs)
 {
     if (isTargetCloseEnough())
     {
@@ -165,31 +157,31 @@ bool CmdMove::move(CompTransform& transform, int deltaTimeMs)
         return true;
     }
 
-    if (!path.empty())
+    if (!m_path.empty())
     {
-        debug_assert(nextIntermediateGoal != Feet::null, "Next intermediate target must be set");
+        debug_assert(m_nextIntermediateGoal != Feet::null, "Next intermediate target must be set");
 
-        if (transform.position.distanceSquared(nextIntermediateGoal) < transform.goalRadiusSquared)
+        if (m_components->transform.position.distanceSquared(m_nextIntermediateGoal) <
+            m_components->transform.goalRadiusSquared)
         {
-            spdlog::debug("Next hop {} reached", nextIntermediateGoal.toString());
+            spdlog::debug("Next hop {} reached", m_nextIntermediateGoal.toString());
 
-            if (path.empty() == false && path.front() == nextIntermediateGoal)
+            if (m_path.empty() == false && m_path.front() == m_nextIntermediateGoal)
             {
-                path.pop_front();
+                m_path.pop_front();
             }
 
             refinePath();
-            if (path.empty() == false)
-                nextIntermediateGoal = path.front();
+            if (m_path.empty() == false)
+                m_nextIntermediateGoal = m_path.front();
             else
-                nextIntermediateGoal = Feet::null;
+                m_nextIntermediateGoal = Feet::null;
         }
         else
         {
-
-            auto desiredDirection = nextIntermediateGoal - transform.position;
-            auto separationForce = resolveCollision(transform);
-            auto avoidanceForce = avoidCollision(transform);
+            const auto desiredDirection = m_nextIntermediateGoal - m_components->transform.position;
+            const auto separationForce = resolveCollision();
+            const auto avoidanceForce = avoidCollision();
 
             Feet finalDir = desiredDirection + separationForce + avoidanceForce;
 
@@ -197,58 +189,33 @@ bool CmdMove::move(CompTransform& transform, int deltaTimeMs)
             auto& debugOverlays = m_gameState->getComponent<CompGraphics>(m_entityID).debugOverlays;
 
             if (separationForce != Feet(0, 0))
-                debugOverlays[1].arrowEnd =
-                    coordinates->feetToScreenUnits((transform.position + (separationForce)));
+                debugOverlays[1].arrowEnd = m_coordinates->feetToScreenUnits(
+                    (m_components->transform.position + (separationForce)));
             else
                 debugOverlays[1].arrowEnd = Vec2::zero;
 
             if (avoidanceForce != Feet(0, 0))
-                debugOverlays[2].arrowEnd =
-                    coordinates->feetToScreenUnits((transform.position + (avoidanceForce)));
+                debugOverlays[2].arrowEnd = m_coordinates->feetToScreenUnits(
+                    (m_components->transform.position + (avoidanceForce)));
             else
                 debugOverlays[2].arrowEnd = Vec2::zero;
 
             debugOverlays[4].arrowEnd =
-                coordinates->feetToScreenUnits((transform.position + (finalDir)));
+                m_coordinates->feetToScreenUnits((m_components->transform.position + (finalDir)));
 #endif
 
             finalDir = finalDir.normalized();
 
             auto timeS = (double) deltaTimeMs / 1000.0;
 
-            auto newPos = transform.position + (finalDir * (transform.speed * timeS));
-            transform.face(newPos);
+            const auto newPos = m_components->transform.position +
+                                (finalDir * (m_components->transform.speed * timeS));
+            m_components->transform.face(newPos);
 
-            setPosition(transform, newPos);
+            setPosition(newPos);
         }
     }
-    return path.empty();
-}
-
-/**
- * Calculates the new position of the unit based on its current transform and elapsed time.
- *
- * This function updates the position using the unit's speed, rotation (in degrees),
- * and the elapsed time in milliseconds. The rotation determines the direction of movement.
- *
- * @param transform Reference to the object's current transform, containing position, speed, and
- * rotation.
- * @param timeMs Elapsed time in milliseconds over which to apply the movement.
- * @return The new position as a Feet object after applying the movement.
- */
-Feet CmdMove::calculateNewPosition(CompTransform& transform, int timeMs)
-{
-    debug_assert(transform.speed > 0, "Speed must be greater than zero");
-    // Update the position based on speed and time
-    auto rad = (std::numbers::pi * transform.rotation) / 180;
-    auto timeS = (double) timeMs / 1000.0;
-
-    auto newPos = transform.position;
-
-    newPos.y -= transform.speed * std::cos(rad) * timeS;
-    newPos.x += transform.speed * std::sin(rad) * timeS;
-
-    return newPos;
+    return m_path.empty();
 }
 
 /**
@@ -264,14 +231,15 @@ Feet CmdMove::calculateNewPosition(CompTransform& transform, int timeMs)
  * velocity.
  * @param newPosFeet The new position for the entity, specified in feet.
  */
-void CmdMove::setPosition(CompTransform& transform, const Feet& newPosFeet)
+void CmdMove::setPosition(const Feet& newPosFeet)
 {
-    auto oldTile = transform.position.toTile();
-    auto newTile = newPosFeet.toTile();
+    const auto oldTile = m_components->transform.position.toTile();
+    const auto newTile = newPosFeet.toTile();
 
 #ifndef NDEBUG
     m_gameState->getComponent<CompGraphics>(m_entityID).debugOverlays[0].arrowEnd =
-        coordinates->feetToScreenUnits((newPosFeet + (transform.getVelocityVector() * 2)));
+        m_coordinates->feetToScreenUnits(
+            (newPosFeet + (m_components->transform.getVelocityVector() * 2)));
 #endif
 
     if (oldTile != newTile)
@@ -280,11 +248,11 @@ void CmdMove::setPosition(CompTransform& transform, const Feet& newPosFeet)
         m_gameState->gameMap.addEntity(MapLayerType::UNITS, newTile, m_entityID);
 
         publishEvent(Event::Type::UNIT_TILE_MOVEMENT,
-                     UnitTileMovementData{m_entityID, newTile, transform.position});
+                     UnitTileMovementData{m_entityID, newTile, m_components->transform.position});
 
         refinePath();
     }
-    transform.position = newPosFeet;
+    m_components->transform.position = newPosFeet;
 }
 
 /**
@@ -296,10 +264,10 @@ void CmdMove::setPosition(CompTransform& transform, const Feet& newPosFeet)
  * @param target The target position to check line of sight to.
  * @return true if there are no static obstacles between the entity and the target; false otherwise.
  */
-bool CmdMove::hasLineOfSight(const Feet& target)
+bool CmdMove::hasLineOfSight(const Feet& target) const
 {
-    auto& transform = m_gameState->getComponent<CompTransform>(m_entityID);
-    return m_gameState->gameMap.intersectsStaticObstacle(transform.position, target) == false;
+    return m_gameState->gameMap.intersectsStaticObstacle(m_components->transform.position,
+                                                         target) == false;
 }
 
 /**
@@ -315,16 +283,14 @@ bool CmdMove::hasLineOfSight(const Feet& target)
  */
 void CmdMove::refinePath()
 {
-    if (path.empty() || path.size() < 2)
+    if (m_path.empty() || m_path.size() < 2)
     {
         spam("Either path is empty or has less than 2 points. Nothing to refine");
         return;
     }
-    auto length = path.size();
-
     int pointsToRemove = -1;
 
-    for (auto waypoint : path)
+    for (auto& waypoint : m_path)
     {
         if (hasLineOfSight(waypoint))
         {
@@ -340,10 +306,10 @@ void CmdMove::refinePath()
 
     spam("Removing {} waypoints", pointsToRemove);
 
-    for (int i = 0; i < pointsToRemove && !path.empty(); i++)
+    for (int i = 0; i < pointsToRemove && !m_path.empty(); i++)
     {
-        spam("Removing waypoint {}", path.front().toString());
-        path.pop_front();
+        spam("Removing waypoint {}", m_path.front().toString());
+        m_path.pop_front();
     }
 }
 
@@ -360,15 +326,14 @@ void CmdMove::refinePath()
  * @return std::list<Feet> The computed path as a list of Feet positions, or an empty list if no
  * path is found.
  */
-std::list<Feet> CmdMove::findPath(const Feet& endPosInFeet, uint32_t entity)
+std::list<Feet> CmdMove::findPath(const Feet& endPosInFeet)
 {
-    auto& transform = m_gameState->getComponent<CompTransform>(entity);
-    Tile startPos = transform.position.toTile();
-    auto endPos = endPosInFeet.toTile();
+    const Tile startPos = m_components->transform.position.toTile();
+    const auto endPos = endPosInFeet.toTile();
 
-    TileMap map = m_gameState->gameMap;
-    std::vector<Feet> newPath =
-        m_gameState->getPathFinder()->findPath(map, transform.position, endPosInFeet);
+    const TileMap map = m_gameState->gameMap;
+    const std::vector<Feet> newPath =
+        m_gameState->getPathFinder()->findPath(map, m_components->transform.position, endPosInFeet);
 
     if (newPath.empty())
     {
@@ -392,11 +357,7 @@ std::list<Feet> CmdMove::findPath(const Feet& endPosInFeet, uint32_t entity)
         //     }
         // }
 
-        std::list<Feet> pathList;
-        for (size_t i = 0; i < newPath.size(); i++)
-        {
-            pathList.push_back(newPath[i]);
-        }
+        std::list<Feet> pathList(newPath.begin(), newPath.end());
         pathList.push_back(endPosInFeet);
 
         return pathList;
@@ -421,10 +382,10 @@ constexpr int square(int n)
  * @param transform The transform component of the unit, containing position and collision radius.
  * @return Feet The average avoidance vector to resolve detected collisions.
  */
-Feet CmdMove::resolveCollision(CompTransform& transform)
+Feet CmdMove::resolveCollision()
 {
     // Static collision resolution
-    auto newTilePos = transform.position.toTile();
+    const auto newTilePos = m_components->transform.position.toTile();
     auto& gameMap = m_gameState->gameMap;
     Feet totalAvoidance{0, 0};
 
@@ -436,8 +397,8 @@ Feet CmdMove::resolveCollision(CompTransform& transform)
     }
 
     // Dynamic collision resolution
-    Tile searchStartTile = newTilePos - Tile(1, 1);
-    Tile searchEndTile = newTilePos + Tile(1, 1);
+    const Tile searchStartTile = newTilePos - Tile(1, 1);
+    const Tile searchEndTile = newTilePos + Tile(1, 1);
 
     bool hasCollision = false;
 
@@ -454,11 +415,11 @@ Feet CmdMove::resolveCollision(CompTransform& transform)
                     continue;
 
                 auto& otherTransform = m_gameState->getComponent<CompTransform>(e);
-                Feet toOther = otherTransform.position - transform.position;
+                Feet toOther = otherTransform.position - m_components->transform.position;
 
                 float distSq = toOther.lengthSquared();
-                float minDistSq =
-                    square(transform.collisionRadius + otherTransform.collisionRadius);
+                float minDistSq = square(m_components->transform.collisionRadius +
+                                         otherTransform.collisionRadius);
 
                 if (distSq < minDistSq && distSq > 0.0001f)
                 {
@@ -471,7 +432,6 @@ Feet CmdMove::resolveCollision(CompTransform& transform)
             }
         }
     }
-
     Feet averagePush = totalAvoidance * 2;
 
     return averagePush;
@@ -489,17 +449,17 @@ Feet CmdMove::resolveCollision(CompTransform& transform)
  * @return A Feet vector representing the avoidance force. Returns (0, 0) if no collision is
  * detected.
  */
-Feet CmdMove::avoidCollision(CompTransform& transform)
+Feet CmdMove::avoidCollision()
 {
-    auto& unit = m_gameState->getComponent<CompUnit>(m_entityID);
-    auto dir = transform.getVelocityVector().normalized();
+    auto dir = m_components->transform.getVelocityVector().normalized();
 
-    auto rayEnd = transform.position + (dir * (unit.lineOfSight / 2));
-    auto unitToAvoid = intersectsUnits(m_entityID, transform, transform.position, rayEnd);
+    auto rayEnd = m_components->transform.position + (dir * (m_components->unit.lineOfSight / 2));
+    auto unitToAvoid = intersectsUnits(m_entityID, m_components->transform,
+                                       m_components->transform.position, rayEnd);
 
 #ifndef NDEBUG
     m_gameState->getComponent<CompGraphics>(m_entityID).debugOverlays[3].arrowEnd =
-        coordinates->feetToScreenUnits(rayEnd);
+        m_coordinates->feetToScreenUnits(rayEnd);
 #endif
 
     if (unitToAvoid != entt::null)
@@ -507,14 +467,14 @@ Feet CmdMove::avoidCollision(CompTransform& transform)
         spam("Posible collision with entity {}", unitToAvoid);
         auto& otherTransform = m_gameState->getComponent<CompTransform>(unitToAvoid);
 
-        Feet dir = otherTransform.position - transform.position;
+        Feet dir = otherTransform.position - m_components->transform.position;
         auto forward = dir.normalized();
         Feet left(-forward.y, forward.x);
 
         Feet avoidanceForce = left * (otherTransform.collisionRadius * 10);
         return avoidanceForce;
     }
-    return Feet(0, 0);
+    return {0, 0};
 }
 
 /**
@@ -542,11 +502,11 @@ double CmdMove::distancePointToSegment(const Feet& p0, const Feet& p1, const Fee
         return (q - p0).length();
     }
 
-    double t = std::clamp(w.dot(v) / lenSq, 0.0, 1.0);
-    auto vx = (double) (v.x) * t;
-    auto vy = (double) (v.y) * t;
+    const double t = std::clamp(w.dot(v) / lenSq, 0.0, 1.0);
+    const auto vx = (double) (v.x) * t;
+    const auto vy = (double) (v.y) * t;
 
-    Feet projection = p0 + Feet(vx, vy);
+    const Feet projection = p0 + Feet(vx, vy);
 
     spam("Start {}, end {}, q {}, projection {}", p0.toString(), p1.toString(), q.toString(),
          projection.toString());
@@ -635,13 +595,13 @@ bool CmdMove::lineIntersectsCircle(const Vec2& p1,
                                    float radius) const
 {
     // Vector from p1 to p2
-    Vec2 d = p2 - p1;
+    const Vec2 d = p2 - p1;
     // Vector from p1 to circle center
-    Vec2 f = p1 - center;
+    const Vec2 f = p1 - center;
 
-    float a = d.dot(d);
-    float b = 2 * f.dot(d);
-    float c = f.dot(f) - radius * radius;
+    const float a = d.dot(d);
+    const float b = 2 * f.dot(d);
+    const float c = f.dot(f) - radius * radius;
 
     float discriminant = b * b - 4 * a * c;
     if (discriminant < 0)
@@ -651,8 +611,8 @@ bool CmdMove::lineIntersectsCircle(const Vec2& p1,
     }
 
     discriminant = std::sqrt(discriminant);
-    float t1 = (-b - discriminant) / (2 * a);
-    float t2 = (-b + discriminant) / (2 * a);
+    const float t1 = (-b - discriminant) / (2 * a);
+    const float t2 = (-b + discriminant) / (2 * a);
 
     // Check if either t is in [0, 1] → segment intersects circle
     return (t1 >= 0 && t1 <= 1) || (t2 >= 0 && t2 <= 1);
@@ -672,17 +632,17 @@ bool CmdMove::lineIntersectsCircle(const Vec2& p1,
  */
 Feet CmdMove::findClosestEdgeOfStaticEntity(uint32_t staticEntity,
                                             const Feet& fromPos,
-                                            const Rect<float>& land)
+                                            const Rect<float>& land) const
 {
-    float x_min = land.x;
-    float x_max = land.x + land.w;
-    float y_min = land.y;
-    float y_max = land.y + land.h;
+    const float xMin = land.x;
+    const float xMax = land.x + land.w;
+    const float yMin = land.y;
+    const float yMax = land.y + land.h;
 
-    float closestX = std::clamp(fromPos.x, x_min, x_max);
-    float closestY = std::clamp(fromPos.y, y_min, y_max);
+    const float closestX = std::clamp(fromPos.x, xMin, xMax);
+    const float closestY = std::clamp(fromPos.y, yMin, yMax);
 
-    return Feet(closestX, closestY);
+    return {closestX, closestY};
 }
 
 /**
@@ -698,18 +658,18 @@ Feet CmdMove::findClosestEdgeOfStaticEntity(uint32_t staticEntity,
  * @param buildingRect The rectangle representing the building area.
  * @return true if the circular area overlaps with the rectangle, false otherwise.
  */
-bool CmdMove::overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& buildingRect)
+bool CmdMove::overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& buildingRect) const
 {
-    float x_min = buildingRect.x;
-    float x_max = buildingRect.x + buildingRect.w;
-    float y_min = buildingRect.y;
-    float y_max = buildingRect.y + buildingRect.h;
+    const float xMin = buildingRect.x;
+    const float xMax = buildingRect.x + buildingRect.w;
+    const float yMin = buildingRect.y;
+    const float yMax = buildingRect.y + buildingRect.h;
 
-    float closestX = std::clamp(unitPos.x, x_min, x_max);
-    float closestY = std::clamp(unitPos.y, y_min, y_max);
+    const float closestX = std::clamp(unitPos.x, xMin, xMax);
+    const float closestY = std::clamp(unitPos.y, yMin, yMax);
 
-    float dx = unitPos.x - closestX;
-    float dy = unitPos.y - closestY;
+    const float dx = unitPos.x - closestX;
+    const float dy = unitPos.y - closestY;
 
     return (dx * dx + dy * dy) <= radiusSq;
 }
@@ -725,18 +685,16 @@ bool CmdMove::overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& b
  *
  * @return true if the target is close enough; false otherwise.
  */
-bool CmdMove::isTargetCloseEnough()
+bool CmdMove::isTargetCloseEnough() const
 {
-    auto& transformMy = m_gameState->getComponent<CompTransform>(m_entityID);
-
     if (targetEntity != entt::null)
     {
         if (m_gameState->hasComponent<CompBuilding>(targetEntity))
         {
             auto [transform, building] =
                 m_gameState->getComponents<CompTransform, CompBuilding>(targetEntity);
-            auto pos = transformMy.position;
-            auto radiusSq = transformMy.goalRadiusSquared;
+            auto pos = m_components->transform.position;
+            auto radiusSq = m_components->transform.goalRadiusSquared;
             auto rect = building.getLandInFeetRect(transform.position);
 
             return overlaps(pos, radiusSq, rect);
@@ -745,8 +703,8 @@ bool CmdMove::isTargetCloseEnough()
         {
             auto [transform, resource] =
                 m_gameState->getComponents<CompTransform, CompResource>(targetEntity);
-            auto pos = transformMy.position;
-            auto radiusSq = transformMy.goalRadiusSquared;
+            auto pos = m_components->transform.position;
+            auto radiusSq = m_components->transform.goalRadiusSquared;
             auto rect = resource.getLandInFeetRect(transform.position);
 
             return overlaps(pos, radiusSq, rect);
@@ -756,6 +714,7 @@ bool CmdMove::isTargetCloseEnough()
     }
     else
     {
-        return transformMy.position.distanceSquared(targetPos) < transformMy.goalRadiusSquared;
+        return m_components->transform.position.distanceSquared(targetPos) <
+               m_components->transform.goalRadiusSquared;
     }
 }

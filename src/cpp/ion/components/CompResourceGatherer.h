@@ -21,19 +21,20 @@ class CompResourceGatherer
     Property<uint32_t> capacity;
     Property<uint32_t> gatherSpeed;
 
+  public:
     uint32_t gatheredAmount = 0;
 
-    bool canGather(uint8_t resourceType)
+    static bool canGather(uint8_t resourceType)
     {
         return gatheringActions.contains(resourceType);
     }
 
-    UnitAction getGatheringAction(uint8_t resourceType)
+    static UnitAction getGatheringAction(uint8_t resourceType)
     {
         return gatheringActions[resourceType];
     }
 
-    UnitAction getCarryingAction(uint8_t resourceType)
+    static UnitAction getCarryingAction(uint8_t resourceType)
     {
         return carryingActions[resourceType];
     }

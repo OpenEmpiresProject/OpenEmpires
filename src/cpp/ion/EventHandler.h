@@ -23,8 +23,8 @@ class EventHandler
     {
         onEvent(e);
         size_t index = static_cast<size_t>(e.type);
-        assert(index < callbacksTable.size());
-        if (auto& handler = callbacksTable[index])
+        assert(index < m_callbacksTable.size());
+        if (auto& handler = m_callbacksTable[index])
         {
             handler(e); // Call the bound handler
         }
@@ -35,14 +35,14 @@ class EventHandler
     {
         static_assert(std::is_base_of_v<EventHandler, T>, "Handler must inherit from EventHandler");
         size_t index = static_cast<size_t>(type);
-        assert(index < callbacksTable.size());
-        callbacksTable[index] = std::bind(method, instance, std::placeholders::_1);
+        assert(index < m_callbacksTable.size());
+        m_callbacksTable[index] = std::bind(method, instance, std::placeholders::_1);
     }
 
   private:
     using CallbackFn = std::function<void(const Event&)>;
     static constexpr size_t MAX_EVENT_TYPES = static_cast<size_t>(Event::Type::MAX_TYPE_MARKER);
-    std::array<CallbackFn, MAX_EVENT_TYPES> callbacksTable;
+    std::array<CallbackFn, MAX_EVENT_TYPES> m_callbacksTable;
 };
 } // namespace ion
 

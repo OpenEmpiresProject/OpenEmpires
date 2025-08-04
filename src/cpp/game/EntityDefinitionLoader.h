@@ -57,6 +57,7 @@ class EntityDefinitionLoader : public ion::EntityFactory, public ion::PropertyIn
         ion::Ref<drs::DRSFile> drsFile;
         int slpId = -1;
         ion::Rect<int> clipRect;
+        ion::Rect<int> boundingRect;
     };
     EntityDefinitionLoader();
     ~EntityDefinitionLoader();
@@ -108,9 +109,9 @@ class EntityDefinitionLoader : public ion::EntityFactory, public ion::PropertyIn
     void loadConstructionSites(pybind11::object module);
     void loadTileSets(pybind11::object module);
     void loadUIElements(pybind11::object module);
-    void createOrUpdateComponent(pybind11::object module,
-                                 uint32_t entityType,
-                                 pybind11::handle entityDefinition);
+    void addCommonComponents(pybind11::object module,
+                             uint32_t entityType,
+                             pybind11::handle entityDefinition);
     void addComponentsForUnit(uint32_t entityType);
     void addComponentsForBuilding(uint32_t entityType);
     void addComponentsForNaturalResource(uint32_t entityType);
@@ -131,6 +132,36 @@ class EntityDefinitionLoader : public ion::EntityFactory, public ion::PropertyIn
     void attachedConstructionSites(uint32_t entityType, const std::string& sizeStr);
     void setDRSData(int64_t id, const EntityDRSData& data);
     void setDRSLoaderFunc(std::function<ion::Ref<drs::DRSFile>(const std::string&)> func);
+    void setBoundingBoxReadFunc(
+        std::function<ion::Rect<int>(ion::Ref<drs::DRSFile>, uint32_t)> func);
+    template <typename T> T& getComponent(uint32_t entityType, uint32_t entitySubType)
+    {
+        auto mapKey = entityType + entitySubType * m_entitySubTypeMapKeyOffset;
+
+        auto it = m_componentsByEntityType.find(mapKey);
+        if (it != m_componentsByEntityType.end())
+        {
+            for (auto& variantComponent : it->second)
+            {
+                T* result = nullptr;
+
+                std::visit(
+                    [&](auto& comp)
+                    {
+                        using K = std::decay_t<decltype(comp)>;
+                        if constexpr (std::is_same_v<K, T>)
+                        {
+                            result = &comp;
+                        }
+                    },
+                    variantComponent);
+
+                if (result)
+                    return *result;
+            }
+        }
+        throw std::runtime_error("Component of requested type not found");
+    }
 
   private:
     const std::string m_unitsFile = "units";
@@ -139,6 +170,7 @@ class EntityDefinitionLoader : public ion::EntityFactory, public ion::PropertyIn
     std::unordered_map<std::string, ion::Ref<drs::DRSFile>> m_drsFilesByName;
     std::map<std::string /*size*/, ConstructionSiteData> m_constructionSitesBySize;
     std::function<ion::Ref<drs::DRSFile>(const std::string&)> m_drsLoadFunc;
+    std::function<ion::Rect<int>(ion::Ref<drs::DRSFile>, uint32_t)> m_boundingBoxReadFunc;
 
     const int m_entitySubTypeMapKeyOffset = 100000;
 };

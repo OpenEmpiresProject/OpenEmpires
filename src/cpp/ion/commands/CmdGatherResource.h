@@ -32,15 +32,15 @@ class CmdGatherResource : public Command
 
   private:
     // TODO: This doesn't belong here, this should be in the components
-    const int choppingSpeed = 10; // 10 wood per second
+    const int m_choppingSpeed = 10; // 10 wood per second
     // Cached values
-    Feet targetPosition; // Use when target is absent by the time this command execute
-    float collectedResourceAmount = 0;
-    std::shared_ptr<Coordinates> coordinateSystem;
-    Ref<Player> player;
-    uint8_t targetResourceType = 0;
-    CompResourceGatherer* gatherer = nullptr;
+    Feet m_targetPosition; // Use when target is absent by the time this command execute
+    float m_collectedResourceAmount = 0;
+    std::shared_ptr<Coordinates> m_coordinateSystem;
+    uint8_t m_targetResourceType = 0;
+    CompResourceGatherer* m_gatherer = nullptr;
 
+  private:
     void onStart() override
     {
         spdlog::debug("Start gathering resource...");
@@ -51,23 +51,22 @@ class CmdGatherResource : public Command
         // TODO: Reset frame to zero (since this is a new command)
         setTarget(target);
 
-        auto& playerComp = m_gameState->getComponent<CompPlayer>(m_entityID);
-        player = playerComp.player;
-        coordinateSystem = ServiceRegistry::getInstance().getService<Coordinates>();
-        collectedResourceAmount = 0;
-        gatherer = &(m_gameState->getComponent<CompResourceGatherer>(m_entityID));
+        m_coordinateSystem = ServiceRegistry::getInstance().getService<Coordinates>();
+        m_collectedResourceAmount = 0;
+        m_gatherer = &(m_gameState->getComponent<CompResourceGatherer>(m_entityID));
     }
 
     void setTarget(uint32_t targetEntity)
     {
-        target = targetEntity;
-        auto& transformTarget = m_gameState->getComponent<CompTransform>(target);
-        targetPosition = transformTarget.position;
-
-        debug_assert(m_gameState->hasComponent<CompResource>(target),
+        debug_assert(m_gameState->hasComponent<CompResource>(targetEntity),
                      "Target entity is not a resource");
 
-        targetResourceType = m_gameState->getComponent<CompResource>(target).original.value().type;
+        target = targetEntity;
+
+        auto [transformTarget, resourceTarget] =
+            m_gameState->getComponents<CompTransform, CompResource>(target);
+        m_targetPosition = transformTarget.position;
+        m_targetResourceType = resourceTarget.original.value().type;
     }
 
     /**
@@ -125,64 +124,57 @@ class CmdGatherResource : public Command
     void moveCloser(std::list<Command*>& subCommands)
     {
         spdlog::debug("Target {} at {} is not close enough to gather, moving...", target,
-                      targetPosition.toString());
-        auto move = ObjectPool<CmdMove>::acquire();
-        move->targetEntity = target;
-        move->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
-        subCommands.push_back(move);
+                      m_targetPosition.toString());
+        auto moveCmd = ObjectPool<CmdMove>::acquire();
+        moveCmd->targetEntity = target;
+        moveCmd->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
+        subCommands.push_back(moveCmd);
     }
 
     void dropOff(std::list<Command*>& subCommands)
     {
         spdlog::debug("Unit {} is at full capacity, need to drop off", m_entityID);
-        auto drop = ObjectPool<CmdDropResource>::acquire();
-        drop->resourceType = targetResourceType;
-        drop->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
-        subCommands.push_back(drop);
+        auto dropCmd = ObjectPool<CmdDropResource>::acquire();
+        dropCmd->resourceType = m_targetResourceType;
+        dropCmd->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
+        subCommands.push_back(dropCmd);
     }
 
-    bool isResourceAvailable()
+    bool isResourceAvailable() const
     {
         if (target != entt::null)
         {
-            CompEntityInfo info = m_gameState->getComponent<CompEntityInfo>(target);
+            const auto& info = m_gameState->getComponent<CompEntityInfo>(target);
             return !info.isDestroyed;
         }
         return false;
     }
 
-    bool isCloseEnough()
+    bool isCloseEnough() const
     {
-        auto& transformMy = m_gameState->getComponent<CompTransform>(m_entityID);
+        const auto& transformMy = m_components->transform;
         auto threshold = transformMy.goalRadius + Constants::FEET_PER_TILE / 2;
-        auto distanceSquared = transformMy.position.distanceSquared(targetPosition);
-        // spdlog::debug("Check closeness. my {}, target {}", transformMy.position.toString(),
-        // targetPosition.toString()); spdlog::debug("Check closeness. distance {}, threshold {}",
-        // distanceSquared, threshold * threshold);
-        return transformMy.position.distanceSquared(targetPosition) < (threshold * threshold);
+        auto distanceSquared = transformMy.position.distanceSquared(m_targetPosition);
+        return transformMy.position.distanceSquared(m_targetPosition) < (threshold * threshold);
     }
 
     void animate()
     {
-        auto [transform, action, animation, dirty] =
-            m_gameState->getComponents<CompTransform, CompAction, CompAnimation, CompDirty>(
-                m_entityID);
-
-        action.action = gatherer->getGatheringAction(targetResourceType);
-        auto& actionAnimation = animation.animations[action.action];
+        m_components->action.action = m_gatherer->getGatheringAction(m_targetResourceType);
+        auto& actionAnimation = m_components->animation.animations[m_components->action.action];
 
         auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.value().speed;
         if (s_totalTicks % ticksPerFrame == 0)
         {
-            dirty.markDirty(m_entityID);
-            animation.frame++;
-            animation.frame %= actionAnimation.value().frames;
+            m_components->dirty.markDirty(m_entityID);
+            m_components->animation.frame++;
+            m_components->animation.frame %= actionAnimation.value().frames;
         }
     }
 
-    bool isFull()
+    bool isFull() const
     {
-        return gatherer->gatheredAmount >= gatherer->capacity;
+        return m_gatherer->gatheredAmount >= m_gatherer->capacity;
     }
 
     /**
@@ -196,19 +188,19 @@ class CmdGatherResource : public Command
      */
     void gather(int deltaTimeMs)
     {
-        auto& transform = m_gameState->getComponent<CompTransform>(m_entityID);
         auto& resource = m_gameState->getComponent<CompResource>(target);
 
-        collectedResourceAmount += float(choppingSpeed) * deltaTimeMs / 1000.0f;
-        uint32_t rounded = collectedResourceAmount;
-        collectedResourceAmount -= rounded;
+        m_collectedResourceAmount += float(m_choppingSpeed) * deltaTimeMs / 1000.0f;
+        uint32_t rounded = m_collectedResourceAmount;
+        m_collectedResourceAmount -= rounded;
 
         if (rounded != 0)
         {
             auto actualDelta = std::min(resource.remainingAmount, rounded);
-            actualDelta = std::min(actualDelta, (gatherer->capacity - gatherer->gatheredAmount));
+            actualDelta =
+                std::min(actualDelta, (m_gatherer->capacity - m_gatherer->gatheredAmount));
             resource.remainingAmount -= actualDelta;
-            gatherer->gatheredAmount += actualDelta;
+            m_gatherer->gatheredAmount += actualDelta;
             m_gameState->getComponent<CompDirty>(target).markDirty(target);
         }
     }
@@ -226,11 +218,10 @@ class CmdGatherResource : public Command
     bool lookForAnotherSimilarResource()
     {
         spdlog::debug("Looking for another resource...");
-        auto& transformMy = m_gameState->getComponent<CompTransform>(m_entityID);
-        auto tilePos = transformMy.position.toTile();
+        auto tilePos = m_components->transform.position.toTile();
 
-        auto newResource =
-            findClosestResource(targetResourceType, tilePos, Constants::MAX_RESOURCE_LOOKUP_RADIUS);
+        auto newResource = findClosestResource(m_targetResourceType, tilePos,
+                                               Constants::MAX_RESOURCE_LOOKUP_RADIUS);
 
         if (newResource != entt::null)
         {
@@ -239,8 +230,8 @@ class CmdGatherResource : public Command
         }
         else
         {
-            spdlog::debug("No resource of type {} found around {}", targetResourceType,
-                          transformMy.position.toString());
+            spdlog::debug("No resource of type {} found around {}", m_targetResourceType,
+                          m_components->transform.position.toString());
         }
         return newResource != entt::null;
     }
@@ -258,19 +249,21 @@ class CmdGatherResource : public Command
      * set to entt::null otherwise.
      * @return true if the tile contains a resource of the specified type; false otherwise.
      */
-    bool doesTileHaveResource(uint8_t resourceType, const Tile& posTile, uint32_t& resourceEntity)
+    bool doesTileHaveResource(uint8_t resourceType,
+                              const Tile& posTile,
+                              uint32_t& resourceEntity) const
     {
         resourceEntity = entt::null;
         auto& map = m_gameState->gameMap;
         auto e = map.getEntity(MapLayerType::STATIC, posTile);
         if (e != entt::null)
         {
-            CompEntityInfo info = m_gameState->getComponent<CompEntityInfo>(e);
+            const auto& info = m_gameState->getComponent<CompEntityInfo>(e);
             if (!info.isDestroyed)
             {
                 if (m_gameState->hasComponent<CompResource>(e))
                 {
-                    CompResource resource = m_gameState->getComponent<CompResource>(e);
+                    const auto& resource = m_gameState->getComponent<CompResource>(e);
                     if (resource.original.value().type == resourceType)
                     {
                         resourceEntity = e;
@@ -295,7 +288,7 @@ class CmdGatherResource : public Command
      * @param maxRadius The maximum search radius (in tiles).
      * @return uint32_t The entity ID of the closest resource, or entt::null if not found.
      */
-    uint32_t findClosestResource(uint8_t resourceType, const Tile& startTile, int maxRadius)
+    uint32_t findClosestResource(uint8_t resourceType, const Tile& startTile, int maxRadius) const
     {
         std::queue<std::pair<Tile, int>> toVisit; // Pair: position, current distance
         std::unordered_set<Tile> visited;
@@ -305,8 +298,8 @@ class CmdGatherResource : public Command
         toVisit.push({startTile, 0});
         visited.insert(startTile);
 
-        const std::vector<Tile> directions = {{0, -1},  {1, 0},  {0, 1}, {-1, 0},
-                                              {-1, -1}, {1, -1}, {1, 1}, {-1, 1}};
+        static const std::vector<Tile> directions = {{0, -1},  {1, 0},  {0, 1}, {-1, 0},
+                                                     {-1, -1}, {1, -1}, {1, 1}, {-1, 1}};
 
         while (!toVisit.empty())
         {
@@ -334,7 +327,6 @@ class CmdGatherResource : public Command
                 }
             }
         }
-
         return entt::null; // Not found within radius
     }
 };

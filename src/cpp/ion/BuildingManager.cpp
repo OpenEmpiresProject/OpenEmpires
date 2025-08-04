@@ -20,7 +20,7 @@
 
 using namespace ion;
 
-BuildingManager::BuildingManager(/* args */)
+BuildingManager::BuildingManager()
 {
     m_coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
     m_gameState = ServiceRegistry::getInstance().getService<GameState>();
@@ -30,10 +30,6 @@ BuildingManager::BuildingManager(/* args */)
     registerCallback(Event::Type::MOUSE_BTN_UP, this, &BuildingManager::onMouseButtonUp);
     registerCallback(Event::Type::UNIT_SELECTION, this, &BuildingManager::onUnitSelection);
     registerCallback(Event::Type::TICK, this, &BuildingManager::onTick);
-}
-
-BuildingManager::~BuildingManager()
-{
 }
 
 void BuildingManager::onBuildingRequest(const Event& e)
@@ -55,8 +51,7 @@ uint32_t BuildingManager::createBuilding(const BuildingPlacementData& request)
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
     auto entity = factory->createEntity(request.entityType, 0);
 
-    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
-    auto [transform, playerComp] = gameState->getComponents<CompTransform, CompPlayer>(entity);
+    auto [transform, playerComp] = m_gameState->getComponents<CompTransform, CompPlayer>(entity);
 
     transform.position = request.pos;
     playerComp.player = request.player;
@@ -130,7 +125,7 @@ void BuildingManager::onTick(const Event& e)
                 m_gameState->getComponents<CompTransform, CompBuilding, CompEntityInfo, CompPlayer>(
                     entity);
 
-            info.variation = building.getVisualVariation();
+            info.variation = building.getVariationByConstructionProgress();
 
             if (building.constructionProgress >= 100)
             {
@@ -234,7 +229,7 @@ void BuildingManager::confirmBuilding(CompTransform& transform,
     }
     building.constructionProgress = 0;
     info.entitySubType = building.constructionSiteEntitySubType;
-    info.variation = building.getVisualVariation();
+    info.variation = building.getVariationByConstructionProgress();
     dirty.markDirty(m_currentBuildingPlacement.entity);
 
     auto& gameMap = ServiceRegistry::getInstance().getService<GameState>()->gameMap;
