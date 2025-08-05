@@ -39,7 +39,7 @@ void EventLoop::run()
 
     for (auto& listener : m_listeners)
     {
-        listener->onInit(this);
+        listener->onInit(*this);
     }
 
     auto lastTick = steady_clock::now();
@@ -87,7 +87,10 @@ void EventLoop::handleTickEvent(std::chrono::steady_clock::time_point& lastTime)
         if (duration > maxDelay)
             duration = tickRate;
 
-        TickData data{static_cast<int>(duration_cast<milliseconds>(duration).count())};
+        ++m_currentTick;
+        auto deltaMs = static_cast<int>(duration_cast<milliseconds>(duration).count());
+
+        TickData data{.deltaTimeMs = deltaMs, .currentTick = m_currentTick};
         Event tickEvent(Event::Type::TICK, data);
 
         // Notify listeners about the event

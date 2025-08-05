@@ -19,10 +19,10 @@ class CmdBuild : public Command
   private:
     void onStart() override;
     void onQueue() override;
-    bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) override;
+    bool onExecute(int deltaTimeMs, int currentTick, std::list<Command*>& subCommands) override;
     std::string toString() const override;
     void destroy() override;
-    void animate(int deltaTimeMs);
+    void animate(int deltaTimeMs, int currentTick);
     bool isCloseEnough();
     bool isComplete();
     void build(int deltaTimeMs);

@@ -15,6 +15,7 @@ namespace core
 struct TickData
 {
     int deltaTimeMs = 0;
+    int currentTick = 0;
 };
 
 struct KeyboardData

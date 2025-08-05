@@ -17,7 +17,7 @@ class MockEventLoopListener : public EventHandler
     {
         callCount++;
     }
-    void onInit(EventLoop* eventLoop) {};
+    void onInit(EventLoop& eventLoop) {};
     void onExit() {};
     int callCount = 0;
 };

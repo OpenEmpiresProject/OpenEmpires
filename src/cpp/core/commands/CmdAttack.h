@@ -18,7 +18,7 @@ class CmdAttack : public Command
         // TODO: Reset frame to zero (since this is a new command)
     }
 
-    bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) override
+    bool onExecute(int deltaTimeMs, int currentTick, std::list<Command*>& subCommands) override
     {
         return false;
     }

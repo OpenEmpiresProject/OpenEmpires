@@ -43,9 +43,9 @@ class CmdIdle : public Command
      * @param subCommands A list to which any sub-commands can be added (unused in idle).
      * @return Always returns false, indicating the idle command never completes.
      */
-    bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) override
+    bool onExecute(int deltaTimeMs, int currentTick, std::list<Command*>& subCommands) override
     {
-        animate();
+        animate(currentTick);
         return false; // Idling never completes
     }
 
@@ -59,13 +59,13 @@ class CmdIdle : public Command
         ObjectPool<CmdIdle>::release(this);
     }
 
-    void animate()
+    void animate(int currentTick)
     {
         m_components->action.action = UnitAction::IDLE;
         const auto& actionAnimation = m_components->animation.animations[UnitAction::IDLE];
 
         auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.value().speed;
-        if (s_totalTicks % ticksPerFrame == 0)
+        if (currentTick % ticksPerFrame == 0)
         {
             m_components->dirty.markDirty(m_entityID);
             m_components->animation.frame++;

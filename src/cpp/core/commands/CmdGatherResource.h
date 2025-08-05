@@ -83,7 +83,7 @@ class CmdGatherResource : public Command
      * @return true if the command is complete and should be removed from the queue, false
      * otherwise.
      */
-    bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) override
+    bool onExecute(int deltaTimeMs, int currentTick, std::list<Command*>& subCommands) override
     {
         if (isResourceAvailable() == false)
         {
@@ -96,7 +96,7 @@ class CmdGatherResource : public Command
 
         if (isCloseEnough())
         {
-            animate();
+            animate(currentTick);
             gather(deltaTimeMs);
         }
         else
@@ -158,13 +158,13 @@ class CmdGatherResource : public Command
         return transformMy.position.distanceSquared(m_targetPosition) < (threshold * threshold);
     }
 
-    void animate()
+    void animate(int currentTick)
     {
         m_components->action.action = m_gatherer->getGatheringAction(m_targetResourceType);
         auto& actionAnimation = m_components->animation.animations[m_components->action.action];
 
         auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.value().speed;
-        if (s_totalTicks % ticksPerFrame == 0)
+        if (currentTick % ticksPerFrame == 0)
         {
             m_components->dirty.markDirty(m_entityID);
             m_components->animation.frame++;

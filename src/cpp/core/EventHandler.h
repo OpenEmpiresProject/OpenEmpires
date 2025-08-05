@@ -14,7 +14,7 @@ namespace core
 class EventHandler
 {
   public:
-    virtual void onInit(EventLoop* eventLoop) {};
+    virtual void onInit(EventLoop& eventLoop) {};
     virtual void onExit() {};
     virtual void onEvent(const Event& e) {};
 

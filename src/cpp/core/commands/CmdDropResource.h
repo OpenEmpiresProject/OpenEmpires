@@ -67,7 +67,7 @@ class CmdDropResource : public Command
      * @param subCommands A list to which any sub-commands generated during execution are added.
      * @return true if the resource was successfully dropped off; false otherwise.
      */
-    bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) override
+    bool onExecute(int deltaTimeMs, int currentTick, std::list<Command*>& subCommands) override
     {
         findClosestDropOffBuilding();
 

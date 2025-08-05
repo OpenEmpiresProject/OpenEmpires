@@ -23,7 +23,7 @@ namespace core
 class MockCommand : public Command
 {
   public:
-    MOCK_METHOD(bool, onExecute, (int, std::list<Command*>&), (override));
+    MOCK_METHOD(bool, onExecute, (int, int, std::list<Command*>&), (override));
     MOCK_METHOD(std::string, toString, (), (const, override));
     MOCK_METHOD(void, destroy, (), (override));
 
@@ -67,14 +67,14 @@ TEST_F(CommandCenterTest, ExecutesCommandsInQueue_CommandComplete)
     auto entity = ServiceRegistry::getInstance().getService<GameState>()->createEntity();
     std::list<Command*> subCommands;
 
-    EXPECT_CALL(*mockCommand, onExecute(0, subCommands))
+    EXPECT_CALL(*mockCommand, onExecute(0, 0, subCommands))
         .WillOnce(::testing::Return(true)); // mark command as completed
 
     unit.commandQueue.push(mockCommand);
     ServiceRegistry::getInstance().getService<GameState>()->addComponent(entity, unit);
 
     Event tickEvent{Event::Type::TICK, TickData{0}};
-    ccEventHandlerPtr->onEvent(tickEvent);
+    commandCenter.onTick(tickEvent);
 
     auto unitActual =
         ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompUnit>(entity);
@@ -89,7 +89,7 @@ TEST_F(CommandCenterTest, ExecutesCommandsInQueue_CommandNotComplete)
     auto entity = ServiceRegistry::getInstance().getService<GameState>()->createEntity();
     std::list<Command*> subCommands;
 
-    EXPECT_CALL(*mockCommand, onExecute(0, subCommands))
+    EXPECT_CALL(*mockCommand, onExecute(0, 0, subCommands))
         .WillOnce(::testing::Return(false)); // mark command as not completed
 
     unit.commandQueue.push(mockCommand);
@@ -112,9 +112,9 @@ TEST_F(CommandCenterTest, CreatesSubCommands)
     auto entity = ServiceRegistry::getInstance().getService<GameState>()->createEntity();
     std::list<Command*> subCommands;
 
-    EXPECT_CALL(*mockCommand, onExecute(0, subCommands))
+    EXPECT_CALL(*mockCommand, onExecute(0, 0, subCommands))
         .WillOnce(::testing::Invoke(
-            [&](int deltaTimeMs, std::list<Command*>& newCommands)
+            [&](int deltaTimeMs, int, std::list<Command*>& newCommands)
             {
                 newCommands.push_back(subCommand);
                 return false;
@@ -131,7 +131,7 @@ TEST_F(CommandCenterTest, CreatesSubCommands)
     ServiceRegistry::getInstance().getService<GameState>()->addComponent(entity, CompTransform());
 
     Event tickEvent{Event::Type::TICK, TickData{0}};
-    ccEventHandlerPtr->onEvent(tickEvent);
+    commandCenter.onTick(tickEvent);
 
     auto unitActual =
         ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompUnit>(entity);

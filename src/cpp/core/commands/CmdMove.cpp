@@ -97,11 +97,11 @@ void CmdMove::onQueue()
  * @return true if the movement executed successfully or if the target position is invalid;
  *         false if the move operation failed.
  */
-bool CmdMove::onExecute(int deltaTimeMs, std::list<Command*>& subCommands)
+bool CmdMove::onExecute(int deltaTimeMs, int currentTick, std::list<Command*>& subCommands)
 {
     if (targetPos.isNull() == false) [[likely]]
     {
-        animate(deltaTimeMs);
+        animate(deltaTimeMs, currentTick);
         return move(deltaTimeMs);
     }
     else [[unlikely]]
@@ -121,13 +121,13 @@ void CmdMove::destroy()
     ObjectPool<CmdMove>::release(this);
 }
 
-void CmdMove::animate(int deltaTimeMs)
+void CmdMove::animate(int deltaTimeMs, int currentTick)
 {
     m_components->action.action = actionOverride;
     const auto& actionAnimation = m_components->animation.animations[m_components->action.action];
 
     auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.value().speed;
-    if (s_totalTicks % ticksPerFrame == 0)
+    if (currentTick % ticksPerFrame == 0)
     {
         m_components->dirty.markDirty(m_entityID);
         m_components->animation.frame++;

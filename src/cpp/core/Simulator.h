@@ -24,7 +24,7 @@ class Simulator : public EventHandler
 
   private:
     // EventHandler overrides
-    void onInit(EventLoop* eventLoop) override;
+    void onInit(EventLoop& eventLoop) override;
 
     void onTick(const Event& e);
     void onKeyUp(const Event& e);

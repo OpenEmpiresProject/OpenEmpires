@@ -46,7 +46,7 @@ Simulator::Simulator(ThreadSynchronizer<FrameData>& synchronizer,
     registerCallback(Event::Type::UNIT_SELECTION, this, &Simulator::onUnitSelection);
 }
 
-void Simulator::onInit(EventLoop* eventLoop)
+void Simulator::onInit(EventLoop& eventLoop)
 {
     ObjectPool<ThreadMessage>::reserve(1000);
     ObjectPool<CompGraphics>::reserve(1000);

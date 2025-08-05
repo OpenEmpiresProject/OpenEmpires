@@ -61,6 +61,8 @@ class EventLoop : public SubSystem, public EventPublisher
 
     static bool s_isPaused;
     bool m_isReady = false;
+
+    int m_currentTick = 0;
 };
 
 } // namespace core

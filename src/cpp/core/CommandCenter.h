@@ -7,10 +7,11 @@ namespace core
 {
 class CommandCenter : public EventHandler
 {
-  private:
-    void onInit(EventLoop* eventLoop) override;
-    void onExit() override;
-    void onEvent(const Event& e) override;
+  public:
+    CommandCenter();
+
+    void onTick(const Event& e);
+    void onCommandRequest(const Event& e);
 };
 } // namespace core
 

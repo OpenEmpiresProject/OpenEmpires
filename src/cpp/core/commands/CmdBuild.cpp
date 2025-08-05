@@ -39,11 +39,11 @@ void CmdBuild::onQueue()
  * @param subCommands List to which any required sub-commands may be appended.
  * @return true if the build command is complete; false otherwise.
  */
-bool CmdBuild::onExecute(int deltaTimeMs, std::list<Command*>& subCommands)
+bool CmdBuild::onExecute(int deltaTimeMs, int currentTick, std::list<Command*>& subCommands)
 {
     if (isCloseEnough())
     {
-        animate(deltaTimeMs);
+        animate(deltaTimeMs, currentTick);
         build(deltaTimeMs);
     }
     else
@@ -73,13 +73,13 @@ void CmdBuild::destroy()
  *
  * @param deltaTimeMs The elapsed time in milliseconds since the last tick.
  */
-void CmdBuild::animate(int deltaTimeMs)
+void CmdBuild::animate(int deltaTimeMs, int currentTick)
 {
     m_components->action.action = UnitAction::BUILDING;
     auto& actionAnimation = m_components->animation.animations[m_components->action.action];
 
     auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.value().speed;
-    if (s_totalTicks % ticksPerFrame == 0)
+    if (currentTick % ticksPerFrame == 0)
     {
         m_components->dirty.markDirty(m_entityID);
         m_components->animation.frame++;

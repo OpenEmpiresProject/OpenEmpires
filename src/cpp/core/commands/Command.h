@@ -52,7 +52,7 @@ class Command
      * added.
      * @return true if the command completed, false otherwise.
      */
-    virtual bool onExecute(int deltaTimeMs, std::list<Command*>& subCommands) = 0;
+    virtual bool onExecute(int deltaTimeMs, int currentTick, std::list<Command*>& subCommands) = 0;
     virtual std::string toString() const = 0;
     virtual void destroy() = 0;
 
@@ -64,11 +64,6 @@ class Command
     int getPriority() const
     {
         return m_priority;
-    }
-
-    static void incrementTotalTicks()
-    {
-        s_totalTicks++;
     }
 
     void setEntityID(uint32_t entityID)
@@ -93,8 +88,6 @@ class Command
     }
 
   protected:
-    inline static int s_totalTicks = 0;
-
     std::shared_ptr<GameSettings> m_settings;
     std::shared_ptr<GameState> m_gameState;
     int m_priority = -1;
