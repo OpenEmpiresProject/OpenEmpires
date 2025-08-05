@@ -40,7 +40,7 @@ class Game
     {
         bool populateWorld = true;
         bool revealAll = false;
-        std::shared_ptr<ion::EventHandler> eventHandler;
+        std::shared_ptr<core::EventHandler> eventHandler;
     };
 
     int run()
@@ -52,7 +52,7 @@ class Game
         return runInternal(params);
     }
 
-    int runIntegTestEnv(std::shared_ptr<ion::EventHandler> eventHandler)
+    int runIntegTestEnv(std::shared_ptr<core::EventHandler> eventHandler)
     {
         Params params{.populateWorld = false, .revealAll = true, .eventHandler = eventHandler};
         return runInternal(params);
@@ -61,64 +61,65 @@ class Game
   private:
     int runInternal(const Params& params)
     {
-        ion::initLogger("logs/game.log");
+        core::initLogger("logs/game.log");
 
         spdlog::info("Game starting");
         spdlog::info("Initializing subsystems...");
 
-        ion::GraphicsRegistry graphicsRegistry;
+        core::GraphicsRegistry graphicsRegistry;
 
-        auto settings = std::make_shared<ion::GameSettings>();
+        auto settings = std::make_shared<core::GameSettings>();
         settings->setWindowDimensions(1366, 768);
 
         if (params.revealAll)
-            settings->setFOWRevealStatus(ion::RevealStatus::EXPLORED);
+            settings->setFOWRevealStatus(core::RevealStatus::EXPLORED);
 
-        ion::ServiceRegistry::getInstance().registerService(settings);
+        core::ServiceRegistry::getInstance().registerService(settings);
 
         std::stop_source stopSource;
         std::stop_token stopToken = stopSource.get_token();
 
-        ion::ThreadSynchronizer<ion::FrameData> simulatorRendererSynchronizer;
+        core::ThreadSynchronizer<core::FrameData> simulatorRendererSynchronizer;
         // game::GraphicsLoaderFromImages graphicsLoader;
         game::GraphicsLoaderFromDRS graphicsLoader;
 
-        auto gameState = std::make_shared<ion::GameState>();
+        auto gameState = std::make_shared<core::GameState>();
         gameState->gameMap.init(settings->getWorldSizeInTiles().width,
                                 settings->getWorldSizeInTiles().height);
-        ion::ServiceRegistry::getInstance().registerService(gameState);
+        core::ServiceRegistry::getInstance().registerService(gameState);
 
-        auto coordinates = std::make_shared<ion::Coordinates>(settings);
-        ion::ServiceRegistry::getInstance().registerService(coordinates);
+        auto coordinates = std::make_shared<core::Coordinates>(settings);
+        core::ServiceRegistry::getInstance().registerService(coordinates);
 
-        auto eventLoop = std::make_shared<ion::EventLoop>(&stopToken);
-        auto simulator = std::make_shared<ion::Simulator>(simulatorRendererSynchronizer, eventLoop);
-        ion::ServiceRegistry::getInstance().registerService(simulator);
+        auto eventLoop = std::make_shared<core::EventLoop>(&stopToken);
+        auto simulator =
+            std::make_shared<core::Simulator>(simulatorRendererSynchronizer, eventLoop);
+        core::ServiceRegistry::getInstance().registerService(simulator);
 
-        auto uiManager = std::make_shared<ion::UIManager>();
-        ion::ServiceRegistry::getInstance().registerService(uiManager);
+        auto uiManager = std::make_shared<core::UIManager>();
+        core::ServiceRegistry::getInstance().registerService(uiManager);
 
-        auto playerManager = std::make_shared<ion::PlayerManager>();
-        ion::ServiceRegistry::getInstance().registerService(playerManager);
+        auto playerManager = std::make_shared<core::PlayerManager>();
+        core::ServiceRegistry::getInstance().registerService(playerManager);
 
         auto resourceManager = std::make_shared<ResourceManager>();
-        ion::ServiceRegistry::getInstance().registerService(resourceManager);
+        core::ServiceRegistry::getInstance().registerService(resourceManager);
 
         auto hud = std::make_shared<HUD>();
-        ion::ServiceRegistry::getInstance().registerService(hud);
+        core::ServiceRegistry::getInstance().registerService(hud);
 
-        auto renderer = std::make_shared<ion::Renderer>(
+        auto renderer = std::make_shared<core::Renderer>(
             &stopSource, graphicsRegistry, simulatorRendererSynchronizer, graphicsLoader);
-        auto cc = std::make_shared<ion::CommandCenter>();
-        ion::ServiceRegistry::getInstance().registerService(cc);
+        auto cc = std::make_shared<core::CommandCenter>();
+        core::ServiceRegistry::getInstance().registerService(cc);
 
         auto entityDefLoader = std::make_shared<game::EntityDefinitionLoader>();
         entityDefLoader->load();
-        std::shared_ptr<ion::EntityFactory> entityFactory = entityDefLoader;
-        ion::ServiceRegistry::getInstance().registerService(entityFactory);
+        std::shared_ptr<core::EntityFactory> entityFactory = entityDefLoader;
+        core::ServiceRegistry::getInstance().registerService(entityFactory);
 
-        auto buildingMngr = std::make_shared<ion::BuildingManager>();
-        auto unitManager = std::make_shared<ion::UnitManager>();
+        auto buildingMngr = std::make_shared<core::BuildingManager>();
+        auto unitManager = std::make_shared<core::UnitManager>();
         auto playerActionResolver = std::make_shared<game::PlayerActionResolver>();
 
         if (params.eventHandler)
@@ -137,13 +138,13 @@ class Game
         auto resourceLoader =
             std::make_shared<DemoWorldCreator>(&stopToken, settings, params.populateWorld);
 
-        ion::SubSystemRegistry::getInstance().registerSubSystem("Renderer", std::move(renderer));
-        ion::SubSystemRegistry::getInstance().registerSubSystem("DemoWorldCreator",
-                                                                std::move(resourceLoader));
-        ion::SubSystemRegistry::getInstance().registerSubSystem("EventLoop", std::move(eventLoop));
+        core::SubSystemRegistry::getInstance().registerSubSystem("Renderer", std::move(renderer));
+        core::SubSystemRegistry::getInstance().registerSubSystem("DemoWorldCreator",
+                                                                 std::move(resourceLoader));
+        core::SubSystemRegistry::getInstance().registerSubSystem("EventLoop", std::move(eventLoop));
 
-        ion::SubSystemRegistry::getInstance().initAll();
-        ion::SubSystemRegistry::getInstance().shutdownAll();
+        core::SubSystemRegistry::getInstance().initAll();
+        core::SubSystemRegistry::getInstance().shutdownAll();
 
         spdlog::shutdown();
         spdlog::drop_all();

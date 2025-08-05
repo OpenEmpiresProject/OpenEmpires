@@ -8,7 +8,7 @@
 #include  <filesystem>
 
 using namespace std;
-using namespace ion;
+using namespace core;
 using namespace drs;
 namespace py = pybind11;
 
@@ -69,7 +69,7 @@ class EntityDefinitionLoaderExposure : public EntityDefinitionLoader
     }
 
     void setBoundingBoxReadFunc(
-        std::function<ion::Rect<int>(ion::Ref<drs::DRSFile>, uint32_t)> func)
+        std::function<core::Rect<int>(core::Ref<drs::DRSFile>, uint32_t)> func)
     {
         EntityDefinitionLoader::setBoundingBoxReadFunc(func);
     }
@@ -312,8 +312,8 @@ all_buildings= [
     siteId.entitySubType = 2;
     loader.setDRSData(siteId.hash(), EntityDefinitionLoader::EntityDRSData{.slpId = 111});
     loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
-    loader.setBoundingBoxReadFunc([](ion::Ref<drs::DRSFile>, uint32_t) -> ion::Rect<int>
-                                  { return ion::Rect<int>(); });
+    loader.setBoundingBoxReadFunc([](core::Ref<drs::DRSFile>, uint32_t) -> core::Rect<int>
+                                  { return core::Rect<int>(); });
 
     // Act
     loader.loadBuildings(module);
@@ -405,8 +405,8 @@ all_construction_sites= [
 
     EntityDefinitionLoaderExposure loader;
     loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
-    loader.setBoundingBoxReadFunc([](ion::Ref<drs::DRSFile>, uint32_t) -> ion::Rect<int>
-                                  { return ion::Rect<int>(); });
+    loader.setBoundingBoxReadFunc([](core::Ref<drs::DRSFile>, uint32_t) -> core::Rect<int>
+                                  { return core::Rect<int>(); });
     loader.loadConstructionSites(module);
 
     {
@@ -488,8 +488,8 @@ all_construction_sites= [
 
     EntityDefinitionLoaderExposure loader;
     loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
-    loader.setBoundingBoxReadFunc([](ion::Ref<drs::DRSFile>, uint32_t) -> ion::Rect<int>
-                                  { return ion::Rect<int>(); });
+    loader.setBoundingBoxReadFunc([](core::Ref<drs::DRSFile>, uint32_t) -> core::Rect<int>
+                                  { return core::Rect<int>(); });
     loader.loadConstructionSites(module);
     loader.loadBuildings(module);
 
@@ -498,8 +498,8 @@ all_construction_sites= [
     auto drsData = loader.getDRSData(id);
     EXPECT_EQ(drsData.slpId, 3483);
 
-    auto gameState = std::make_shared<ion::GameState>();
-    ion::ServiceRegistry::getInstance().registerService(gameState);
+    auto gameState = std::make_shared<core::GameState>();
+    core::ServiceRegistry::getInstance().registerService(gameState);
 
     auto mill = loader.createEntity(EntityTypes::ET_MILL, 0);
 
@@ -531,8 +531,8 @@ all_tilesets = [
 
     EntityDefinitionLoaderExposure loader;
     loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
-    loader.setBoundingBoxReadFunc([](ion::Ref<drs::DRSFile>, uint32_t) -> ion::Rect<int>
-                                  { return ion::Rect<int>(); });
+    loader.setBoundingBoxReadFunc([](core::Ref<drs::DRSFile>, uint32_t) -> core::Rect<int>
+                                  { return core::Rect<int>(); });
 
     // Act
     loader.loadTileSets(module);
@@ -578,8 +578,8 @@ all_natural_resources= [
     // Act
     EntityDefinitionLoaderExposure loader;
     loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
-    loader.setBoundingBoxReadFunc([](ion::Ref<drs::DRSFile>, uint32_t) -> ion::Rect<int>
-                                  { return ion::Rect<int>(); });
+    loader.setBoundingBoxReadFunc([](core::Ref<drs::DRSFile>, uint32_t) -> core::Rect<int>
+                                  { return core::Rect<int>(); });
     loader.loadNaturalResources(module);
 
     // Assert
@@ -615,8 +615,8 @@ all_ui_elements = [
     // Act
     EntityDefinitionLoaderExposure loader;
     loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
-    loader.setBoundingBoxReadFunc([](ion::Ref<drs::DRSFile>, uint32_t) -> ion::Rect<int>
-                                  { return ion::Rect<int>(); });
+    loader.setBoundingBoxReadFunc([](core::Ref<drs::DRSFile>, uint32_t) -> core::Rect<int>
+                                  { return core::Rect<int>(); });
     loader.loadUIElements(module);
 
     // Assert

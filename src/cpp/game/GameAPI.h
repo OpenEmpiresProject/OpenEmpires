@@ -9,11 +9,11 @@
 #include <list>
 #include <memory>
 
-namespace ion
+namespace core
 {
 class Player;
 class Feet;
-} // namespace ion
+} // namespace core
 
 namespace game
 {
@@ -35,12 +35,12 @@ class GameAPI
 
     bool isReady();
     void quit();
-    ion::Ref<ion::Player> getPrimaryPlayer();
-    uint32_t createVillager(ion::Ref<ion::Player>, const ion::Feet& pos);
+    core::Ref<core::Player> getPrimaryPlayer();
+    uint32_t createVillager(core::Ref<core::Player>, const core::Feet& pos);
     std::list<uint32_t> getVillagers();
-    void commandToMove(uint32_t unit, const ion::Feet& target);
+    void commandToMove(uint32_t unit, const core::Feet& target);
     int getCurrentAction(uint32_t unit);
-    ion::Feet getUnitPosition(uint32_t unit);
+    core::Feet getUnitPosition(uint32_t unit);
     void deleteEntity(uint32_t entity);
 
   private:

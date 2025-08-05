@@ -24,7 +24,7 @@ public:
     static game::Game m_game;
     static game::GameAPI* m_api;
     static std::thread* m_testThread;
-    static ion::Ref<game::IntegTestTickAssist> m_tickAssist;
+    static core::Ref<game::IntegTestTickAssist> m_tickAssist;
 };
 
 #endif

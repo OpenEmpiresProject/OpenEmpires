@@ -8,7 +8,7 @@
 #include "utils/Logger.h"
 
 using namespace game;
-using namespace ion;
+using namespace core;
 
 HUD::HUD(/* args */)
 {
@@ -20,7 +20,7 @@ HUD::~HUD()
 {
 }
 
-void HUD::updateLabelRef(Ref<ion::ui::Label>& label, const std::string& text)
+void HUD::updateLabelRef(Ref<core::ui::Label>& label, const std::string& text)
 {
     if (label == nullptr)
     {

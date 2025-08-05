@@ -26,7 +26,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_video.h>
 
-using namespace ion;
+using namespace core;
 using namespace std;
 
 namespace game
@@ -103,7 +103,7 @@ class Studio : public PropertyInitializer
 
     void init()
     {
-        ion::initLogger("logs/studio.log");
+        core::initLogger("logs/studio.log");
         spdlog::info("Studio is starting");
 
         initSDL();
@@ -272,7 +272,7 @@ class Studio : public PropertyInitializer
     }
 
   private:
-    ion::GraphicsRegistry m_graphicsRegistry;
+    core::GraphicsRegistry m_graphicsRegistry;
     SDL_Window* m_window = nullptr;
     SDL_Renderer* m_renderer = nullptr;
     CompRendering m_rc;

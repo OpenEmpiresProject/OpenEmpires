@@ -1,6 +1,6 @@
 add_subdirectory(drs)
 add_subdirectory(game)
-add_subdirectory(ion)
+add_subdirectory(core)
 add_subdirectory(sdl3_gfx)
 
 add_executable(openEmpires main.cpp)
@@ -15,7 +15,7 @@ target_link_libraries(openEmpires
     PRIVATE
         drs
         game
-        ion
+        core
         sdl3_gfx
 )
 
@@ -23,7 +23,7 @@ target_include_directories(openEmpires
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/drs
         ${CMAKE_CURRENT_SOURCE_DIR}/game
-        ${CMAKE_CURRENT_SOURCE_DIR}/ion
+        ${CMAKE_CURRENT_SOURCE_DIR}/core
         ${CMAKE_CURRENT_SOURCE_DIR}/sdl3_gfx
 )
 

@@ -21,7 +21,7 @@
 #include <vector>
 
 using namespace game;
-using namespace ion;
+using namespace core;
 namespace fs = std::filesystem;
 using namespace std;
 

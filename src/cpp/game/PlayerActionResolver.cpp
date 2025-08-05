@@ -15,7 +15,7 @@
 
 #include <SDL3/SDL.h>
 
-using namespace ion;
+using namespace core;
 using namespace game;
 
 PlayerActionResolver::PlayerActionResolver(/* args */)
@@ -28,11 +28,11 @@ PlayerActionResolver::~PlayerActionResolver()
 {
 }
 
-void PlayerActionResolver::onEvent(const ion::Event& e)
+void PlayerActionResolver::onEvent(const core::Event& e)
 {
 }
 
-void PlayerActionResolver::onMouseMove(const ion::Event& e)
+void PlayerActionResolver::onMouseMove(const core::Event& e)
 {
     m_lastMouseScreenPos = e.getData<MouseMoveData>().screenPos;
 }
@@ -48,7 +48,7 @@ BuildingPlacementData createBuildingRequestData(uint32_t entityType, const Feet&
     return data;
 }
 
-void PlayerActionResolver::onKeyUp(const ion::Event& e)
+void PlayerActionResolver::onKeyUp(const core::Event& e)
 {
     SDL_Scancode scancode = static_cast<SDL_Scancode>(e.getData<KeyboardData>().keyCode);
     auto coordinates = ServiceRegistry::getInstance().getService<Coordinates>();

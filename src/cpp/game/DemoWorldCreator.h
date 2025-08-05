@@ -16,11 +16,11 @@
 #include <memory>
 namespace game
 {
-class DemoWorldCreator : public ion::SubSystem, public ion::PropertyInitializer
+class DemoWorldCreator : public core::SubSystem, public core::PropertyInitializer
 {
   public:
     DemoWorldCreator(std::stop_token* stopToken,
-                     std::shared_ptr<ion::GameSettings> settings,
+                     std::shared_ptr<core::GameSettings> settings,
                      bool populateWorld);
     ~DemoWorldCreator() = default;
 
@@ -32,21 +32,21 @@ class DemoWorldCreator : public ion::SubSystem, public ion::PropertyInitializer
     void shutdown() override;
 
     void loadEntities();
-    void generateMap(ion::TileMap& gameMap);
+    void generateMap(core::TileMap& gameMap);
     void createTile(uint32_t x,
                     uint32_t y,
-                    ion::Ref<ion::GameState> gameState,
+                    core::Ref<core::GameState> gameState,
                     EntityTypes entityType);
-    void createTree(ion::TileMap& gameMap, uint32_t x, uint32_t y);
+    void createTree(core::TileMap& gameMap, uint32_t x, uint32_t y);
     void createStoneOrGoldCluster(EntityTypes entityType,
-                                  ion::TileMap& gameMap,
+                                  core::TileMap& gameMap,
                                   uint32_t xHint,
                                   uint32_t yHint,
                                   uint8_t amount);
-    void createStoneOrGold(EntityTypes entityType, ion::TileMap& gameMap, uint32_t x, uint32_t y);
-    void createVillager(ion::Ref<ion::Player> player, const ion::Tile& pos);
+    void createStoneOrGold(EntityTypes entityType, core::TileMap& gameMap, uint32_t x, uint32_t y);
+    void createVillager(core::Ref<core::Player> player, const core::Tile& pos);
 
-    std::shared_ptr<ion::GameSettings> m_settings;
+    std::shared_ptr<core::GameSettings> m_settings;
     bool m_populateWorld = false;
     bool m_isReady = false;
 };

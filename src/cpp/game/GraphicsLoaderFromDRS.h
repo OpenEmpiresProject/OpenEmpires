@@ -5,16 +5,16 @@
 
 namespace game
 {
-class GraphicsLoaderFromDRS : public ion::GraphicsLoader
+class GraphicsLoaderFromDRS : public core::GraphicsLoader
 {
   private:
     void loadAllGraphics(SDL_Renderer* renderer,
-                         ion::GraphicsRegistry& graphicsRegistry,
-                         ion::AtlasGenerator& atlasGenerator) override;
+                         core::GraphicsRegistry& graphicsRegistry,
+                         core::AtlasGenerator& atlasGenerator) override;
     void loadGraphics(SDL_Renderer* renderer,
-                      ion::GraphicsRegistry& graphicsRegistry,
-                      ion::AtlasGenerator& atlasGenerator,
-                      const std::list<ion::GraphicsID>& idsToLoad) override;
+                      core::GraphicsRegistry& graphicsRegistry,
+                      core::AtlasGenerator& atlasGenerator,
+                      const std::list<core::GraphicsID>& idsToLoad) override;
 };
 
 } // namespace game

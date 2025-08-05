@@ -3,7 +3,7 @@
 
 #include "IntegTestBase.h"
 
-using namespace ion;
+using namespace core;
 using namespace game;
 
 class MovementsTest : public IntegTestBase

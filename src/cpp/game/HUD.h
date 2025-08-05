@@ -7,22 +7,22 @@
 
 namespace game
 {
-class HUD : public ion::EventHandler
+class HUD : public core::EventHandler
 {
   public:
     HUD(/* args */);
     ~HUD();
 
   private:
-    void onTick(const ion::Event& e);
-    void updateLabelRef(ion::Ref<ion::ui::Label>& label, const std::string& text);
-    void onUnitSelection(const ion::Event& e);
+    void onTick(const core::Event& e);
+    void updateLabelRef(core::Ref<core::ui::Label>& label, const std::string& text);
+    void onUnitSelection(const core::Event& e);
 
-    ion::Ref<ion::ui::Label> m_woodLabel;
-    ion::Ref<ion::ui::Label> m_stoneabel;
-    ion::Ref<ion::ui::Label> m_goldLabel;
-    ion::Ref<ion::ui::Label> m_playerIdLabel;
-    ion::Ref<ion::ui::Label> m_selectedIcon;
+    core::Ref<core::ui::Label> m_woodLabel;
+    core::Ref<core::ui::Label> m_stoneabel;
+    core::Ref<core::ui::Label> m_goldLabel;
+    core::Ref<core::ui::Label> m_playerIdLabel;
+    core::Ref<core::ui::Label> m_selectedIcon;
 };
 
 } // namespace game

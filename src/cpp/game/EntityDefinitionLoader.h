@@ -34,36 +34,36 @@ namespace game
 {
 
 using ComponentType = std::variant<std::monostate,
-                                   ion::CompAction,
-                                   ion::CompAnimation,
-                                   ion::CompBuilder,
-                                   ion::CompBuilding,
-                                   ion::CompDirty,
-                                   ion::CompEntityInfo,
-                                   ion::CompGraphics,
-                                   ion::CompPlayer,
-                                   ion::CompRendering,
-                                   ion::CompResource,
-                                   ion::CompResourceGatherer,
-                                   ion::CompSelectible,
-                                   ion::CompTransform,
-                                   ion::CompUnit>;
+                                   core::CompAction,
+                                   core::CompAnimation,
+                                   core::CompBuilder,
+                                   core::CompBuilding,
+                                   core::CompDirty,
+                                   core::CompEntityInfo,
+                                   core::CompGraphics,
+                                   core::CompPlayer,
+                                   core::CompRendering,
+                                   core::CompResource,
+                                   core::CompResourceGatherer,
+                                   core::CompSelectible,
+                                   core::CompTransform,
+                                   core::CompUnit>;
 
-class EntityDefinitionLoader : public ion::EntityFactory, public ion::PropertyInitializer
+class EntityDefinitionLoader : public core::EntityFactory, public core::PropertyInitializer
 {
   public:
     struct EntityDRSData
     {
-        ion::Ref<drs::DRSFile> drsFile;
+        core::Ref<drs::DRSFile> drsFile;
         int slpId = -1;
-        ion::Rect<int> clipRect;
-        ion::Rect<int> boundingRect;
+        core::Rect<int> clipRect;
+        core::Rect<int> boundingRect;
     };
     EntityDefinitionLoader();
     ~EntityDefinitionLoader();
 
     void load();
-    EntityDRSData getDRSData(const ion::GraphicsID& id);
+    EntityDRSData getDRSData(const core::GraphicsID& id);
 
     template <typename T> static T readValue(pybind11::handle object, const std::string& key)
     {
@@ -99,7 +99,7 @@ class EntityDefinitionLoader : public ion::EntityFactory, public ion::PropertyIn
   protected:
     struct ConstructionSiteData
     {
-        ion::Size size;
+        core::Size size;
         std::map<int, int> progressToFrames;
     };
 
@@ -131,9 +131,9 @@ class EntityDefinitionLoader : public ion::EntityFactory, public ion::PropertyIn
     void setSite(const std::string& sizeStr, const std::map<int, int>& progressToFrames);
     void attachedConstructionSites(uint32_t entityType, const std::string& sizeStr);
     void setDRSData(int64_t id, const EntityDRSData& data);
-    void setDRSLoaderFunc(std::function<ion::Ref<drs::DRSFile>(const std::string&)> func);
+    void setDRSLoaderFunc(std::function<core::Ref<drs::DRSFile>(const std::string&)> func);
     void setBoundingBoxReadFunc(
-        std::function<ion::Rect<int>(ion::Ref<drs::DRSFile>, uint32_t)> func);
+        std::function<core::Rect<int>(core::Ref<drs::DRSFile>, uint32_t)> func);
     template <typename T> T& getComponent(uint32_t entityType, uint32_t entitySubType)
     {
         auto mapKey = entityType + entitySubType * m_entitySubTypeMapKeyOffset;
@@ -167,10 +167,10 @@ class EntityDefinitionLoader : public ion::EntityFactory, public ion::PropertyIn
     const std::string m_unitsFile = "units";
     std::map<uint32_t, std::list<ComponentType>> m_componentsByEntityType;
     std::unordered_map<int64_t, EntityDRSData> m_DRSDataByGraphicsIdHash;
-    std::unordered_map<std::string, ion::Ref<drs::DRSFile>> m_drsFilesByName;
+    std::unordered_map<std::string, core::Ref<drs::DRSFile>> m_drsFilesByName;
     std::map<std::string /*size*/, ConstructionSiteData> m_constructionSitesBySize;
-    std::function<ion::Ref<drs::DRSFile>(const std::string&)> m_drsLoadFunc;
-    std::function<ion::Rect<int>(ion::Ref<drs::DRSFile>, uint32_t)> m_boundingBoxReadFunc;
+    std::function<core::Ref<drs::DRSFile>(const std::string&)> m_drsLoadFunc;
+    std::function<core::Rect<int>(core::Ref<drs::DRSFile>, uint32_t)> m_boundingBoxReadFunc;
 
     const int m_entitySubTypeMapKeyOffset = 100000;
 };

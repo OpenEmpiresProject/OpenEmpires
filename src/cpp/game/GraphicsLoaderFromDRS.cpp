@@ -16,7 +16,7 @@
 
 using namespace game;
 using namespace std;
-using namespace ion;
+using namespace core;
 using namespace drs;
 
 void loadSLP(shared_ptr<DRSFile> drs,

@@ -13,7 +13,7 @@ set_target_properties(openEmpiresIntegTests PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
 )
 
-target_link_libraries(openEmpiresIntegTests PRIVATE game ion GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
+target_link_libraries(openEmpiresIntegTests PRIVATE game core GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
 
 # Include directories for the C++ source files
 include_directories(${CMAKE_SOURCE_DIR}/src/cpp)

@@ -39,7 +39,7 @@
 
 namespace fs = std::filesystem;
 using namespace game;
-using namespace ion;
+using namespace core;
 using namespace drs;
 using namespace std;
 
@@ -118,7 +118,7 @@ void DemoWorldCreator::loadEntities()
     auto playerIdLabel = window->createChild<ui::Label>();
     playerIdLabel->setRect(Rect<int>(420, 5, 50, 20));
     playerIdLabel->setName("player");
-    playerIdLabel->setTextColor(ion::Color::WHITE);
+    playerIdLabel->setTextColor(core::Color::WHITE);
 
     GraphicsID controlPanelBackground{.entityType = EntityTypes::ET_UI_ELEMENT,
                                       .entitySubType = EntitySubTypes::EST_UI_CONTROL_PANEL};
@@ -174,7 +174,7 @@ void DemoWorldCreator::createTree(TileMap& map, uint32_t x, uint32_t y)
 }
 
 void DemoWorldCreator::createStoneOrGold(EntityTypes entityType,
-                                         ion::TileMap& gameMap,
+                                         core::TileMap& gameMap,
                                          uint32_t x,
                                          uint32_t y)
 {
@@ -191,7 +191,7 @@ void DemoWorldCreator::createStoneOrGold(EntityTypes entityType,
     gameMap.addEntity(MapLayerType::STATIC, Tile(x, y), entity);
 }
 
-void DemoWorldCreator::createVillager(Ref<ion::Player> player, const Tile& tilePos)
+void DemoWorldCreator::createVillager(Ref<core::Player> player, const Tile& tilePos)
 {
     auto gameState = ServiceRegistry::getInstance().getService<GameState>();
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
@@ -213,7 +213,7 @@ void DemoWorldCreator::createVillager(Ref<ion::Player> player, const Tile& tileP
 }
 
 void DemoWorldCreator::createStoneOrGoldCluster(
-    EntityTypes entityType, ion::TileMap& gameMap, uint32_t xHint, uint32_t yHint, uint8_t amount)
+    EntityTypes entityType, core::TileMap& gameMap, uint32_t xHint, uint32_t yHint, uint8_t amount)
 {
     if (amount == 0)
         return;
@@ -354,7 +354,7 @@ void DemoWorldCreator::generateMap(TileMap& gameMap)
 
 void DemoWorldCreator::createTile(uint32_t x,
                                   uint32_t y,
-                                  ion::Ref<ion::GameState> gameState,
+                                  core::Ref<core::GameState> gameState,
                                   EntityTypes entityType)
 {
     auto size = m_settings->getWorldSizeInTiles();

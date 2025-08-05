@@ -9,7 +9,7 @@
 #include "components/CompTransform.h"
 
 using namespace game;
-using namespace ion;
+using namespace core;
 
 ResourceManager::ResourceManager(/* args */)
 {

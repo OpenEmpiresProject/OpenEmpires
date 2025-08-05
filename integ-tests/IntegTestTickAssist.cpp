@@ -5,14 +5,14 @@ using namespace game;
 IntegTestTickAssist::IntegTestTickAssist(/* args */)
     : m_lock(m_syncMutex, std::defer_lock)
 {
-    registerCallback(ion::Event::Type::TICK, this, &IntegTestTickAssist::onTick);
+    registerCallback(core::Event::Type::TICK, this, &IntegTestTickAssist::onTick);
 }
 
 IntegTestTickAssist::~IntegTestTickAssist()
 {
 }
 
-void IntegTestTickAssist::onTick(const ion::Event& e)
+void IntegTestTickAssist::onTick(const core::Event& e)
 {
     std::lock_guard lock(m_syncMutex);
 }

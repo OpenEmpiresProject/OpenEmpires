@@ -25,7 +25,7 @@
 #include "components/CompUnit.h"
 
 using namespace game;
-using namespace ion;
+using namespace core;
 
 struct ScopedSynchronizer
 {
@@ -72,7 +72,7 @@ Ref<Player> GameAPI::getPrimaryPlayer()
     return playerManager->getViewingPlayer();
 }
 
-uint32_t GameAPI::createVillager(Ref<ion::Player> player, const Feet& pos)
+uint32_t GameAPI::createVillager(Ref<core::Player> player, const Feet& pos)
 {
     ScopedSynchronizer sync(m_sync);
 

@@ -9,7 +9,7 @@
 #include <pybind11/stl.h>
 #include <unordered_map>
 
-using namespace ion;
+using namespace core;
 using namespace game;
 using namespace std;
 using namespace drs;
@@ -366,19 +366,19 @@ void EntityDefinitionLoader::addComponentsForUnit(uint32_t entityType)
 {
     CompGraphics graphics;
     graphics.layer = GraphicLayer::ENTITIES;
-    graphics.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::GREEN,
+    graphics.debugOverlays.push_back({DebugOverlay::Type::ARROW, core::Color::GREEN,
                                       DebugOverlay::FixedPosition::BOTTOM_CENTER,
                                       DebugOverlay::FixedPosition::CENTER});
-    graphics.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::RED,
+    graphics.debugOverlays.push_back({DebugOverlay::Type::ARROW, core::Color::RED,
                                       DebugOverlay::FixedPosition::BOTTOM_CENTER,
                                       DebugOverlay::FixedPosition::CENTER});
-    graphics.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::BLUE,
+    graphics.debugOverlays.push_back({DebugOverlay::Type::ARROW, core::Color::BLUE,
                                       DebugOverlay::FixedPosition::BOTTOM_CENTER,
                                       DebugOverlay::FixedPosition::CENTER});
-    graphics.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::YELLOW,
+    graphics.debugOverlays.push_back({DebugOverlay::Type::ARROW, core::Color::YELLOW,
                                       DebugOverlay::FixedPosition::BOTTOM_CENTER,
                                       DebugOverlay::FixedPosition::CENTER});
-    graphics.debugOverlays.push_back({DebugOverlay::Type::ARROW, ion::Color::BLACK,
+    graphics.debugOverlays.push_back({DebugOverlay::Type::ARROW, core::Color::BLACK,
                                       DebugOverlay::FixedPosition::BOTTOM_CENTER,
                                       DebugOverlay::FixedPosition::CENTER});
 
@@ -416,7 +416,7 @@ void EntityDefinitionLoader::addComponentsForTileset(uint32_t entityType)
 {
     CompGraphics graphics;
     graphics.layer = GraphicLayer::GROUND;
-    DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, ion::Color::GREY,
+    DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, core::Color::GREY,
                          DebugOverlay::FixedPosition::BOTTOM_CENTER};
     overlay.customPos1 = DebugOverlay::FixedPosition::CENTER_LEFT;
     overlay.customPos2 = DebugOverlay::FixedPosition::CENTER_RIGHT;
@@ -803,7 +803,7 @@ ComponentType EntityDefinitionLoader::createCompBuilding(py::object module,
 }
 
 void EntityDefinitionLoader::setBoundingBoxReadFunc(
-    std::function<ion::Rect<int>(ion::Ref<drs::DRSFile>, uint32_t)> func)
+    std::function<core::Rect<int>(core::Ref<drs::DRSFile>, uint32_t)> func)
 {
     m_boundingBoxReadFunc = func;
 }

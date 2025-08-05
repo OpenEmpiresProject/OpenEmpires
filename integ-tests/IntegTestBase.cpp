@@ -5,12 +5,12 @@
 game::Game IntegTestBase::m_game;
 game::GameAPI* IntegTestBase::m_api = nullptr;
 std::thread* IntegTestBase::m_testThread = nullptr;
-ion::Ref<game::IntegTestTickAssist> IntegTestBase::m_tickAssist;
+core::Ref<game::IntegTestTickAssist> IntegTestBase::m_tickAssist;
 
 void IntegTestBase::SetUpTestSuite() 
 {
-    m_tickAssist = ion::CreateRef<game::IntegTestTickAssist>();
-    auto sync = ion::CreateRef<game::GameAPI::Synchronizer>();
+    m_tickAssist = core::CreateRef<game::IntegTestTickAssist>();
+    auto sync = core::CreateRef<game::GameAPI::Synchronizer>();
     sync->onStart = [&](){m_tickAssist->aquireLock();};
     sync->onEnd = [&](){m_tickAssist->releaseLock();};
 
@@ -18,7 +18,7 @@ void IntegTestBase::SetUpTestSuite()
     m_testThread = new std::thread([]() {
         m_game.runIntegTestEnv(m_tickAssist);
     });
-    while (ion::SubSystemRegistry::getInstance().isAllInitialized() == false) {}
+    while (core::SubSystemRegistry::getInstance().isAllInitialized() == false) {}
     while (m_api->isReady() == false) {}
 }
 

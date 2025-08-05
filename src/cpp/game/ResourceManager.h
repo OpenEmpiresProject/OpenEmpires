@@ -5,15 +5,15 @@
 
 namespace game
 {
-class ResourceManager : public ion::EventHandler
+class ResourceManager : public core::EventHandler
 {
   public:
     ResourceManager(/* args */);
     ~ResourceManager();
 
   private:
-    void onEvent(const ion::Event& e) override;
-    void onTick(const ion::Event& e);
+    void onEvent(const core::Event& e) override;
+    void onTick(const core::Event& e);
 };
 
 } // namespace game

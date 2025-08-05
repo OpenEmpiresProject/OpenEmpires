@@ -7,7 +7,7 @@
 
 namespace game
 {
-    class IntegTestTickAssist : public ion::EventHandler
+    class IntegTestTickAssist : public core::EventHandler
     {
     public:
         IntegTestTickAssist(/* args */);
@@ -17,7 +17,7 @@ namespace game
         void releaseLock();
 
     private:
-        void onTick(const ion::Event& e);
+        void onTick(const core::Event& e);
     
         std::mutex m_syncMutex;
         std::unique_lock<std::mutex> m_lock;

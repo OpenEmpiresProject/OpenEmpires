@@ -8,18 +8,18 @@
 
 namespace game
 {
-class PlayerActionResolver : public ion::EventHandler
+class PlayerActionResolver : public core::EventHandler
 {
   public:
     PlayerActionResolver(/* args */);
     ~PlayerActionResolver();
 
   private:
-    ion::Vec2 m_lastMouseScreenPos;
+    core::Vec2 m_lastMouseScreenPos;
 
-    void onEvent(const ion::Event& e) override;
-    void onKeyUp(const ion::Event& e);
-    void onMouseMove(const ion::Event& e);
+    void onEvent(const core::Event& e) override;
+    void onKeyUp(const core::Event& e);
+    void onMouseMove(const core::Event& e);
 };
 
 } // namespace game
