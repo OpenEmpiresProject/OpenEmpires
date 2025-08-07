@@ -14,7 +14,6 @@ class GameState
 {
   public:
     GameState();
-    ~GameState();
     GameState(const GameState&) = delete;
     GameState& operator=(const GameState&) = delete;
 
@@ -61,16 +60,20 @@ class GameState
 
     void clearAll();
 
-    TileMap gameMap;
-
-    PathFinderBase* getPathFinder() const
+    Ref<PathFinderBase> getPathFinder() const
     {
         return m_pathFinder;
     }
 
+    TileMap& gameMap()
+    {
+        return m_gameMap;
+    }
+
   private:
+    TileMap m_gameMap;
     entt::basic_registry<uint32_t> m_registry;
-    PathFinderBase* m_pathFinder = nullptr;
+    Ref<PathFinderBase> m_pathFinder;
     std::vector<uint32_t> m_entitiesToDestroy;
 };
 } // namespace core

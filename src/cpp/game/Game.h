@@ -19,7 +19,6 @@
 #include "ServiceRegistry.h"
 #include "Simulator.h"
 #include "SubSystemRegistry.h"
-#include "ThreadQueue.h"
 #include "ThreadSynchronizer.h"
 #include "UIManager.h"
 #include "UnitManager.h"
@@ -84,16 +83,15 @@ class Game
         game::GraphicsLoaderFromDRS graphicsLoader;
 
         auto gameState = std::make_shared<core::GameState>();
-        gameState->gameMap.init(settings->getWorldSizeInTiles().width,
-                                settings->getWorldSizeInTiles().height);
+        gameState->gameMap().init(settings->getWorldSizeInTiles().width,
+                                  settings->getWorldSizeInTiles().height);
         core::ServiceRegistry::getInstance().registerService(gameState);
 
         auto coordinates = std::make_shared<core::Coordinates>(settings);
         core::ServiceRegistry::getInstance().registerService(coordinates);
 
         auto eventLoop = std::make_shared<core::EventLoop>(&stopToken);
-        auto simulator =
-            std::make_shared<core::Simulator>(simulatorRendererSynchronizer, eventLoop);
+        auto simulator = std::make_shared<core::Simulator>(simulatorRendererSynchronizer);
         core::ServiceRegistry::getInstance().registerService(simulator);
 
         auto uiManager = std::make_shared<core::UIManager>();

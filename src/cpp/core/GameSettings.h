@@ -12,9 +12,6 @@ namespace core
 class GameSettings
 {
   public:
-    GameSettings() = default;
-    ~GameSettings() = default;
-
     void setResolution(int width, int height)
     {
         m_resolution.width = width;

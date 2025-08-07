@@ -9,14 +9,14 @@
 
 namespace core
 {
-struct Resource
+struct InGameResource
 {
     uint8_t type = Constants::RESOURCE_TYPE_NONE;
     uint32_t amount = 0;
 
-    Resource() = default;
+    InGameResource() = default;
 
-    Resource(uint8_t type, uint32_t amount) : type(type), amount(amount)
+    InGameResource(uint8_t type, uint32_t amount) : type(type), amount(amount)
     {
     }
 

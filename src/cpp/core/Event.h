@@ -115,7 +115,7 @@ struct Event
     const Type type = Type::NONE;
     const Data data = std::monostate{};
 
-    template <typename T> T getData() const
+    template <typename T> const T& getData() const
     {
         return std::get<T>(data);
     }

@@ -15,7 +15,6 @@ struct UnitSelection
     {
         selectedEntities.reserve(Constants::MAX_UNIT_SELECTION);
     }
-    ~UnitSelection() = default;
 };
 } // namespace core
 

@@ -49,11 +49,11 @@ struct ScopedSynchronizer
 bool GameAPI::isReady()
 {
     auto redndererSubSystem = SubSystemRegistry::getInstance().getSubSystem("Renderer");
-    auto renderer = (Renderer*) redndererSubSystem;
+    auto renderer = static_pointer_cast<Renderer>(redndererSubSystem);
     auto creatorSubSystem = SubSystemRegistry::getInstance().getSubSystem("DemoWorldCreator");
-    auto creator = (DemoWorldCreator*) creatorSubSystem;
+    auto creator = static_pointer_cast<DemoWorldCreator>(creatorSubSystem);
     auto eventLoopSubSystem = SubSystemRegistry::getInstance().getSubSystem("EventLoop");
-    auto eventLoop = (EventLoop*) eventLoopSubSystem;
+    auto eventLoop = static_pointer_cast<EventLoop>(eventLoopSubSystem);
     return renderer->isReady() && creator->isReady() && eventLoop->isReady();
 }
 
@@ -89,7 +89,7 @@ uint32_t GameAPI::createVillager(Ref<core::Player> player, const Feet& pos)
     playerComp.player = player;
 
     auto newTile = transform.position.toTile();
-    gameState->gameMap.addEntity(MapLayerType::UNITS, newTile, villager);
+    gameState->gameMap().addEntity(MapLayerType::UNITS, newTile, villager);
 
     player->getFogOfWar()->markAsExplored(transform.position, unit.lineOfSight);
 
@@ -113,8 +113,8 @@ void GameAPI::commandToMove(uint32_t unit, const Feet& target)
     ScopedSynchronizer sync(m_sync);
 
     auto subSys = SubSystemRegistry::getInstance().getSubSystem("EventLoop");
-    auto eventLoop = (EventLoop*) subSys;
-    auto eventPublisher = (EventPublisher*) eventLoop;
+    auto eventLoop = static_pointer_cast<EventLoop>(subSys);
+    auto eventPublisher = static_pointer_cast<EventPublisher>(eventLoop);
 
     auto cmd = ObjectPool<CmdMove>::acquire();
     cmd->targetPos = target;
@@ -146,8 +146,8 @@ void GameAPI::deleteEntity(uint32_t entity)
     ScopedSynchronizer sync(m_sync);
 
     auto subSys = SubSystemRegistry::getInstance().getSubSystem("EventLoop");
-    auto eventLoop = (EventLoop*) subSys;
-    auto eventPublisher = (EventPublisher*) eventLoop;
+    auto eventLoop = static_pointer_cast<EventLoop>(subSys);
+    auto eventPublisher = static_pointer_cast<EventPublisher>(eventLoop);
 
     Event event(Event::Type::ENTITY_DELETE, EntityDeleteData{entity});
 

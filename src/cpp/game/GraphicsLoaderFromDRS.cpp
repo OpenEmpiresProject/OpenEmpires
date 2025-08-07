@@ -1,5 +1,6 @@
 #include "GraphicsLoaderFromDRS.h"
 
+#include "AtlasGenerator.h"
 #include "DRSFile.h"
 #include "EntityDefinitionLoader.h"
 #include "GameTypes.h"
@@ -25,7 +26,7 @@ void loadSLP(shared_ptr<DRSFile> drs,
              uint32_t entitySubType,
              uint32_t action,
              uint32_t playerId,
-             SDL_Renderer* renderer,
+             SDL_Renderer& renderer,
              GraphicsRegistry& graphicsRegistry,
              AtlasGenerator& atlasGenerator,
              Rect<int> clipRect = Rect<int>());
@@ -33,14 +34,14 @@ shared_ptr<DRSFile> loadDRSFile(const string& drsFilename);
 void adjustDirections(GraphicsRegistry& graphicsRegistry);
 void registerDummyTexture(int entityType, int entitySubType, GraphicsRegistry& graphicsRegistry);
 
-void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer* renderer,
+void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer& renderer,
                                             GraphicsRegistry& graphicsRegistry,
                                             AtlasGenerator& atlasGenerator)
 {
     registerDummyTexture(EntityTypes::ET_UI_ELEMENT, EntitySubTypes::EST_DEFAULT, graphicsRegistry);
 }
 
-void GraphicsLoaderFromDRS::loadGraphics(SDL_Renderer* renderer,
+void GraphicsLoaderFromDRS::loadGraphics(SDL_Renderer& renderer,
                                          GraphicsRegistry& graphicsRegistry,
                                          AtlasGenerator& atlasGenerator,
                                          const std::list<GraphicsID>& idsToLoad)
@@ -153,7 +154,7 @@ void loadSLP(shared_ptr<DRSFile> drs,
              uint32_t entitySubType,
              uint32_t action,
              uint32_t playerId,
-             SDL_Renderer* renderer,
+             SDL_Renderer& renderer,
              GraphicsRegistry& graphicsRegistry,
              AtlasGenerator& atlasGenerator,
              Rect<int> clipRect)

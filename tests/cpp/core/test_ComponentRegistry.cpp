@@ -32,15 +32,15 @@ TEST(ComponentRegistryTest, RegisterAndRetrieveComponent)
     MockComponent* mockComponentPtr = mockComponent.get();
 
     registry.registerSubSystem("TestComponent", std::move(mockComponent));
-    SubSystem* retrievedComponent = registry.getSubSystem("TestComponent");
+    auto retrievedComponent = registry.getSubSystem("TestComponent");
 
-    EXPECT_EQ(retrievedComponent, mockComponentPtr);
+    EXPECT_EQ(retrievedComponent.get(), mockComponentPtr);
 }
 
 TEST(ComponentRegistryTest, RetrieveNonExistentComponent)
 {
     SubSystemRegistry& registry = SubSystemRegistry::getInstance();
-    SubSystem* retrievedComponent = registry.getSubSystem("NonExistentComponent");
+    auto retrievedComponent = registry.getSubSystem("NonExistentComponent");
 
     EXPECT_EQ(retrievedComponent, nullptr);
 }

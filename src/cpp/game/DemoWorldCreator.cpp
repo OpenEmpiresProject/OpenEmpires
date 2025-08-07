@@ -77,9 +77,9 @@ void DemoWorldCreator::loadEntities()
 
     if (m_populateWorld)
     {
-        generateMap(gameState->gameMap);
-        createStoneOrGoldCluster(EntityTypes::ET_STONE, gameState->gameMap, 30, 30, 4);
-        createStoneOrGoldCluster(EntityTypes::ET_GOLD, gameState->gameMap, 20, 30, 4);
+        generateMap(gameState->gameMap());
+        createStoneOrGoldCluster(EntityTypes::ET_STONE, gameState->gameMap(), 30, 30, 4);
+        createStoneOrGoldCluster(EntityTypes::ET_GOLD, gameState->gameMap(), 20, 30, 4);
         createVillager(player2, Tile(25, 25));
         createVillager(player, Tile(20, 20));
     }
@@ -207,7 +207,7 @@ void DemoWorldCreator::createVillager(Ref<core::Player> player, const Tile& tile
     playerComp.player = player;
 
     auto newTile = transform.position.toTile();
-    gameState->gameMap.addEntity(MapLayerType::UNITS, newTile, villager);
+    gameState->gameMap().addEntity(MapLayerType::UNITS, newTile, villager);
 
     player->getFogOfWar()->markAsExplored(transform.position, unit.lineOfSight);
 }
@@ -374,14 +374,14 @@ void DemoWorldCreator::createTile(uint32_t x,
     transform.position = Feet(x * 256, y * 256);
     info.variation = tileVariation;
 
-    gameState->gameMap.addEntity(MapLayerType::GROUND, Tile(x, y), entity);
+    gameState->gameMap().addEntity(MapLayerType::GROUND, Tile(x, y), entity);
 }
 
 void DemoWorldCreator::init()
 {
-    Resource::registerResourceType(ResourceType::WOOD);
-    Resource::registerResourceType(ResourceType::STONE);
-    Resource::registerResourceType(ResourceType::GOLD);
+    InGameResource::registerResourceType(ResourceType::WOOD);
+    InGameResource::registerResourceType(ResourceType::STONE);
+    InGameResource::registerResourceType(ResourceType::GOLD);
     loadEntities();
     m_isReady = true;
 }

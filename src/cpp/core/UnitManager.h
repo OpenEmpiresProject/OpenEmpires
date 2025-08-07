@@ -15,12 +15,8 @@ class UnitManager : public EventHandler
 {
   public:
     UnitManager();
-    ~UnitManager();
 
   private:
-    // Common
-    Ref<Coordinates> m_coordinates;
-
     // Unit selection related
     struct TileMapQueryResult
     {
@@ -44,9 +40,13 @@ class UnitManager : public EventHandler
     void onUnitSelection(const Event& e);
     void onUnitRequested(const Event& e);
 
+  private:
+    // Common
+    Ref<Coordinates> m_coordinates;
+
     bool m_buildingPlacementInProgress = false;
     Vec2 m_selectionStartPosScreenUnits;
-    bool m_isSelecting = false;
+    bool m_isSelectionBoxInProgress = false;
     UnitSelection m_currentUnitSelection;
 
     // Other functionalities goes here

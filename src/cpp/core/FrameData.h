@@ -3,12 +3,13 @@
 
 #include "Feet.h"
 #include "FogOfWar.h"
-#include "components/CompGraphics.h"
 
 #include <vector>
 
 namespace core
 {
+class CompGraphics;
+
 struct FrameData
 {
     int frameNumber = 0;

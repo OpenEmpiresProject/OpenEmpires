@@ -1,9 +1,9 @@
 #ifndef COMPRESOURCE_H
 #define COMPRESOURCE_H
 
+#include "InGameResource.h"
 #include "Property.h"
 #include "Rect.h"
-#include "Resource.h"
 #include "utils/Constants.h"
 
 #include <cstdint>
@@ -13,7 +13,7 @@ namespace core
 class CompResource
 {
   public:
-    Property<Resource> original;
+    Property<InGameResource> original;
 
   public:
     uint32_t remainingAmount = 0;

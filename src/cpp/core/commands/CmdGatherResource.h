@@ -254,7 +254,7 @@ class CmdGatherResource : public Command
                               uint32_t& resourceEntity) const
     {
         resourceEntity = entt::null;
-        auto& map = m_gameState->gameMap;
+        auto& map = m_gameState->gameMap();
         auto e = map.getEntity(MapLayerType::STATIC, posTile);
         if (e != entt::null)
         {

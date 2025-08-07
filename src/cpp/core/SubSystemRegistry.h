@@ -2,6 +2,7 @@
 #define SUBSYSTEMREGISTRY_H
 
 #include "SubSystem.h"
+#include "utils/Types.h"
 
 #include <memory>
 #include <string>
@@ -16,8 +17,8 @@ class SubSystemRegistry
   public:
     static SubSystemRegistry& getInstance();
 
-    void registerSubSystem(const std::string& name, std::shared_ptr<SubSystem> subSystem);
-    SubSystem* getSubSystem(const std::string& name);
+    void registerSubSystem(const std::string& name, Ref<SubSystem> subSystem);
+    Ref<SubSystem> getSubSystem(const std::string& name);
     void initAll();
     void shutdownAll();
     bool isAllInitialized() const;
@@ -31,7 +32,7 @@ class SubSystemRegistry
     SubSystemRegistry(SubSystemRegistry&&) = delete;
     SubSystemRegistry& operator=(SubSystemRegistry&&) = delete;
 
-    std::unordered_map<std::string, std::shared_ptr<SubSystem>> m_subSystems;
+    std::unordered_map<std::string, Ref<SubSystem>> m_subSystems;
 
     bool m_allInitialized = false;
 };

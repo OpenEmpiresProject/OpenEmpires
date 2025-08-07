@@ -1,5 +1,6 @@
 #include "Simulator.h"
 
+#include "Coordinates.h"
 #include "Event.h"
 #include "GameState.h"
 #include "PlayerManager.h"
@@ -32,23 +33,19 @@ using namespace core;
 
 char scancodeToChar(SDL_Scancode scancode, bool shiftPressed);
 
-Simulator::Simulator(ThreadSynchronizer<FrameData>& synchronizer,
-                     std::shared_ptr<EventPublisher> publisher)
+Simulator::Simulator(ThreadSynchronizer<FrameData>& synchronizer)
     : m_synchronizer(synchronizer),
-      m_coordinates(ServiceRegistry::getInstance().getService<Coordinates>()),
-      m_publisher(std::move(publisher))
+      m_coordinates(ServiceRegistry::getInstance().getService<Coordinates>())
 {
     CompDirty::g_dirtyEntities.reserve(10000);
 
     registerCallback(Event::Type::TICK, this, &Simulator::onTick);
     registerCallback(Event::Type::KEY_UP, this, &Simulator::onKeyUp);
-    registerCallback(Event::Type::KEY_DOWN, this, &Simulator::onKeyDown);
     registerCallback(Event::Type::UNIT_SELECTION, this, &Simulator::onUnitSelection);
 }
 
 void Simulator::onInit(EventLoop& eventLoop)
 {
-    ObjectPool<ThreadMessage>::reserve(1000);
     ObjectPool<CompGraphics>::reserve(1000);
 }
 
@@ -78,12 +75,11 @@ void Simulator::onKeyUp(const Event& e)
     }
 }
 
-void Simulator::onKeyDown(const Event& e)
-{
-}
-
 void Simulator::onTickStart()
 {
+    // Read and send data
+    auto player = ServiceRegistry::getInstance().getService<PlayerManager>()->getViewingPlayer();
+    m_synchronizer.getSenderFrameData().fogOfWar = *(player->getFogOfWar().get());
     m_synchronizer.getSenderFrameData().frameNumber = m_frame;
     m_coordinates->setViewportPositionInPixels(
         m_synchronizer.getSenderFrameData().viewportPositionInPixels);
@@ -98,11 +94,7 @@ void Simulator::onTickStart()
 
 void Simulator::onTickEnd()
 {
-    // CompDirty::globalDirtyVersion++;
     m_frame++;
-    // TODO: Use a better method to find the displaying player
-    auto player = ServiceRegistry::getInstance().getService<PlayerManager>()->getViewingPlayer();
-    m_synchronizer.getSenderFrameData().fogOfWar = *(player->getFogOfWar().get());
     m_synchronizer.waitForReceiver([&]() { onSynchorizedBlock(); });
     CompDirty::g_dirtyEntities.clear();
 }
@@ -115,17 +107,15 @@ void Simulator::onSynchorizedBlock()
 
 void Simulator::onUnitSelection(const Event& e)
 {
-    auto selectedEntities = e.getData<UnitSelectionData>().selection.selectedEntities;
+    auto& selectedEntities = e.getData<UnitSelectionData>().selection.selectedEntities;
     if (selectedEntities.size() == 1)
     {
         auto resourceEntity = selectedEntities[0];
+        auto state = ServiceRegistry::getInstance().getService<GameState>();
 
-        if (ServiceRegistry::getInstance().getService<GameState>()->hasComponent<CompResource>(
-                resourceEntity))
+        if (state->hasComponent<CompResource>(resourceEntity))
         {
-            auto resource =
-                ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompResource>(
-                    resourceEntity);
+            auto resource = state->getComponent<CompResource>(resourceEntity);
             spdlog::info("Selected entity has {} resources", resource.remainingAmount);
         }
     }
@@ -163,12 +153,11 @@ void Simulator::updateGraphicComponents()
         gc.entityType = entityInfo.entityType;
         gc.isDestroyed = entityInfo.isDestroyed;
         gc.isEnabled = entityInfo.isEnabled;
-        // TODO: add isHidden concept as well
         gc.entityID = entityInfo.entityId;
 
         if (state->hasComponent<CompSelectible>(entity))
         {
-            auto select = state->getComponent<CompSelectible>(entity);
+            auto& select = state->getComponent<CompSelectible>(entity);
             if (select.isSelected)
             {
                 // TODO: Respect other addons
@@ -182,19 +171,19 @@ void Simulator::updateGraphicComponents()
 
         if (state->hasComponent<CompAnimation>(entity))
         {
-            auto animation = state->getComponent<CompAnimation>(entity);
+            auto& animation = state->getComponent<CompAnimation>(entity);
             gc.frame = animation.frame;
         }
 
         if (state->hasComponent<CompAction>(entity))
         {
-            auto action = state->getComponent<CompAction>(entity);
+            auto& action = state->getComponent<CompAction>(entity);
             gc.action = action.action;
         }
 
         if (state->hasComponent<CompBuilding>(entity))
         {
-            auto building = state->getComponent<CompBuilding>(entity);
+            auto& building = state->getComponent<CompBuilding>(entity);
             if (building.validPlacement)
                 gc.shading = Color::NONE;
             else
@@ -208,7 +197,7 @@ void Simulator::updateGraphicComponents()
             gc.positionInFeet = Feet::null;
             gc.positionInScreenUnits = {transform.position.x, transform.position.y};
 
-            auto ui = state->getComponent<CompUIElement>(entity);
+            auto& ui = state->getComponent<CompUIElement>(entity);
             gc.isEnabled = ui.isVisible;
 
             if (ui.type == UIRenderingType::TEXT)

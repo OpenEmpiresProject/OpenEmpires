@@ -26,10 +26,6 @@ UnitManager::UnitManager() : m_coordinates(ServiceRegistry::getInstance().getSer
                      &UnitManager::onBuildingPlacementFinished);
 }
 
-UnitManager::~UnitManager()
-{
-}
-
 void UnitManager::onBuildingPlacementStarted(const Event& e)
 {
     m_buildingPlacementInProgress = true;
@@ -51,19 +47,20 @@ void UnitManager::onUnitDeletion(const Event& e)
             gameState->getComponents<CompEntityInfo, CompDirty, CompTransform>(entity);
         info.isDestroyed = true;
         dirty.markDirty(entity);
-        gameState->gameMap.removeEntity(MapLayerType::UNITS, transform.position.toTile(), entity);
+        gameState->gameMap().removeEntity(MapLayerType::UNITS, transform.position.toTile(), entity);
     }
 }
 
 void UnitManager::onMouseButtonUp(const Event& e)
 {
-    auto mousePos = e.getData<MouseClickData>().screenPosition;
+    auto& clickData = e.getData<MouseClickData>();
+    auto mousePos = clickData.screenPosition;
 
-    if (e.getData<MouseClickData>().button == MouseClickData::Button::LEFT)
+    if (clickData.button == MouseClickData::Button::LEFT)
     {
         resolveSelection(mousePos);
     }
-    else if (e.getData<MouseClickData>().button == MouseClickData::Button::RIGHT)
+    else if (clickData.button == MouseClickData::Button::RIGHT)
     {
         resolveAction(mousePos);
     }
@@ -71,10 +68,12 @@ void UnitManager::onMouseButtonUp(const Event& e)
 
 void UnitManager::onMouseButtonDown(const Event& e)
 {
-    if (e.getData<MouseClickData>().button == MouseClickData::Button::LEFT)
+    auto& clickData = e.getData<MouseClickData>();
+
+    if (clickData.button == MouseClickData::Button::LEFT)
     {
-        m_isSelecting = true;
-        m_selectionStartPosScreenUnits = e.getData<MouseClickData>().screenPosition;
+        m_isSelectionBoxInProgress = true;
+        m_selectionStartPosScreenUnits = clickData.screenPosition;
     }
 }
 
@@ -84,12 +83,12 @@ void UnitManager::resolveSelection(const Vec2& screenPos)
         return;
 
     // Invalidate in-progress selection if mouse hasn't moved much
-    if (m_isSelecting)
+    if (m_isSelectionBoxInProgress)
     {
         if ((screenPos - m_selectionStartPosScreenUnits).lengthSquared() <
             Constants::MIN_SELECTION_BOX_MOUSE_MOVEMENT)
         {
-            m_isSelecting = false;
+            m_isSelectionBoxInProgress = false;
         }
     }
 
@@ -97,11 +96,11 @@ void UnitManager::resolveSelection(const Vec2& screenPos)
     // 1. Complete selection box
     // 2. Individual selection click
 
-    if (m_isSelecting)
+    if (m_isSelectionBoxInProgress)
     {
         // TODO: we want on the fly selection instead of mouse button up
         completeSelectionBox(m_selectionStartPosScreenUnits, screenPos);
-        m_isSelecting = false;
+        m_isSelectionBoxInProgress = false;
     }
     else
     {
@@ -114,10 +113,9 @@ void UnitManager::resolveAction(const Vec2& screenPos)
     auto result = whatIsAt(screenPos);
     auto target = result.entity;
     auto layer = result.layer;
-    bool gatherable =
-        ServiceRegistry::getInstance().getService<GameState>()->hasComponent<CompResource>(target);
-    bool construction =
-        ServiceRegistry::getInstance().getService<GameState>()->hasComponent<CompBuilding>(target);
+    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+    bool gatherable = gameState->hasComponent<CompResource>(target);
+    bool construction = gameState->hasComponent<CompBuilding>(target);
 
     for (auto entity : m_currentUnitSelection.selectedEntities)
     {
@@ -127,8 +125,7 @@ void UnitManager::resolveAction(const Vec2& screenPos)
             // TODO: Ensure target is within the map
             // TODO: Ensure we have control over this unit
 
-            if (ServiceRegistry::getInstance().getService<GameState>()->hasComponent<CompUnit>(
-                    entity))
+            if (gameState->hasComponent<CompUnit>(entity))
             {
                 auto worldPos = m_coordinates->screenUnitsToFeet(screenPos);
                 auto cmd = ObjectPool<CmdMove>::acquire();
@@ -165,9 +162,7 @@ void UnitManager::addEntitiesToSelection(const std::vector<uint32_t>& selectedEn
     {
         if (gameState->hasComponent<CompUnit>(entity)) [[likely]]
         {
-            auto [dirty, select] = ServiceRegistry::getInstance()
-                                       .getService<GameState>()
-                                       ->getComponents<CompDirty, CompSelectible>(entity);
+            auto [dirty, select] = gameState->getComponents<CompDirty, CompSelectible>(entity);
 
             selection.selectedEntities.push_back(entity);
             select.isSelected = true;
@@ -175,9 +170,7 @@ void UnitManager::addEntitiesToSelection(const std::vector<uint32_t>& selectedEn
         }
         else if (gameState->hasComponent<CompResource>(entity)) [[likely]]
         {
-            auto [dirty, select] = ServiceRegistry::getInstance()
-                                       .getService<GameState>()
-                                       ->getComponents<CompDirty, CompSelectible>(entity);
+            auto [dirty, select] = gameState->getComponents<CompDirty, CompSelectible>(entity);
 
             selection.selectedEntities.push_back(entity);
             select.isSelected = true;
@@ -192,17 +185,14 @@ void UnitManager::addEntitiesToSelection(const std::vector<uint32_t>& selectedEn
 
 void UnitManager::updateSelection(const UnitSelection& newSelection)
 {
+    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
     // Clear any existing selections' addons
     for (auto& entity : m_currentUnitSelection.selectedEntities)
     {
-        ServiceRegistry::getInstance()
-            .getService<GameState>()
-            ->getComponent<CompSelectible>(entity)
-            .isSelected = false;
-        ServiceRegistry::getInstance()
-            .getService<GameState>()
-            ->getComponents<CompDirty>(entity)
-            .markDirty(entity);
+        auto [dirty, select] = gameState->getComponents<CompDirty, CompSelectible>(entity);
+
+        select.isSelected = false;
+        dirty.markDirty(entity);
     }
     m_currentUnitSelection = newSelection;
 }
@@ -241,9 +231,9 @@ UnitManager::TileMapQueryResult UnitManager::whatIsAt(const Vec2& screenPos)
     {
         for (pos.x = gridStartPos.x; pos.x >= clickedCellPos.x; pos.x--)
         {
-            if (gameState->gameMap.isOccupied(MapLayerType::STATIC, pos))
+            if (gameState->gameMap().isOccupied(MapLayerType::STATIC, pos))
             {
-                auto entity = gameState->gameMap.getEntity(MapLayerType::STATIC, pos);
+                auto entity = gameState->gameMap().getEntity(MapLayerType::STATIC, pos);
                 if (entity != entt::null)
                 {
                     if (gameState->hasComponent<CompSelectible>(entity)) [[likely]]
@@ -274,9 +264,9 @@ UnitManager::TileMapQueryResult UnitManager::whatIsAt(const Vec2& screenPos)
                     }
                 }
             }
-            else if (gameState->gameMap.isOccupied(MapLayerType::ON_GROUND, pos))
+            else if (gameState->gameMap().isOccupied(MapLayerType::ON_GROUND, pos))
             {
-                auto entity = gameState->gameMap.getEntity(MapLayerType::ON_GROUND, pos);
+                auto entity = gameState->gameMap().getEntity(MapLayerType::ON_GROUND, pos);
                 if (entity != entt::null)
                 {
                     if (gameState->hasComponent<CompBuilding>(entity))
@@ -348,7 +338,7 @@ void UnitManager::onUnitSelection(const Event& e)
 
 void UnitManager::onUnitRequested(const Event& e)
 {
-    auto data = e.getData<UnitCreationData>();
+    auto& data = e.getData<UnitCreationData>();
 
     auto gameState = ServiceRegistry::getInstance().getService<GameState>();
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
@@ -366,7 +356,7 @@ void UnitManager::onUnitRequested(const Event& e)
     playerComp.player = data.player;
 
     auto newTile = transform.position.toTile();
-    gameState->gameMap.addEntity(MapLayerType::UNITS, newTile, unit);
+    gameState->gameMap().addEntity(MapLayerType::UNITS, newTile, unit);
 
     data.player->getFogOfWar()->markAsExplored(transform.position, unitComp.lineOfSight);
 }

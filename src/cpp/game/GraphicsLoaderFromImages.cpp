@@ -25,14 +25,12 @@ using namespace core;
 namespace fs = std::filesystem;
 using namespace std;
 
-void GraphicsLoaderFromImages::loadAllGraphics(SDL_Renderer* renderer,
+void GraphicsLoaderFromImages::loadAllGraphics(SDL_Renderer& renderer,
                                                GraphicsRegistry& graphicsRegistry,
                                                AtlasGenerator& atlasGenerator)
 {
-    m_renderer = renderer;
-    loadTextures(graphicsRegistry, atlasGenerator);
+    loadTextures(renderer, graphicsRegistry, atlasGenerator);
     adjustDirections(graphicsRegistry);
-    loadAnimations(graphicsRegistry);
     loadCursors();
     setCursor(4);
 }
@@ -79,7 +77,8 @@ std::vector<Vec2> loadAnchorsFromCSV(const std::filesystem::path& filepath)
     return anchors;
 }
 
-void GraphicsLoaderFromImages::loadTextures(GraphicsRegistry& graphicsRegistry,
+void GraphicsLoaderFromImages::loadTextures(SDL_Renderer& renderer,
+                                            GraphicsRegistry& graphicsRegistry,
                                             AtlasGenerator& atlasGenerator)
 {
     spdlog::info("Loading textures from assets/images...");
@@ -120,7 +119,7 @@ void GraphicsLoaderFromImages::loadTextures(GraphicsRegistry& graphicsRegistry,
     // Create atlas textures for each entityType
     for (const auto& [entityType, paths] : entityTypeToPaths)
     {
-        createAtlasForEntityType(entityType, paths, anchorsByFileName, graphicsRegistry,
+        createAtlasForEntityType(renderer, entityType, paths, anchorsByFileName, graphicsRegistry,
                                  atlasGenerator);
         loadedCount += paths.size();
     }
@@ -146,6 +145,7 @@ int GraphicsLoaderFromImages::determineEntityType(const std::filesystem::path& p
 }
 
 void GraphicsLoaderFromImages::createAtlasForEntityType(
+    SDL_Renderer& renderer,
     int entityType,
     const std::vector<std::filesystem::path>& paths,
     const std::map<std::string, Vec2>& anchors,
@@ -168,7 +168,7 @@ void GraphicsLoaderFromImages::createAtlasForEntityType(
         surfaces.push_back(surface);
     }
 
-    auto atlasTexture = atlasGenerator.generateAtlas(m_renderer, surfaces, srcRects);
+    auto atlasTexture = atlasGenerator.generateAtlas(renderer, surfaces, srcRects);
     if (!atlasTexture)
     {
         spdlog::error("Failed to create atlas texture for entity type {}.", entityType);
@@ -255,40 +255,6 @@ void GraphicsLoaderFromImages::createAtlasForEntityType(
 
         Texture entry{atlasTexture, srcRectF, anchor, imageSize, false};
         graphicsRegistry.registerTexture(id, entry);
-    }
-}
-
-void GraphicsLoaderFromImages::loadAnimations(GraphicsRegistry& graphicsRegistry)
-{
-    for (const auto& [id, texture] : graphicsRegistry.getTextures())
-    {
-        auto idFull = GraphicsID::fromHash(id);
-        // Find all textures with the same entityType, action, and direction
-        std::vector<int64_t> animationFrames;
-        for (const auto& [otherId, otherTexture] : graphicsRegistry.getTextures())
-        {
-            auto otherIdFull = GraphicsID::fromHash(otherId);
-            if (idFull.entityType == otherIdFull.entityType &&
-                idFull.action == otherIdFull.action && idFull.direction == otherIdFull.direction)
-            {
-                animationFrames.push_back(otherId);
-            }
-        }
-
-        if (!animationFrames.empty())
-        {
-            GraphicsID animationID;
-            animationID.entityType = idFull.entityType;
-            animationID.action = idFull.action;
-            animationID.direction = idFull.direction;
-            Animation animation{animationFrames, true, 10}; // 10 FPS
-            graphicsRegistry.registerAnimation(animationID, animation);
-
-            // spdlog::debug(
-            //     "Animation created for entityType: {}, action: {}, direction: {} with {}
-            //     frames.", idFull.entityType, idFull.action, static_cast<int>(idFull.direction),
-            //     animationFrames.size());
-        }
     }
 }
 

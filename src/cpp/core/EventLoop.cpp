@@ -22,10 +22,6 @@ EventLoop::EventLoop(std::stop_token* stopToken) : SubSystem(stopToken)
     }
 }
 
-EventLoop::~EventLoop()
-{
-}
-
 void EventLoop::init()
 {
     m_eventLoopThread = std::thread(&EventLoop::run, this);
@@ -54,6 +50,7 @@ void EventLoop::run()
         }
         else
         {
+            // If the simulation is paused, we can slow down.
             std::this_thread::sleep_for(milliseconds(100));
         }
 

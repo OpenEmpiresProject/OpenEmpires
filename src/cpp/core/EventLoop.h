@@ -17,15 +17,14 @@ class EventLoop : public SubSystem, public EventPublisher
 {
   public:
     EventLoop(std::stop_token* stopToken);
-    ~EventLoop();
 
     void registerListener(std::shared_ptr<EventHandler> listener);
-    int getListenersCount() const
+    inline int getListenersCount() const
     {
         return m_listeners.size();
     }
 
-    bool isReady() const
+    inline bool isReady() const
     {
         return m_isReady;
     }
@@ -43,13 +42,16 @@ class EventLoop : public SubSystem, public EventPublisher
   private:
     // SubSystem methods
     void init() override;
-    void run();
     void shutdown() override;
+    // EventPublisher methods
+    void publish(const Event& event) override;
+
+    void run();
     void handleTickEvent(std::chrono::steady_clock::time_point& lastTime);
     void handleInputEvents();
     void handleGameEvents();
-    void publish(const Event& event) override;
 
+  private:
     std::list<std::shared_ptr<EventHandler>> m_listeners;
     std::thread m_eventLoopThread;
     std::queue<Event> m_eventQueue;

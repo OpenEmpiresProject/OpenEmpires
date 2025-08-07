@@ -22,7 +22,7 @@ class EventHandler
     void dispatchEvent(const Event& e)
     {
         onEvent(e);
-        size_t index = static_cast<size_t>(e.type);
+        auto index = static_cast<size_t>(e.type);
         assert(index < m_callbacksTable.size());
         if (auto& handler = m_callbacksTable[index])
         {
@@ -34,7 +34,7 @@ class EventHandler
     void registerCallback(Event::Type type, T* instance, void (T::*method)(const Event&))
     {
         static_assert(std::is_base_of_v<EventHandler, T>, "Handler must inherit from EventHandler");
-        size_t index = static_cast<size_t>(type);
+        auto index = static_cast<size_t>(type);
         assert(index < m_callbacksTable.size());
         m_callbacksTable[index] = std::bind(method, instance, std::placeholders::_1);
     }

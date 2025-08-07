@@ -11,18 +11,17 @@ SubSystemRegistry& SubSystemRegistry::getInstance()
     return instance;
 }
 
-void SubSystemRegistry::registerSubSystem(const std::string& name,
-                                          std::shared_ptr<SubSystem> component)
+void SubSystemRegistry::registerSubSystem(const std::string& name, Ref<SubSystem> component)
 {
     m_subSystems[name] = std::move(component);
 }
 
-SubSystem* SubSystemRegistry::getSubSystem(const std::string& name)
+Ref<SubSystem> SubSystemRegistry::getSubSystem(const std::string& name)
 {
     auto it = m_subSystems.find(name);
     if (it != m_subSystems.end())
     {
-        return it->second.get();
+        return it->second;
     }
     return nullptr;
 }

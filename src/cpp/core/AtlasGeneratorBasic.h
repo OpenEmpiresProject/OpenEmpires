@@ -13,7 +13,7 @@ namespace core
 class AtlasGeneratorBasic : public AtlasGenerator
 {
   public:
-    SDL_Texture* generateAtlas(SDL_Renderer* renderer,
+    SDL_Texture* generateAtlas(SDL_Renderer& renderer,
                                const std::vector<SDL_Surface*>& surfaces,
                                std::vector<SDL_Rect>& sourceRects) override
     {
@@ -61,7 +61,7 @@ class AtlasGeneratorBasic : public AtlasGenerator
         }
 
         // Create texture from the atlas surface
-        SDL_Texture* atlasTexture = SDL_CreateTextureFromSurface(renderer, atlasSurface);
+        SDL_Texture* atlasTexture = SDL_CreateTextureFromSurface(&renderer, atlasSurface);
         SDL_DestroySurface(atlasSurface);
 
         if (!atlasTexture)

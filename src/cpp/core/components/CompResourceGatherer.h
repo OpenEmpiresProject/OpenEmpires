@@ -1,8 +1,8 @@
 #ifndef COMPRESOURCEGATHERER_H
 #define COMPRESOURCEGATHERER_H
 
+#include "InGameResource.h"
 #include "Property.h"
-#include "Resource.h"
 #include "utils/Constants.h"
 #include "utils/Types.h"
 

@@ -14,18 +14,18 @@ void FogOfWar::init(uint32_t width, uint32_t height, RevealStatus initialFill)
     m_map = Flat2DArray<RevealStatus>(width, height, initialFill);
 }
 
-void FogOfWar::markAsExplored(uint32_t x, uint32_t y)
+void FogOfWar::markAsExplored(const Tile& tilePos)
 {
-    if (x >= 0 && x < m_map.width() && y >= 0 && y < m_map.height())
+    if (tilePos.x >= 0 && tilePos.x < m_map.width() && tilePos.y >= 0 && tilePos.y < m_map.height())
     {
-        m_map.at(x, y) = RevealStatus::EXPLORED;
+        m_map.at(tilePos.x, tilePos.y) = RevealStatus::EXPLORED;
     }
 }
 
 void FogOfWar::markAsExplored(const Feet& feetPos)
 {
     auto tilePos = feetPos.toTile();
-    markAsExplored(tilePos.x, tilePos.y);
+    markAsExplored(tilePos);
 }
 
 void FogOfWar::markAsExplored(const Feet& feetPos, uint32_t lineOfSight)
@@ -41,15 +41,15 @@ void FogOfWar::markAsExplored(const Feet& feetPos, const Size& size, uint32_t li
     markRadius(tilePos, size, lineOfSight / Constants::FEET_PER_TILE, RevealStatus::EXPLORED);
 }
 
-void FogOfWar::markAsVisible(uint32_t tileX, uint32_t tileY, uint32_t lineOfSight)
+void FogOfWar::markAsVisible(const Tile& tilePos, uint32_t lineOfSight)
 {
-    markRadius(tileX, tileY, lineOfSight / Constants::FEET_PER_TILE, RevealStatus::VISIBLE);
+    markRadius(tilePos.x, tilePos.y, lineOfSight / Constants::FEET_PER_TILE, RevealStatus::VISIBLE);
 }
 
 void FogOfWar::markAsVisible(const Feet& feetPos, uint32_t lineOfSight)
 {
     auto tilePos = feetPos.toTile();
-    markAsVisible(tilePos.x, tilePos.y, lineOfSight);
+    markAsVisible(tilePos, lineOfSight);
 }
 
 void FogOfWar::markRadius(uint32_t tileX, uint32_t tileY, uint8_t lineOfSight, RevealStatus type)
@@ -69,7 +69,7 @@ void FogOfWar::markRadius(uint32_t tileX, uint32_t tileY, uint8_t lineOfSight, R
             uint32_t dy = y - tileY;
             if (dx * dx + dy * dy <= radiusSq)
             {
-                setRevealMode(x, y, type);
+                setRevealStatus(Tile(x, y), type);
             }
         }
     }
@@ -107,15 +107,10 @@ void FogOfWar::markRadius(const Tile& bottomCorner,
 
             if (dx * dx + dy * dy <= radiusSq)
             {
-                setRevealMode(x, y, type);
+                setRevealStatus(Tile(x, y), type);
             }
         }
     }
-}
-
-RevealStatus FogOfWar::getRevealStatus(uint32_t tileX, uint32_t tileY) const
-{
-    return m_map.at(tileX, tileY);
 }
 
 RevealStatus FogOfWar::getRevealStatus(const Tile& tilePos) const
@@ -123,14 +118,9 @@ RevealStatus FogOfWar::getRevealStatus(const Tile& tilePos) const
     return m_map.at(tilePos.x, tilePos.y);
 }
 
-void FogOfWar::setRevealMode(uint32_t tileX, uint32_t tileY, RevealStatus type)
+void FogOfWar::setRevealStatus(const Tile& tilePos, RevealStatus type)
 {
-    m_map.at(tileX, tileY) = type;
-}
-
-bool FogOfWar::isExplored(uint32_t tileX, uint32_t tileY) const
-{
-    return m_map.at(tileX, tileY) == RevealStatus::EXPLORED;
+    m_map.at(tilePos.x, tilePos.y) = type;
 }
 
 bool FogOfWar::isExplored(const Tile& tile) const

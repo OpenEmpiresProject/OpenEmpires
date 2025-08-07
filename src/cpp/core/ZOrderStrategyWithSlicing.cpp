@@ -9,7 +9,7 @@ using namespace core;
 
 std::list<CompRendering*> slice(CompRendering& rc);
 
-core::ZOrderStrategyWithSlicing::ZOrderStrategyWithSlicing()
+ZOrderStrategyWithSlicing::ZOrderStrategyWithSlicing()
     : m_settings(ServiceRegistry::getInstance().getService<GameSettings>()),
       m_zBucketsSize(
           ServiceRegistry::getInstance().getService<GameSettings>()->getWorldSizeInTiles().height *
@@ -19,10 +19,14 @@ core::ZOrderStrategyWithSlicing::ZOrderStrategyWithSlicing()
           Constants::FEET_PER_TILE * 3)
 {
     m_finalListToRender.reserve(10000);
-    for (size_t i = 0; i < GraphicLayersOrder.size(); i++)
+    for (size_t i = 0; i < g_graphicLayersOrder.size(); i++)
     {
         m_objectsToRenderByLayer[i].reserve(2000);
     }
+}
+
+ZOrderStrategyWithSlicing::~ZOrderStrategyWithSlicing()
+{
 }
 
 void ZOrderStrategyWithSlicing::preProcess(CompRendering& cr)
@@ -73,7 +77,7 @@ const std::vector<CompRendering*>& ZOrderStrategyWithSlicing::zOrder(const Coord
     ++m_zBucketVersion; // it will take 4 trillion years to overflow this
     m_finalListToRender.clear();
 
-    for (size_t i = 0; i < GraphicLayersOrder.size(); i++)
+    for (size_t i = 0; i < g_graphicLayersOrder.size(); i++)
     {
         m_objectsToRenderByLayer[i].clear();
     }
@@ -113,16 +117,12 @@ const std::vector<CompRendering*>& ZOrderStrategyWithSlicing::zOrder(const Coord
         }
     }
 
-    for (size_t i = 0; i < GraphicLayersOrder.size(); i++)
+    for (size_t i = 0; i < g_graphicLayersOrder.size(); i++)
     {
         m_finalListToRender.insert(m_finalListToRender.end(), m_objectsToRenderByLayer[i].begin(),
                                    m_objectsToRenderByLayer[i].end());
     }
     return m_finalListToRender;
-}
-
-ZOrderStrategyWithSlicing::~ZOrderStrategyWithSlicing()
-{
 }
 
 void ZOrderStrategyWithSlicing::addRenderingCompToZBuckets(CompRendering* rc,

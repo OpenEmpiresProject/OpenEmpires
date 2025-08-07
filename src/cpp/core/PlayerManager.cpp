@@ -24,10 +24,6 @@ PlayerManager::PlayerManager()
     registerCallback(Event::Type::UNIT_TILE_MOVEMENT, this, &PlayerManager::onUnitTileMovement);
 }
 
-PlayerManager::~PlayerManager()
-{
-}
-
 Ref<Player> PlayerManager::createPlayer()
 {
     return createPlayer(getNextPlayerId());

@@ -8,20 +8,12 @@
 
 using namespace core;
 
-Player::Player(/* args */)
-{
-}
-
-Player::~Player()
-{
-}
-
 void Player::init(uint8_t id)
 {
     m_id = id;
     for (size_t i = 0; i < Constants::MAX_RESOURCE_TYPES; i++)
     {
-        m_resources.push_back(Resource(i, 0));
+        m_resources.push_back(InGameResource(i, 0));
     }
     m_fow = CreateRef<FogOfWar>();
     auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
@@ -50,7 +42,7 @@ bool Player::spendResource(uint8_t resourceType, uint32_t amount)
     return false;
 }
 
-uint32_t Player::getResourceAmount(uint8_t resourceType)
+uint32_t Player::getResourceAmount(uint8_t resourceType) const
 {
     debug_assert(resourceType < Constants::MAX_RESOURCE_TYPES, "Invalid resource type {}",
                  resourceType);
@@ -58,7 +50,7 @@ uint32_t Player::getResourceAmount(uint8_t resourceType)
     return m_resources[resourceType].amount;
 }
 
-bool Player::hasResource(uint8_t resourceType, uint32_t amount)
+bool Player::hasResource(uint8_t resourceType, uint32_t amount) const
 {
     debug_assert(resourceType < Constants::MAX_RESOURCE_TYPES, "Invalid resource type {}",
                  resourceType);
@@ -88,7 +80,7 @@ void Player::removeEntity(uint32_t entityId)
     }
 }
 
-bool Player::isOwned(uint32_t entityId)
+bool Player::isOwned(uint32_t entityId) const
 {
     return m_ownedEntities.find(entityId) != m_ownedEntities.end();
 }

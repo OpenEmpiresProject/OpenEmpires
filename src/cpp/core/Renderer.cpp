@@ -11,7 +11,6 @@
 #include "SDL3_gfxPrimitives.h"
 #include "ServiceRegistry.h"
 #include "StatsCounter.h"
-#include "ThreadQueue.h"
 #include "Tile.h"
 #include "Version.h"
 #include "ZOrderStrategyBase.h"
@@ -32,12 +31,12 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <cstdio>
 #include <filesystem>
 #include <iostream>
 #include <list>
 #include <memory>
 #include <readerwriterqueue.h>
-#include <stdio.h>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -332,7 +331,7 @@ void RendererImpl::threadEntry()
 {
     initSDL();
     AtlasGeneratorBasic atlasGenerator;
-    m_graphicsLoader.loadAllGraphics(m_renderer, m_graphicsRegistry, atlasGenerator);
+    m_graphicsLoader.loadAllGraphics(*m_renderer, m_graphicsRegistry, atlasGenerator);
     renderingLoop();
 }
 
@@ -524,7 +523,7 @@ void RendererImpl::updateRenderingComponents()
     if (idsNeedToLoad.empty() == false)
     {
         AtlasGeneratorBasic atlasGenerator;
-        m_graphicsLoader.loadGraphics(m_renderer, m_graphicsRegistry, atlasGenerator,
+        m_graphicsLoader.loadGraphics(*m_renderer, m_graphicsRegistry, atlasGenerator,
                                       idsNeedToLoad);
         for (auto& instruction : lazyLoadedInstructions)
         {

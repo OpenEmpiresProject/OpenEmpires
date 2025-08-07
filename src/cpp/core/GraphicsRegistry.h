@@ -13,13 +13,16 @@ namespace core
 class GraphicsID
 {
   public:
-    // Bit layout
-    // 63            49 48         39 38        29 28     24 23       19 18         9 8      5 4 0
-    //  +---------------+-------------+-------------+---------+-----------+-----------+--------+--------+
-    //  |  entityType   | entitySubTp |   action    | frame   | direction | variation
-    //  |   (15 bits)   |  (10 bits)  |  (10 bits)  | (5 bits)|  (4 bits) | (10 bits) |(4 bits)|(5
-    //  bits)|
-    //  +---------------+-------------+-------------+---------+-----------+-----------+--------+--------+
+    // clang-format off
+    /*
+    *   Bit layout
+    *   63            49 48         39 38        29 28     24 23       19 18         9 8      5 4         0
+    *   +---------------+-------------+-------------+---------+-----------+-----------+--------+----------+
+    *   |  entityType   | entitySubTp |   action    | frame   | direction | variation | Player | Reserved |
+    *   |   (15 bits)   |  (10 bits)  |  (10 bits)  | (5 bits)|  (4 bits) | (10 bits) |(4 bits)|(5  bits) |
+    *   +---------------+-------------+-------------+---------+-----------+-----------+--------+----------+
+    */
+    // clang-format on
 
     int entityType = 0;    // 32,768 values
     int entitySubType = 0; // 1,024 values
@@ -111,24 +114,17 @@ struct Animation
 {
     std::vector<int64_t> frames; // Frames in terms of TextureIDs
     bool repeatable = false;
-    int speed = 10; // 10 FPS
+    int speed = 10; // FPS
 };
 
 class GraphicsRegistry
 {
   public:
-    GraphicsRegistry() = default;
-    ~GraphicsRegistry() = default;
-
     void registerTexture(const GraphicsID& graphicID, const Texture& entry);
     const Texture& getTexture(const GraphicsID& graphicID) const;
     bool hasTexture(const GraphicsID& graphicID) const;
     size_t getTextureCount() const;
     const std::unordered_map<int64_t, Texture>& getTextures() const;
-    void registerAnimation(const GraphicsID& graphicID, const Animation& entry);
-    const Animation& getAnimation(const GraphicsID& graphicID) const;
-    bool hasAnimation(const GraphicsID& graphicID) const;
-    size_t getAnimationCount() const;
     size_t getVariationCount(const GraphicsID& graphicID) const;
 
   private:

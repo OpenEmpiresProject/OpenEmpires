@@ -7,11 +7,7 @@ using namespace core;
 
 GameState::GameState()
 {
-    m_pathFinder = new PathFinderAStar();
-}
-
-GameState::~GameState()
-{
+    m_pathFinder = CreateRef<PathFinderAStar>();
 }
 
 uint32_t GameState::createEntity()

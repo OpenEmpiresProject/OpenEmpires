@@ -43,13 +43,10 @@ class ServiceRegistry
     }
 
   private:
-    ServiceRegistry()
-    {
-    }
-    ~ServiceRegistry()
-    {
-    }
+    ServiceRegistry() = default;
+    ~ServiceRegistry() = default;
 
+  private:
     std::unordered_map<std::type_index, std::shared_ptr<void>> m_services;
 };
 

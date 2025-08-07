@@ -71,7 +71,8 @@ void CmdMove::onQueue()
             m_nextIntermediateGoal = Feet::null;
 
 #ifndef NDEBUG
-        auto tileEntity = m_gameState->gameMap.getEntity(MapLayerType::GROUND, targetPos.toTile());
+        auto tileEntity =
+            m_gameState->gameMap().getEntity(MapLayerType::GROUND, targetPos.toTile());
         auto [graphics, dirty] = m_gameState->getComponents<CompGraphics, CompDirty>(tileEntity);
 
         graphics.debugOverlays.clear();
@@ -244,8 +245,8 @@ void CmdMove::setPosition(const Feet& newPosFeet)
 
     if (oldTile != newTile)
     {
-        m_gameState->gameMap.removeEntity(MapLayerType::UNITS, oldTile, m_entityID);
-        m_gameState->gameMap.addEntity(MapLayerType::UNITS, newTile, m_entityID);
+        m_gameState->gameMap().removeEntity(MapLayerType::UNITS, oldTile, m_entityID);
+        m_gameState->gameMap().addEntity(MapLayerType::UNITS, newTile, m_entityID);
 
         publishEvent(Event::Type::UNIT_TILE_MOVEMENT,
                      UnitTileMovementData{m_entityID, newTile, m_components->transform.position});
@@ -266,8 +267,8 @@ void CmdMove::setPosition(const Feet& newPosFeet)
  */
 bool CmdMove::hasLineOfSight(const Feet& target) const
 {
-    return m_gameState->gameMap.intersectsStaticObstacle(m_components->transform.position,
-                                                         target) == false;
+    return m_gameState->gameMap().intersectsStaticObstacle(m_components->transform.position,
+                                                           target) == false;
 }
 
 /**
@@ -331,7 +332,7 @@ std::list<Feet> CmdMove::findPath(const Feet& endPosInFeet)
     const Tile startPos = m_components->transform.position.toTile();
     const auto endPos = endPosInFeet.toTile();
 
-    const TileMap map = m_gameState->gameMap;
+    const TileMap map = m_gameState->gameMap();
     const std::vector<Feet> newPath =
         m_gameState->getPathFinder()->findPath(map, m_components->transform.position, endPosInFeet);
 
@@ -386,7 +387,7 @@ Feet CmdMove::resolveCollision()
 {
     // Static collision resolution
     const auto newTilePos = m_components->transform.position.toTile();
-    auto& gameMap = m_gameState->gameMap;
+    auto& gameMap = m_gameState->gameMap();
     Feet totalAvoidance{0, 0};
 
     if (gameMap.isOccupied(MapLayerType::STATIC, newTilePos))
@@ -533,7 +534,7 @@ uint32_t CmdMove::intersectsUnits(uint32_t self,
                                   const Feet& start,
                                   const Feet& end) const
 {
-    auto& gameMap = m_gameState->gameMap;
+    auto& gameMap = m_gameState->gameMap();
 
     float distance = start.distance(end);
     int numSteps =

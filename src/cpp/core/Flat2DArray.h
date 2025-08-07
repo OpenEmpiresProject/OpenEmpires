@@ -84,7 +84,8 @@ template <typename T> class Flat2DArray
     }
 
   private:
-    size_t m_width, m_height;
+    size_t m_width = 0;
+    size_t m_height = 0;
     std::vector<T> m_data;
 };
 } // namespace core

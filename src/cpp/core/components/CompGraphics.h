@@ -56,7 +56,7 @@ enum class GraphicLayer
     UI
 };
 
-inline constexpr std::array<GraphicLayer, 5> GraphicLayersOrder{
+inline constexpr std::array<GraphicLayer, 5> g_graphicLayersOrder{
     GraphicLayer::GROUND, GraphicLayer::ON_GROUND, GraphicLayer::ENTITIES, GraphicLayer::SKY,
     GraphicLayer::UI};
 

@@ -14,31 +14,29 @@ namespace game
 {
 class GraphicsLoaderFromImages : public core::GraphicsLoader
 {
-  public:
-    void loadAllGraphics(SDL_Renderer* renderer,
+public:
+    void loadAllGraphics(SDL_Renderer& renderer,
                          core::GraphicsRegistry& graphicsRegistry,
                          core::AtlasGenerator& atlasGenerator) override;
-    void loadTexture(const std::filesystem::path& path);
-    void unloadGraphics(const std::string& graphicsPath);
-    void loadAnimations(core::GraphicsRegistry& graphicsRegistry);
     void loadCursors();
     void setCursor(int variation);
 
   private:
-    void loadTextures(core::GraphicsRegistry& graphicsRegistry,
+    void loadTextures(SDL_Renderer& renderer,
+                      core::GraphicsRegistry& graphicsRegistry,
                       core::AtlasGenerator& atlasGenerator);
     void adjustDirections(core::GraphicsRegistry& graphicsRegistry);
     bool isTextureFlippingNeededEntity(int entityType) const;
     bool isTextureFlippingNeededDirection(core::Direction direction) const;
     core::Direction getFlippedDirection(core::Direction direction) const;
     int determineEntityType(const std::filesystem::path& path);
-    void createAtlasForEntityType(int entityType,
+    void createAtlasForEntityType(SDL_Renderer& renderer,
+                                  int entityType,
                                   const std::vector<std::filesystem::path>& paths,
                                   const std::map<std::string, core::Vec2>& anchors,
                                   core::GraphicsRegistry& graphicsRegistry,
                                   core::AtlasGenerator& atlasGenerator);
 
-    SDL_Renderer* m_renderer;
     int m_variation = 0;
     std::unordered_map<int, SDL_Cursor*> m_cursors;
 };

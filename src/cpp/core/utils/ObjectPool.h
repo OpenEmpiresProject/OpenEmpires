@@ -15,6 +15,8 @@ namespace core
 template <typename T> class ObjectPool
 {
   public:
+    ObjectPool() = delete;
+
     constexpr static size_t MAX_LOCAL_POOL_SIZE = 10000;
 
     using Ptr = T*;
@@ -48,8 +50,6 @@ template <typename T> class ObjectPool
         static thread_local Storage storage;
         return storage;
     }
-
-    ObjectPool() = delete;
 
     // Preallocate a fixed number of objects
     static void reserve(size_t count)
@@ -131,15 +131,6 @@ template <typename T> class ObjectPool
         auto& storage = getThreadLocalStorage();
         return storage.pool.size();
     }
-
-    // // Free all objects in the pool
-    // ~ObjectPool()
-    // {
-    //     while (!pool.empty())
-    //     {
-    //         pool.pop();
-    //     }
-    // }
 
   private:
     struct WarmUpInitializer

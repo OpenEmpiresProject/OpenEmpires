@@ -44,41 +44,6 @@ const Texture& GraphicsRegistry::getTexture(const GraphicsID& graphicID) const
     return m_textureMap.at(graphicID.hash());
 }
 
-void GraphicsRegistry::registerAnimation(const GraphicsID& graphicID, const Animation& entry)
-{
-    if (graphicID.frame != 0)
-    {
-        spdlog::error("Animation ID should not have a frame value: {}", graphicID.toString());
-        throw std::runtime_error("Animation ID should not have a frame value:" +
-                                 graphicID.toString());
-    }
-
-    auto it = m_animationMap.find(graphicID.hash());
-    if (it != m_animationMap.end())
-    {
-        spdlog::warn("Animation ID already exists, updating: {}", graphicID.toString());
-        it->second = entry;
-    }
-    else
-    {
-        m_animationMap[graphicID.hash()] = entry;
-    }
-}
-
-const Animation& GraphicsRegistry::getAnimation(const GraphicsID& graphicID) const
-{
-    int64_t hash = graphicID.hashWithClearingFrame();
-
-    // Check if the graphicID exists in the map
-    auto it = m_animationMap.find(hash);
-    if (it == m_animationMap.end())
-    {
-        spdlog::error("Animation ID not found in registry: {}", graphicID.toString());
-        throw std::runtime_error("Animation ID not found in registry:" + graphicID.toString());
-    }
-    return m_animationMap.at(hash);
-}
-
 bool GraphicsRegistry::hasTexture(const GraphicsID& graphicID) const
 {
     return m_textureMap.find(graphicID.hash()) != m_textureMap.end();
@@ -92,18 +57,6 @@ size_t GraphicsRegistry::getTextureCount() const
 const std::unordered_map<int64_t, Texture>& GraphicsRegistry::getTextures() const
 {
     return m_textureMap;
-}
-
-bool GraphicsRegistry::hasAnimation(const GraphicsID& graphicID) const
-{
-    int64_t hash = graphicID.hashWithClearingFrame();
-
-    return m_animationMap.find(hash) != m_animationMap.end();
-}
-
-size_t GraphicsRegistry::getAnimationCount() const
-{
-    return m_animationMap.size();
 }
 
 size_t GraphicsRegistry::getVariationCount(const GraphicsID& graphicID) const

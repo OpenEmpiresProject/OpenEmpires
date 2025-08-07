@@ -11,7 +11,7 @@ class AtlasGenerator
 {
   public:
     virtual ~AtlasGenerator() = default;
-    virtual SDL_Texture* generateAtlas(SDL_Renderer* renderer,
+    virtual SDL_Texture* generateAtlas(SDL_Renderer& renderer,
                                        const std::vector<SDL_Surface*>& surfaces,
                                        std::vector<SDL_Rect>& sourceRects) = 0;
 };

@@ -714,7 +714,8 @@ ComponentType EntityDefinitionLoader::createCompResource(py::object module,
     auto name = EntityDefinitionLoader::readValue<string>(entityDefinition, "name");
     auto amount = EntityDefinitionLoader::readValue<int>(entityDefinition, "resource_amount");
     CompResource comp;
-    PropertyInitializer::set<Resource>(comp.original, Resource(getResourceType(name), amount));
+    PropertyInitializer::set<InGameResource>(comp.original,
+                                             InGameResource(getResourceType(name), amount));
     comp.remainingAmount = comp.original.value().amount;
 
     return ComponentType(comp);

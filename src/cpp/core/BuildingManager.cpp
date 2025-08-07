@@ -140,7 +140,7 @@ void BuildingManager::onTick(const Event& e)
 
             if (building.constructionProgress > 1 && building.isInStaticMap == false)
             {
-                auto& gameMap = ServiceRegistry::getInstance().getService<GameState>()->gameMap;
+                auto& gameMap = ServiceRegistry::getInstance().getService<GameState>()->gameMap();
 
                 for (size_t i = 0; i < building.size.value().width; i++)
                 {
@@ -165,7 +165,7 @@ bool BuildingManager::canPlaceBuildingAt(const CompBuilding& building,
 {
     auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
     auto tile = feet.toTile();
-    auto staticMap = ServiceRegistry::getInstance().getService<GameState>()->gameMap.getMap(
+    auto staticMap = ServiceRegistry::getInstance().getService<GameState>()->gameMap().getMap(
         MapLayerType::STATIC);
 
     auto isValidTile = [&](const Tile& tile)
@@ -232,7 +232,7 @@ void BuildingManager::confirmBuilding(CompTransform& transform,
     info.variation = building.getVariationByConstructionProgress();
     dirty.markDirty(m_currentBuildingPlacement.entity);
 
-    auto& gameMap = ServiceRegistry::getInstance().getService<GameState>()->gameMap;
+    auto& gameMap = ServiceRegistry::getInstance().getService<GameState>()->gameMap();
 
     for (size_t i = 0; i < building.size.value().width; i++)
     {
