@@ -68,6 +68,8 @@ uint32_t getEntitySubType(uint32_t entityType, const std::string& name)
             return EntitySubTypes::EST_UI_RESOURCE_PANEL;
         else if (name == "control_panel")
             return EntitySubTypes::EST_UI_CONTROL_PANEL;
+        else if (name == "progress_bar")
+            return EntitySubTypes::UI_PROGRESS_BAR;
     }
     return EntitySubTypes::EST_DEFAULT;
 }
@@ -242,6 +244,13 @@ void EntityDefinitionLoader::loadBuildings(pybind11::object module)
             addCommonComponents(module, entityType, entry);
             loadDRSForStillImage(entityType, EntitySubTypes::EST_DEFAULT, entry);
             attachedConstructionSites(entityType, size);
+
+            GraphicsID id;
+            id.entityType = entityType;
+            auto drsData = m_DRSDataByGraphicsIdHash.at(id.hash());
+
+            auto& sc = getComponent<CompSelectible>(entityType, EntitySubTypes::EST_DEFAULT);
+            sc.boundingBoxes[static_cast<int>(Direction::NONE)] = drsData.boundingRect;
         }
     }
 }
@@ -739,10 +748,17 @@ bool isInstanceOf(py::object module,
 ComponentType EntityDefinitionLoader::createCompSelectible(py::object module,
                                                            pybind11::handle entityDefinition)
 {
-    if (isInstanceOf(module, entityDefinition, "Unit") ||
-        isInstanceOf(module, entityDefinition, "Building"))
+    if (isInstanceOf(module, entityDefinition, "Unit"))
     {
         auto iconHash = readIconDef(EntitySubTypes::UI_UNIT_ICON, entityDefinition);
+
+        CompSelectible comp;
+        PropertyInitializer::set<ImageId>(comp.icon, iconHash);
+        return ComponentType(comp);
+    }
+    else if (isInstanceOf(module, entityDefinition, "Building"))
+    {
+        auto iconHash = readIconDef(EntitySubTypes::UI_BUILDING_ICON, entityDefinition);
 
         CompSelectible comp;
         PropertyInitializer::set<ImageId>(comp.icon, iconHash);

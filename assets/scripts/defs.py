@@ -155,20 +155,25 @@ all_buildings: List[Building] = [
         line_of_sight=256*5,
         size="medium",
         accepted_resources=["food"], 
-        graphics={"default":Graphic(slp_id=3483)}
+        graphics={"default":Graphic(slp_id=3483),},
+        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=21)
     ),
     SingleResourceDropOffPoint(
         name="wood_camp", 
         line_of_sight=256*5,
         size="medium",
         accepted_resources=["wood"], 
-        graphics={"default":Graphic(slp_id=3505)}),
+        graphics={"default":Graphic(slp_id=3505)},
+        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=40)
+    ),
     SingleResourceDropOffPoint(
         name="mine_camp", 
         line_of_sight=256*5,
         size="medium",
         accepted_resources=["gold", "stone"], 
-        graphics={"default":Graphic(slp_id=3492)}),
+        graphics={"default":Graphic(slp_id=3492)},
+        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=39)
+    ),
 ]
 
 all_construction_sites: List[ConstructionSite] = [
@@ -184,5 +189,6 @@ all_tilesets: List[TileSet] = [
 
 all_ui_elements: List[UIElement] = [
     UIElement(name="resource_panel", graphics={"default":Graphic(drs_file="interfac.drs", slp_id=51101, clip_rect=Rect(w=400, h=25))}),
-    UIElement(name="control_panel", graphics={"default":Graphic(drs_file="interfac.drs", slp_id=51101, clip_rect=Rect(y=454, w=506, h=145))})
+    UIElement(name="control_panel", graphics={"default":Graphic(drs_file="interfac.drs", slp_id=51101, clip_rect=Rect(y=454, w=506, h=145))}),
+    UIElement(name="progress_bar", graphics={"default":Graphic(drs_file="interfac.drs", slp_id=50764)})
 ]

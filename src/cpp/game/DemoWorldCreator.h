@@ -32,6 +32,7 @@ class DemoWorldCreator : public core::SubSystem, public core::PropertyInitialize
     void shutdown() override;
 
     void loadEntities();
+    void createHUD();
     void generateMap(core::TileMap& gameMap);
     void createTile(uint32_t x,
                     uint32_t y,

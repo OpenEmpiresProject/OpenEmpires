@@ -91,57 +91,7 @@ void DemoWorldCreator::loadEntities()
                                              {ResourceType::STONE, UnitAction::CARRYING_STONE},
                                              {ResourceType::GOLD, UnitAction::CARRYING_GOLD}};
 
-    ui::Widget::s_entityType = EntityTypes::ET_UI_ELEMENT;
-    ui::Widget::s_entitySubType = EntitySubTypes::EST_DEFAULT;
-    GraphicsID resourcePanelBackground{.entityType = EntityTypes::ET_UI_ELEMENT,
-                                       .entitySubType = EntitySubTypes::EST_UI_RESOURCE_PANEL};
-    auto window = CreateRef<ui::Window>();
-    window->setName("resourcePanel");
-    window->setBackgroundImage(resourcePanelBackground.hash());
-    ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(window);
-
-    auto woodLabel = window->createChild<ui::Label>();
-    woodLabel->setText("0");
-    woodLabel->setRect(Rect<int>(35, 5, 50, 20));
-    woodLabel->setName("wood");
-
-    auto stoneLabel = window->createChild<ui::Label>();
-    stoneLabel->setText("0");
-    stoneLabel->setRect(Rect<int>(265, 5, 50, 20));
-    stoneLabel->setName("stone");
-
-    auto goldLabel = window->createChild<ui::Label>();
-    goldLabel->setText("0");
-    goldLabel->setRect(Rect<int>(195, 5, 50, 20));
-    goldLabel->setName("gold");
-
-    auto playerIdLabel = window->createChild<ui::Label>();
-    playerIdLabel->setRect(Rect<int>(420, 5, 50, 20));
-    playerIdLabel->setName("player");
-    playerIdLabel->setTextColor(core::Color::WHITE);
-
-    GraphicsID controlPanelBackground{.entityType = EntityTypes::ET_UI_ELEMENT,
-                                      .entitySubType = EntitySubTypes::EST_UI_CONTROL_PANEL};
-    auto controlPanel = CreateRef<ui::Window>();
-    controlPanel->setName("controlPanel");
-    controlPanel->setBackgroundImage(controlPanelBackground.hash());
-    controlPanel->setRect(Rect<int>(0, -1, 506, 145)); // -1 is to attach to bottom of screen
-    ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(controlPanel);
-
-    auto hLayout = controlPanel->createChild<ui::Layout>();
-
-    auto commandsLayout = hLayout->createChild<ui::Layout>();
-    commandsLayout->setRect(Rect<int>(0, 0, 210, 145)); // TODO: Can we simplify this?
-
-    auto infoLayout = hLayout->createChild<ui::Layout>();
-    infoLayout->setRect(Rect<int>(0, 0, 290, 145)); // TODO: Can we simplify this?
-    infoLayout->setMargin(20);
-    infoLayout->setSpacing(10);
-
-    auto selectedIcon = infoLayout->createChild<ui::Label>();
-    selectedIcon->setRect(Rect<int>(0, 0, 50, 50));
-    selectedIcon->setName("selected_icon");
-    selectedIcon->setVisible(false);
+    createHUD();
 
     spdlog::info("Entity loading successfully.");
 }
@@ -389,4 +339,83 @@ void DemoWorldCreator::init()
 void DemoWorldCreator::shutdown()
 {
     // Cleanup code for resource loading
+}
+
+void DemoWorldCreator::createHUD()
+{
+    ui::Widget::s_entityType = EntityTypes::ET_UI_ELEMENT;
+    ui::Widget::s_entitySubType = EntitySubTypes::EST_DEFAULT;
+    GraphicsID resourcePanelBackground{.entityType = EntityTypes::ET_UI_ELEMENT,
+                                       .entitySubType = EntitySubTypes::EST_UI_RESOURCE_PANEL};
+    auto window = CreateRef<ui::Window>();
+    window->setName("resourcePanel");
+    window->setBackgroundImage(resourcePanelBackground.hash());
+    ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(window);
+
+    auto woodLabel = window->createChild<ui::Label>();
+    woodLabel->setText("0");
+    woodLabel->setRect(Rect<int>(35, 5, 50, 20));
+    woodLabel->setName("wood");
+
+    auto stoneLabel = window->createChild<ui::Label>();
+    stoneLabel->setText("0");
+    stoneLabel->setRect(Rect<int>(265, 5, 50, 20));
+    stoneLabel->setName("stone");
+
+    auto goldLabel = window->createChild<ui::Label>();
+    goldLabel->setText("0");
+    goldLabel->setRect(Rect<int>(195, 5, 50, 20));
+    goldLabel->setName("gold");
+
+    auto playerIdLabel = window->createChild<ui::Label>();
+    playerIdLabel->setRect(Rect<int>(420, 5, 50, 20));
+    playerIdLabel->setName("player");
+    playerIdLabel->setTextColor(core::Color::WHITE);
+
+    GraphicsID controlPanelBackground{.entityType = EntityTypes::ET_UI_ELEMENT,
+                                      .entitySubType = EntitySubTypes::EST_UI_CONTROL_PANEL};
+    auto controlPanel = CreateRef<ui::Window>();
+    controlPanel->setName("controlPanel");
+    controlPanel->setBackgroundImage(controlPanelBackground.hash());
+    controlPanel->setRect(Rect<int>(0, -1, 506, 145)); // -1 is to attach to bottom of screen
+    ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(controlPanel);
+
+    auto hLayout = controlPanel->createChild<ui::Layout>();
+
+    auto commandsLayout = hLayout->createChild<ui::Layout>();
+    commandsLayout->setRect(Rect<int>(0, 0, 210, 145)); // TODO: Can we simplify this?
+
+    auto infoLayout = hLayout->createChild<ui::Layout>();
+    infoLayout->setRect(Rect<int>(0, 0, 290, 145)); // TODO: Can we simplify this?
+    infoLayout->setMargin(20);
+    infoLayout->setSpacing(10);
+    infoLayout->setDirection(ui::LayoutDirection::Horizontal);
+
+    auto basicInfoLayout = infoLayout->createChild<ui::Layout>();
+    basicInfoLayout->setRect(Rect<int>(0, 0, 100, 145)); // TODO: Can we simplify this?
+    basicInfoLayout->setDirection(ui::LayoutDirection::Vertical);
+
+    auto extendedInfoLayout = infoLayout->createChild<ui::Layout>();
+    extendedInfoLayout->setRect(Rect<int>(0, 0, 200, 145)); // TODO: Can we simplify this?
+    extendedInfoLayout->setDirection(ui::LayoutDirection::Vertical);
+    extendedInfoLayout->setMargin(20);
+
+    auto selectedIcon = basicInfoLayout->createChild<ui::Label>();
+    selectedIcon->setRect(Rect<int>(0, 0, 50, 50));
+    selectedIcon->setName("selected_icon");
+    selectedIcon->setVisible(false);
+
+    auto constructionPercLabel = extendedInfoLayout->createChild<ui::Label>();
+    constructionPercLabel->setRect(Rect<int>(0, 0, 150, 20));
+    constructionPercLabel->setName("construction_progress_label");
+    constructionPercLabel->setVisible(false);
+    constructionPercLabel->setTextColor(core::Color::BLACK);
+
+    GraphicsID progressBarBackground{.entityType = EntityTypes::ET_UI_ELEMENT,
+                                     .entitySubType = EntitySubTypes::UI_PROGRESS_BAR};
+    auto constructionProgressBarLabel = extendedInfoLayout->createChild<ui::Label>();
+    constructionProgressBarLabel->setRect(Rect<int>(0, 0, 150, 10));
+    constructionProgressBarLabel->setName("construction_progress_bar_label");
+    constructionProgressBarLabel->setVisible(false);
+    constructionProgressBarLabel->setBackgroundImage(progressBarBackground.hash());
 }

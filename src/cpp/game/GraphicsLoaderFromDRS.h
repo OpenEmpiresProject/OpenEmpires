@@ -7,7 +7,7 @@ namespace game
 {
 class GraphicsLoaderFromDRS : public core::GraphicsLoader
 {
-private:
+  private:
     void loadAllGraphics(SDL_Renderer& renderer,
                          core::GraphicsRegistry& graphicsRegistry,
                          core::AtlasGenerator& atlasGenerator) override;

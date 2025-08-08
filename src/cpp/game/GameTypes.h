@@ -27,6 +27,8 @@ enum EntitySubTypes
     EST_UI_CONTROL_PANEL = 2,
     UI_UNIT_ICON = 3,
     UI_NATURAL_RESOURCE_ICON = 4,
+    UI_BUILDING_ICON = 5,
+    UI_PROGRESS_BAR = 6,
 
     EST_SMALL_SIZE = 1,
     EST_MEDIUM_SIZE = 2,

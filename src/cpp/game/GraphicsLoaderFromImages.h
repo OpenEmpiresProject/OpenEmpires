@@ -14,7 +14,7 @@ namespace game
 {
 class GraphicsLoaderFromImages : public core::GraphicsLoader
 {
-public:
+  public:
     void loadAllGraphics(SDL_Renderer& renderer,
                          core::GraphicsRegistry& graphicsRegistry,
                          core::AtlasGenerator& atlasGenerator) override;
