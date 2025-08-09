@@ -132,6 +132,7 @@ void HUD::onTick(const Event& e)
 void HUD::onUnitSelection(const Event& e)
 {
     updateLabelRef(m_selectedIcon, "selected_icon");
+    updateLabelRef(m_selectedName, "selected_name");
     m_selectedIcon->setVisible(false);
     m_constructionTextLabel->setVisible(false);
     m_constructionProgressBarLabel->setVisible(false);
@@ -146,6 +147,8 @@ void HUD::onUnitSelection(const Event& e)
         {
             m_selectedIcon->setVisible(true);
             m_selectedIcon->setBackgroundImage(comSelectible.icon);
+            m_selectedName->setVisible(true);
+            m_selectedName->setText(comSelectible.displayName);
         }
         else
         {

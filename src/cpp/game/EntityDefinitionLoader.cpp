@@ -751,25 +751,31 @@ ComponentType EntityDefinitionLoader::createCompSelectible(py::object module,
     if (isInstanceOf(module, entityDefinition, "Unit"))
     {
         auto iconHash = readIconDef(EntitySubTypes::UI_UNIT_ICON, entityDefinition);
+        auto displayName = readValue<std::string>(entityDefinition, "display_name");
 
         CompSelectible comp;
         PropertyInitializer::set<ImageId>(comp.icon, iconHash);
+        PropertyInitializer::set<std::string>(comp.displayName, displayName);
         return ComponentType(comp);
     }
     else if (isInstanceOf(module, entityDefinition, "Building"))
     {
         auto iconHash = readIconDef(EntitySubTypes::UI_BUILDING_ICON, entityDefinition);
+        auto displayName = readValue<std::string>(entityDefinition, "display_name");
 
         CompSelectible comp;
         PropertyInitializer::set<ImageId>(comp.icon, iconHash);
+        PropertyInitializer::set<std::string>(comp.displayName, displayName);
         return ComponentType(comp);
     }
     else if (isInstanceOf(module, entityDefinition, "NaturalResource"))
     {
         auto iconHash = readIconDef(EntitySubTypes::UI_NATURAL_RESOURCE_ICON, entityDefinition);
+        auto displayName = readValue<std::string>(entityDefinition, "display_name");
 
         CompSelectible comp;
         PropertyInitializer::set<ImageId>(comp.icon, iconHash);
+        PropertyInitializer::set<std::string>(comp.displayName, displayName);
         comp.selectionIndicator = {
             GraphicAddon::Type::RHOMBUS,
             GraphicAddon::Rhombus{Constants::TILE_PIXEL_WIDTH, Constants::TILE_PIXEL_HEIGHT}};

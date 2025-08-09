@@ -24,6 +24,7 @@ class HUD : public core::EventHandler
     core::Ref<core::ui::Label> m_stoneabel;
     core::Ref<core::ui::Label> m_goldLabel;
     core::Ref<core::ui::Label> m_playerIdLabel;
+    core::Ref<core::ui::Label> m_selectedName;
     core::Ref<core::ui::Label> m_selectedIcon;
     core::Ref<core::ui::Label> m_constructionTextLabel;
     core::Ref<core::ui::Label> m_constructionProgressBarLabel;

@@ -161,7 +161,7 @@ void Label::updateGraphicCommand()
     ui.text = text;
     ui.color = textColor;
 
-    if (ui.text.empty() == false)
+    if (backgroundImage == 0)
         ui.type = UIRenderingType::TEXT;
 }
 

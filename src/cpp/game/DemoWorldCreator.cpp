@@ -37,6 +37,8 @@
 #include <random>
 #include <string>
 
+#define WITH(statement) statement;
+
 namespace fs = std::filesystem;
 using namespace game;
 using namespace core;
@@ -348,74 +350,91 @@ void DemoWorldCreator::createHUD()
     GraphicsID resourcePanelBackground{.entityType = EntityTypes::ET_UI_ELEMENT,
                                        .entitySubType = EntitySubTypes::EST_UI_RESOURCE_PANEL};
     auto window = CreateRef<ui::Window>();
-    window->setName("resourcePanel");
-    window->setBackgroundImage(resourcePanelBackground.hash());
-    ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(window);
+    WITH(window->withName("resourcePanel")->withBackgroundImage(resourcePanelBackground.hash()))
+    {
+        ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(window);
 
-    auto woodLabel = window->createChild<ui::Label>();
-    woodLabel->setText("0");
-    woodLabel->setRect(Rect<int>(35, 5, 50, 20));
-    woodLabel->setName("wood");
+        auto woodLabel = window->createChild<ui::Label>()
+                             ->withText("0")
+                             ->withRect(Rect<int>(35, 5, 50, 20))
+                             ->withName("wood");
 
-    auto stoneLabel = window->createChild<ui::Label>();
-    stoneLabel->setText("0");
-    stoneLabel->setRect(Rect<int>(265, 5, 50, 20));
-    stoneLabel->setName("stone");
+        auto stoneLabel = window->createChild<ui::Label>()
+                              ->withText("0")
+                              ->withRect(Rect<int>(265, 5, 50, 20))
+                              ->withName("stone");
 
-    auto goldLabel = window->createChild<ui::Label>();
-    goldLabel->setText("0");
-    goldLabel->setRect(Rect<int>(195, 5, 50, 20));
-    goldLabel->setName("gold");
+        auto goldLabel = window->createChild<ui::Label>()
+                             ->withText("0")
+                             ->withRect(Rect<int>(195, 5, 50, 20))
+                             ->withName("gold");
 
-    auto playerIdLabel = window->createChild<ui::Label>();
-    playerIdLabel->setRect(Rect<int>(420, 5, 50, 20));
-    playerIdLabel->setName("player");
-    playerIdLabel->setTextColor(core::Color::WHITE);
+        auto playerIdLabel = window->createChild<ui::Label>()
+                                 ->withTextColor(core::Color::WHITE)
+                                 ->withRect(Rect<int>(420, 5, 50, 20))
+                                 ->withName("player");
+    }
 
-    GraphicsID controlPanelBackground{.entityType = EntityTypes::ET_UI_ELEMENT,
-                                      .entitySubType = EntitySubTypes::EST_UI_CONTROL_PANEL};
-    auto controlPanel = CreateRef<ui::Window>();
-    controlPanel->setName("controlPanel");
-    controlPanel->setBackgroundImage(controlPanelBackground.hash());
-    controlPanel->setRect(Rect<int>(0, -1, 506, 145)); // -1 is to attach to bottom of screen
-    ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(controlPanel);
+    WITH(auto controlPanel = CreateRef<ui::Window>())
+    {
+        GraphicsID controlPanelBackground{.entityType = EntityTypes::ET_UI_ELEMENT,
+                                          .entitySubType = EntitySubTypes::EST_UI_CONTROL_PANEL};
 
-    auto hLayout = controlPanel->createChild<ui::Layout>();
+        controlPanel->withName("controlPanel")
+            ->withBackgroundImage(controlPanelBackground.hash())
+            ->withRect(Rect<int>(0, -1, 506, 145)); // -1 is to attach to bottom of screen
+        ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(controlPanel);
 
-    auto commandsLayout = hLayout->createChild<ui::Layout>();
-    commandsLayout->setRect(Rect<int>(0, 0, 210, 145)); // TODO: Can we simplify this?
+        WITH(auto hLayout = controlPanel->createChild<ui::Layout>())
+        {
+            WITH(auto commandsLayout = hLayout->createChild<ui::Layout>())
+            {
+                commandsLayout->setRect(Rect<int>(0, 0, 210, 145)); // TODO: Can we simplify this?
+            }
 
-    auto infoLayout = hLayout->createChild<ui::Layout>();
-    infoLayout->setRect(Rect<int>(0, 0, 290, 145)); // TODO: Can we simplify this?
-    infoLayout->setMargin(20);
-    infoLayout->setSpacing(10);
-    infoLayout->setDirection(ui::LayoutDirection::Horizontal);
+            WITH(auto infoLayout = hLayout->createChild<ui::Layout>()
+                                       ->withDirection(ui::LayoutDirection::Horizontal)
+                                       ->withSpacing(10)
+                                       ->withMargin(20)
+                                       ->withRect(Rect<int>(0, 0, 290, 145)))
+            {
 
-    auto basicInfoLayout = infoLayout->createChild<ui::Layout>();
-    basicInfoLayout->setRect(Rect<int>(0, 0, 100, 145)); // TODO: Can we simplify this?
-    basicInfoLayout->setDirection(ui::LayoutDirection::Vertical);
+                WITH(auto basicInfoLayout = infoLayout->createChild<ui::Layout>()
+                                                ->withDirection(ui::LayoutDirection::Vertical)
+                                                ->withRect(Rect<int>(0, 0, 100, 145)))
+                {
+                    basicInfoLayout->createChild<ui::Label>()
+                        ->withTextColor(core::Color::BLACK)
+                        ->withRect(Rect<int>(0, 0, 100, 20))
+                        ->withName("selected_name")
+                        ->withVisible(false);
+                    basicInfoLayout->createChild<ui::Label>()
+                        ->withRect(Rect<int>(0, 0, 50, 50))
+                        ->withName("selected_icon")
+                        ->withVisible(false);
+                }
 
-    auto extendedInfoLayout = infoLayout->createChild<ui::Layout>();
-    extendedInfoLayout->setRect(Rect<int>(0, 0, 200, 145)); // TODO: Can we simplify this?
-    extendedInfoLayout->setDirection(ui::LayoutDirection::Vertical);
-    extendedInfoLayout->setMargin(20);
-
-    auto selectedIcon = basicInfoLayout->createChild<ui::Label>();
-    selectedIcon->setRect(Rect<int>(0, 0, 50, 50));
-    selectedIcon->setName("selected_icon");
-    selectedIcon->setVisible(false);
-
-    auto constructionPercLabel = extendedInfoLayout->createChild<ui::Label>();
-    constructionPercLabel->setRect(Rect<int>(0, 0, 150, 20));
-    constructionPercLabel->setName("construction_progress_label");
-    constructionPercLabel->setVisible(false);
-    constructionPercLabel->setTextColor(core::Color::BLACK);
-
-    GraphicsID progressBarBackground{.entityType = EntityTypes::ET_UI_ELEMENT,
-                                     .entitySubType = EntitySubTypes::UI_PROGRESS_BAR};
-    auto constructionProgressBarLabel = extendedInfoLayout->createChild<ui::Label>();
-    constructionProgressBarLabel->setRect(Rect<int>(0, 0, 150, 10));
-    constructionProgressBarLabel->setName("construction_progress_bar_label");
-    constructionProgressBarLabel->setVisible(false);
-    constructionProgressBarLabel->setBackgroundImage(progressBarBackground.hash());
+                WITH(auto extendedInfoLayout = infoLayout->createChild<ui::Layout>()
+                                                   ->withDirection(ui::LayoutDirection::Vertical)
+                                                   ->withMargin(20)
+                                                   ->withRect(Rect<int>(0, 0, 200, 145)))
+                {
+                    auto constructionPercLabel = extendedInfoLayout->createChild<ui::Label>()
+                                                     ->withTextColor(core::Color::BLACK)
+                                                     ->withRect(Rect<int>(0, 0, 150, 20))
+                                                     ->withName("construction_progress_label")
+                                                     ->withVisible(false);
+                    GraphicsID progressBarBackground{.entityType = EntityTypes::ET_UI_ELEMENT,
+                                                     .entitySubType =
+                                                         EntitySubTypes::UI_PROGRESS_BAR};
+                    auto constructionProgressBarLabel =
+                        extendedInfoLayout->createChild<ui::Label>()
+                            ->withBackgroundImage(progressBarBackground.hash())
+                            ->withName("construction_progress_bar_label")
+                            ->withRect(Rect<int>(0, 0, 150, 10))
+                            ->withVisible(false);
+                }
+            }
+        }
+    }
 }

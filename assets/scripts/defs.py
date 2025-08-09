@@ -37,6 +37,7 @@ class Icon(Graphic):
 
 class Unit:
     name: str
+    display_name: str
     line_of_sight: int
     moving_speed: int
     animations: List[Animation]
@@ -53,6 +54,7 @@ class Villager(Unit):
 
 class NaturalResource:
     name: str
+    display_name: str
     resource_amount: int
     graphics: Dict[str, Graphic] # Graphics by theme
     icon: Icon
@@ -69,6 +71,7 @@ class Tree(NaturalResource):
 
 class Building:
     name: str
+    display_name: str
     line_of_sight: int
     size: str
     graphics: Dict[str, Graphic] # Graphics by theme
@@ -107,6 +110,7 @@ class UIElement:
 all_units: List[Unit] = [
     Villager(
         name="villager",
+        display_name="Villager",
         line_of_sight=256*5,
         moving_speed=256,
         build_speed=20,
@@ -129,18 +133,21 @@ all_units: List[Unit] = [
 all_natural_resources: List[NaturalResource] = [
     NaturalResource(
         name="gold",
+        display_name="Gold Mine",
         resource_amount=1000,
         graphics={"default":Graphic(slp_id=4479)},
         icon=Icon(drs_file="interfac.drs", slp_id=50731, index=3),
     ),
     NaturalResource(
         name="stone",
+        display_name="Stone Mine",
         resource_amount=1000,
         graphics={"default":Graphic(slp_id=1034)},
         icon=Icon(drs_file="interfac.drs", slp_id=50731, index=1),
     ),
     Tree(
         name="wood",
+        display_name="Tree",
         resource_amount=100,
         graphics={"oak":Graphic(slp_id=4652)},
         stump=NaturalResource(name="stump", graphics={"oak":Graphic(slp_id=1252)}),
@@ -152,6 +159,7 @@ all_natural_resources: List[NaturalResource] = [
 all_buildings: List[Building] = [
     SingleResourceDropOffPoint(
         name="mill", 
+        display_name="Mill",
         line_of_sight=256*5,
         size="medium",
         accepted_resources=["food"], 
@@ -160,6 +168,7 @@ all_buildings: List[Building] = [
     ),
     SingleResourceDropOffPoint(
         name="wood_camp", 
+        display_name="Lumber Camp",
         line_of_sight=256*5,
         size="medium",
         accepted_resources=["wood"], 
@@ -168,6 +177,7 @@ all_buildings: List[Building] = [
     ),
     SingleResourceDropOffPoint(
         name="mine_camp", 
+        display_name="Mining Camp",
         line_of_sight=256*5,
         size="medium",
         accepted_resources=["gold", "stone"], 

@@ -14,6 +14,7 @@ class CompSelectible
 {
   public:
     Property<ImageId> icon;
+    Property<std::string> displayName;
 
   public:
     // NOTE: Rect's x, y doesn't represent the position of the rect, but only the local

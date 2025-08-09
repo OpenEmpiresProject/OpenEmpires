@@ -24,6 +24,14 @@
             dirty = true;                                                                          \
             Field = value;                                                                         \
         }                                                                                          \
+    }                                                                                              \
+    auto with##Capital(const decltype(Field)& value)                                               \
+        ->decltype(std::static_pointer_cast<std::remove_reference_t<decltype(*this)>>(             \
+            this->shared_from_this()))                                                             \
+    {                                                                                              \
+        set##Capital(value);                                                                       \
+        return std::static_pointer_cast<std::remove_reference_t<decltype(*this)>>(                 \
+            this->shared_from_this());                                                             \
     }
 
 namespace core
