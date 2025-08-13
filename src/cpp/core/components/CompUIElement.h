@@ -1,6 +1,7 @@
 #ifndef COMPUIELEMENT_H
 #define COMPUIELEMENT_H
 
+#include "GraphicsRegistry.h"
 #include "Rect.h"
 
 #include <string>
@@ -22,7 +23,7 @@ class CompUIElement
     Rect<int> rect;
     Color color;
     uint32_t id = 0;
-    int64_t backgroundImage = 0;
+    GraphicsID backgroundImage;
     bool isVisible = true;
 };
 } // namespace core

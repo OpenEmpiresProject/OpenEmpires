@@ -17,6 +17,7 @@ enum EntityTypes
     ET_LUMBER_CAMP = 9,
     ET_MINING_CAMP = 10,
     ET_CONSTRUCTION_SITE = 11,
+    ET_TOWN_CENTER = 12,
 
     ET_UI_ELEMENT = 10000
 };
@@ -32,6 +33,7 @@ enum EntitySubTypes
 
     EST_SMALL_SIZE = 1,
     EST_MEDIUM_SIZE = 2,
+    EST_HUGE_SIZE = 3,
 
     EST_DEFAULT = 0,
     EST_CHOPPED_TREE = 1,

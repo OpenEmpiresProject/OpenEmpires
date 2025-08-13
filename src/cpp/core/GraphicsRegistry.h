@@ -13,40 +13,64 @@ namespace core
 class GraphicsID
 {
   public:
-    // clang-format off
-    /*
-    *   Bit layout
-    *   63            49 48         39 38        29 28     24 23       19 18         9 8      5 4         0
-    *   +---------------+-------------+-------------+---------+-----------+-----------+--------+----------+
-    *   |  entityType   | entitySubTp |   action    | frame   | direction | variation | Player | Reserved |
-    *   |   (15 bits)   |  (10 bits)  |  (10 bits)  | (5 bits)|  (4 bits) | (10 bits) |(4 bits)|(5  bits) |
-    *   +---------------+-------------+-------------+---------+-----------+-----------+--------+----------+
-    */
-    // clang-format on
+    union
+    {
+        struct
+        {
+            uint64_t entityType : 15;    // 32,768 values
+            uint64_t entitySubType : 10; // 1,024 values
+            uint64_t action : 10;        // 1,024 values
+            uint64_t frame : 5;          // 32 values
+            uint64_t direction : 4;      // 16 values
+            uint64_t variation : 10;     // 1,024 values
+            uint64_t playerId : 4;       // 16 values
+            uint64_t civilization : 6;   // 64 values
+            uint64_t age : 3;            // 8 values
+            uint64_t reserved : 57;
+        };
+        struct
+        {
+            uint64_t low;
+            uint64_t high;
+        } raw;
+    };
 
-    int entityType = 0;    // 32,768 values
-    int entitySubType = 0; // 1,024 values
-    union                  // 1,024 values
+    GraphicsID(uint64_t type) : GraphicsID()
     {
-        int action = 0;
-        int uiElement;
-    };
-    int frame = 0;                         // 32 values
-    Direction direction = Direction::NONE; // 16 values
-    union                                  // 1,024 values
+        entityType = type;
+    }
+
+    GraphicsID(uint64_t type, uint64_t subType) : GraphicsID()
     {
-        int variation = 0;
-        int imageIndex;
-    };
-    int playerId = 0; // 16 values
-    int reserved = 0; // 32 values
+        entityType = type;
+        entitySubType = subType;
+    }
+
+    GraphicsID()
+    {
+        entityType = 0;
+        entitySubType = 0;
+        action = 0;
+        frame = 0;
+        variation = 0;
+        playerId = 0;
+        civilization = 0;
+        age = 0;
+        reserved = 0;
+        direction = static_cast<uint64_t>(Direction::NONE);
+        reserved = 0;
+    }
 
     GraphicsID getBaseId() const
     {
-        return GraphicsID{.entityType = entityType,
-                          .entitySubType = entitySubType,
-                          .action = action,
-                          .playerId = playerId};
+        GraphicsID id;
+        id.entityType = entityType;
+        id.entitySubType = entitySubType;
+        id.action = action;
+        id.playerId = playerId;
+        id.civilization = civilization;
+        id.age = age;
+        return id;
     }
 
     bool isValid() const
@@ -54,28 +78,20 @@ class GraphicsID
         return entityType != 0;
     }
 
-    bool operator==(const GraphicsID& other) const
+    bool operator==(const GraphicsID& o) const
     {
-        return entityType == other.entityType && action == other.action &&
-               direction == other.direction && frame == other.frame &&
-               entitySubType == other.entitySubType && variation == other.variation &&
-               playerId == other.playerId && reserved == other.reserved;
+        return raw.low == o.raw.low && raw.high == o.raw.high;
     }
 
-    int64_t hashWithClearingFrame() const
+    bool operator!=(const GraphicsID& o) const
     {
-        int64_t h = hash();
-        h &= ~(0x1FLL << 24); // Clear 5-bit frame field
-        return h;
+        return !(*this == o);
     }
 
-    int64_t hash() const
+    bool operator<(const GraphicsID& other) const noexcept
     {
-        return (static_cast<int64_t>(entityType) << 49) |
-               (static_cast<int64_t>(entitySubType) << 39) | (static_cast<int64_t>(action) << 29) |
-               (static_cast<int64_t>(frame) << 24) | (static_cast<int64_t>(direction) << 19) |
-               (static_cast<int64_t>(variation) << 9) | (static_cast<int64_t>(playerId) << 5) |
-               static_cast<int64_t>(reserved);
+        return (raw.high < other.raw.high) ||
+               (raw.high == other.raw.high && raw.low < other.raw.low);
     }
 
     std::string toString() const
@@ -86,21 +102,36 @@ class GraphicsID
                ", P" + std::to_string(playerId) + ", R" + std::to_string(reserved) + ")";
     }
 
-    static GraphicsID fromHash(int64_t hash)
+  private:
+    static inline uint64_t rotl(uint64_t v, unsigned int k) noexcept
     {
-        GraphicsID id;
-        id.entityType = (hash >> 49) & 0x7FFF;                     // 15 bits
-        id.entitySubType = (hash >> 39) & 0x3FF;                   // 10 bits
-        id.action = (hash >> 29) & 0x3FF;                          // 10 bits
-        id.frame = (hash >> 24) & 0x1F;                            // 5 bits
-        id.direction = static_cast<Direction>((hash >> 19) & 0xF); // 4 bits
-        id.variation = (hash >> 9) & 0x3FF;                        // 10 bits
-        id.playerId = (hash >> 5) & 0xF;                           // 4 bits
-        id.reserved = hash & 0x1F;                                 // 5 bits
-        return id;
+        return (v << k) | (v >> (64 - k));
     }
 };
 
+static_assert(sizeof(GraphicsID) == 16, "GraphicsID size should be limited to 128bits");
+
+} // namespace core
+
+// Hash functor for unordered_map
+namespace std
+{
+template <> struct hash<core::GraphicsID>
+{
+    size_t operator()(const core::GraphicsID& id) const noexcept
+    {
+        // Simple 64-bit mix
+        uint64_t low = id.raw.low;
+        uint64_t high = id.raw.high;
+        // SplitMix64-ish mixing
+        low ^= high + 0x9e3779b97f4a7c15ULL + (low << 6) + (low >> 2);
+        return static_cast<size_t>(low);
+    }
+};
+} // namespace std
+
+namespace core
+{
 struct Texture
 {
     SDL_Texture* image = nullptr;
@@ -124,15 +155,13 @@ class GraphicsRegistry
     const Texture& getTexture(const GraphicsID& graphicID) const;
     bool hasTexture(const GraphicsID& graphicID) const;
     size_t getTextureCount() const;
-    const std::unordered_map<int64_t, Texture>& getTextures() const;
+    const std::unordered_map<GraphicsID, Texture>& getTextures() const;
     size_t getVariationCount(const GraphicsID& graphicID) const;
 
   private:
-    std::unordered_map<int64_t, Texture> m_textureMap;
-    std::unordered_map<int64_t, Animation> m_animationMap;
+    std::unordered_map<GraphicsID, Texture> m_textureMap;
 
 #ifndef NDEBUG
-    std::unordered_map<int64_t, GraphicsID> m_graphicIds;
     std::unordered_map<int, std::vector<GraphicsID>> m_graphicIdsByEntityType;
 #endif
 };

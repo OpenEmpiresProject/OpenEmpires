@@ -1,4 +1,4 @@
-#include "GraphicsLoaderFromDRS.h"
+﻿#include "GraphicsLoaderFromDRS.h"
 
 #include "AtlasGenerator.h"
 #include "DRSFile.h"
@@ -10,8 +10,10 @@
 #include "utils/Logger.h"
 #include "utils/Types.h"
 
+#include <SDL3_image/SDL_image.h>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <unordered_map>
 
@@ -30,6 +32,11 @@ void loadSLP(shared_ptr<DRSFile> drs,
              GraphicsRegistry& graphicsRegistry,
              AtlasGenerator& atlasGenerator,
              Rect<int> clipRect = Rect<int>());
+void loadSLP(const EntityDefinitionLoader::EntityDRSData& drs,
+             const GraphicsID& baseId,
+             SDL_Renderer& renderer,
+             GraphicsRegistry& graphicsRegistry,
+             AtlasGenerator& atlasGenerator);
 shared_ptr<DRSFile> loadDRSFile(const string& drsFilename);
 void adjustDirections(GraphicsRegistry& graphicsRegistry);
 void registerDummyTexture(int entityType, int entitySubType, GraphicsRegistry& graphicsRegistry);
@@ -50,24 +57,32 @@ void GraphicsLoaderFromDRS::loadGraphics(SDL_Renderer& renderer,
     Ref<EntityDefinitionLoader> defLoader =
         dynamic_pointer_cast<EntityDefinitionLoader>(entityFactory);
 
-    std::map<int64_t, GraphicsID> uniqueBaseIds;
+    std::set<GraphicsID> uniqueBaseIds;
     for (auto& id : idsToLoad)
     {
         auto baseId = id.getBaseId();
-        uniqueBaseIds[baseId.hash()] = id;
+        uniqueBaseIds.insert(baseId);
     }
 
     for (auto& id : uniqueBaseIds)
     {
-        auto baseId = GraphicsID::fromHash(id.first);
+        auto baseId = id;
         baseId.playerId = 0;
 
         auto drsData = defLoader->getDRSData(baseId);
-        if (drsData.drsFile != nullptr)
+
+        if (drsData.parts.size() == 1)
         {
-            loadSLP(drsData.drsFile, drsData.slpId, id.second.entityType, id.second.entitySubType,
-                    id.second.action, id.second.playerId, renderer, graphicsRegistry,
-                    atlasGenerator, drsData.clipRect);
+            if (drsData.parts[0].drsFile != nullptr)
+            {
+                loadSLP(drsData.parts[0].drsFile, drsData.parts[0].slpId, id.entityType,
+                        id.entitySubType, id.action, id.playerId, renderer, graphicsRegistry,
+                        atlasGenerator, drsData.clipRect);
+            }
+        }
+        else // Multi-part texture
+        {
+            loadSLP(drsData, id, renderer, graphicsRegistry, atlasGenerator);
         }
     }
     adjustDirections(graphicsRegistry);
@@ -148,28 +163,108 @@ shared_ptr<DRSFile> loadDRSFile(const string& drsFilename)
     return drs;
 }
 
-void loadSLP(shared_ptr<DRSFile> drs,
-             uint32_t slpId,
-             uint32_t entityType,
-             uint32_t entitySubType,
-             uint32_t action,
-             uint32_t playerId,
-             SDL_Renderer& renderer,
-             GraphicsRegistry& graphicsRegistry,
-             AtlasGenerator& atlasGenerator,
-             Rect<int> clipRect)
+SDL_Surface* merge_surfaces_with_anchors(const std::vector<SDL_Surface*>& surfaces,
+                                         const std::vector<Vec2>& anchors,
+                                         int minWidth,
+                                         int minHeight)
 {
-    auto slp = drs->getSLPFile(slpId);
-
-    std::vector<SDL_Surface*> surfaces;
-
-    auto frames = slp.getFrames(playerId);
-    for (auto& frame : frames)
+    if (surfaces.empty() || surfaces.size() != anchors.size())
     {
-        auto surface = frameToSurface(frame);
-        surfaces.push_back(surface);
+        spdlog::error(
+            "Invalid arguments: surfaces and anchors must match in size, and must not be empty.");
+        return nullptr;
     }
 
+    if (!surfaces[0])
+    {
+        spdlog::error("First surface is null. Cannot determine pixel format.");
+        return nullptr;
+    }
+
+    // Step 1: Compute bounding box with pivot (250,250)
+    const int pivotX = 250;
+    const int pivotY = 250;
+
+    int minX = INT_MAX, minY = INT_MAX;
+    int maxX = INT_MIN, maxY = INT_MIN;
+
+    for (size_t i = 0; i < surfaces.size(); i++)
+    {
+        auto* surf = surfaces[i];
+        if (!surf)
+            continue;
+
+        // 🔄 Reversed anchor: subtract anchor instead of add
+        int left = pivotX - anchors[i].x;
+        int top = pivotY - anchors[i].y;
+        int right = left + surf->w;
+        int bottom = top + surf->h;
+
+        minX = std::min(minX, left);
+        minY = std::min(minY, top);
+        maxX = std::max(maxX, right);
+        maxY = std::max(maxY, bottom);
+    }
+
+    if (minX == INT_MAX || minY == INT_MAX)
+    {
+        spdlog::error("No valid surfaces.");
+        return nullptr;
+    }
+
+    int finalW = max(maxX - minX, minWidth);
+    int finalH = max(maxY - minY, minHeight);
+
+    // Step 2: Create the final surface with same format as first surface
+    SDL_Surface* final_surface = SDL_CreateSurface(finalW, finalH, surfaces[0]->format);
+    if (!final_surface)
+    {
+        spdlog::error("Surface creation failed: {}", SDL_GetError());
+        return nullptr;
+    }
+
+    // Step 2b: Set magenta as colorkey and fill
+    auto fmtDetails = SDL_GetPixelFormatDetails(final_surface->format);
+    auto palette = SDL_GetSurfacePalette(final_surface);
+    Uint32 colorkey = SDL_MapRGB(fmtDetails, palette, 0xFF, 0, 0xFF);
+
+    SDL_SetSurfaceColorKey(final_surface, true, colorkey);
+    SDL_FillSurfaceRect(final_surface, nullptr, colorkey);
+
+    // Step 3: Blit each surface shifted into positive coords
+    for (size_t i = 0; i < surfaces.size(); i++)
+    {
+        auto* surf = surfaces[i];
+        if (!surf)
+            continue;
+
+        SDL_Rect dest;
+        dest.x = pivotX - anchors[i].x - minX;
+        dest.y = pivotY - anchors[i].y - minY;
+        dest.w = surf->w;
+        dest.h = surf->h;
+
+        if (SDL_BlitSurface(surf, nullptr, final_surface, &dest) < 0)
+        {
+            spdlog::error("Blit failed for surface {}: {}", i, SDL_GetError());
+        }
+    }
+
+    return final_surface; // caller frees
+}
+
+void loadSurfaces(AtlasGenerator& atlasGenerator,
+                  SDL_Renderer& renderer,
+                  std::vector<SDL_Surface*>& surfaces,
+                  uint32_t entityType,
+                  Rect<int> clipRect,
+                  uint32_t entitySubType,
+                  uint32_t action,
+                  uint32_t playerId,
+                  std::vector<Frame>& frames,
+                  std::vector<Vec2>& anchors,
+                  GraphicsRegistry& graphicsRegistry)
+{
     std::vector<SDL_Rect> srcRects;
 
     auto atlasTexture = atlasGenerator.generateAtlas(renderer, surfaces, srcRects);
@@ -206,8 +301,7 @@ void loadSLP(shared_ptr<DRSFile> drs,
         if (playerId == 2)
             int rerer = 0;
 
-        auto anchorPair = frames[i].getAnchor();
-        Vec2 anchor(anchorPair.first, anchorPair.second);
+        Vec2 anchor = anchors[i];
 
         if (entityType == EntityTypes::ET_TILE)
         {
@@ -226,23 +320,23 @@ void loadSLP(shared_ptr<DRSFile> drs,
             auto direction = (int) (index / 15); // 0-3
             if (direction == 0)
             {
-                id.direction = Direction::SOUTH;
+                id.direction = static_cast<uint64_t>(Direction::SOUTH);
             }
             else if (direction == 1)
             {
-                id.direction = Direction::SOUTHWEST;
+                id.direction = static_cast<uint64_t>(Direction::SOUTHWEST);
             }
             else if (direction == 2)
             {
-                id.direction = Direction::WEST;
+                id.direction = static_cast<uint64_t>(Direction::WEST);
             }
             else if (direction == 3)
             {
-                id.direction = Direction::NORTHWEST;
+                id.direction = static_cast<uint64_t>(Direction::NORTHWEST);
             }
             else if (direction == 4)
             {
-                id.direction = Direction::NORTH;
+                id.direction = static_cast<uint64_t>(Direction::NORTH);
             }
         }
         else
@@ -263,6 +357,79 @@ void loadSLP(shared_ptr<DRSFile> drs,
         Texture entry{atlasTexture, srcRectF, anchor, imageSize, false};
         graphicsRegistry.registerTexture(id, entry);
     }
+}
+
+void loadSLP(const EntityDefinitionLoader::EntityDRSData& drsData,
+             const GraphicsID& baseId,
+             SDL_Renderer& renderer,
+             GraphicsRegistry& graphicsRegistry,
+             AtlasGenerator& atlasGenerator)
+{
+    std::vector<SDL_Surface*> surfaces;
+    std::vector<Vec2> anchors;
+    std::vector<drs::Frame> frames;
+
+    for (auto& part : drsData.parts)
+    {
+        auto slp = part.drsFile->getSLPFile(part.slpId);
+        auto framesPerPart = slp.getFrames(baseId.playerId);
+        for (auto& frame : framesPerPart)
+        {
+            auto surface = frameToSurface(frame);
+            surfaces.push_back(surface);
+
+            if (part.anchor.isNull())
+            {
+                auto anchorPair = frame.getAnchor();
+                Vec2 anchor(anchorPair.first, anchorPair.second);
+                anchors.push_back(anchor);
+            }
+            else
+            {
+                anchors.push_back(part.anchor);
+            }
+
+            frames.push_back(frame);
+        }
+    }
+
+    auto mergedSurface =
+        merge_surfaces_with_anchors(surfaces, anchors, drsData.anchor.x, drsData.anchor.y);
+    std::vector<Vec2> newAnchors = {drsData.anchor};
+
+    std::vector<SDL_Surface*> mergedSurfaceVec = {mergedSurface};
+    loadSurfaces(atlasGenerator, renderer, mergedSurfaceVec, baseId.entityType, drsData.clipRect,
+                 baseId.entitySubType, baseId.action, baseId.playerId, frames, newAnchors,
+                 graphicsRegistry);
+}
+
+void loadSLP(shared_ptr<DRSFile> drs,
+             uint32_t slpId,
+             uint32_t entityType,
+             uint32_t entitySubType,
+             uint32_t action,
+             uint32_t playerId,
+             SDL_Renderer& renderer,
+             GraphicsRegistry& graphicsRegistry,
+             AtlasGenerator& atlasGenerator,
+             Rect<int> clipRect)
+{
+    auto slp = drs->getSLPFile(slpId);
+
+    std::vector<SDL_Surface*> surfaces;
+    std::vector<Vec2> anchors;
+
+    auto frames = slp.getFrames(playerId);
+    for (auto& frame : frames)
+    {
+        auto surface = frameToSurface(frame);
+        surfaces.push_back(surface);
+        auto anchorPair = frame.getAnchor();
+        anchors.push_back(Vec2(anchorPair.first, anchorPair.second));
+    }
+
+    loadSurfaces(atlasGenerator, renderer, surfaces, entityType, clipRect, entitySubType, action,
+                 playerId, frames, anchors, graphicsRegistry);
 }
 
 bool isTextureFlippingNeededEntity(int entityType)
@@ -296,11 +463,10 @@ void adjustDirections(GraphicsRegistry& graphicsRegistry)
     std::list<std::pair<GraphicsID, Texture>> graphicsToFlip;
     for (const auto& [id, texture] : graphicsRegistry.getTextures())
     {
-        GraphicsID idFull = GraphicsID::fromHash(id);
-        if (isTextureFlippingNeededEntity(idFull.entityType) &&
-            isTextureFlippingNeededDirection(idFull.direction))
+        if (isTextureFlippingNeededEntity(id.entityType) &&
+            isTextureFlippingNeededDirection(static_cast<Direction>(id.direction)))
         {
-            graphicsToFlip.push_back(std::make_pair(idFull, texture));
+            graphicsToFlip.push_back(std::make_pair(id, texture));
         }
     }
 
@@ -308,8 +474,8 @@ void adjustDirections(GraphicsRegistry& graphicsRegistry)
     {
         texture.anchor.x = texture.size.width - texture.anchor.x;
         texture.flip = true; // Mark the texture for flipping
-        id.direction =
-            static_cast<Direction>(getFlippedDirection(id.direction)); // Flip the direction
+        id.direction = static_cast<uint64_t>(
+            getFlippedDirection(static_cast<Direction>(id.direction))); // Flip the direction
 
         if (graphicsRegistry.hasTexture(id) == false)
             graphicsRegistry.registerTexture(id, texture);

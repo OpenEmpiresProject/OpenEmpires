@@ -2,6 +2,7 @@
 #define UI_H
 
 #include "Color.h"
+#include "GraphicsRegistry.h"
 #include "Rect.h"
 #include "utils/Types.h"
 
@@ -37,7 +38,6 @@
 namespace core
 {
 class Event;
-class GraphicsID;
 
 namespace ui
 {
@@ -52,7 +52,7 @@ class Widget : public std::enable_shared_from_this<Widget>
     bool visible = true;
     bool hot = false;
     bool dirty = true;
-    int64_t backgroundImage = 0; // Hash of graphic id of texture
+    GraphicsID backgroundImage;
     std::vector<Ref<Widget>> children;
 
   public:

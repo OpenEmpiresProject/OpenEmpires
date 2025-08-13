@@ -58,7 +58,7 @@ class EntityDefinitionLoaderExposure : public EntityDefinitionLoader
         return EntityDefinitionLoader::createEntity(entityType, entitySubType);
     }
 
-    void setDRSData(int64_t id, const EntityDRSData& data)
+    void setDRSData(const GraphicsID& id, const EntityDRSData& data)
     {
         EntityDefinitionLoader::setDRSData(id, data);
     }
@@ -278,6 +278,8 @@ class Graphic:
     slp_id = 0
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
+class CompositeGraphic:
+    pass
 
 class Building:
     name = ''
@@ -310,7 +312,9 @@ all_buildings= [
     GraphicsID siteId;
     siteId.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
     siteId.entitySubType = 2;
-    loader.setDRSData(siteId.hash(), EntityDefinitionLoader::EntityDRSData{.slpId = 111});
+    EntityDefinitionLoader::EntityDRSData data;
+    data.parts.push_back(EntityDefinitionLoader::EntityDRSData::Part(nullptr, 111, Vec2::null));
+    loader.setDRSData(siteId, data);
     loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
     loader.setBoundingBoxReadFunc([](core::Ref<drs::DRSFile>, uint32_t) -> core::Rect<int>
                                   { return core::Rect<int>(); });
@@ -320,11 +324,9 @@ all_buildings= [
 
     // Assert
     // Main building
-    EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_MILL}).slpId, 3483);
+    EXPECT_EQ(loader.getDRSData(GraphicsID(EntityTypes::ET_MILL)).parts[0].slpId, 3483);
     // One of construction sites
-    EXPECT_EQ(
-        loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_MILL, .entitySubType = 2}).slpId,
-        111);
+    EXPECT_EQ(loader.getDRSData(GraphicsID(EntityTypes::ET_MILL, 2)).parts[0].slpId, 111);
 }
 
 TEST(EntityDefinitionLoaderTest, BuildingResourceAcceptance)
@@ -368,7 +370,7 @@ mill = SingleResourceDropOffPoint(
     ComponentType result = loader.createCompBuilding(module, millDef);
     ASSERT_TRUE(std::get<CompBuilding>(result).acceptResource(ResourceType::FOOD));
 }
-
+ 
 TEST(EntityDefinitionLoaderTest, LoadAllConstructionSites)
 {
     py::scoped_interpreter guard{};
@@ -379,6 +381,8 @@ class Graphic:
     slp_id = 0
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
+class CompositeGraphic:
+    pass
 
 class ConstructionSite:
     name = 'construction_site'
@@ -414,7 +418,7 @@ all_construction_sites= [
         id.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
         id.entitySubType = EntitySubTypes::EST_SMALL_SIZE;
         auto drsData = loader.getDRSData(id);
-        EXPECT_EQ(drsData.slpId, 236);
+        EXPECT_EQ(drsData.parts[0].slpId, 236);
 
         auto sideData = loader.getSite("small");
         EXPECT_EQ(sideData.size.width, 1);
@@ -427,7 +431,7 @@ all_construction_sites= [
         id.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
         id.entitySubType = EntitySubTypes::EST_MEDIUM_SIZE;
         auto drsData = loader.getDRSData(id);
-        EXPECT_EQ(drsData.slpId, 237);
+        EXPECT_EQ(drsData.parts[0].slpId, 237);
 
         auto sideData = loader.getSite("medium");
         EXPECT_EQ(sideData.size.width, 2);
@@ -446,6 +450,8 @@ class Graphic:
     slp_id = 0
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
+class CompositeGraphic:
+    pass
 
 class Building:
     name = ''
@@ -496,7 +502,7 @@ all_construction_sites= [
     GraphicsID id;
     id.entityType = EntityTypes::ET_MILL;
     auto drsData = loader.getDRSData(id);
-    EXPECT_EQ(drsData.slpId, 3483);
+    EXPECT_EQ(drsData.parts[0].slpId, 3483);
 
     auto gameState = std::make_shared<core::GameState>();
     core::ServiceRegistry::getInstance().registerService(gameState);
@@ -518,6 +524,9 @@ class Graphic:
     slp_id = 0
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
+class CompositeGraphic:
+    pass
+
 class TileSet:
     graphics = {}
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
@@ -538,7 +547,7 @@ all_tilesets = [
     loader.loadTileSets(module);
 
     // Assert
-    EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_TILE}).slpId, 15001);
+    EXPECT_EQ(loader.getDRSData(GraphicsID(EntityTypes::ET_TILE)).parts[0].slpId, 15001);
 }
 
 TEST(EntityDefinitionLoaderTest, LoadTreeWithStump)
@@ -551,6 +560,9 @@ class Graphic:
     drs_file = "graphics.drs"
     slp_id = 0
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+class CompositeGraphic:
+    pass
 
 class NaturalResource:
     name = ''
@@ -583,10 +595,10 @@ all_natural_resources= [
     loader.loadNaturalResources(module);
 
     // Assert
-    EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_TREE}).slpId, 435);
+    EXPECT_EQ(loader.getDRSData(GraphicsID(EntityTypes::ET_TREE)).parts[0].slpId, 435);
     EXPECT_EQ(loader
-                  .getDRSData(GraphicsID{.entityType = EntityTypes::ET_TREE,
-                                         .entitySubType = EntitySubTypes::EST_CHOPPED_TREE})
+                  .getDRSData(GraphicsID(EntityTypes::ET_TREE, EntitySubTypes::EST_CHOPPED_TREE))
+                  .parts[0]
                   .slpId,
               1252);
 }
@@ -601,6 +613,9 @@ class Rect:
 
 class Graphic:
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+class CompositeGraphic:
+    pass
 
 class UIElement:
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
@@ -623,7 +638,7 @@ all_ui_elements = [
     GraphicsID id;
     id.entityType = EntityTypes::ET_UI_ELEMENT;
     id.entitySubType = EntitySubTypes::EST_UI_RESOURCE_PANEL;
-    EXPECT_EQ(loader.getDRSData(id).slpId, 51101);
+    EXPECT_EQ(loader.getDRSData(id).parts[0].slpId, 51101);
     EXPECT_EQ(loader.getDRSData(id).clipRect.w,
               400);
     EXPECT_EQ(loader.getDRSData(id).clipRect.h,

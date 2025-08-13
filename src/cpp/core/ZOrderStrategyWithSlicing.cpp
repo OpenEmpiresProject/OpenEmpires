@@ -192,7 +192,7 @@ std::list<CompRendering*> slice(CompRendering& rc)
         subComponentsToReturn.push_back(slice);
 
         // Slice left
-        for (size_t i = 1; i < rc.landSize.width; i++)
+        for (int i = 1; i < rc.landSize.width; i++)
         {
             auto slice = ObjectPool<CompRendering>::acquire();
             *slice = rc;
@@ -231,7 +231,7 @@ std::list<CompRendering*> slice(CompRendering& rc)
         }
 
         // Slice right
-        for (size_t i = 1; i < rc.landSize.height; i++)
+        for (int i = 1; i < rc.landSize.height; i++)
         {
             auto slice = ObjectPool<CompRendering>::acquire();
             *slice = rc;
@@ -256,14 +256,15 @@ std::list<CompRendering*> slice(CompRendering& rc)
             }
             else
             {
-                // Distance from the center of the original texture
-                slice->anchor.x = -1 * Constants::TILE_PIXEL_WIDTH / 2 * i;
+                // Move the source texture selection to right
+                slice->srcRect.x =
+                    rc.srcRect.x + rc.anchor.x + (Constants::TILE_PIXEL_WIDTH / 2 * i);
 
                 // Intermediate slices are always half of a tile width
                 slice->srcRect.w = Constants::TILE_PIXEL_WIDTH / 2;
 
-                // Move the source texture selection to right
-                slice->srcRect.x = rc.srcRect.x + rc.srcRect.w / 2 - slice->anchor.x;
+                // Distance from the center of the original texture
+                slice->anchor.x = -1 * ((Constants::TILE_PIXEL_WIDTH / 2) * i);
             }
             slice->additionalZOffset += -1 * Constants::FEET_PER_TILE * (i);
             subComponentsToReturn.push_back(slice);

@@ -54,9 +54,19 @@ class EntityDefinitionLoader : public core::EntityFactory, public core::Property
   public:
     struct EntityDRSData
     {
-        core::Ref<drs::DRSFile> drsFile;
-        int slpId = -1;
+        struct Part
+        {
+            core::Ref<drs::DRSFile> drsFile;
+            int slpId = -1;
+            core::Vec2 anchor = core::Vec2::null;
+            Part(core::Ref<drs::DRSFile> drs, int slp, const core::Vec2& anchor)
+                : drsFile(drs), slpId(slp), anchor(anchor)
+            {
+            }
+        };
+        std::vector<Part> parts;
         core::Rect<int> clipRect;
+        core::Vec2 anchor;
         core::Rect<int> boundingRect;
     };
     EntityDefinitionLoader();
@@ -120,17 +130,18 @@ class EntityDefinitionLoader : public core::EntityFactory, public core::Property
     void loadDRSForAnimations(uint32_t entityType,
                               uint32_t entitySubType,
                               pybind11::handle entityDefinition);
-    void loadDRSForStillImage(uint32_t entityType,
+    void loadDRSForStillImage(pybind11::object module,
+                              uint32_t entityType,
                               uint32_t entitySubType,
                               pybind11::handle entityDefinition);
     void loadDRSForIcon(uint32_t entityType,
                         uint32_t entitySubType,
                         pybind11::handle entityDefinition);
-    int64_t readIconDef(uint32_t entitySubType, pybind11::handle entityDefinition);
+    core::GraphicsID readIconDef(uint32_t entitySubType, pybind11::handle entityDefinition);
     ConstructionSiteData getSite(const std::string& sizeStr);
     void setSite(const std::string& sizeStr, const std::map<int, int>& progressToFrames);
     void attachedConstructionSites(uint32_t entityType, const std::string& sizeStr);
-    void setDRSData(int64_t id, const EntityDRSData& data);
+    void setDRSData(const core::GraphicsID& id, const EntityDRSData& data);
     void setDRSLoaderFunc(std::function<core::Ref<drs::DRSFile>(const std::string&)> func);
     void setBoundingBoxReadFunc(
         std::function<core::Rect<int>(core::Ref<drs::DRSFile>, uint32_t)> func);
@@ -166,7 +177,7 @@ class EntityDefinitionLoader : public core::EntityFactory, public core::Property
   private:
     const std::string m_unitsFile = "units";
     std::map<uint32_t, std::list<ComponentType>> m_componentsByEntityType;
-    std::unordered_map<int64_t, EntityDRSData> m_DRSDataByGraphicsIdHash;
+    std::unordered_map<core::GraphicsID, EntityDRSData> m_DRSDataByGraphicsIdHash;
     std::unordered_map<std::string, core::Ref<drs::DRSFile>> m_drsFilesByName;
     std::map<std::string /*size*/, ConstructionSiteData> m_constructionSitesBySize;
     std::function<core::Ref<drs::DRSFile>(const std::string&)> m_drsLoadFunc;
