@@ -10,7 +10,7 @@ void GraphicsRegistry::registerTexture(const GraphicsID& graphicID, const Textur
 {
     // spdlog::debug("Registering texture with ID: {}", graphicID.toString());
 
-    auto it = m_textureMap.find(graphicID.hash());
+    auto it = m_textureMap.find(graphicID);
     if (it != m_textureMap.end())
     {
         spdlog::warn("Texture ID already exists, updating: {}", graphicID.toString());
@@ -18,11 +18,10 @@ void GraphicsRegistry::registerTexture(const GraphicsID& graphicID, const Textur
     }
     else
     {
-        m_textureMap[graphicID.hash()] = entry;
+        m_textureMap[graphicID] = entry;
     }
 
 #ifndef NDEBUG
-    m_graphicIds[graphicID.hash()] = graphicID;
     auto itEntityType = m_graphicIdsByEntityType.find(graphicID.entityType);
     if (itEntityType == m_graphicIdsByEntityType.end())
     {
@@ -35,18 +34,23 @@ void GraphicsRegistry::registerTexture(const GraphicsID& graphicID, const Textur
 const Texture& GraphicsRegistry::getTexture(const GraphicsID& graphicID) const
 {
     // Check if the graphicID exists in the map
-    auto it = m_textureMap.find(graphicID.hash());
+    auto it = m_textureMap.find(graphicID);
     if (it == m_textureMap.end())
     {
+        for (auto& e : m_textureMap)
+        {
+            spdlog::debug("Existing GraphicsID: {}", e.first.toString());
+        }
+
         spdlog::error("Graphic ID not found in registry: {}", graphicID.toString());
         throw std::runtime_error("Graphic ID not found in registry:" + graphicID.toString());
     }
-    return m_textureMap.at(graphicID.hash());
+    return it->second;
 }
 
 bool GraphicsRegistry::hasTexture(const GraphicsID& graphicID) const
 {
-    return m_textureMap.find(graphicID.hash()) != m_textureMap.end();
+    return m_textureMap.find(graphicID) != m_textureMap.end();
 }
 
 size_t GraphicsRegistry::getTextureCount() const
@@ -54,7 +58,7 @@ size_t GraphicsRegistry::getTextureCount() const
     return m_textureMap.size();
 }
 
-const std::unordered_map<int64_t, Texture>& GraphicsRegistry::getTextures() const
+const std::unordered_map<GraphicsID, Texture>& GraphicsRegistry::getTextures() const
 {
     return m_textureMap;
 }

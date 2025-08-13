@@ -25,7 +25,6 @@ struct GenericTag
 {
 };
 using Vec2 = Vec2Base<float, GenericTag>;
-using ImageId = int64_t;
 
 enum class WorldSizeType
 {
@@ -35,7 +34,7 @@ enum class WorldSizeType
     GIANT
 };
 
-enum class Direction
+enum Direction
 {
     NORTH = 0,
     NORTHEAST,

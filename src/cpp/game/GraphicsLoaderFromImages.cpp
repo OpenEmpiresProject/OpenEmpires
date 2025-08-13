@@ -219,23 +219,23 @@ void GraphicsLoaderFromImages::createAtlasForEntityType(
             auto direction = (int) (index / 15); // 0-3
             if (direction == 0)
             {
-                id.direction = Direction::SOUTH;
+                id.direction = static_cast<uint64_t>(Direction::SOUTH);
             }
             else if (direction == 1)
             {
-                id.direction = Direction::SOUTHWEST;
+                id.direction = static_cast<uint64_t>(Direction::SOUTHWEST);
             }
             else if (direction == 2)
             {
-                id.direction = Direction::WEST;
+                id.direction = static_cast<uint64_t>(Direction::WEST);
             }
             else if (direction == 3)
             {
-                id.direction = Direction::NORTHWEST;
+                id.direction = static_cast<uint64_t>(Direction::NORTHWEST);
             }
             else if (direction == 4)
             {
-                id.direction = Direction::NORTH;
+                id.direction = static_cast<uint64_t>(Direction::NORTH);
             }
         }
         else if (entityType == EntityTypes::ET_TREE) // Trees
@@ -308,19 +308,18 @@ void GraphicsLoaderFromImages::adjustDirections(GraphicsRegistry& graphicsRegist
     std::list<std::pair<GraphicsID, Texture>> graphicsToFlip;
     for (const auto& [id, texture] : graphicsRegistry.getTextures())
     {
-        GraphicsID idFull = GraphicsID::fromHash(id);
-        if (isTextureFlippingNeededEntity(idFull.entityType) &&
-            isTextureFlippingNeededDirection(idFull.direction))
+        if (isTextureFlippingNeededEntity(id.entityType) &&
+            isTextureFlippingNeededDirection(static_cast<Direction>(id.direction)))
         {
-            graphicsToFlip.push_back(std::make_pair(idFull, texture));
+            graphicsToFlip.push_back(std::make_pair(id, texture));
         }
     }
 
     for (auto& [id, texture] : graphicsToFlip)
     {
         texture.flip = true; // Mark the texture for flipping
-        id.direction =
-            static_cast<Direction>(getFlippedDirection(id.direction)); // Flip the direction
+        id.direction = static_cast<uint64_t>(
+            getFlippedDirection(static_cast<Direction>(id.direction))); // Flip the direction
 
         graphicsRegistry.registerTexture(id, texture);
     }

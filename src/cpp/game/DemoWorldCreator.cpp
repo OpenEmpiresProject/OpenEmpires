@@ -347,10 +347,12 @@ void DemoWorldCreator::createHUD()
 {
     ui::Widget::s_entityType = EntityTypes::ET_UI_ELEMENT;
     ui::Widget::s_entitySubType = EntitySubTypes::EST_DEFAULT;
-    GraphicsID resourcePanelBackground{.entityType = EntityTypes::ET_UI_ELEMENT,
-                                       .entitySubType = EntitySubTypes::EST_UI_RESOURCE_PANEL};
+    GraphicsID resourcePanelBackground;
+    resourcePanelBackground.entityType = EntityTypes::ET_UI_ELEMENT;
+    resourcePanelBackground.entitySubType = EntitySubTypes::EST_UI_RESOURCE_PANEL;
+
     auto window = CreateRef<ui::Window>();
-    WITH(window->withName("resourcePanel")->withBackgroundImage(resourcePanelBackground.hash()))
+    WITH(window->withName("resourcePanel")->withBackgroundImage(resourcePanelBackground))
     {
         ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(window);
 
@@ -377,11 +379,12 @@ void DemoWorldCreator::createHUD()
 
     WITH(auto controlPanel = CreateRef<ui::Window>())
     {
-        GraphicsID controlPanelBackground{.entityType = EntityTypes::ET_UI_ELEMENT,
-                                          .entitySubType = EntitySubTypes::EST_UI_CONTROL_PANEL};
+        GraphicsID controlPanelBackground;
+        controlPanelBackground.entityType = EntityTypes::ET_UI_ELEMENT;
+        controlPanelBackground.entitySubType = EntitySubTypes::EST_UI_CONTROL_PANEL;
 
         controlPanel->withName("controlPanel")
-            ->withBackgroundImage(controlPanelBackground.hash())
+            ->withBackgroundImage(controlPanelBackground)
             ->withRect(Rect<int>(0, -1, 506, 145)); // -1 is to attach to bottom of screen
         ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(controlPanel);
 
@@ -424,12 +427,12 @@ void DemoWorldCreator::createHUD()
                                                      ->withRect(Rect<int>(0, 0, 150, 20))
                                                      ->withName("construction_progress_label")
                                                      ->withVisible(false);
-                    GraphicsID progressBarBackground{.entityType = EntityTypes::ET_UI_ELEMENT,
-                                                     .entitySubType =
-                                                         EntitySubTypes::UI_PROGRESS_BAR};
+                    GraphicsID progressBarBackground;
+                    progressBarBackground.entityType = EntityTypes::ET_UI_ELEMENT;
+                    progressBarBackground.entitySubType = EntitySubTypes::UI_PROGRESS_BAR;
                     auto constructionProgressBarLabel =
                         extendedInfoLayout->createChild<ui::Label>()
-                            ->withBackgroundImage(progressBarBackground.hash())
+                            ->withBackgroundImage(progressBarBackground)
                             ->withName("construction_progress_bar_label")
                             ->withRect(Rect<int>(0, 0, 150, 10))
                             ->withVisible(false);

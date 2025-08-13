@@ -106,10 +106,9 @@ void HUD::onTick(const Event& e)
                     auto& building = gameState->getComponent<CompBuilding>(entity);
                     m_constructionTextLabel->setText(
                         std::format("Constructing {}%", building.constructionProgress));
-                    auto graphic =
-                        GraphicsID::fromHash(m_constructionProgressBarLabel->getBackgroundImage());
+                    auto graphic = m_constructionProgressBarLabel->getBackgroundImage();
                     graphic.variation = building.constructionProgress;
-                    m_constructionProgressBarLabel->setBackgroundImage(graphic.hash());
+                    m_constructionProgressBarLabel->setBackgroundImage(graphic);
 
                     if (building.constructionProgress >= 100)
                     {

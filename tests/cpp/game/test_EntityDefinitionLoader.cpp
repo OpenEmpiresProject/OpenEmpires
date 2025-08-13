@@ -58,7 +58,7 @@ class EntityDefinitionLoaderExposure : public EntityDefinitionLoader
         return EntityDefinitionLoader::createEntity(entityType, entitySubType);
     }
 
-    void setDRSData(int64_t id, const EntityDRSData& data)
+    void setDRSData(const GraphicsID& id, const EntityDRSData& data)
     {
         EntityDefinitionLoader::setDRSData(id, data);
     }
@@ -310,7 +310,7 @@ all_buildings= [
     GraphicsID siteId;
     siteId.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
     siteId.entitySubType = 2;
-    loader.setDRSData(siteId.hash(), EntityDefinitionLoader::EntityDRSData{.slpId = 111});
+    loader.setDRSData(siteId, EntityDefinitionLoader::EntityDRSData{.slpId = 111});
     loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
     loader.setBoundingBoxReadFunc([](core::Ref<drs::DRSFile>, uint32_t) -> core::Rect<int>
                                   { return core::Rect<int>(); });
@@ -320,10 +320,10 @@ all_buildings= [
 
     // Assert
     // Main building
-    EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_MILL}).slpId, 3483);
+    EXPECT_EQ(loader.getDRSData(GraphicsID(EntityTypes::ET_MILL)).slpId, 3483);
     // One of construction sites
     EXPECT_EQ(
-        loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_MILL, .entitySubType = 2}).slpId,
+        loader.getDRSData(GraphicsID(EntityTypes::ET_MILL, 2)).slpId,
         111);
 }
 
@@ -538,7 +538,7 @@ all_tilesets = [
     loader.loadTileSets(module);
 
     // Assert
-    EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_TILE}).slpId, 15001);
+    EXPECT_EQ(loader.getDRSData(GraphicsID(EntityTypes::ET_TILE)).slpId, 15001);
 }
 
 TEST(EntityDefinitionLoaderTest, LoadTreeWithStump)
@@ -583,10 +583,9 @@ all_natural_resources= [
     loader.loadNaturalResources(module);
 
     // Assert
-    EXPECT_EQ(loader.getDRSData(GraphicsID{.entityType = EntityTypes::ET_TREE}).slpId, 435);
+    EXPECT_EQ(loader.getDRSData(GraphicsID(EntityTypes::ET_TREE)).slpId, 435);
     EXPECT_EQ(loader
-                  .getDRSData(GraphicsID{.entityType = EntityTypes::ET_TREE,
-                                         .entitySubType = EntitySubTypes::EST_CHOPPED_TREE})
+                  .getDRSData(GraphicsID(EntityTypes::ET_TREE, EntitySubTypes::EST_CHOPPED_TREE))
                   .slpId,
               1252);
 }

@@ -3,6 +3,7 @@
 
 #include "Feet.h"
 #include "GraphicAddon.h"
+#include "GraphicsRegistry.h"
 #include "Property.h"
 #include "Rect.h"
 #include "utils/Size.h"
@@ -13,7 +14,7 @@ namespace core
 class CompSelectible
 {
   public:
-    Property<ImageId> icon;
+    Property<GraphicsID> icon;
     Property<std::string> displayName;
 
   public:

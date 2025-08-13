@@ -147,7 +147,7 @@ void Simulator::updateGraphicComponents()
             state->getComponents<CompTransform, CompEntityInfo, CompGraphics>(entity);
 
         gc.positionInFeet = transform.position;
-        gc.direction = transform.getIsometricDirection();
+        gc.direction = static_cast<uint64_t>(transform.getIsometricDirection());
         gc.variation = entityInfo.variation;
         gc.entitySubType = entityInfo.entitySubType;
         gc.entityType = entityInfo.entityType;
@@ -209,12 +209,11 @@ void Simulator::updateGraphicComponents()
             }
             else if (ui.type == UIRenderingType::TEXTURE)
             {
-                if (ui.backgroundImage != 0)
+                if (ui.backgroundImage.isValid())
                 {
-                    auto backgroundImageId = GraphicsID::fromHash(ui.backgroundImage);
-                    gc.entityType = backgroundImageId.entityType;
-                    gc.entitySubType = backgroundImageId.entitySubType;
-                    gc.variation = backgroundImageId.variation;
+                    gc.entityType = ui.backgroundImage.entityType;
+                    gc.entitySubType = ui.backgroundImage.entitySubType;
+                    gc.variation = ui.backgroundImage.variation;
                 }
             }
         }

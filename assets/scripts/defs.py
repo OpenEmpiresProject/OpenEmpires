@@ -56,7 +56,7 @@ class NaturalResource:
     name: str
     display_name: str
     resource_amount: int
-    graphics: Dict[str, Graphic] # Graphics by theme
+    graphics: Dict[str, List[Graphic]] # Graphics by theme
     icon: Icon
 
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
@@ -74,7 +74,7 @@ class Building:
     display_name: str
     line_of_sight: int
     size: str
-    graphics: Dict[str, Graphic] # Graphics by theme
+    graphics: Dict[str, List[Graphic]] # Graphics by theme
     icon: Icon
 
 
@@ -89,21 +89,21 @@ class SingleResourceDropOffPoint(Building, ResourceDropOff):
 class ConstructionSite:
     name: str = "construction_site"
     size: str
-    graphics: Dict[str, Graphic] # Graphics by theme
+    graphics: Dict[str, List[Graphic]] # Graphics by theme
     progress_frame_map: Dict[int, int]
 
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
 
 class TileSet:
-    graphics: Dict[str, Graphic] # Graphics by theme
+    graphics: Dict[str, List[Graphic]] # Graphics by theme
 
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
 
 class UIElement:
     name: str
-    graphics: Dict[str, Graphic] # Graphics by theme
+    graphics: Dict[str, List[Graphic]] # Graphics by theme
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
 
@@ -184,12 +184,25 @@ all_buildings: List[Building] = [
         graphics={"default":Graphic(slp_id=3492)},
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=39)
     ),
+    SingleResourceDropOffPoint(
+        name="town_center", 
+        display_name="Town Center",
+        line_of_sight=256*5,
+        size="large",
+        accepted_resources=["gold", "stone", "food"], 
+        graphics={"default":[Graphic(slp_id=900), Graphic(slp_id=3597)]},
+        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=39)
+    ),
 ]
 
 all_construction_sites: List[ConstructionSite] = [
     ConstructionSite(
         size="medium", 
         graphics={"default": Graphic(slp_id=237)}, 
+        progress_frame_map={33:0, 66:1, 99:2}),
+    ConstructionSite(
+        size="large", 
+        graphics={"default": Graphic(slp_id=238)}, 
         progress_frame_map={33:0, 66:1, 99:2})
 ]
 

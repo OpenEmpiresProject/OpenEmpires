@@ -69,4 +69,9 @@ void PlayerActionResolver::onKeyUp(const core::Event& e)
         auto data = createBuildingRequestData(EntityTypes::ET_MINING_CAMP, worldPos);
         publishEvent(Event::Type::BUILDING_REQUESTED, data);
     }
+    else if (scancode == SDL_SCANCODE_C)
+    {
+        auto data = createBuildingRequestData(EntityTypes::ET_TOWN_CENTER, worldPos);
+        publishEvent(Event::Type::BUILDING_REQUESTED, data);
+    }
 }

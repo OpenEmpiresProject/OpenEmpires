@@ -12,6 +12,7 @@
 
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <unordered_map>
 
@@ -50,24 +51,23 @@ void GraphicsLoaderFromDRS::loadGraphics(SDL_Renderer& renderer,
     Ref<EntityDefinitionLoader> defLoader =
         dynamic_pointer_cast<EntityDefinitionLoader>(entityFactory);
 
-    std::map<int64_t, GraphicsID> uniqueBaseIds;
+    std::set<GraphicsID> uniqueBaseIds;
     for (auto& id : idsToLoad)
     {
         auto baseId = id.getBaseId();
-        uniqueBaseIds[baseId.hash()] = id;
+        uniqueBaseIds.insert(baseId);
     }
 
     for (auto& id : uniqueBaseIds)
     {
-        auto baseId = GraphicsID::fromHash(id.first);
+        auto baseId = id;
         baseId.playerId = 0;
 
         auto drsData = defLoader->getDRSData(baseId);
         if (drsData.drsFile != nullptr)
         {
-            loadSLP(drsData.drsFile, drsData.slpId, id.second.entityType, id.second.entitySubType,
-                    id.second.action, id.second.playerId, renderer, graphicsRegistry,
-                    atlasGenerator, drsData.clipRect);
+            loadSLP(drsData.drsFile, drsData.slpId, id.entityType, id.entitySubType, id.action,
+                    id.playerId, renderer, graphicsRegistry, atlasGenerator, drsData.clipRect);
         }
     }
     adjustDirections(graphicsRegistry);
@@ -226,23 +226,23 @@ void loadSLP(shared_ptr<DRSFile> drs,
             auto direction = (int) (index / 15); // 0-3
             if (direction == 0)
             {
-                id.direction = Direction::SOUTH;
+                id.direction = static_cast<uint64_t>(Direction::SOUTH);
             }
             else if (direction == 1)
             {
-                id.direction = Direction::SOUTHWEST;
+                id.direction = static_cast<uint64_t>(Direction::SOUTHWEST);
             }
             else if (direction == 2)
             {
-                id.direction = Direction::WEST;
+                id.direction = static_cast<uint64_t>(Direction::WEST);
             }
             else if (direction == 3)
             {
-                id.direction = Direction::NORTHWEST;
+                id.direction = static_cast<uint64_t>(Direction::NORTHWEST);
             }
             else if (direction == 4)
             {
-                id.direction = Direction::NORTH;
+                id.direction = static_cast<uint64_t>(Direction::NORTH);
             }
         }
         else
@@ -296,11 +296,10 @@ void adjustDirections(GraphicsRegistry& graphicsRegistry)
     std::list<std::pair<GraphicsID, Texture>> graphicsToFlip;
     for (const auto& [id, texture] : graphicsRegistry.getTextures())
     {
-        GraphicsID idFull = GraphicsID::fromHash(id);
-        if (isTextureFlippingNeededEntity(idFull.entityType) &&
-            isTextureFlippingNeededDirection(idFull.direction))
+        if (isTextureFlippingNeededEntity(id.entityType) &&
+            isTextureFlippingNeededDirection(static_cast<Direction>(id.direction)))
         {
-            graphicsToFlip.push_back(std::make_pair(idFull, texture));
+            graphicsToFlip.push_back(std::make_pair(id, texture));
         }
     }
 
@@ -308,8 +307,8 @@ void adjustDirections(GraphicsRegistry& graphicsRegistry)
     {
         texture.anchor.x = texture.size.width - texture.anchor.x;
         texture.flip = true; // Mark the texture for flipping
-        id.direction =
-            static_cast<Direction>(getFlippedDirection(id.direction)); // Flip the direction
+        id.direction = static_cast<uint64_t>(
+            getFlippedDirection(static_cast<Direction>(id.direction))); // Flip the direction
 
         if (graphicsRegistry.hasTexture(id) == false)
             graphicsRegistry.registerTexture(id, texture);

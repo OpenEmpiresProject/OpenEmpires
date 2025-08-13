@@ -69,7 +69,7 @@ void Widget::updateGraphicCommand()
         ui.rect = getAbsoluteRect();
         ui.backgroundImage = backgroundImage;
         ui.isVisible = visible;
-        if (backgroundImage != 0)
+        if (backgroundImage.isValid())
             ui.type = UIRenderingType::TEXTURE;
         else
             ui.type = UIRenderingType::NONE;
@@ -161,7 +161,7 @@ void Label::updateGraphicCommand()
     ui.text = text;
     ui.color = textColor;
 
-    if (backgroundImage == 0)
+    if (backgroundImage.isValid() == false)
         ui.type = UIRenderingType::TEXT;
 }
 

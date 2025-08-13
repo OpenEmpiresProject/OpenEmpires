@@ -42,6 +42,7 @@ uint32_t getEntityType(const std::string& entityName)
         {"wood_camp", EntityTypes::ET_LUMBER_CAMP},
         {"mine_camp", EntityTypes::ET_MINING_CAMP},
         {"construction_site", EntityTypes::ET_CONSTRUCTION_SITE},
+        {"town_center", EntityTypes::ET_TOWN_CENTER},
     };
     return entityTypes.at(entityName);
 }
@@ -54,6 +55,8 @@ uint32_t getEntitySubType(uint32_t entityType, const std::string& name)
             return EntitySubTypes::EST_SMALL_SIZE;
         else if (name == "medium")
             return EntitySubTypes::EST_MEDIUM_SIZE;
+        else if (name == "large")
+            return EntitySubTypes::EST_LARGE_SIZE;
     }
     else if (entityType == EntityTypes::ET_TREE)
     {
@@ -91,6 +94,8 @@ Size getBuildingSize(const std::string& name)
         return Size(1, 1);
     else if (name == "medium")
         return Size(2, 2);
+    else if (name == "large")
+        return Size(3, 3);
     else
     {
         debug_assert(false, "unknown building size");
@@ -158,7 +163,7 @@ void EntityDefinitionLoader::loadUnits(py::object module)
 
             GraphicsID id;
             id.entityType = entityType;
-            auto drsData = m_DRSDataByGraphicsIdHash.at(id.hash());
+            auto drsData = m_DRSDataByGraphicsIdHash.at(id);
 
             auto& sc = getComponent<CompSelectible>(entityType, EntitySubTypes::EST_DEFAULT);
             for (int i = static_cast<int>(Direction::NORTH);
@@ -187,7 +192,7 @@ void EntityDefinitionLoader::loadNaturalResources(py::object module)
 
             GraphicsID id;
             id.entityType = entityType;
-            auto drsData = m_DRSDataByGraphicsIdHash.at(id.hash());
+            auto drsData = m_DRSDataByGraphicsIdHash.at(id);
 
             auto& sc = getComponent<CompSelectible>(entityType, EntitySubTypes::EST_DEFAULT);
             sc.boundingBoxes[static_cast<int>(Direction::NONE)] = drsData.boundingRect;
@@ -247,7 +252,7 @@ void EntityDefinitionLoader::loadBuildings(pybind11::object module)
 
             GraphicsID id;
             id.entityType = entityType;
-            auto drsData = m_DRSDataByGraphicsIdHash.at(id.hash());
+            auto drsData = m_DRSDataByGraphicsIdHash.at(id);
 
             auto& sc = getComponent<CompSelectible>(entityType, EntitySubTypes::EST_DEFAULT);
             sc.boundingBoxes[static_cast<int>(Direction::NONE)] = drsData.boundingRect;
@@ -309,12 +314,18 @@ void EntityDefinitionLoader::loadUIElements(pybind11::object module)
 
 EntityDefinitionLoader::EntityDRSData EntityDefinitionLoader::getDRSData(const GraphicsID& id)
 {
-    auto it = m_DRSDataByGraphicsIdHash.find(id.hash());
+    auto it = m_DRSDataByGraphicsIdHash.find(id);
     if (it != m_DRSDataByGraphicsIdHash.end())
         return it->second;
     else
+    {
+        for (auto& e : m_DRSDataByGraphicsIdHash)
+        {
+            spdlog::debug("getDRSData: map {}:{}", e.first.toString(), e.second.slpId);
+        }
         spdlog::warn("Could not find DRS data for id {}", id.toString());
-    return EntityDRSData();
+    }
+    return {};
 }
 
 uint32_t EntityDefinitionLoader::createEntity(uint32_t entityType, uint32_t entitySubType)
@@ -472,7 +483,7 @@ void EntityDefinitionLoader::loadDRSForAnimations(uint32_t entityType,
             // TODO: Bounding box might have to change depending on the direction
             auto boundingBox = m_boundingBoxReadFunc(drsFile, slpId);
 
-            m_DRSDataByGraphicsIdHash[id.hash()] =
+            m_DRSDataByGraphicsIdHash[id] =
                 EntityDRSData{.drsFile = drsFile, .slpId = slpId, .boundingRect = boundingBox};
         }
     }
@@ -488,36 +499,52 @@ void EntityDefinitionLoader::loadDRSForStillImage(uint32_t entityType,
 
         for (auto [theme, graphicsEntry] : graphicsDict)
         {
-            // TODO: handle theme
-            auto drsFileName =
-                EntityDefinitionLoader::readValue<std::string>(graphicsEntry, "drs_file");
-            auto slpId = EntityDefinitionLoader::readValue<int>(graphicsEntry, "slp_id");
-
-            Ref<DRSFile> drsFile;
-            auto it = m_drsFilesByName.find(drsFileName);
-            if (it != m_drsFilesByName.end())
-                drsFile = it->second;
-            else
-                drsFile = m_drsLoadFunc("assets/" + drsFileName);
-
-            Rect<int> clipRect;
-            if (py::hasattr(graphicsEntry, "clip_rect"))
+            auto processGraphic = [&](py::handle graphicObj, int part)
             {
-                py::object rect = graphicsEntry.attr("clip_rect");
-                clipRect.x = readValue<int>(rect, "x");
-                clipRect.y = readValue<int>(rect, "y");
-                clipRect.w = readValue<int>(rect, "w");
-                clipRect.h = readValue<int>(rect, "h");
+                // TODO: handle theme
+                auto drsFileName =
+                    EntityDefinitionLoader::readValue<std::string>(graphicObj, "drs_file");
+                auto slpId = EntityDefinitionLoader::readValue<int>(graphicObj, "slp_id");
+
+                Ref<DRSFile> drsFile;
+                auto it = m_drsFilesByName.find(drsFileName);
+                if (it != m_drsFilesByName.end())
+                    drsFile = it->second;
+                else
+                    drsFile = m_drsLoadFunc("assets/" + drsFileName);
+
+                Rect<int> clipRect;
+                if (py::hasattr(graphicObj, "clip_rect"))
+                {
+                    py::object rect = graphicObj.attr("clip_rect");
+                    clipRect.x = readValue<int>(rect, "x");
+                    clipRect.y = readValue<int>(rect, "y");
+                    clipRect.w = readValue<int>(rect, "w");
+                    clipRect.h = readValue<int>(rect, "h");
+                }
+
+                GraphicsID id;
+                id.entityType = entityType;
+                id.entitySubType = entitySubType;
+                id.part = part;
+
+                auto boundingBox = m_boundingBoxReadFunc(drsFile, slpId);
+                m_DRSDataByGraphicsIdHash[id] =
+                    EntityDRSData{drsFile, slpId, clipRect, boundingBox};
+
+                spdlog::debug("Loading DRS data for id {}, slp id {}", id.toString(), slpId);
+            };
+
+            if (py::isinstance<py::list>(graphicsEntry) || py::isinstance<py::tuple>(graphicsEntry))
+            {
+                int part = 0;
+                for (auto graphicObj : graphicsEntry)
+                    processGraphic(graphicObj, part++);
             }
-
-            GraphicsID id;
-            id.entityType = entityType;
-            id.entitySubType = entitySubType;
-
-            auto boundingBox = m_boundingBoxReadFunc(drsFile, slpId);
-            // id.action = action;
-            m_DRSDataByGraphicsIdHash[id.hash()] =
-                EntityDRSData{drsFile, slpId, clipRect, boundingBox};
+            else
+            {
+                processGraphic(graphicsEntry, 0);
+            }
         }
     }
 }
@@ -552,7 +579,7 @@ void EntityDefinitionLoader::loadDRSForIcon(uint32_t entityType,
         GraphicsID id;
         id.entityType = entityType;
         id.entitySubType = entitySubType;
-        m_DRSDataByGraphicsIdHash[id.hash()] = EntityDRSData{drsFile, slpId, clipRect};
+        m_DRSDataByGraphicsIdHash[id] = EntityDRSData{drsFile, slpId, clipRect};
     }
 }
 
@@ -599,16 +626,16 @@ void EntityDefinitionLoader::attachedConstructionSites(uint32_t entityType,
     GraphicsID siteId;
     siteId.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
     siteId.entitySubType = getEntitySubType(EntityTypes::ET_CONSTRUCTION_SITE, sizeStr);
-    auto siteDRSData = m_DRSDataByGraphicsIdHash.at(siteId.hash());
+    auto siteDRSData = m_DRSDataByGraphicsIdHash.at(siteId);
 
     GraphicsID buildingAttachedSiteId;
     buildingAttachedSiteId.entityType = entityType;
     buildingAttachedSiteId.entitySubType = siteId.entitySubType;
-    m_DRSDataByGraphicsIdHash[buildingAttachedSiteId.hash()] = siteDRSData;
+    m_DRSDataByGraphicsIdHash[buildingAttachedSiteId] = siteDRSData;
     ;
 }
 
-void EntityDefinitionLoader::setDRSData(int64_t id, const EntityDRSData& data)
+void EntityDefinitionLoader::setDRSData(const GraphicsID& id, const EntityDRSData& data)
 {
     m_DRSDataByGraphicsIdHash[id] = data;
 }
@@ -618,8 +645,8 @@ void EntityDefinitionLoader::setDRSLoaderFunc(std::function<Ref<DRSFile>(const s
     m_drsLoadFunc = func;
 }
 
-int64_t EntityDefinitionLoader::readIconDef(uint32_t entitySubType,
-                                            pybind11::handle entityDefinition)
+GraphicsID EntityDefinitionLoader::readIconDef(uint32_t entitySubType,
+                                               pybind11::handle entityDefinition)
 {
     if (py::hasattr(entityDefinition, "icon"))
     {
@@ -629,12 +656,12 @@ int64_t EntityDefinitionLoader::readIconDef(uint32_t entitySubType,
         GraphicsID icon;
         icon.entityType = EntityTypes::ET_UI_ELEMENT;
         icon.entitySubType = entitySubType;
-        icon.imageIndex = index;
+        icon.variation = index;
 
         loadDRSForIcon(EntityTypes::ET_UI_ELEMENT, entitySubType, iconDef);
-        return icon.hash();
+        return icon;
     }
-    return 0;
+    return {};
 }
 
 ComponentType EntityDefinitionLoader::createAnimation(py::object module,
@@ -754,7 +781,7 @@ ComponentType EntityDefinitionLoader::createCompSelectible(py::object module,
         auto displayName = readValue<std::string>(entityDefinition, "display_name");
 
         CompSelectible comp;
-        PropertyInitializer::set<ImageId>(comp.icon, iconHash);
+        PropertyInitializer::set<GraphicsID>(comp.icon, iconHash);
         PropertyInitializer::set<std::string>(comp.displayName, displayName);
         return ComponentType(comp);
     }
@@ -764,7 +791,7 @@ ComponentType EntityDefinitionLoader::createCompSelectible(py::object module,
         auto displayName = readValue<std::string>(entityDefinition, "display_name");
 
         CompSelectible comp;
-        PropertyInitializer::set<ImageId>(comp.icon, iconHash);
+        PropertyInitializer::set<GraphicsID>(comp.icon, iconHash);
         PropertyInitializer::set<std::string>(comp.displayName, displayName);
         return ComponentType(comp);
     }
@@ -774,7 +801,7 @@ ComponentType EntityDefinitionLoader::createCompSelectible(py::object module,
         auto displayName = readValue<std::string>(entityDefinition, "display_name");
 
         CompSelectible comp;
-        PropertyInitializer::set<ImageId>(comp.icon, iconHash);
+        PropertyInitializer::set<GraphicsID>(comp.icon, iconHash);
         PropertyInitializer::set<std::string>(comp.displayName, displayName);
         comp.selectionIndicator = {
             GraphicAddon::Type::RHOMBUS,
