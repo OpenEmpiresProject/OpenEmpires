@@ -1,9 +1,9 @@
 #ifndef HUD_H
 #define HUD_H
 
+#include "EntitySelection.h"
 #include "EventHandler.h"
 #include "UI.h"
-#include "UnitSelection.h"
 #include "utils/Types.h"
 
 namespace game
@@ -28,7 +28,7 @@ class HUD : public core::EventHandler
     core::Ref<core::ui::Label> m_selectedIcon;
     core::Ref<core::ui::Label> m_constructionTextLabel;
     core::Ref<core::ui::Label> m_constructionProgressBarLabel;
-    core::UnitSelection m_currentSelection;
+    core::EntitySelection m_currentSelection;
 };
 
 } // namespace game

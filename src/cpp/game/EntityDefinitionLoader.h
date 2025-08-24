@@ -20,6 +20,7 @@
 #include "components/CompSelectible.h"
 #include "components/CompTransform.h"
 #include "components/CompUnit.h"
+#include "components/CompUnitFactory.h"
 #include "utils/Size.h"
 #include "utils/Types.h"
 
@@ -47,7 +48,8 @@ using ComponentType = std::variant<std::monostate,
                                    core::CompResourceGatherer,
                                    core::CompSelectible,
                                    core::CompTransform,
-                                   core::CompUnit>;
+                                   core::CompUnit,
+                                   core::CompUnitFactory>;
 
 class EntityDefinitionLoader : public core::EntityFactory, public core::PropertyInitializer
 {
@@ -104,6 +106,8 @@ class EntityDefinitionLoader : public core::EntityFactory, public core::Property
     ComponentType createCompSelectible(pybind11::object module, pybind11::handle entityDefinition);
     static ComponentType createCompBuilding(pybind11::object module,
                                             pybind11::handle entityDefinition);
+    static ComponentType createCompUnitFactory(pybind11::object module,
+                                               pybind11::handle entityDefinition);
     uint32_t createEntity(uint32_t entityType, uint32_t entitySubType) override;
 
   protected:

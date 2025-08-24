@@ -3,7 +3,8 @@
 #include "Coordinates.h"
 #include "Event.h"
 #include "GameState.h"
-#include "PlayerManager.h"
+#include "PlayerController.h"
+#include "PlayerFactory.h"
 #include "ServiceRegistry.h"
 #include "UI.h"
 #include "commands/CmdGatherResource.h"
@@ -41,7 +42,7 @@ Simulator::Simulator(ThreadSynchronizer<FrameData>& synchronizer)
 
     registerCallback(Event::Type::TICK, this, &Simulator::onTick);
     registerCallback(Event::Type::KEY_UP, this, &Simulator::onKeyUp);
-    registerCallback(Event::Type::UNIT_SELECTION, this, &Simulator::onUnitSelection);
+    registerCallback(Event::Type::ENTITY_SELECTION, this, &Simulator::onUnitSelection);
 }
 
 void Simulator::onInit(EventLoop& eventLoop)
@@ -78,7 +79,7 @@ void Simulator::onKeyUp(const Event& e)
 void Simulator::onTickStart()
 {
     // Read and send data
-    auto player = ServiceRegistry::getInstance().getService<PlayerManager>()->getViewingPlayer();
+    auto player = ServiceRegistry::getInstance().getService<PlayerController>()->getPlayer();
     m_synchronizer.getSenderFrameData().fogOfWar = *(player->getFogOfWar().get());
     m_synchronizer.getSenderFrameData().frameNumber = m_frame;
     m_coordinates->setViewportPositionInPixels(
@@ -107,7 +108,7 @@ void Simulator::onSynchorizedBlock()
 
 void Simulator::onUnitSelection(const Event& e)
 {
-    auto& selectedEntities = e.getData<UnitSelectionData>().selection.selectedEntities;
+    auto& selectedEntities = e.getData<EntitySelectionData>().selection.selectedEntities;
     if (selectedEntities.size() == 1)
     {
         auto resourceEntity = selectedEntities[0];

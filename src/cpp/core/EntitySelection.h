@@ -7,13 +7,13 @@
 
 namespace core
 {
-struct UnitSelection
+struct EntitySelection
 {
     std::vector<uint32_t> selectedEntities;
 
-    UnitSelection()
+    EntitySelection()
     {
-        selectedEntities.reserve(Constants::MAX_UNIT_SELECTION);
+        selectedEntities.reserve(Constants::MAX_ENTITY_SELECTION);
     }
 };
 } // namespace core

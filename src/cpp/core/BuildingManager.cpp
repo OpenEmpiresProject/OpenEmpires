@@ -3,8 +3,9 @@
 #include "Coordinates.h"
 #include "EntityFactory.h"
 #include "GameState.h"
-#include "PlayerManager.h"
+#include "PlayerFactory.h"
 #include "ServiceRegistry.h"
+#include "ShortcutResolver.h"
 #include "commands/CmdBuild.h"
 #include "components/CompBuilder.h"
 #include "components/CompBuilding.h"
@@ -28,13 +29,15 @@ BuildingManager::BuildingManager()
     registerCallback(Event::Type::KEY_UP, this, &BuildingManager::onKeyUp);
     registerCallback(Event::Type::MOUSE_MOVE, this, &BuildingManager::onMouseMove);
     registerCallback(Event::Type::MOUSE_BTN_UP, this, &BuildingManager::onMouseButtonUp);
-    registerCallback(Event::Type::UNIT_SELECTION, this, &BuildingManager::onUnitSelection);
+    registerCallback(Event::Type::ENTITY_SELECTION, this, &BuildingManager::onEntitySelection);
     registerCallback(Event::Type::TICK, this, &BuildingManager::onTick);
 }
 
+// TODO: NOT generic
 void BuildingManager::onBuildingRequest(const Event& e)
 {
     cancelBuilding();
+    // TODO: This is wrong, mixing generic requests with active-player specifics
     m_currentBuildingPlacement = e.getData<BuildingPlacementData>();
     m_currentBuildingPlacement.entity = createBuilding(m_currentBuildingPlacement);
 
@@ -46,6 +49,7 @@ void BuildingManager::onBuildingRequest(const Event& e)
     publishEvent(Event::Type::BUILDING_PLACEMENT_STARTED, m_currentBuildingPlacement);
 }
 
+// Generic
 uint32_t BuildingManager::createBuilding(const BuildingPlacementData& request)
 {
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
@@ -58,6 +62,7 @@ uint32_t BuildingManager::createBuilding(const BuildingPlacementData& request)
     return entity;
 }
 
+// TODO: NOT generic. player specific
 void BuildingManager::onKeyUp(const Event& e)
 {
     SDL_Scancode scancode = static_cast<SDL_Scancode>(e.getData<KeyboardData>().keyCode);
@@ -66,18 +71,23 @@ void BuildingManager::onKeyUp(const Event& e)
     {
         cancelBuilding();
     }
+    else
+    {
+        auto resolver = ServiceRegistry::getInstance().getService<ShortcutResolver>();
+        // auto action = resolver->resolve(scancode, )
+    }
 }
 
+// TODO: Player specific
 void BuildingManager::onMouseMove(const Event& e)
 {
-    m_lastMouseScreenPos = e.getData<MouseMoveData>().screenPos;
     if (m_currentBuildingPlacement.entity != entt::null)
     {
         auto [transform, dirty, building] =
             m_gameState->getComponents<CompTransform, CompDirty, CompBuilding>(
                 m_currentBuildingPlacement.entity);
 
-        auto feet = m_coordinates->screenUnitsToFeet(m_lastMouseScreenPos);
+        auto feet = m_coordinates->screenUnitsToFeet(e.getData<MouseMoveData>().screenPos);
 
         bool outOfMap = false;
         building.validPlacement = canPlaceBuildingAt(building, feet, outOfMap);
@@ -90,6 +100,7 @@ void BuildingManager::onMouseMove(const Event& e)
     }
 }
 
+// TODO: Player specific
 void BuildingManager::onMouseButtonUp(const Event& e)
 {
     if (e.getData<MouseClickData>().button == MouseClickData::Button::LEFT)
@@ -108,12 +119,27 @@ void BuildingManager::onMouseButtonUp(const Event& e)
     }
 }
 
-void BuildingManager::onUnitSelection(const Event& e)
+// TODO: Player specific
+void BuildingManager::onEntitySelection(const Event& e)
 {
-    auto data = e.getData<UnitSelectionData>();
-    m_unitSelection = data.selection;
+    auto data = e.getData<EntitySelectionData>();
+
+    if (data.type == EntitySelectionData::Type::UNIT)
+    {
+        m_unitSelection = data.selection;
+    }
+    else if (data.type == EntitySelectionData::Type::BUILDING)
+    {
+        m_buildingSelection = data.selection;
+    }
+    else
+    {
+        m_unitSelection = EntitySelection();
+        m_buildingSelection = EntitySelection();
+    }
 }
 
+// Generic
 void BuildingManager::onTick(const Event& e)
 {
     for (auto entity : CompDirty::g_dirtyEntities)
@@ -159,6 +185,7 @@ void BuildingManager::onTick(const Event& e)
     }
 }
 
+// TODO: Generic
 bool BuildingManager::canPlaceBuildingAt(const CompBuilding& building,
                                          const Feet& feet,
                                          bool& outOfMap)
@@ -194,6 +221,7 @@ bool BuildingManager::canPlaceBuildingAt(const CompBuilding& building,
     return true;
 }
 
+// TODO: Not generic
 void BuildingManager::cancelBuilding()
 {
     if (m_currentBuildingPlacement.entity != entt::null)
@@ -209,6 +237,7 @@ void BuildingManager::cancelBuilding()
     }
 }
 
+// TODO: Player specific
 void BuildingManager::confirmBuilding(CompTransform& transform,
                                       CompBuilding& building,
                                       CompEntityInfo& info,
@@ -247,6 +276,7 @@ void BuildingManager::confirmBuilding(CompTransform& transform,
     m_currentBuildingPlacement = BuildingPlacementData();
 }
 
+// Generic
 void BuildingManager::onCompleteBuilding(uint32_t entity,
                                          const CompBuilding& building,
                                          const CompTransform& transform,

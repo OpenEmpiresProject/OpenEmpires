@@ -6,14 +6,17 @@
 #include "Coordinates.h"
 #include "DemoWorldCreator.h"
 #include "EntityDefinitionLoader.h"
+#include "EntityTypeRegistry.h"
 #include "EventLoop.h"
+#include "GameShortcutResolver.h"
 #include "GameState.h"
 #include "GraphicsLoaderFromDRS.h"
 #include "GraphicsLoaderFromImages.h"
 #include "GraphicsRegistry.h"
 #include "HUD.h"
 #include "PlayerActionResolver.h"
-#include "PlayerManager.h"
+#include "PlayerController.h"
+#include "PlayerFactory.h"
 #include "Renderer.h"
 #include "ResourceManager.h"
 #include "ServiceRegistry.h"
@@ -97,14 +100,20 @@ class Game
         auto uiManager = std::make_shared<core::UIManager>();
         core::ServiceRegistry::getInstance().registerService(uiManager);
 
-        auto playerManager = std::make_shared<core::PlayerManager>();
+        auto playerManager = std::make_shared<core::PlayerFactory>();
         core::ServiceRegistry::getInstance().registerService(playerManager);
+
+        auto playerController = std::make_shared<core::PlayerController>();
+        core::ServiceRegistry::getInstance().registerService(playerController);
 
         auto resourceManager = std::make_shared<ResourceManager>();
         core::ServiceRegistry::getInstance().registerService(resourceManager);
 
         auto hud = std::make_shared<HUD>();
         core::ServiceRegistry::getInstance().registerService(hud);
+
+        auto entityTypeRegistry = std::make_shared<core::EntityTypeRegistry>();
+        core::ServiceRegistry::getInstance().registerService(entityTypeRegistry);
 
         auto renderer = std::make_shared<core::Renderer>(
             &stopSource, graphicsRegistry, simulatorRendererSynchronizer, graphicsLoader);
@@ -120,13 +129,17 @@ class Game
         auto unitManager = std::make_shared<core::UnitManager>();
         auto playerActionResolver = std::make_shared<game::PlayerActionResolver>();
 
+        auto gameShortcutResolver = std::make_shared<game::GameShortcutResolver>();
+        std::shared_ptr<core::ShortcutResolver> shortcutResolver = gameShortcutResolver;
+        core::ServiceRegistry::getInstance().registerService(shortcutResolver);
+
         if (params.eventHandler)
             eventLoop->registerListener(params.eventHandler);
 
         eventLoop->registerListener(std::move(simulator));
         eventLoop->registerListener(std::move(cc));
         eventLoop->registerListener(std::move(uiManager));
-        eventLoop->registerListener(std::move(playerManager));
+        eventLoop->registerListener(std::move(playerController));
         eventLoop->registerListener(std::move(resourceManager));
         eventLoop->registerListener(std::move(hud));
         eventLoop->registerListener(std::move(buildingMngr));

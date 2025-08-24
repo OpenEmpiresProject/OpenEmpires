@@ -70,6 +70,14 @@ class GameState
         return m_gameMap;
     }
 
+    struct TileMapQueryResult
+    {
+        uint32_t entity = entt::null;
+        MapLayerType layer = MapLayerType::MAX_LAYERS;
+    };
+
+    TileMapQueryResult whatIsAt(const Vec2& screenPos);
+
   private:
     TileMap m_gameMap;
     entt::basic_registry<uint32_t> m_registry;

@@ -5,7 +5,8 @@
 #include "EventLoop.h"
 #include "EventPublisher.h"
 #include "GameTypes.h"
-#include "PlayerManager.h"
+#include "PlayerController.h"
+#include "PlayerFactory.h"
 #include "Renderer.h"
 #include "ServiceRegistry.h"
 #include "SubSystemRegistry.h"
@@ -68,8 +69,8 @@ Ref<Player> GameAPI::getPrimaryPlayer()
 {
     ScopedSynchronizer sync(m_sync);
 
-    auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
-    return playerManager->getViewingPlayer();
+    auto controller = ServiceRegistry::getInstance().getService<PlayerController>();
+    return controller->getPlayer();
 }
 
 uint32_t GameAPI::createVillager(Ref<core::Player> player, const Feet& pos)

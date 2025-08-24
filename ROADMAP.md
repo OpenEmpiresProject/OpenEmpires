@@ -43,12 +43,12 @@ We use milestone versions for planning. Early versions are experimental. Feature
 ---
 
 ## v0.3 – Base Building & Population
-> Goal: Enable building construction, population limits, and basic game loop.
+> Goal: Enable building construction, population limits.
 
 ### Features:
 - [ ] Town center, house and barracks mechanics
 - [ ] Building queue system
-- [ ] Population limit systemz
+- [ ] Population limit system
 - [x] Multiple player support (not networking)
 - [x] Scripting for entity definition
 - [x] Unit abilities modeling

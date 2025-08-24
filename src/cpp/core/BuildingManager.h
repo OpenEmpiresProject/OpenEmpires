@@ -16,10 +16,10 @@ class BuildingManager : public EventHandler
 
   private:
     BuildingPlacementData m_currentBuildingPlacement;
-    Vec2 m_lastMouseScreenPos;
     Ref<Coordinates> m_coordinates;
     Ref<GameState> m_gameState;
-    UnitSelection m_unitSelection;
+    EntitySelection m_unitSelection;
+    EntitySelection m_buildingSelection;
 
   private:
     void onMouseButtonUp(const Event& e);
@@ -28,7 +28,7 @@ class BuildingManager : public EventHandler
     void onBuildingRequest(const Event& e);
     uint32_t createBuilding(const BuildingPlacementData& request);
     void onTick(const Event& e);
-    void onUnitSelection(const Event& e);
+    void onEntitySelection(const Event& e);
     bool canPlaceBuildingAt(const CompBuilding& building, const Feet& feet, bool& outOfMap);
     void cancelBuilding();
     void confirmBuilding(CompTransform& transform,

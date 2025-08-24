@@ -4,7 +4,8 @@
 #include "EntityFactory.h"
 #include "GameState.h"
 #include "GameTypes.h"
-#include "PlayerManager.h"
+#include "PlayerController.h"
+#include "PlayerFactory.h"
 #include "Renderer.h"
 #include "ServiceRegistry.h"
 #include "SubSystemRegistry.h"
@@ -61,9 +62,11 @@ void DemoWorldCreator::loadEntities()
 {
     spdlog::info("Loading entities...");
 
-    auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
+    auto playerManager = ServiceRegistry::getInstance().getService<PlayerFactory>();
     auto player = playerManager->createPlayer();
     auto player2 = playerManager->createPlayer();
+    auto playercontroller = ServiceRegistry::getInstance().getService<PlayerController>();
+    playercontroller->setPlayer(player);
 
     auto gameState = ServiceRegistry::getInstance().getService<GameState>();
 

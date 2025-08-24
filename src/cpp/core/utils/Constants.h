@@ -12,7 +12,7 @@ class Constants
     static const int TILE_PIXEL_WIDTH = 96;
     static const int TILE_PIXEL_HEIGHT = 48;
     static const int MAX_ANIMATIONS = 10;
-    static const int MAX_UNIT_SELECTION = 30;
+    static const int MAX_ENTITY_SELECTION = 30;
     // Mouse should move at least 5 pixels to consider as a selection box
     static const int MIN_SELECTION_BOX_MOUSE_MOVEMENT = 25;
     // Engine will lookup MAX_SELECTION_LOOKUP_HEIGHT*MAX_SELECTION_LOOKUP_HEIGHT area
@@ -30,6 +30,8 @@ class Constants
     // Maximum gap between two frames. If the gap is more than this,
     // frame delay will be capped to this.
     static const int MAX_FRAME_DELAY_MS = 500;
+
+    static const int ABSOLUTE_MAX_UNIT_QUEUE_SIZE = 100;
 };
 } // namespace core
 

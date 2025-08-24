@@ -2,7 +2,8 @@
 
 #include "GameTypes.h"
 #include "GraphicsRegistry.h"
-#include "PlayerManager.h"
+#include "PlayerController.h"
+#include "PlayerFactory.h"
 #include "ServiceRegistry.h"
 #include "UIManager.h"
 #include "components/CompBuilding.h"
@@ -14,7 +15,7 @@ using namespace core;
 
 HUD::HUD(/* args */)
 {
-    registerCallback(Event::Type::UNIT_SELECTION, this, &HUD::onUnitSelection);
+    registerCallback(Event::Type::ENTITY_SELECTION, this, &HUD::onUnitSelection);
     registerCallback(Event::Type::TICK, this, &HUD::onTick);
 }
 
@@ -51,8 +52,8 @@ void HUD::onTick(const Event& e)
 
     if (m_woodLabel != nullptr)
     {
-        auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
-        auto player = playerManager->getViewingPlayer();
+        auto playerManager = ServiceRegistry::getInstance().getService<PlayerController>();
+        auto player = playerManager->getPlayer();
         m_woodLabel->setText(std::to_string(player->getResourceAmount(ResourceType::WOOD)));
     }
     else
@@ -62,8 +63,8 @@ void HUD::onTick(const Event& e)
 
     if (m_stoneabel != nullptr)
     {
-        auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
-        auto player = playerManager->getViewingPlayer();
+        auto playerManager = ServiceRegistry::getInstance().getService<PlayerController>();
+        auto player = playerManager->getPlayer();
         m_stoneabel->setText(std::to_string(player->getResourceAmount(ResourceType::STONE)));
     }
     else
@@ -73,8 +74,8 @@ void HUD::onTick(const Event& e)
 
     if (m_goldLabel != nullptr)
     {
-        auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
-        auto player = playerManager->getViewingPlayer();
+        auto playerManager = ServiceRegistry::getInstance().getService<PlayerController>();
+        auto player = playerManager->getPlayer();
         m_goldLabel->setText(std::to_string(player->getResourceAmount(ResourceType::GOLD)));
     }
     else
@@ -84,8 +85,8 @@ void HUD::onTick(const Event& e)
 
     if (m_playerIdLabel != nullptr)
     {
-        auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
-        auto player = playerManager->getViewingPlayer();
+        auto playerManager = ServiceRegistry::getInstance().getService<PlayerController>();
+        auto player = playerManager->getPlayer();
         m_playerIdLabel->setText("Player " + std::to_string(player->getId()));
     }
     else
@@ -118,8 +119,8 @@ void HUD::onTick(const Event& e)
                 }
             }
         }
-        auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
-        auto player = playerManager->getViewingPlayer();
+        auto playerManager = ServiceRegistry::getInstance().getService<PlayerController>();
+        auto player = playerManager->getPlayer();
         m_playerIdLabel->setText("Player " + std::to_string(player->getId()));
     }
     else
@@ -136,7 +137,7 @@ void HUD::onUnitSelection(const Event& e)
     m_constructionTextLabel->setVisible(false);
     m_constructionProgressBarLabel->setVisible(false);
 
-    m_currentSelection = e.getData<UnitSelectionData>().selection;
+    m_currentSelection = e.getData<EntitySelectionData>().selection;
     auto gameState = ServiceRegistry::getInstance().getService<GameState>();
 
     for (auto unit : m_currentSelection.selectedEntities)

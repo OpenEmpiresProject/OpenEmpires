@@ -1,7 +1,9 @@
 #include "EntityDefinitionLoader.h"
 
+#include "EntityTypeRegistry.h"
 #include "GameTypes.h"
 #include "commands/CmdIdle.h"
+#include "components/CompUnitFactory.h"
 #include "debug.h"
 #include "utils/Logger.h"
 #include "utils/ObjectPool.h"
@@ -155,12 +157,16 @@ void EntityDefinitionLoader::loadUnits(py::object module)
     if (py::hasattr(module, "all_units"))
     {
         py::list all_units = module.attr("all_units");
+        auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
 
         for (auto py_unit : all_units)
         {
             std::string name = py_unit.attr("name").cast<std::string>();
 
             auto entityType = getEntityType(name);
+            if (typeRegistry->isValid(name) == false)
+                typeRegistry->registerEntityType(name, entityType);
+
             addComponentsForUnit(entityType);
             addCommonComponents(module, entityType, py_unit);
             loadDRSForAnimations(entityType, EntitySubTypes::EST_DEFAULT, py_unit);
@@ -184,12 +190,17 @@ void EntityDefinitionLoader::loadNaturalResources(py::object module)
     if (py::hasattr(module, "all_natural_resources"))
     {
         py::list entries = module.attr("all_natural_resources");
+        auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
 
         for (auto entry : entries)
         {
             std::string name = entry.attr("name").cast<std::string>();
 
             auto entityType = getEntityType(name);
+
+            if (typeRegistry->isValid(name) == false)
+                typeRegistry->registerEntityType(name, entityType);
+
             addComponentsForNaturalResource(entityType);
             addCommonComponents(module, entityType, entry);
             loadDRSForStillImage(module, entityType, EntitySubTypes::EST_DEFAULT, entry);
@@ -242,6 +253,7 @@ void EntityDefinitionLoader::loadBuildings(pybind11::object module)
     if (py::hasattr(module, "all_buildings"))
     {
         py::list entries = module.attr("all_buildings");
+        auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
 
         for (auto entry : entries)
         {
@@ -249,6 +261,10 @@ void EntityDefinitionLoader::loadBuildings(pybind11::object module)
             std::string size = entry.attr("size").cast<std::string>();
 
             auto entityType = getEntityType(name);
+
+            if (typeRegistry->isValid(name) == false)
+                typeRegistry->registerEntityType(name, entityType);
+
             addComponentsForBuilding(entityType);
             addCommonComponents(module, entityType, entry);
             loadDRSForStillImage(module, entityType, EntitySubTypes::EST_DEFAULT, entry);
@@ -269,6 +285,7 @@ void EntityDefinitionLoader::loadConstructionSites(pybind11::object module)
     if (py::hasattr(module, "all_construction_sites"))
     {
         py::list entries = module.attr("all_construction_sites");
+        auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
 
         for (auto entry : entries)
         {
@@ -280,6 +297,9 @@ void EntityDefinitionLoader::loadConstructionSites(pybind11::object module)
             m_constructionSitesBySize[sizeStr] = data;
 
             auto entityType = getEntityType(name);
+            if (typeRegistry->isValid(name) == false)
+                typeRegistry->registerEntityType(name, entityType);
+
             auto entitySubType = getEntitySubType(entityType, sizeStr);
             loadDRSForStillImage(module, entityType, entitySubType, entry);
         }
@@ -360,11 +380,26 @@ uint32_t EntityDefinitionLoader::createEntity(uint32_t entityType, uint32_t enti
     }
     gameState->getComponent<CompEntityInfo>(entity).entityId = entity;
 
+    // Adding default idle command
     if (gameState->hasComponent<CompUnit>(entity))
     {
         auto idleCmd = ObjectPool<CmdIdle>::acquire(entity);
         idleCmd->setPriority(Command::DEFAULT_PRIORITY);
         gameState->getComponent<CompUnit>(entity).commandQueue.push(idleCmd);
+    }
+
+    // Late binding of entity names to types
+    if (gameState->hasComponent<CompUnitFactory>(entity))
+    {
+        auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+
+        std::vector<uint32_t> possibleUnitTypes;
+        auto& factory = gameState->getComponent<CompUnitFactory>(entity);
+        for (auto& possibleUnit : factory.producibleUnitNames.value())
+        {
+            possibleUnitTypes.push_back(typeRegistry->getEntityType(possibleUnit));
+        }
+        PropertyInitializer::set(factory.producibleUnitTypes, possibleUnitTypes);
     }
     return entity;
 }
@@ -382,6 +417,7 @@ void EntityDefinitionLoader::addCommonComponents(py::object module,
     addComponentIfNotNull(entityType, createCompTransform(module, entityDefinition));
     addComponentIfNotNull(entityType, createCompResource(module, entityDefinition));
     addComponentIfNotNull(entityType, createCompBuilding(module, entityDefinition));
+    addComponentIfNotNull(entityType, createCompUnitFactory(module, entityDefinition));
     addComponentIfNotNull(entityType, createCompSelectible(module, entityDefinition));
     addComponentIfNotNull(entityType, CompEntityInfo(entityType));
 }
@@ -895,4 +931,28 @@ void EntityDefinitionLoader::setBoundingBoxReadFunc(
     std::function<core::Rect<int>(core::Ref<drs::DRSFile>, uint32_t)> func)
 {
     m_boundingBoxReadFunc = func;
+}
+
+ComponentType EntityDefinitionLoader::createCompUnitFactory(pybind11::object module,
+                                                            pybind11::handle entityDefinition)
+{
+    if (py::hasattr(module, "UnitFactory"))
+    {
+        py::object unitFactoryClass = module.attr("UnitFactory");
+        if (py::isinstance(entityDefinition, unitFactoryClass))
+        {
+            CompUnitFactory comp;
+
+            auto producibleUnits =
+                readValue<std::vector<std::string>>(entityDefinition, "producible_units");
+            auto maxQueueSize = readValue<int>(entityDefinition, "max_queue_size");
+
+            PropertyInitializer::set<uint32_t>(comp.maxQueueSize, maxQueueSize);
+            PropertyInitializer::set<std::vector<std::string>>(comp.producibleUnitNames,
+                                                               producibleUnits);
+
+            return ComponentType(comp);
+        }
+    }
+    return std::monostate{};
 }

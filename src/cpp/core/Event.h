@@ -1,10 +1,10 @@
 #ifndef EVENT_H
 #define EVENT_H
 
+#include "EntitySelection.h"
 #include "Feet.h"
 #include "Player.h"
 #include "Tile.h"
-#include "UnitSelection.h"
 #include "commands/Command.h"
 
 #include <entt/entity/registry.hpp>
@@ -40,9 +40,16 @@ struct MouseClickData
     Vec2 screenPosition;
 };
 
-struct UnitSelectionData
+struct EntitySelectionData
 {
-    UnitSelection selection;
+    enum class Type
+    {
+        UNIT,
+        BUILDING,
+        NATURAL_RESOURCE
+    };
+    Type type;
+    EntitySelection selection;
 };
 
 struct CommandRequestData
@@ -90,7 +97,7 @@ struct Event
         MOUSE_BTN_DOWN,
         MOUSE_BTN_UP,
         UNIT_REQUESTED, // Use UnitCreationData
-        UNIT_SELECTION,
+        ENTITY_SELECTION,
         UNIT_TILE_MOVEMENT,
         ENTITY_DELETE,
         BUILDING_REQUESTED,          // Use BuildingPlacementData
@@ -105,7 +112,7 @@ struct Event
                               MouseClickData,
                               KeyboardData,
                               MouseMoveData,
-                              UnitSelectionData,
+                              EntitySelectionData,
                               CommandRequestData,
                               UnitTileMovementData,
                               EntityDeleteData,

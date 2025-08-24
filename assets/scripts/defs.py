@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Dict, List
 
+# Start of basic definitions. These definitions are known to the game. It is possible to compose these 
+# to define new entity types. But not possible to change these.
 
 class Rect:
     x: int
@@ -90,11 +92,14 @@ class Building:
     icon: Icon
 
 
-class ResourceDropOff:
+class ResourceDropOff(Building):
     accepted_resources: List[str]
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
 
-class SingleResourceDropOffPoint(Building, ResourceDropOff):
+class UnitFactory:
+    producible_units: List[str] # List of names of units can create from this factory
+    max_queue_size: int
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
 
@@ -117,6 +122,17 @@ class UIElement:
     name: str
     graphics: Dict[str, List[Graphic]] # Graphics by theme
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+
+# End of basic definitions.
+
+# Start of composite entity definitions. These can't have new attributes defined, but only overrides.
+
+class TownCenter(ResourceDropOff, UnitFactory):
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+
+# End of composite entity definitions
 
 
 all_units: List[Unit] = [
@@ -169,7 +185,7 @@ all_natural_resources: List[NaturalResource] = [
 ]
 
 all_buildings: List[Building] = [
-    SingleResourceDropOffPoint(
+    ResourceDropOff(
         name="mill", 
         display_name="Mill",
         line_of_sight=256*5,
@@ -178,7 +194,7 @@ all_buildings: List[Building] = [
         graphics={"default":Graphic(slp_id=3483),},
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=21)
     ),
-    SingleResourceDropOffPoint(
+    ResourceDropOff(
         name="wood_camp", 
         display_name="Lumber Camp",
         line_of_sight=256*5,
@@ -187,7 +203,7 @@ all_buildings: List[Building] = [
         graphics={"default":Graphic(slp_id=3505)},
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=40)
     ),
-    SingleResourceDropOffPoint(
+    ResourceDropOff(
         name="mine_camp", 
         display_name="Mining Camp",
         line_of_sight=256*5,
@@ -196,12 +212,14 @@ all_buildings: List[Building] = [
         graphics={"default":Graphic(slp_id=3492)},
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=39)
     ),
-    SingleResourceDropOffPoint(
+    TownCenter(
         name="town_center", 
         display_name="Town Center",
         line_of_sight=256*5,
         size="huge",
         accepted_resources=["gold", "stone", "food"], 
+        producible_units=["villager"],
+        max_queue_size=10,
         graphics={"default": CompositeGraphic(
             anchor=Point(x=187, y=290),
             parts=[

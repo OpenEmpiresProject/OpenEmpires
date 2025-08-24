@@ -3,7 +3,8 @@
 #include "Coordinates.h"
 #include "Event.h"
 #include "GameState.h"
-#include "PlayerManager.h"
+#include "PlayerController.h"
+#include "PlayerFactory.h"
 #include "ServiceRegistry.h"
 #include "components/CompBuilding.h"
 #include "components/CompDirty.h"
@@ -39,10 +40,10 @@ void PlayerActionResolver::onMouseMove(const core::Event& e)
 
 BuildingPlacementData createBuildingRequestData(uint32_t entityType, const Feet& pos)
 {
-    auto playerManager = ServiceRegistry::getInstance().getService<PlayerManager>();
+    auto playerManager = ServiceRegistry::getInstance().getService<PlayerController>();
 
     BuildingPlacementData data;
-    data.player = playerManager->getViewingPlayer();
+    data.player = playerManager->getPlayer();
     data.entityType = entityType;
     data.pos = pos;
     return data;
