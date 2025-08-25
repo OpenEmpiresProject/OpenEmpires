@@ -9,6 +9,7 @@
 namespace core
 {
 class PathFinderBase;
+class CompBuilding;
 
 class GameState
 {
@@ -77,6 +78,8 @@ class GameState
     };
 
     TileMapQueryResult whatIsAt(const Vec2& screenPos);
+
+    bool canPlaceBuildingAt(const CompBuilding& building, const Feet& feet, bool& outOfMap);
 
   private:
     TileMap m_gameMap;

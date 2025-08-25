@@ -10,6 +10,8 @@
 #include <string>
 #include <utility>
 
+#define DEVELOPMENT
+
 namespace core
 {
 template <typename T> using Ref = std::shared_ptr<T>;

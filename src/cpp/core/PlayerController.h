@@ -3,6 +3,7 @@
 
 #include "EntitySelection.h"
 #include "EventHandler.h"
+#include "ShortcutResolver.h"
 #include "utils/Types.h"
 
 namespace core
@@ -15,38 +16,53 @@ class PlayerController : public EventHandler
 {
   public:
     PlayerController();
-    ~PlayerController();
 
     void setPlayer(Ref<Player> player);
-    Ref<Player> getPlayer() const
-    {
-        return m_player;
-    }
+    Ref<Player> getPlayer() const;
 
   private:
+    // Common
     Ref<Player> m_player;
-
     bool m_fowEnabled = true;
     Ref<GameState> m_gameState;
     Ref<Coordinates> m_coordinates;
 
-    bool m_buildingPlacementInProgress = false;
+    // Selection related
     Vec2 m_selectionStartPosScreenUnits;
     bool m_isSelectionBoxInProgress = false;
-    EntitySelection m_currentUnitSelection;
+    EntitySelectionData m_currentEntitySelection;
+
+    // Building placement related
+    BuildingPlacementData m_currentBuildingPlacement;
+    Vec2 m_currentMouseScreenPos;
 
   private:
+    // Event callbacks
     void onKeyUp(const Event& e);
     void onMouseButtonUp(const Event& e);
     void onMouseButtonDown(const Event& e);
-    void onBuildingPlacementStarted(const Event& e);
-    void onBuildingPlacementFinished(const Event& e);
-    void trySelectingEntities(const std::vector<uint32_t>& selectedEntities);
-    void updateSelection(const EntitySelection& newSelection);
-    void handleClickToSelect(const Vec2& screenPos);
-    void handleEntitySelection(const Vec2& screenPos);
+    void onMouseMove(const Event& e);
+    void onBuildingApproved(const Event& e);
+
     void resolveAction(const Vec2& screenPos);
+
+    // Building placement related
+    void createBuilding(const ShortcutResolver::Action& action);
+    void cancelBuildingPlacement();
+    void confirmBuildingPlacement(CompTransform& transform,
+                                  CompBuilding& building,
+                                  CompEntityInfo& info,
+                                  CompDirty& dirty) const;
+
+    // Selection related
+    void selectHomogeneousEntities(const std::vector<uint32_t>& selectedEntities);
+    void updateSelection(const EntitySelectionData& newSelection);
+    void handleClickToSelect(const Vec2& screenPos);
+    void selectEntities(const Vec2& screenPos);
     void completeSelectionBox(const Vec2& startScreenPos, const Vec2& endScreenPos);
+    void getAllOverlappingEntities(const Vec2& startScreenPos,
+                                   const Vec2& endScreenPos,
+                                   std::vector<uint32_t>& entitiesToAddToSelection);
     void onUnitSelection(const Event& e);
 };
 } // namespace core

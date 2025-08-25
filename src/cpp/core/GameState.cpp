@@ -1,6 +1,7 @@
 #include "GameState.h"
 
 #include "Coordinates.h"
+#include "GameSettings.h"
 #include "PathFinderAStar.h"
 #include "PathFinderBase.h"
 #include "ServiceRegistry.h"
@@ -113,4 +114,36 @@ GameState::TileMapQueryResult GameState::whatIsAt(const Vec2& screenPos)
         }
     }
     return result;
+}
+
+bool GameState::canPlaceBuildingAt(const CompBuilding& building, const Feet& feet, bool& outOfMap)
+{
+    auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
+    auto tile = feet.toTile();
+    auto staticMap = m_gameMap.getMap(MapLayerType::STATIC);
+
+    auto isValidTile = [&](const Tile& tile)
+    {
+        return tile.x >= 0 && tile.y >= 0 && tile.x < settings->getWorldSizeInTiles().width &&
+               tile.y < settings->getWorldSizeInTiles().height;
+    };
+
+    outOfMap = false;
+
+    for (int i = 0; i < building.size.value().width; i++)
+    {
+        for (int j = 0; j < building.size.value().height; j++)
+        {
+            if (!isValidTile({tile.x - i, tile.y - j}))
+            {
+                outOfMap = true;
+                return false;
+            }
+            if (staticMap[tile.x - i][tile.y - j].isOccupied())
+            {
+                return false;
+            }
+        }
+    }
+    return true;
 }

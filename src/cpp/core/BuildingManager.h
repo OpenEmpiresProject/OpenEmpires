@@ -5,7 +5,6 @@
 
 namespace core
 {
-class Coordinates;
 class CompBuilding;
 class CompTransform;
 class CompPlayer;
@@ -15,26 +14,13 @@ class BuildingManager : public EventHandler
     BuildingManager();
 
   private:
-    BuildingPlacementData m_currentBuildingPlacement;
-    Ref<Coordinates> m_coordinates;
     Ref<GameState> m_gameState;
-    EntitySelection m_unitSelection;
-    EntitySelection m_buildingSelection;
 
   private:
-    void onMouseButtonUp(const Event& e);
-    void onMouseMove(const Event& e);
-    void onKeyUp(const Event& e);
     void onBuildingRequest(const Event& e);
-    uint32_t createBuilding(const BuildingPlacementData& request);
     void onTick(const Event& e);
-    void onEntitySelection(const Event& e);
-    bool canPlaceBuildingAt(const CompBuilding& building, const Feet& feet, bool& outOfMap);
-    void cancelBuilding();
-    void confirmBuilding(CompTransform& transform,
-                         CompBuilding& building,
-                         CompEntityInfo& info,
-                         CompDirty& dirty);
+
+    uint32_t createBuilding(const BuildingPlacementData& request);
     void onCompleteBuilding(uint32_t entity,
                             const CompBuilding& building,
                             const CompTransform& transform,

@@ -14,7 +14,6 @@
 #include "GraphicsLoaderFromImages.h"
 #include "GraphicsRegistry.h"
 #include "HUD.h"
-#include "PlayerActionResolver.h"
 #include "PlayerController.h"
 #include "PlayerFactory.h"
 #include "Renderer.h"
@@ -127,7 +126,6 @@ class Game
 
         auto buildingMngr = std::make_shared<core::BuildingManager>();
         auto unitManager = std::make_shared<core::UnitManager>();
-        auto playerActionResolver = std::make_shared<game::PlayerActionResolver>();
 
         auto gameShortcutResolver = std::make_shared<game::GameShortcutResolver>();
         std::shared_ptr<core::ShortcutResolver> shortcutResolver = gameShortcutResolver;
@@ -144,7 +142,6 @@ class Game
         eventLoop->registerListener(std::move(hud));
         eventLoop->registerListener(std::move(buildingMngr));
         eventLoop->registerListener(std::move(unitManager));
-        eventLoop->registerListener(std::move(playerActionResolver));
 
         auto resourceLoader =
             std::make_shared<DemoWorldCreator>(&stopToken, settings, params.populateWorld);

@@ -100,9 +100,8 @@ struct Event
         ENTITY_SELECTION,
         UNIT_TILE_MOVEMENT,
         ENTITY_DELETE,
-        BUILDING_REQUESTED,          // Use BuildingPlacementData
-        BUILDING_PLACEMENT_STARTED,  // Use BuildingPlacementData
-        BUILDING_PLACEMENT_FINISHED, // Use BuildingPlacementData
+        BUILDING_REQUESTED, // Use BuildingPlacementData
+        BUILDING_APPROVED,  // Use BuildingPlacementData
         COMMAND_REQUEST,
         MAX_TYPE_MARKER,
     };

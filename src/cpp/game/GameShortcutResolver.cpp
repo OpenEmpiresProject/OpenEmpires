@@ -14,22 +14,22 @@ const ShortcutResolver::Action game::GameShortcutResolver::resolve(
     {
         if (key == SDL_SCANCODE_M)
         {
-            action.type = Action::Type::CREATE_ENTITY;
+            action.type = Action::Type::CREATE_BUILDING;
             action.entityType = EntityTypes::ET_MILL;
         }
         else if (key == SDL_SCANCODE_L)
         {
-            action.type = Action::Type::CREATE_ENTITY;
+            action.type = Action::Type::CREATE_BUILDING;
             action.entityType = EntityTypes::ET_LUMBER_CAMP;
         }
         else if (key == SDL_SCANCODE_N)
         {
-            action.type = Action::Type::CREATE_ENTITY;
+            action.type = Action::Type::CREATE_BUILDING;
             action.entityType = EntityTypes::ET_MINING_CAMP;
         }
         else if (key == SDL_SCANCODE_C)
         {
-            action.type = Action::Type::CREATE_ENTITY;
+            action.type = Action::Type::CREATE_BUILDING;
             action.entityType = EntityTypes::ET_TOWN_CENTER;
         }
     }
@@ -37,7 +37,7 @@ const ShortcutResolver::Action game::GameShortcutResolver::resolve(
     {
         if (key == SDL_SCANCODE_V)
         {
-            action.type = Action::Type::CREATE_ENTITY;
+            action.type = Action::Type::CREATE_UNIT;
             action.entityType = EntityTypes::ET_VILLAGER;
         }
     }

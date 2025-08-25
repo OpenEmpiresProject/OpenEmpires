@@ -16,7 +16,8 @@ class ShortcutResolver
         enum class Type
         {
             INVALID,
-            CREATE_ENTITY,
+            CREATE_BUILDING,
+            CREATE_UNIT,
             UNIT_COMMAND
         };
 
