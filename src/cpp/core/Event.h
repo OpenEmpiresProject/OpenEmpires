@@ -85,6 +85,13 @@ struct UnitCreationData
     uint32_t entityType = 0;
 };
 
+struct UnitQueueData
+{
+    Ref<Player> player;
+    uint32_t entityType = 0; // Unit type
+    uint32_t building = entt::null;
+};
+
 struct Event
 {
     enum class Type
@@ -96,7 +103,8 @@ struct Event
         MOUSE_MOVE,
         MOUSE_BTN_DOWN,
         MOUSE_BTN_UP,
-        UNIT_REQUESTED, // Use UnitCreationData
+        UNIT_CREATION_FINISHED, // Use UnitCreationData
+        UNIT_QUEUE_REQUEST,     // UnitQueueData
         ENTITY_SELECTION,
         UNIT_TILE_MOVEMENT,
         ENTITY_DELETE,
@@ -115,6 +123,7 @@ struct Event
                               CommandRequestData,
                               UnitTileMovementData,
                               EntityDeleteData,
+                              UnitQueueData,
                               UnitCreationData,
                               BuildingPlacementData>;
 

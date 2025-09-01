@@ -8,7 +8,9 @@
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompPlayer.h"
+#include "components/CompSelectible.h"
 #include "components/CompTransform.h"
+#include "components/CompUnitFactory.h"
 #include "utils/ObjectPool.h"
 
 using namespace core;
@@ -18,6 +20,7 @@ BuildingManager::BuildingManager()
     m_gameState = ServiceRegistry::getInstance().getService<GameState>();
     registerCallback(Event::Type::TICK, this, &BuildingManager::onTick);
     registerCallback(Event::Type::BUILDING_REQUESTED, this, &BuildingManager::onBuildingRequest);
+    registerCallback(Event::Type::UNIT_QUEUE_REQUEST, this, &BuildingManager::onQueueUnit);
 }
 
 void BuildingManager::onTick(const Event& e)
@@ -62,6 +65,35 @@ void BuildingManager::onTick(const Event& e)
                 building.isInStaticMap = true;
             }
         }
+    }
+
+    auto& tick = e.getData<TickData>();
+
+    for (auto it = m_activeFactories.begin(); it != m_activeFactories.end();)
+    {
+        auto& activeFactory = *it;
+        activeFactory.factory.currentUnitProgress += float(10) * tick.deltaTimeMs / 1000.0f;
+
+        spdlog::debug("Unit {} progress {}", activeFactory.factory.productionQueue.at(0),
+                      activeFactory.factory.currentUnitProgress);
+
+        if (activeFactory.factory.currentUnitProgress > 100)
+        {
+            UnitCreationData data;
+            data.entityType = activeFactory.factory.productionQueue.at(0);
+            data.player = activeFactory.player;
+            data.position = findVacantPositionAroundBuilding(activeFactory.building);
+            publishEvent(Event::Type::UNIT_CREATION_FINISHED, data);
+
+            activeFactory.factory.currentUnitProgress = 0;
+            activeFactory.factory.productionQueue.erase(
+                activeFactory.factory.productionQueue.begin());
+        }
+
+        if (activeFactory.factory.productionQueue.empty())
+            it = m_activeFactories.erase(it);
+        else
+            ++it;
     }
 }
 
@@ -113,4 +145,27 @@ uint32_t BuildingManager::createBuilding(const BuildingPlacementData& request)
         }
     }
     return entity;
+}
+
+void BuildingManager::onQueueUnit(const Event& e)
+{
+    auto& data = e.getData<UnitQueueData>();
+    spdlog::debug("On queuing unit {} for building {}", data.entityType, data.building);
+
+    auto [building, factory] =
+        m_gameState->getComponents<CompBuilding, CompUnitFactory>(data.building);
+    factory.productionQueue.push_back(data.entityType);
+
+    ActiveFactoryInfo info{.factory = factory, .building = data.building, .player = data.player};
+    m_activeFactories.push_back(info);
+}
+
+Feet BuildingManager::findVacantPositionAroundBuilding(uint32_t building)
+{
+    auto [transform, buildingComp] =
+        m_gameState->getComponents<CompTransform, CompBuilding>(building);
+    auto tile = transform.position.toTile();
+    // TODO: Temp
+    Tile newPos = tile + 1;
+    return newPos.toFeet();
 }

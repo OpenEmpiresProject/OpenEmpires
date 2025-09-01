@@ -17,7 +17,7 @@ UnitManager::UnitManager()
     m_gameState = ServiceRegistry::getInstance().getService<GameState>();
 
     registerCallback(Event::Type::ENTITY_DELETE, this, &UnitManager::onUnitDeletion);
-    registerCallback(Event::Type::UNIT_REQUESTED, this, &UnitManager::onUnitRequested);
+    registerCallback(Event::Type::UNIT_CREATION_FINISHED, this, &UnitManager::onCreateUnit);
     registerCallback(Event::Type::UNIT_TILE_MOVEMENT, this, &UnitManager::onUnitTileMovement);
 }
 
@@ -44,7 +44,7 @@ void UnitManager::onUnitDeletion(const Event& e)
     }
 }
 
-void UnitManager::onUnitRequested(const Event& e)
+void UnitManager::onCreateUnit(const Event& e)
 {
     auto& data = e.getData<UnitCreationData>();
 

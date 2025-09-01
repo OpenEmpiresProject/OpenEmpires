@@ -16,7 +16,8 @@ class CompUnitFactory
     Property<uint32_t> maxQueueSize;
 
   public:
-    std::vector<uint32_t> productionQueue;
+    std::vector<uint32_t> productionQueue; // Entity types
+    float currentUnitProgress = 0;
 
     CompUnitFactory()
     {

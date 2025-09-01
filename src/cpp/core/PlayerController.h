@@ -54,6 +54,9 @@ class PlayerController : public EventHandler
                                   CompEntityInfo& info,
                                   CompDirty& dirty) const;
 
+    void createUnit(uint32_t entityType, const EntitySelection& selectedBuildings);
+    void createUnit(uint32_t entityType, uint32_t fromBuildingEntityId);
+
     // Selection related
     void selectHomogeneousEntities(const std::vector<uint32_t>& selectedEntities);
     void updateSelection(const EntitySelectionData& newSelection);

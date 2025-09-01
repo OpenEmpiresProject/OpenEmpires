@@ -81,6 +81,10 @@ void PlayerController::onKeyUp(const Event& e)
             {
                 createBuilding(action);
             }
+            else if (action.type == ShortcutResolver::Action::Type::CREATE_UNIT)
+            {
+                createUnit(action.entityType, m_currentEntitySelection.selection);
+            }
         }
     }
 }
@@ -468,4 +472,15 @@ void PlayerController::createBuilding(const ShortcutResolver::Action& action)
     data.entity = entity;
 
     m_currentBuildingPlacement = data;
+}
+
+void PlayerController::createUnit(uint32_t entityType, const EntitySelection& selectedBuildings)
+{
+    spdlog::debug("Request to create unit type {}", entityType);
+
+    for (auto building : selectedBuildings.selectedEntities)
+    {
+        UnitQueueData data{.player = m_player, .entityType = entityType, .building = building};
+        publishEvent(Event::Type::UNIT_QUEUE_REQUEST, data);
+    }
 }
