@@ -1,6 +1,8 @@
 #ifndef GAMETYPES_H
 #define GAMETYPES_H
 
+#include <cstdint>
+
 namespace game
 {
 enum EntityTypes

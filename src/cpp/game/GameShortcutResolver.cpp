@@ -1,17 +1,38 @@
 #include "GameShortcutResolver.h"
 
+#include "EntityTypeRegistry.h"
 #include "GameTypes.h"
+#include "components/CompBuilder.h"
+#include "components/CompUnitFactory.h"
+#include "utils/Logger.h"
 
 using namespace core;
 using namespace game;
 
 const ShortcutResolver::Action game::GameShortcutResolver::resolve(
-    SDL_Scancode key, EntitySelectionData::Type currentSelection) const
+    SDL_Scancode key, EntitySelectionData currentSelection) const
 {
+    char shortcutLetter = getLetter(key);
+    if (shortcutLetter <= 0)
+        return {};
+    if (currentSelection.selection.selectedEntities.empty())
+        return {};
+
     Action action;
-    // TODO: Not accurate enough, need to check the entity type as well
-    if (currentSelection == EntitySelectionData::Type::UNIT)
+    if (currentSelection.type == EntitySelectionData::Type::UNIT)
     {
+        // TODO: Handle heterogeneous entity type selection
+        auto firstEntity = currentSelection.selection.selectedEntities[0];
+        auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+
+        if (gameState->hasComponent<CompBuilder>(firstEntity) == false)
+        {
+            spdlog::warn("Cannot resolve shortcut to construct building since selected entity "
+                         "{} is not a builder",
+                         firstEntity);
+            return {};
+        }
+
         if (key == SDL_SCANCODE_M)
         {
             action.type = Action::Type::CREATE_BUILDING;
@@ -33,13 +54,47 @@ const ShortcutResolver::Action game::GameShortcutResolver::resolve(
             action.entityType = EntityTypes::ET_TOWN_CENTER;
         }
     }
-    else if (currentSelection == EntitySelectionData::Type::BUILDING)
+    else if (currentSelection.type == EntitySelectionData::Type::BUILDING)
     {
-        if (key == SDL_SCANCODE_V)
+        // TODO: Handle heterogeneous entity type selection
+        auto firstEntity = currentSelection.selection.selectedEntities[0];
+        auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+
+        if (gameState->hasComponent<CompUnitFactory>(firstEntity) == false)
         {
+            spdlog::warn("Cannot resolve shortcut to create unit since selected entity "
+                         "{} is not a unit factory",
+                         firstEntity);
+            return {};
+        }
+
+        auto& factory = gameState->getComponent<CompUnitFactory>(firstEntity);
+        if (factory.producibleUnitShortcuts.value().contains(shortcutLetter))
+        {
+            uint32_t entityTypeToCreate =
+                factory.producibleUnitShortcuts.value().at(shortcutLetter);
+            action.entityType = entityTypeToCreate;
             action.type = Action::Type::CREATE_UNIT;
-            action.entityType = EntityTypes::ET_VILLAGER;
         }
     }
     return action;
+}
+
+char GameShortcutResolver::getLetter(SDL_Scancode key) const
+{
+    if (key >= SDL_SCANCODE_A && key <= SDL_SCANCODE_Z)
+    {
+        return key - SDL_SCANCODE_A + 'a';
+    }
+    return 0;
+}
+
+SDL_Scancode GameShortcutResolver::getKeyCode(char letter) const
+{
+    if (letter >= 'a' && letter <= 'z')
+    {
+        char sdlCode = letter - 'a' + SDL_SCANCODE_A;
+        return static_cast<SDL_Scancode>(sdlCode);
+    }
+    return SDL_Scancode::SDL_SCANCODE_UNKNOWN;
 }

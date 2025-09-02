@@ -97,8 +97,14 @@ class ResourceDropOff(Building):
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
 
+class ProducibleUnit:
+    name: str
+    shortcut: str # A single character shortcut. Relative to the building.
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+
 class UnitFactory:
-    producible_units: List[str] # List of names of units can create from this factory
+    producible_units: List[ProducibleUnit] # List of units can create from this factory
     max_queue_size: int
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
@@ -218,7 +224,7 @@ all_buildings: List[Building] = [
         line_of_sight=256*5,
         size="huge",
         accepted_resources=["gold", "stone", "food"], 
-        producible_units=["villager"],
+        producible_units=[ProducibleUnit(name="villager", shortcut="v")],
         max_queue_size=10,
         graphics={"default": CompositeGraphic(
             anchor=Point(x=187, y=290),

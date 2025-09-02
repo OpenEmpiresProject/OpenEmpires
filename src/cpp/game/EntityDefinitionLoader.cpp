@@ -399,7 +399,14 @@ uint32_t EntityDefinitionLoader::createEntity(uint32_t entityType, uint32_t enti
         {
             possibleUnitTypes.push_back(typeRegistry->getEntityType(possibleUnit));
         }
+
+        std::unordered_map<char, uint32_t> entityTypesByShortcut;
+        for (auto [key, name] : factory.producibleUnitNamesByShortcuts.value())
+        {
+            entityTypesByShortcut[key] = typeRegistry->getEntityType(name);
+        }
         PropertyInitializer::set(factory.producibleUnitTypes, possibleUnitTypes);
+        PropertyInitializer::set(factory.producibleUnitShortcuts, entityTypesByShortcut);
     }
     return entity;
 }
@@ -943,14 +950,29 @@ ComponentType EntityDefinitionLoader::createCompUnitFactory(pybind11::object mod
         {
             CompUnitFactory comp;
 
-            auto producibleUnits =
-                readValue<std::vector<std::string>>(entityDefinition, "producible_units");
+            py::object producibleUnits = entityDefinition.attr("producible_units");
+            std::vector<std::string> producibleUnitNames;
+            std::unordered_map<char, std::string> entityNameByShortcut;
+
+            for (auto unit : producibleUnits)
+            {
+                auto name = readValue<std::string>(unit, "name");
+                auto shortcut = readValue<std::string>(unit, "shortcut");
+                char key = 0;
+                if (shortcut.empty() == false)
+                {
+                    key = shortcut.c_str()[0];
+                }
+                entityNameByShortcut[key] = name;
+            }
+
             auto maxQueueSize = readValue<int>(entityDefinition, "max_queue_size");
 
             PropertyInitializer::set<uint32_t>(comp.maxQueueSize, maxQueueSize);
             PropertyInitializer::set<std::vector<std::string>>(comp.producibleUnitNames,
-                                                               producibleUnits);
-
+                                                               producibleUnitNames);
+            PropertyInitializer::set<std::unordered_map<char, std::string>>(
+                comp.producibleUnitNamesByShortcuts, entityNameByShortcut);
             return ComponentType(comp);
         }
     }

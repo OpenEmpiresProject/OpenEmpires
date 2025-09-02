@@ -25,8 +25,7 @@ class ShortcutResolver
         uint32_t entityType = entt::null;
     };
 
-    virtual const Action resolve(SDL_Scancode key,
-                                 EntitySelectionData::Type currentSelection) const = 0;
+    virtual const Action resolve(SDL_Scancode key, EntitySelectionData currentSelection) const = 0;
     // TODO: handle other shortcut types including global shortcuts
 };
 } // namespace core

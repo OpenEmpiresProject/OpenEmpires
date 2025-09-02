@@ -75,7 +75,7 @@ void PlayerController::onKeyUp(const Event& e)
         else
         {
             auto resolver = ServiceRegistry::getInstance().getService<ShortcutResolver>();
-            auto action = resolver->resolve(scancode, m_currentEntitySelection.type);
+            auto action = resolver->resolve(scancode, m_currentEntitySelection);
 
             if (action.type == ShortcutResolver::Action::Type::CREATE_BUILDING)
             {
@@ -215,7 +215,7 @@ void PlayerController::resolveAction(const Vec2& screenPos)
         else if (gatherable)
         {
             // It is a request to gather the resource at target
-            // TODO: Check selected entity's capability to gather, if it isn't doable, fall back to
+            // TODO: Check selected entity're capability to gather, if it isn't doable, fall back to
             // move
             auto cmd = ObjectPool<CmdGatherResource>::acquire();
             cmd->target = target;
