@@ -23,8 +23,17 @@ openEmpires is a cross-platform clone of Age of Empires 2, designed to provide a
 - Python 3.x
 - Make
 - vcpkg (for C++ package management)
-- [optional] clang-format (can be installed using pip)
-- [optional] cppcheck (can be installed using pip)
+- [optional] clang-forma
+- [optional] cppcheck
+
+#### Installation Options (Windows)
+- CMake - can be installed with visual studio on Windows
+- A C++ compiler - can be installed with visual studio on Windows
+- Python 3.x - can be installed with visual studio on Windows
+- Make - can be installed with msys2 on Windows
+- vcpkg - can be installed with visual studio on Windows
+- clang-format - can be installed using pip
+- cppcheck - can be installed using pip
 
 > Note: If required clone and setup vcpkg manually to get the latest package list.
 
@@ -35,6 +44,8 @@ openEmpires is a cross-platform clone of Age of Empires 2, designed to provide a
 - EnTT (for entity-component-system)
 - spdlog (for logging)
 
+> Note: Above dependencies will be automatically installed with `make configure` (later step)
+
 #### Setting env variables
 - Add path to CMake to the PATH variable
 - Add path to C++ compiler to the PATH variable
@@ -43,15 +54,22 @@ openEmpires is a cross-platform clone of Age of Empires 2, designed to provide a
 
 An example env setup in Windows might look like this;
 ```
-$vsBase = "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools"
-$vcpkgPath = "E:\Projects\openEmpires\vcpkg\vcpkg"
+$pathsToAdd = @(
+    "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin",
+    "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\bin\Hostx86\x64",
+    "D:\Projects\openEmpires\vcpkg\vcpkg",
+    "C:\msys64\usr\bin",
+    "C:\Program Files (x86)\Microsoft Visual Studio\Shared\Python39_64"
+)
 
-$env:Path += ";$vsBase\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin"
-$env:Path += ";$vsBase\VC\Tools\MSVC\14.43.34808\bin\Hostx86\x64"
-$env:Path += ";$vcpkgPath"
-$env:VCPKG_ROOT = $vcpkgPath
+$currentPath = [System.Environment]::GetEnvironmentVariable("PATH", "User")
+$newPath = $currentPath + ";" + ($pathsToAdd -join ";")
 
+setx PATH $newPath
+setx VCPKG_ROOT "D:\Projects\openEmpires\vcpkg\vcpkg"
 ```
+
+> NOTE: Using setx will not update current session, a shell/IDE restart will be required after above.
 
 ### Building the Project
 
@@ -73,6 +91,8 @@ $env:VCPKG_ROOT = $vcpkgPath
    ```
    make
    ```
+
+> NOTE: If you get an error similar to `Cannot open include file: 'Version.h': No such file or directory`, just configure it again using `make configure` and build using `make` (this is a oneoff error)
 
 ### Running the Game
 
