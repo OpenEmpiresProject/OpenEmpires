@@ -30,7 +30,7 @@ openEmpires is a cross-platform clone of Age of Empires 2, designed to provide a
 - CMake - can be installed with visual studio on Windows
 - A C++ compiler - can be installed with visual studio on Windows
 - Python 3.x - can be installed with visual studio on Windows
-- Make - can be installed with msys2 on Windows
+- Make - can be installed with msys2 on Windows. nmake would not work.
 - vcpkg - can be installed with visual studio on Windows
 - clang-format - can be installed using pip
 - cppcheck - can be installed using pip
@@ -57,9 +57,9 @@ An example env setup in Windows might look like this;
 $pathsToAdd = @(
     "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin",
     "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\bin\Hostx86\x64",
-    "D:\Projects\openEmpires\vcpkg\vcpkg",
     "C:\msys64\usr\bin",
-    "C:\Program Files (x86)\Microsoft Visual Studio\Shared\Python39_64"
+    "C:\Program Files (x86)\Microsoft Visual Studio\Shared\Python39_64",
+    "C:\Program Files (x86)\Microsoft Visual Studio\Shared\Python39_64\Scripts"
 )
 
 $currentPath = [System.Environment]::GetEnvironmentVariable("PATH", "User")
@@ -69,7 +69,8 @@ setx PATH $newPath
 setx VCPKG_ROOT "D:\Projects\openEmpires\vcpkg\vcpkg"
 ```
 
-> NOTE: Using setx will not update current session, a shell/IDE restart will be required after above.
+> Note: Using setx will not update current session, a shell/IDE restart will be required after above.
+> Note: Above example assumes pip installations were done globally (from a shell with admin rights)
 
 ### Building the Project
 

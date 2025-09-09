@@ -27,7 +27,7 @@
         }                                                                                          \
     }                                                                                              \
     auto with##Capital(const decltype(Field)& value)                                               \
-        ->decltype(std::static_pointer_cast<std::remove_reference_t<decltype(*this)>>(             \
+        -> decltype(std::static_pointer_cast<std::remove_reference_t<decltype(*this)>>(            \
             this->shared_from_this()))                                                             \
     {                                                                                              \
         set##Capital(value);                                                                       \

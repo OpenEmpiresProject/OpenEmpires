@@ -51,11 +51,11 @@ cppcheck:
 # Run the tests (directly execute the test binary)
 test: build
 	@echo Running tests...
-	@if defined FILTER ( \
-		$(BUILD_DIR)\bin\Debug\$(TEST_EXEC).exe --gtest_filter=$(FILTER) \
-	) else ( \
-		$(BUILD_DIR)\bin\Debug\$(TEST_EXEC).exe \
-	)
+ifeq ($(strip $(FILTER)),)
+	@$(BUILD_DIR)\bin\Debug\$(TEST_EXEC).exe
+else
+	@$(BUILD_DIR)\bin\Debug\$(TEST_EXEC).exe --gtest_filter=$(FILTER)
+endif
 
 # Run the integration tests (directly execute the test binary)
 integ-test: build
