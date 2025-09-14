@@ -425,18 +425,29 @@ void DemoWorldCreator::createHUD()
                                                    ->withMargin(20)
                                                    ->withRect(Rect<int>(0, 0, 200, 145)))
                 {
-                    auto constructionPercLabel = extendedInfoLayout->createChild<ui::Label>()
+                    // Two labels to display the progress and item in two lines. eg:
+                    // Creating - 50%
+                    // Villager
+                    //
+                    extendedInfoLayout->createChild<ui::Label>()
                                                      ->withTextColor(core::Color::BLACK)
                                                      ->withRect(Rect<int>(0, 0, 150, 20))
-                                                     ->withName("construction_progress_label")
+                                                     ->withName("progress_label")
                                                      ->withVisible(false);
+
+                    extendedInfoLayout->createChild<ui::Label>()
+                        ->withTextColor(core::Color::BLACK)
+                        ->withRect(Rect<int>(0, 0, 150, 20))
+                        ->withName("progress_item_name")
+                        ->withVisible(false);
+
                     GraphicsID progressBarBackground;
                     progressBarBackground.entityType = EntityTypes::ET_UI_ELEMENT;
                     progressBarBackground.entitySubType = EntitySubTypes::UI_PROGRESS_BAR;
                     auto constructionProgressBarLabel =
                         extendedInfoLayout->createChild<ui::Label>()
                             ->withBackgroundImage(progressBarBackground)
-                            ->withName("construction_progress_bar_label")
+                            ->withName("progress_bar_label")
                             ->withRect(Rect<int>(0, 0, 150, 10))
                             ->withVisible(false);
                 }

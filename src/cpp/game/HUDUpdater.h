@@ -8,11 +8,11 @@
 
 namespace game
 {
-class HUD : public core::EventHandler
+class HUDUpdater : public core::EventHandler
 {
   public:
-    HUD(/* args */);
-    ~HUD();
+    HUDUpdater(/* args */);
+    ~HUDUpdater();
 
   private:
     void onTick(const core::Event& e);
@@ -26,8 +26,9 @@ class HUD : public core::EventHandler
     core::Ref<core::ui::Label> m_playerIdLabel;
     core::Ref<core::ui::Label> m_selectedName;
     core::Ref<core::ui::Label> m_selectedIcon;
-    core::Ref<core::ui::Label> m_constructionTextLabel;
-    core::Ref<core::ui::Label> m_constructionProgressBarLabel;
+    core::Ref<core::ui::Label> m_progressTextLabel;
+    core::Ref<core::ui::Label> m_progressItemNameLabel;
+    core::Ref<core::ui::Label> m_progressBarLabel;
     core::EntitySelection m_currentSelection;
 };
 

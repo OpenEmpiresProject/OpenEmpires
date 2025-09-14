@@ -34,3 +34,23 @@ void EntityTypeRegistry::registerEntityType(const std::string& name, uint32_t en
         m_entityTypes.insert(entityType);
     }
 }
+
+GraphicsID EntityTypeRegistry::getHUDIcon(uint32_t entityType) const
+{
+    return m_icons.at(entityType);
+}
+
+std::string EntityTypeRegistry::getHUDDisplayName(uint32_t entityType) const
+{
+    return m_displayName.at(entityType);
+}
+
+void EntityTypeRegistry::registerHUDDisplayName(uint32_t entityType, const std::string& displayName)
+{
+    m_displayName[entityType] = displayName;
+}
+
+void EntityTypeRegistry::registerHUDIcon(uint32_t entityType, const GraphicsID& icon)
+{
+    m_icons[entityType] = icon;
+}

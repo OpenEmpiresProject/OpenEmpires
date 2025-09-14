@@ -13,7 +13,7 @@
 #include "GraphicsLoaderFromDRS.h"
 #include "GraphicsLoaderFromImages.h"
 #include "GraphicsRegistry.h"
-#include "HUD.h"
+#include "HUDUpdater.h"
 #include "PlayerController.h"
 #include "PlayerFactory.h"
 #include "Renderer.h"
@@ -108,7 +108,7 @@ class Game
         auto resourceManager = std::make_shared<ResourceManager>();
         core::ServiceRegistry::getInstance().registerService(resourceManager);
 
-        auto hud = std::make_shared<HUD>();
+        auto hud = std::make_shared<HUDUpdater>();
         core::ServiceRegistry::getInstance().registerService(hud);
 
         auto entityTypeRegistry = std::make_shared<core::EntityTypeRegistry>();

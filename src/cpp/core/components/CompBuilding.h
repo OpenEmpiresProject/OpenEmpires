@@ -31,6 +31,11 @@ class CompBuilding
     uint32_t constructionSiteEntitySubType = 0;
     bool isInStaticMap = false;
 
+    bool isConstructed() const
+    {
+        return constructionProgress >= 100;
+    }
+
     int getVariationByConstructionProgress() const
     {
         debug_assert(visualVariationByProgress.size() > 0,

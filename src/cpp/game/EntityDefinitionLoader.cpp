@@ -425,7 +425,7 @@ void EntityDefinitionLoader::addCommonComponents(py::object module,
     addComponentIfNotNull(entityType, createCompResource(module, entityDefinition));
     addComponentIfNotNull(entityType, createCompBuilding(module, entityDefinition));
     addComponentIfNotNull(entityType, createCompUnitFactory(module, entityDefinition));
-    addComponentIfNotNull(entityType, createCompSelectible(module, entityDefinition));
+    addComponentIfNotNull(entityType, createCompSelectible(entityType, module, entityDefinition));
     addComponentIfNotNull(entityType, CompEntityInfo(entityType));
 }
 
@@ -854,13 +854,17 @@ bool isInstanceOf(py::object module,
     return false;
 }
 
-ComponentType EntityDefinitionLoader::createCompSelectible(py::object module,
+ComponentType EntityDefinitionLoader::createCompSelectible(uint32_t entityType, py::object module,
                                                            pybind11::handle entityDefinition)
 {
     if (isInstanceOf(module, entityDefinition, "Unit"))
     {
         auto iconHash = readIconDef(EntitySubTypes::UI_UNIT_ICON, entityDefinition);
         auto displayName = readValue<std::string>(entityDefinition, "display_name");
+
+        auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+        typeRegistry->registerHUDIcon(entityType, iconHash);
+        typeRegistry->registerHUDDisplayName(entityType, displayName);
 
         CompSelectible comp;
         PropertyInitializer::set<GraphicsID>(comp.icon, iconHash);
@@ -872,6 +876,10 @@ ComponentType EntityDefinitionLoader::createCompSelectible(py::object module,
         auto iconHash = readIconDef(EntitySubTypes::UI_BUILDING_ICON, entityDefinition);
         auto displayName = readValue<std::string>(entityDefinition, "display_name");
 
+        auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+        typeRegistry->registerHUDIcon(entityType, iconHash);
+        typeRegistry->registerHUDDisplayName(entityType, displayName);
+
         CompSelectible comp;
         PropertyInitializer::set<GraphicsID>(comp.icon, iconHash);
         PropertyInitializer::set<std::string>(comp.displayName, displayName);
@@ -881,6 +889,10 @@ ComponentType EntityDefinitionLoader::createCompSelectible(py::object module,
     {
         auto iconHash = readIconDef(EntitySubTypes::UI_NATURAL_RESOURCE_ICON, entityDefinition);
         auto displayName = readValue<std::string>(entityDefinition, "display_name");
+
+        auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+        typeRegistry->registerHUDIcon(entityType, iconHash);
+        typeRegistry->registerHUDDisplayName(entityType, displayName);
 
         CompSelectible comp;
         PropertyInitializer::set<GraphicsID>(comp.icon, iconHash);

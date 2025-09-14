@@ -1,6 +1,8 @@
 #ifndef ENTITYTYPEREGISTRY_H
 #define ENTITYTYPEREGISTRY_H
 
+#include "GraphicsRegistry.h"
+
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -16,9 +18,17 @@ class EntityTypeRegistry
 
     void registerEntityType(const std::string& name, uint32_t entityType);
 
+    GraphicsID getHUDIcon(uint32_t entityType) const;
+    std::string getHUDDisplayName(uint32_t entityType) const;
+
+    void registerHUDIcon(uint32_t entityType, const GraphicsID& icon);
+    void registerHUDDisplayName(uint32_t entityType, const std::string& displayName);
+
   private:
     std::unordered_map<std::string, uint32_t> m_entityTypesByNames;
     std::unordered_set<uint32_t> m_entityTypes;
+    std::unordered_map<uint32_t, GraphicsID> m_icons;
+    std::unordered_map<uint32_t, std::string> m_displayName;
 };
 
 } // namespace core
