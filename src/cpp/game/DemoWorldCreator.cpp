@@ -402,54 +402,65 @@ void DemoWorldCreator::createHUD()
                                        ->withDirection(ui::LayoutDirection::Horizontal)
                                        ->withSpacing(10)
                                        ->withMargin(20)
-                                       ->withRect(Rect<int>(0, 0, 290, 145)))
+                                       ->withRect(Rect<int>(0, 0, 350, 145)))
             {
 
                 WITH(auto basicInfoLayout = infoLayout->createChild<ui::Layout>()
                                                 ->withDirection(ui::LayoutDirection::Vertical)
-                                                ->withRect(Rect<int>(0, 0, 100, 145)))
+                                                ->withRect(Rect<int>(0, 0, 80, 145)))
                 {
                     basicInfoLayout->createChild<ui::Label>()
                         ->withTextColor(core::Color::BLACK)
-                        ->withRect(Rect<int>(0, 0, 100, 20))
+                        ->withRect(Rect<int>(0, 0, 80, 20))
                         ->withName("selected_name")
                         ->withVisible(false);
                     basicInfoLayout->createChild<ui::Label>()
-                        ->withRect(Rect<int>(0, 0, 50, 50))
+                        ->withRect(Rect<int>(0, 0, m_iconSize, m_iconSize))
                         ->withName("selected_icon")
                         ->withVisible(false);
                 }
 
                 WITH(auto extendedInfoLayout = infoLayout->createChild<ui::Layout>()
-                                                   ->withDirection(ui::LayoutDirection::Vertical)
+                                                   ->withDirection(ui::LayoutDirection::Horizontal)
                                                    ->withMargin(20)
-                                                   ->withRect(Rect<int>(0, 0, 200, 145)))
+                                                   ->withSpacing(10)
+                                                   ->withRect(Rect<int>(0, 0, 250, 145)))
                 {
-                    // Two labels to display the progress and item in two lines. eg:
-                    // Creating - 50%
-                    // Villager
-                    //
                     extendedInfoLayout->createChild<ui::Label>()
-                                                     ->withTextColor(core::Color::BLACK)
-                                                     ->withRect(Rect<int>(0, 0, 150, 20))
-                                                     ->withName("progress_label")
-                                                     ->withVisible(false);
-
-                    extendedInfoLayout->createChild<ui::Label>()
-                        ->withTextColor(core::Color::BLACK)
-                        ->withRect(Rect<int>(0, 0, 150, 20))
-                        ->withName("progress_item_name")
+                        ->withRect(Rect<int>(0, 0, m_iconSize, m_iconSize))
+                        ->withName("unit_creating")
                         ->withVisible(false);
 
-                    GraphicsID progressBarBackground;
-                    progressBarBackground.entityType = EntityTypes::ET_UI_ELEMENT;
-                    progressBarBackground.entitySubType = EntitySubTypes::UI_PROGRESS_BAR;
-                    auto constructionProgressBarLabel =
-                        extendedInfoLayout->createChild<ui::Label>()
+                    WITH(auto progressBarLayout = extendedInfoLayout->createChild<ui::Layout>()
+                        ->withDirection(ui::LayoutDirection::Vertical)
+                        ->withRect(Rect<int>(0, 0, 200, 145)))
+                    {
+                        // Two labels to display the progress and item in two lines. eg:
+                        // Creating - 50%
+                        // Villager
+                        //
+                        progressBarLayout->createChild<ui::Label>()
+                            ->withTextColor(core::Color::BLACK)
+                            ->withRect(Rect<int>(0, 0, 150, 20))
+                            ->withName("progress_label")
+                            ->withVisible(false);
+
+                        progressBarLayout->createChild<ui::Label>()
+                            ->withTextColor(core::Color::BLACK)
+                            ->withRect(Rect<int>(0, 0, 150, 20))
+                            ->withName("progress_item_name")
+                            ->withVisible(false);
+
+                        GraphicsID progressBarBackground;
+                        progressBarBackground.entityType = EntityTypes::ET_UI_ELEMENT;
+                        progressBarBackground.entitySubType = EntitySubTypes::UI_PROGRESS_BAR;
+                        progressBarLayout->createChild<ui::Label>()
                             ->withBackgroundImage(progressBarBackground)
                             ->withName("progress_bar_label")
                             ->withRect(Rect<int>(0, 0, 150, 10))
                             ->withVisible(false);
+                    }
+                    
                 }
             }
         }

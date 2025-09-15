@@ -47,9 +47,11 @@ class DemoWorldCreator : public core::SubSystem, public core::PropertyInitialize
     void createStoneOrGold(EntityTypes entityType, core::TileMap& gameMap, uint32_t x, uint32_t y);
     void createVillager(core::Ref<core::Player> player, const core::Tile& pos);
 
+  private:
     std::shared_ptr<core::GameSettings> m_settings;
     bool m_populateWorld = false;
     bool m_isReady = false;
+    const int m_iconSize = 36;
 };
 } // namespace game
 

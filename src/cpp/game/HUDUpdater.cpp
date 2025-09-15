@@ -55,6 +55,7 @@ void HUDUpdater::onTick(const Event& e)
     updateLabelRef(m_progressTextLabel, "progress_label");
     updateLabelRef(m_progressItemNameLabel, "progress_item_name");
     updateLabelRef(m_progressBarLabel, "progress_bar_label");
+    updateLabelRef(m_unitInProgressIcon, "unit_creating");
     updatePlayerControllerRef();
 
     updateResourcePanel();
@@ -69,6 +70,7 @@ void HUDUpdater::onUnitSelection(const Event& e)
     m_selectedName->setVisible(false);
     m_progressTextLabel->setVisible(false);
     m_progressItemNameLabel->setVisible(false);
+    m_unitInProgressIcon->setVisible(false);
     m_progressBarLabel->setVisible(false);
 
     m_currentSelection = e.getData<EntitySelectionData>().selection;
@@ -112,6 +114,7 @@ void HUDUpdater::updateProgressBar()
                 m_progressTextLabel->setVisible(false);
                 m_progressItemNameLabel->setVisible(false);
                 m_progressBarLabel->setVisible(false);
+                m_unitInProgressIcon->setVisible(false);
 
                 if (gameState->hasComponent<CompUnitFactory>(entity))
                 {
@@ -122,10 +125,13 @@ void HUDUpdater::updateProgressBar()
                     {
                         auto displayName =
                             entityInfoRegistry->getHUDDisplayName(factory.productionQueue[0]);
+                        auto unitIcon =
+                            entityInfoRegistry->getHUDIcon(factory.productionQueue[0]);
                         m_progressTextLabel->setText(
                             std::format("Creating - {}%", (int) factory.currentUnitProgress));
 
                         m_progressItemNameLabel->setText(displayName);
+                        m_unitInProgressIcon->setBackgroundImage(unitIcon);
 
                         auto graphic = m_progressBarLabel->getBackgroundImage();
                         graphic.variation = factory.currentUnitProgress;
@@ -134,6 +140,7 @@ void HUDUpdater::updateProgressBar()
                         m_progressTextLabel->setVisible(true);
                         m_progressBarLabel->setVisible(true);
                         m_progressItemNameLabel->setVisible(true);
+                        m_unitInProgressIcon->setVisible(true);
                     }
                 }
             }
@@ -142,7 +149,7 @@ void HUDUpdater::updateProgressBar()
                 auto displayName = entityInfoRegistry->getHUDDisplayName(buildingInfo.entityType);
 
                 m_progressTextLabel->setText(
-                    std::format("Constructing - {}%", building.constructionProgress));
+                    std::format("Building - {}%", building.constructionProgress));
                 m_progressItemNameLabel->setText(displayName);
                 auto graphic = m_progressBarLabel->getBackgroundImage();
                 graphic.variation = building.constructionProgress;
