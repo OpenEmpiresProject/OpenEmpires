@@ -979,8 +979,10 @@ ComponentType EntityDefinitionLoader::createCompUnitFactory(pybind11::object mod
             }
 
             auto maxQueueSize = readValue<int>(entityDefinition, "max_queue_size");
+            auto unitCreationSpeed = readValue<int>(entityDefinition, "unit_creation_speed");
 
             PropertyInitializer::set<uint32_t>(comp.maxQueueSize, maxQueueSize);
+            PropertyInitializer::set<uint32_t>(comp.unitCreationSpeed, unitCreationSpeed);
             PropertyInitializer::set<std::vector<std::string>>(comp.producibleUnitNames,
                                                                producibleUnitNames);
             PropertyInitializer::set<std::unordered_map<char, std::string>>(

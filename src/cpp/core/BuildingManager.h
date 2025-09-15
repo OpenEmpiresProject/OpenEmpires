@@ -28,8 +28,9 @@ class BuildingManager : public EventHandler
   private:
     void onBuildingRequest(const Event& e);
     void onTick(const Event& e);
+    void updateInProgressUnitCreations(auto& tick);
+    void updateInProgressConstructions();
     void onQueueUnit(const Event& e);
-
     uint32_t createBuilding(const BuildingPlacementData& request);
     void onCompleteBuilding(uint32_t entity,
                             const CompBuilding& building,

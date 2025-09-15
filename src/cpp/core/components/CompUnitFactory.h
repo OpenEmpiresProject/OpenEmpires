@@ -17,6 +17,7 @@ class CompUnitFactory
     Property<std::unordered_map<char, uint32_t>> producibleUnitShortcuts;
     Property<std::unordered_map<char, std::string>> producibleUnitNamesByShortcuts;
     Property<uint32_t> maxQueueSize;
+    Property<uint32_t> unitCreationSpeed;
 
   public:
     std::vector<uint32_t> productionQueue; // Entity types

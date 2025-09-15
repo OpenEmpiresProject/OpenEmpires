@@ -5,17 +5,21 @@
 #include "EventHandler.h"
 #include "UI.h"
 #include "utils/Types.h"
+#include "PlayerController.h"
 
 namespace game
 {
 class HUDUpdater : public core::EventHandler
 {
   public:
-    HUDUpdater(/* args */);
+    HUDUpdater();
     ~HUDUpdater();
 
   private:
     void onTick(const core::Event& e);
+    void updateResourcePanel();
+    void updateProgressBar();
+    void updatePlayerControllerRef();
     void updateLabelRef(core::Ref<core::ui::Label>& label, const std::string& text);
     void onUnitSelection(const core::Event& e);
 
@@ -30,6 +34,7 @@ class HUDUpdater : public core::EventHandler
     core::Ref<core::ui::Label> m_progressItemNameLabel;
     core::Ref<core::ui::Label> m_progressBarLabel;
     core::EntitySelection m_currentSelection;
+    core::Ref<core::PlayerController> m_playerController;
 };
 
 } // namespace game

@@ -147,7 +147,7 @@ all_units: List[Unit] = [
         display_name="Villager",
         line_of_sight=256*5,
         moving_speed=256,
-        build_speed=20,
+        build_speed=40,
         gather_speed=10,
         resource_capacity=100,
         icon=Icon(drs_file="interfac.drs", slp_id=50730, index=16),
@@ -223,7 +223,8 @@ all_buildings: List[Building] = [
         display_name="Town Center",
         line_of_sight=256*5,
         size="huge",
-        accepted_resources=["gold", "stone", "food"], 
+        accepted_resources=["gold", "stone", "food"],
+        unit_creation_speed=40,
         producible_units=[ProducibleUnit(name="villager", shortcut="v")],
         max_queue_size=10,
         graphics={"default": CompositeGraphic(
@@ -236,7 +237,7 @@ all_buildings: List[Building] = [
                 Graphic(slp_id=4621, anchor=Point(x=-161,y=0)), 
                 Graphic(slp_id=3597, anchor=Point(x=185,y=47)), 
                 Graphic(slp_id=4613, anchor=Point(x=-46,y=48))])},
-        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=39)
+        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=28)
     ),
 ]
 

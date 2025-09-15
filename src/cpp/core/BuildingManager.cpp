@@ -25,76 +25,8 @@ BuildingManager::BuildingManager()
 
 void BuildingManager::onTick(const Event& e)
 {
-    for (auto entity : CompDirty::g_dirtyEntities)
-    {
-        if (ServiceRegistry::getInstance().getService<GameState>()->hasComponent<CompBuilding>(
-                entity))
-        {
-            auto [transform, building, info, player] =
-                m_gameState->getComponents<CompTransform, CompBuilding, CompEntityInfo, CompPlayer>(
-                    entity);
-
-            info.variation = building.getVariationByConstructionProgress();
-
-            if (building.constructionProgress >= 100)
-            {
-                onCompleteBuilding(entity, building, transform, player);
-                info.variation = 0;
-                info.entitySubType =
-                    0; // Reseting entity sub type will essentially remove construction site
-            }
-
-            spam("Progress {}, Building subtype: {}, variation {}", building.constructionProgress,
-                 info.entitySubType, info.variation);
-
-            if (building.constructionProgress > 1 && building.isInStaticMap == false)
-            {
-                auto& gameMap = ServiceRegistry::getInstance().getService<GameState>()->gameMap();
-
-                for (size_t i = 0; i < building.size.value().width; i++)
-                {
-                    for (size_t j = 0; j < building.size.value().height; j++)
-                    {
-                        gameMap.addEntity(MapLayerType::STATIC,
-                                          transform.position.toTile() - Tile(i, j), entity);
-                        gameMap.removeEntity(MapLayerType::ON_GROUND,
-                                             transform.position.toTile() - Tile(i, j), entity);
-                    }
-                }
-
-                building.isInStaticMap = true;
-            }
-        }
-    }
-
-    auto& tick = e.getData<TickData>();
-
-    for (auto it = m_activeFactories.begin(); it != m_activeFactories.end();)
-    {
-        auto& activeFactory = *it;
-        activeFactory.factory.currentUnitProgress += float(10) * tick.deltaTimeMs / 1000.0f;
-
-        spdlog::debug("Unit {} progress {}", activeFactory.factory.productionQueue.at(0),
-                      activeFactory.factory.currentUnitProgress);
-
-        if (activeFactory.factory.currentUnitProgress > 100)
-        {
-            UnitCreationData data;
-            data.entityType = activeFactory.factory.productionQueue.at(0);
-            data.player = activeFactory.player;
-            data.position = findVacantPositionAroundBuilding(activeFactory.building);
-            publishEvent(Event::Type::UNIT_CREATION_FINISHED, data);
-
-            activeFactory.factory.currentUnitProgress = 0;
-            activeFactory.factory.productionQueue.erase(
-                activeFactory.factory.productionQueue.begin());
-        }
-
-        if (activeFactory.factory.productionQueue.empty())
-            it = m_activeFactories.erase(it);
-        else
-            ++it;
-    }
+    updateInProgressConstructions();
+    updateInProgressUnitCreations(e.getData<TickData>());
 }
 
 void BuildingManager::onCompleteBuilding(uint32_t entity,
@@ -104,7 +36,6 @@ void BuildingManager::onCompleteBuilding(uint32_t entity,
 {
     player.player->getFogOfWar()->markAsExplored(transform.position.toTile().centerInFeet(),
                                                  building.size, building.lineOfSight);
-
     player.player->addEntity(entity);
 }
 
@@ -168,4 +99,77 @@ Feet BuildingManager::findVacantPositionAroundBuilding(uint32_t building)
     // TODO: Temp
     Tile newPos = tile + 1;
     return newPos.toFeet();
+}
+
+void BuildingManager::updateInProgressConstructions()
+{
+    for (auto entity : CompDirty::g_dirtyEntities)
+    {
+        if (ServiceRegistry::getInstance().getService<GameState>()->hasComponent<CompBuilding>(
+                entity))
+        {
+            auto [transform, building, info, player] =
+                m_gameState->getComponents<CompTransform, CompBuilding, CompEntityInfo, CompPlayer>(
+                    entity);
+
+            info.variation = building.getVariationByConstructionProgress();
+
+            if (building.constructionProgress >= 100)
+            {
+                onCompleteBuilding(entity, building, transform, player);
+                info.variation = 0;
+                info.entitySubType =
+                    0; // Reseting entity sub type will essentially remove construction site
+            }
+
+            spam("Progress {}, Building subtype: {}, variation {}", building.constructionProgress,
+                 info.entitySubType, info.variation);
+
+            if (building.constructionProgress > 1 && building.isInStaticMap == false)
+            {
+                auto& gameMap = ServiceRegistry::getInstance().getService<GameState>()->gameMap();
+
+                for (size_t i = 0; i < building.size.value().width; i++)
+                {
+                    for (size_t j = 0; j < building.size.value().height; j++)
+                    {
+                        gameMap.addEntity(MapLayerType::STATIC,
+                                          transform.position.toTile() - Tile(i, j), entity);
+                        gameMap.removeEntity(MapLayerType::ON_GROUND,
+                                             transform.position.toTile() - Tile(i, j), entity);
+                    }
+                }
+
+                building.isInStaticMap = true;
+            }
+        }
+    }
+}
+
+void BuildingManager::updateInProgressUnitCreations(auto& tick)
+{
+    for (auto it = m_activeFactories.begin(); it != m_activeFactories.end();)
+    {
+        auto& activeFactoryInfo = *it;
+        activeFactoryInfo.factory.currentUnitProgress +=
+            float(activeFactoryInfo.factory.unitCreationSpeed) * tick.deltaTimeMs / 1000.0f;
+
+        if (activeFactoryInfo.factory.currentUnitProgress > 100)
+        {
+            UnitCreationData data;
+            data.entityType = activeFactoryInfo.factory.productionQueue.at(0);
+            data.player = activeFactoryInfo.player;
+            data.position = findVacantPositionAroundBuilding(activeFactoryInfo.building);
+            publishEvent(Event::Type::UNIT_CREATION_FINISHED, data);
+
+            activeFactoryInfo.factory.currentUnitProgress = 0;
+            activeFactoryInfo.factory.productionQueue.erase(
+                activeFactoryInfo.factory.productionQueue.begin());
+        }
+
+        if (activeFactoryInfo.factory.productionQueue.empty())
+            it = m_activeFactories.erase(it);
+        else
+            ++it;
+    }
 }
