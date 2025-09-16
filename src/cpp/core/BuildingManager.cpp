@@ -96,9 +96,38 @@ Feet BuildingManager::findVacantPositionAroundBuilding(uint32_t building)
     auto [transform, buildingComp] =
         m_gameState->getComponents<CompTransform, CompBuilding>(building);
     auto tile = transform.position.toTile();
-    // TODO: Temp
-    Tile newPos = tile + 1;
-    return newPos.toFeet();
+    auto bottomCorner = tile + 1;
+    Tile pos = bottomCorner;
+
+    auto size = buildingComp.size.value();
+    auto tileMap = m_gameState->gameMap();
+
+    // Find vacant tile through bottom left edge of the building
+    for (int dx = 0; dx < size.width + 2; ++dx)
+    {
+        pos.x = bottomCorner.x - dx;
+        if (tileMap.isOccupied(MapLayerType::UNITS, pos) == false &&
+            tileMap.isOccupied(MapLayerType::STATIC, pos) == false)
+        {
+            return pos.centerInFeet();
+        }
+    }
+
+    pos = bottomCorner;
+    // Find vacant tile through bottom right edge of the building
+    for (int dy = 0; dy < size.height + 2; ++dy)
+    {
+        pos.y = bottomCorner.y - dy;
+        if (tileMap.isOccupied(MapLayerType::UNITS, pos) == false &&
+            tileMap.isOccupied(MapLayerType::STATIC, pos) == false)
+        {
+            return pos.centerInFeet();
+        }
+    }
+    // TODO: Need to find a vacant area somehow, or push others away
+    spdlog::warn(
+        "Could not find vacant area to place the unit, proceeding bottom corner for now. TODO");
+    return pos.centerInFeet();
 }
 
 void BuildingManager::updateInProgressConstructions()
