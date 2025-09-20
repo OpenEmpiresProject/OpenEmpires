@@ -88,7 +88,7 @@ void BuildingManager::onQueueUnit(const Event& e)
     factory.productionQueue.push_back(data.entityType);
 
     ActiveFactoryInfo info{.factory = factory, .building = data.building, .player = data.player};
-    m_activeFactories.push_back(info);
+    m_activeFactories.emplace(data.building, info);
 }
 
 Feet BuildingManager::findVacantPositionAroundBuilding(uint32_t building)
@@ -179,24 +179,24 @@ void BuildingManager::updateInProgressUnitCreations(auto& tick)
 {
     for (auto it = m_activeFactories.begin(); it != m_activeFactories.end();)
     {
-        auto& activeFactoryInfo = *it;
-        activeFactoryInfo.factory.currentUnitProgress +=
-            float(activeFactoryInfo.factory.unitCreationSpeed) * tick.deltaTimeMs / 1000.0f;
+        auto& activeFactoryInfo = it->second;
+        CompUnitFactory& factory = activeFactoryInfo.factory.get();
+        factory.currentUnitProgress +=
+            float(factory.unitCreationSpeed) * tick.deltaTimeMs / 1000.0f;
 
-        if (activeFactoryInfo.factory.currentUnitProgress > 100)
+        if (factory.currentUnitProgress > 100)
         {
             UnitCreationData data;
-            data.entityType = activeFactoryInfo.factory.productionQueue.at(0);
+            data.entityType = factory.productionQueue.at(0);
             data.player = activeFactoryInfo.player;
             data.position = findVacantPositionAroundBuilding(activeFactoryInfo.building);
             publishEvent(Event::Type::UNIT_CREATION_FINISHED, data);
 
-            activeFactoryInfo.factory.currentUnitProgress = 0;
-            activeFactoryInfo.factory.productionQueue.erase(
-                activeFactoryInfo.factory.productionQueue.begin());
+            factory.currentUnitProgress = 0;
+            factory.productionQueue.erase(factory.productionQueue.begin());
         }
 
-        if (activeFactoryInfo.factory.productionQueue.empty())
+        if (factory.productionQueue.empty())
             it = m_activeFactories.erase(it);
         else
             ++it;

@@ -31,7 +31,7 @@ class Constants
     // frame delay will be capped to this.
     static const int MAX_FRAME_DELAY_MS = 500;
 
-    static const int ABSOLUTE_MAX_UNIT_QUEUE_SIZE = 100;
+    static const int ABSOLUTE_MAX_UNIT_QUEUE_SIZE = 20;
 };
 } // namespace core
 

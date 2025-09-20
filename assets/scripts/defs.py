@@ -224,7 +224,7 @@ all_buildings: List[Building] = [
         line_of_sight=256*5,
         size="huge",
         accepted_resources=["gold", "stone", "food"],
-        unit_creation_speed=40,
+        unit_creation_speed=10,
         producible_units=[ProducibleUnit(name="villager", shortcut="v")],
         max_queue_size=10,
         graphics={"default": CompositeGraphic(
@@ -257,7 +257,7 @@ all_tilesets: List[TileSet] = [
 ]
 
 all_ui_elements: List[UIElement] = [
-    UIElement(name="resource_panel", graphics={"default":Graphic(drs_file="interfac.drs", slp_id=51101, clip_rect=Rect(w=400, h=25))}),
-    UIElement(name="control_panel", graphics={"default":Graphic(drs_file="interfac.drs", slp_id=51101, clip_rect=Rect(y=454, w=506, h=145))}),
+    UIElement(name="resource_panel", graphics={"default":Graphic(drs_file="interfac.drs", slp_id=51135, clip_rect=Rect(w=400, h=25))}),
+    UIElement(name="control_panel", graphics={"default":Graphic(drs_file="interfac.drs", slp_id=51135, clip_rect=Rect(y=593, w=680, h=175))}),
     UIElement(name="progress_bar", graphics={"default":Graphic(drs_file="interfac.drs", slp_id=50764)})
 ]

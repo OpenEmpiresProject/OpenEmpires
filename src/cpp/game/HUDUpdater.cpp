@@ -55,8 +55,13 @@ void HUDUpdater::onTick(const Event& e)
     updateLabelRef(m_progressTextLabel, "progress_label");
     updateLabelRef(m_progressItemNameLabel, "progress_item_name");
     updateLabelRef(m_progressBarLabel, "progress_bar_label");
-    updateLabelRef(m_unitInProgressIcon, "unit_creating");
+    updateLabelRef(m_unitInProgressIcon, "unit_creating_icon");
     updatePlayerControllerRef();
+
+    for (int i = 0; i < Constants::ABSOLUTE_MAX_UNIT_QUEUE_SIZE; ++i)
+    {
+        updateLabelRef(m_queuedUnitIcons[i], fmt::format("queued_unit_icon_{}", i));
+    }
 
     updateResourcePanel();
     updateProgressBar();
@@ -115,6 +120,10 @@ void HUDUpdater::updateProgressBar()
                 m_progressItemNameLabel->setVisible(false);
                 m_progressBarLabel->setVisible(false);
                 m_unitInProgressIcon->setVisible(false);
+                for (int i = 0; i < Constants::ABSOLUTE_MAX_UNIT_QUEUE_SIZE; ++i)
+                {
+                    m_queuedUnitIcons[i]->setVisible(false);
+                }
 
                 if (gameState->hasComponent<CompUnitFactory>(entity))
                 {
@@ -141,6 +150,13 @@ void HUDUpdater::updateProgressBar()
                         m_progressBarLabel->setVisible(true);
                         m_progressItemNameLabel->setVisible(true);
                         m_unitInProgressIcon->setVisible(true);
+                    }
+
+                    for (int i = 1; i < factory.productionQueue.size(); ++i)
+                    {
+                        auto unitIcon = entityInfoRegistry->getHUDIcon(factory.productionQueue[i]);
+                        m_queuedUnitIcons[i - 1]->setBackgroundImage(unitIcon);
+                        m_queuedUnitIcons[i - 1]->setVisible(true);
                     }
                 }
             }

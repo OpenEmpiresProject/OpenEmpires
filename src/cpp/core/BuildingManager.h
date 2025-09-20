@@ -4,6 +4,9 @@
 #include "EventHandler.h"
 #include "components/CompUnitFactory.h"
 
+#include <map>
+#include <functional>
+
 namespace core
 {
 class CompBuilding;
@@ -17,13 +20,13 @@ class BuildingManager : public EventHandler
   private:
     struct ActiveFactoryInfo
     {
-        CompUnitFactory& factory;
+        std::reference_wrapper<CompUnitFactory> factory;
         uint32_t building;
         Ref<Player> player;
     };
 
     Ref<GameState> m_gameState;
-    std::list<ActiveFactoryInfo> m_activeFactories;
+    std::map<uint32_t /*building id*/, ActiveFactoryInfo> m_activeFactories;
 
   private:
     void onBuildingRequest(const Event& e);

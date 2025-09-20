@@ -71,6 +71,24 @@ class Widget : public std::enable_shared_from_this<Widget>
     virtual void updateGraphicCommand();
     Rect<int> getAbsoluteRect() const;
 
+    void setPos(int x, int y);
+    void setSize(int width, int height);
+
+    auto withPos(int x, int y)
+    {
+        setPos(x, y);
+        return std::static_pointer_cast<std::remove_reference_t<decltype(*this)>>(
+            this->shared_from_this());     
+    }
+
+    auto withSize(int width, int height)
+    {
+        setSize(width, height);
+        return std::static_pointer_cast<std::remove_reference_t<decltype(*this)>>(
+            this->shared_from_this());
+    }
+
+
     DEFINE_GETTER_SETTER(rect, Rect);
     DEFINE_GETTER_SETTER(name, Name);
     DEFINE_GETTER_SETTER(enabled, Enabled);

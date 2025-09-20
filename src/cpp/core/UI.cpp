@@ -135,6 +135,18 @@ Ref<Widget> Widget::findChild(const std::string& name) const
     return nullptr;
 }
 
+void Widget::setPos(int x, int y)
+{
+    rect.x = x;
+    rect.y = y;
+}
+
+void Widget::setSize(int width, int height)
+{
+    rect.w = width;
+    rect.h = height;
+}
+
 Label::Label(Ref<Widget> parent) : Widget(parent)
 {
 }
@@ -195,28 +207,84 @@ Layout::Layout(Ref<Widget> parent) : Widget(parent)
 
 void Layout::updateGraphicCommand()
 {
+    /*
+    *   Approach: Check whether visible children of this layout would exceed the size
+    *   (width or height depending on the layout direction). Then calculate the offset
+    *   that each child has to bring back (i.e. adjust) to avoid overflowing children.
+    *   These new positions will be assigned forcefully to children (only the width 
+    *   and height of children will be preserved).
+    */
+
     if (direction == LayoutDirection::Horizontal)
     {
+        int overflowNegationOffset = 0;
+
+        if (rect.w > 0)
+        {
+            int totalWidthRequiredForChildren = 0;
+            int visibleChildCount = 0;
+            for (auto& child : children)
+            {
+                if (child->getVisible())
+                {
+                    totalWidthRequiredForChildren += child->getRect().w + spacing;
+                    visibleChildCount++;
+                }
+            }
+
+            int availableTotalWidth = rect.w - 2 * margin; // Margins are on both ends
+            int overflowWidth = std::max(0, totalWidthRequiredForChildren - availableTotalWidth);
+            overflowNegationOffset = overflowWidth / std::max(1, visibleChildCount);
+        }
+
         int newX = margin;
+        int i = 0;
         for (auto& child : children)
         {
-            auto& rect = child->getRect();
-            rect.x = newX;
-            rect.y = margin;
-            child->setRect(rect);
-            newX += rect.w + spacing;
+            if (child->getVisible())
+            {
+                auto& rect = child->getRect();
+                rect.x = newX;
+                rect.y = margin;
+                child->setRect(rect);
+                newX += rect.w + spacing - (overflowNegationOffset * 1);
+            }
         }
     }
     else if (direction == LayoutDirection::Vertical)
     {
+        int overflowNegationOffset = 0;
+
+        if (rect.h > 0)
+        {
+            int totalHeightRequiredForChildren = 0;
+            int visibleChildCount = 0;
+            for (auto& child : children)
+            {
+                if (child->getVisible())
+                {
+                    totalHeightRequiredForChildren += child->getRect().h + spacing;
+                    visibleChildCount++;
+                }
+            }
+
+            int availableTotalHeight = rect.h - 2 * margin; // Margins are on both ends
+            int overflowHeight = std::max(0, totalHeightRequiredForChildren - availableTotalHeight);
+            overflowNegationOffset = overflowHeight / std::max((size_t) 1, children.size());
+        }
+      
         int newY = margin;
+        int i = 0;
         for (auto& child : children)
         {
-            auto& rect = child->getRect();
-            rect.y = newY;
-            rect.x = margin;
-            child->setRect(rect);
-            newY += rect.h + spacing;
+            if (child->getVisible())
+            {
+                auto& rect = child->getRect();
+                rect.y = newY;
+                rect.x = margin;
+                child->setRect(rect);
+                newY += rect.h + spacing - (overflowNegationOffset * 1);
+            }
         }
     }
     Widget::updateGraphicCommand();
