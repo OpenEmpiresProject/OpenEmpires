@@ -388,26 +388,24 @@ void DemoWorldCreator::createHUD()
 
         controlPanel->withName("controlPanel")
             ->withBackgroundImage(controlPanelBackground)
-            ->withRect(Rect<int>(0, -1, 506, 175)); // -1 is to attach to bottom of screen
+            ->withRect(Rect<int>(0, -1, 675, 175)); // -1 is to attach to bottom of screen
         ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(controlPanel);
 
         WITH(auto hLayout = controlPanel->createChild<ui::Layout>())
         {
-            WITH(auto commandsLayout = hLayout->createChild<ui::Layout>())
-            {
-                commandsLayout->setSize(275, 175);
-            }
+            WITH(auto commandsLayout = hLayout->createChild<ui::Layout>()->withSize(275, 0))
+            {}
 
             WITH(auto infoLayout = hLayout->createChild<ui::Layout>()
                                        ->withDirection(ui::LayoutDirection::Horizontal)
                                        ->withSpacing(10)
                                        ->withMargin(20)
-                                       ->withSize(400, 175))
+                                       ->withSize(400, 0))
             {
 
                 WITH(auto basicInfoLayout = infoLayout->createChild<ui::Layout>()
                                                 ->withDirection(ui::LayoutDirection::Vertical)
-                                                ->withSize(80, 175))
+                                                ->withSize(80, 0))
                 {
                     basicInfoLayout->createChild<ui::Label>()
                         ->withTextColor(core::Color::BLACK)
@@ -423,24 +421,23 @@ void DemoWorldCreator::createHUD()
                 WITH(auto unitCreationLayout = infoLayout->createChild<ui::Layout>()
                                                 ->withDirection(ui::LayoutDirection::Vertical)
                                                 ->withMargin(20)
-                                                ->withSize(250, 180))
+                                                ->withSize(250, 0))
                 {
                     WITH(auto currentInProgressDetailsLayout =
                              unitCreationLayout->createChild<ui::Layout>()
                                  ->withDirection(ui::LayoutDirection::Horizontal)
                                  ->withSpacing(10)
-                                 ->withSize(250, 60))
+                                 ->withSize(0, 60))
                     {
                         currentInProgressDetailsLayout->createChild<ui::Label>()
-                            ->withSize(m_iconSize, m_iconSize)
+                            ->withSize(m_iconSize, 0)
                             ->withName("unit_creating_icon")
                             ->withVisible(false);
-
 
                         WITH(auto progressBarLayout =
                                  currentInProgressDetailsLayout->createChild<ui::Layout>()
                                      ->withDirection(ui::LayoutDirection::Vertical)
-                                     ->withSize(200, 175))
+                                     ->withSize(250 - m_iconSize - 10 /*spacing*/, 0))
                         {
                             // Two labels to display the progress and item in two lines. eg:
                             // Creating - 50%
@@ -448,13 +445,13 @@ void DemoWorldCreator::createHUD()
                             //
                             progressBarLayout->createChild<ui::Label>()
                                 ->withTextColor(core::Color::BLACK)
-                                ->withSize(150, 20)
+                                ->withSize(0, 20)
                                 ->withName("progress_label")
                                 ->withVisible(false);
 
                             progressBarLayout->createChild<ui::Label>()
                                 ->withTextColor(core::Color::BLACK)
-                                ->withSize(150, 20)
+                                ->withSize(0, 20)
                                 ->withName("progress_item_name")
                                 ->withVisible(false);
 
@@ -464,7 +461,7 @@ void DemoWorldCreator::createHUD()
                             progressBarLayout->createChild<ui::Label>()
                                 ->withBackgroundImage(progressBarBackground)
                                 ->withName("progress_bar_label")
-                                ->withSize(150, 10)
+                                ->withSize(0, 10)
                                 ->withVisible(false);
                         }
                     } 
@@ -473,7 +470,7 @@ void DemoWorldCreator::createHUD()
                         unitCreationLayout->createChild<ui::Layout>()
                         ->withDirection(ui::LayoutDirection::Horizontal)
                         ->withSpacing(5)
-                        ->withSize(250, m_iconSize))
+                        ->withSize(0, m_iconSize))
                     {
                         for (int i = 0; i < Constants::ABSOLUTE_MAX_UNIT_QUEUE_SIZE; ++i)
                         {

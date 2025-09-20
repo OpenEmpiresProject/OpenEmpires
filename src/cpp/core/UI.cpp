@@ -80,6 +80,20 @@ void Widget::updateGraphicCommand()
 
     for (auto& child : children)
     {
+        // Stretch child to fit to this widget
+        auto& childRect = child->getRect();
+        int newWidth = childRect.w;
+        int newHeight = childRect.h;
+
+        if (childRect.w == 0)
+        {
+            newWidth = rect.w;
+        }
+        if (childRect.h == 0)
+        {
+            newHeight = rect.h;
+        }
+        child->setSize(newWidth, newHeight);
         child->updateGraphicCommand();
     }
 }
