@@ -4,12 +4,9 @@
 #include "GraphicsRegistry.h"
 #include "PlayerController.h"
 #include "PlayerFactory.h"
-#include "ServiceRegistry.h"
-#include "UIManager.h"
 #include "components/CompBuilding.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompSelectible.h"
-#include "utils/Logger.h"
 #include "components/CompUnitFactory.h"
 #include "EntityTypeRegistry.h"
 
@@ -26,41 +23,24 @@ HUDUpdater::~HUDUpdater()
 {
 }
 
-void HUDUpdater::updateLabelRef(Ref<core::ui::Label>& label, const std::string& text)
-{
-    if (label == nullptr)
-    {
-        auto uiManager = ServiceRegistry::getInstance().getService<UIManager>();
-        auto& windows = uiManager->getWindows();
-        for (auto window : windows)
-        {
-            auto child = window->findChild(text);
-            if (child != nullptr)
-            {
-                label = std::static_pointer_cast<ui::Label>(child);
-                return;
-            }
-        }
-        spdlog::error("Could not find {} label element", text);
-    }
-}
-
 void HUDUpdater::onTick(const Event& e)
 {
     // Late binding label pointers
-    updateLabelRef(m_woodLabel, "wood");
-    updateLabelRef(m_stoneabel, "stone");
-    updateLabelRef(m_goldLabel, "gold");
-    updateLabelRef(m_playerIdLabel, "player");
-    updateLabelRef(m_progressTextLabel, "progress_label");
-    updateLabelRef(m_progressItemNameLabel, "progress_item_name");
-    updateLabelRef(m_progressBarLabel, "progress_bar_label");
-    updateLabelRef(m_unitInProgressIcon, "unit_creating_icon");
+    updateUIElementRef(m_woodLabel, "wood");
+    updateUIElementRef(m_stoneabel, "stone");
+    updateUIElementRef(m_goldLabel, "gold");
+    updateUIElementRef(m_playerIdLabel, "player");
+    updateUIElementRef(m_progressTextLabel, "progress_label");
+    updateUIElementRef(m_progressItemNameLabel, "progress_item_name");
+    updateUIElementRef(m_progressBarLabel, "progress_bar_label");
+    updateUIElementRef(m_unitInProgressIcon, "unit_creating_icon");
+    updateUIElementRef(m_creationInProgressGroup, "creation_in_progress_group");
+    updateUIElementRef(m_creationQueueGroup, "creation_queue_group");
     updatePlayerControllerRef();
 
     for (int i = 0; i < Constants::ABSOLUTE_MAX_UNIT_QUEUE_SIZE; ++i)
     {
-        updateLabelRef(m_queuedUnitIcons[i], fmt::format("queued_unit_icon_{}", i));
+        updateUIElementRef(m_queuedUnitIcons[i], fmt::format("queued_unit_icon_{}", i));
     }
 
     updateResourcePanel();
@@ -69,14 +49,12 @@ void HUDUpdater::onTick(const Event& e)
 
 void HUDUpdater::onUnitSelection(const Event& e)
 {
-    updateLabelRef(m_selectedIcon, "selected_icon");
-    updateLabelRef(m_selectedName, "selected_name");
+    updateUIElementRef(m_selectedIcon, "selected_icon");
+    updateUIElementRef(m_selectedName, "selected_name");
     m_selectedIcon->setVisible(false);
     m_selectedName->setVisible(false);
-    m_progressTextLabel->setVisible(false);
-    m_progressItemNameLabel->setVisible(false);
-    m_unitInProgressIcon->setVisible(false);
-    m_progressBarLabel->setVisible(false);
+    m_creationInProgressGroup->hide();
+    m_creationQueueGroup->hide();
 
     m_currentSelection = e.getData<EntitySelectionData>().selection;
     auto gameState = ServiceRegistry::getInstance().getService<GameState>();
@@ -116,10 +94,9 @@ void HUDUpdater::updateProgressBar()
 
             if (building.isConstructed())
             {
-                m_progressTextLabel->setVisible(false);
-                m_progressItemNameLabel->setVisible(false);
-                m_progressBarLabel->setVisible(false);
-                m_unitInProgressIcon->setVisible(false);
+                m_creationInProgressGroup->hide();
+                m_creationQueueGroup->hide();
+
                 for (int i = 0; i < Constants::ABSOLUTE_MAX_UNIT_QUEUE_SIZE; ++i)
                 {
                     m_queuedUnitIcons[i]->setVisible(false);
@@ -146,17 +123,27 @@ void HUDUpdater::updateProgressBar()
                         graphic.variation = factory.currentUnitProgress;
                         m_progressBarLabel->setBackgroundImage(graphic);
 
-                        m_progressTextLabel->setVisible(true);
-                        m_progressBarLabel->setVisible(true);
-                        m_progressItemNameLabel->setVisible(true);
-                        m_unitInProgressIcon->setVisible(true);
+                        m_creationInProgressGroup->show();
                     }
 
-                    for (int i = 1; i < factory.productionQueue.size(); ++i)
+                    if (factory.productionQueue.empty() == false)
                     {
-                        auto unitIcon = entityInfoRegistry->getHUDIcon(factory.productionQueue[i]);
-                        m_queuedUnitIcons[i - 1]->setBackgroundImage(unitIcon);
-                        m_queuedUnitIcons[i - 1]->setVisible(true);
+                        m_creationQueueGroup->show();
+                    }
+
+                    for (int i = 1; i < Constants::ABSOLUTE_MAX_UNIT_QUEUE_SIZE; ++i)
+                    {
+                        if (i < factory.productionQueue.size())
+                        {
+                            auto unitIcon =
+                                entityInfoRegistry->getHUDIcon(factory.productionQueue[i]);
+                            m_queuedUnitIcons[i - 1]->setBackgroundImage(unitIcon);
+                            m_queuedUnitIcons[i - 1]->setVisible(true);
+                        }
+                        else
+                        {
+                            m_queuedUnitIcons[i - 1]->setVisible(false);
+                        }
                     }
                 }
             }
@@ -171,9 +158,7 @@ void HUDUpdater::updateProgressBar()
                 graphic.variation = building.constructionProgress;
                 m_progressBarLabel->setBackgroundImage(graphic);
 
-                m_progressTextLabel->setVisible(true);
-                m_progressBarLabel->setVisible(true);
-                m_progressItemNameLabel->setVisible(true);
+                m_creationInProgressGroup->show();
             }
         }
     }

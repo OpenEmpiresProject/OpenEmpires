@@ -161,6 +161,24 @@ void Widget::setSize(int width, int height)
     rect.h = height;
 }
 
+void Widget::hide()
+{
+    setVisible(false);
+    for (auto& child : children)
+    {
+        child->hide();
+    }
+}
+
+void Widget::show()
+{
+    setVisible(true);
+    for (auto& child : children)
+    {
+        child->show();
+    }
+}
+
 Label::Label(Ref<Widget> parent) : Widget(parent)
 {
 }

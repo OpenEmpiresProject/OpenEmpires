@@ -6,6 +6,9 @@
 #include "UI.h"
 #include "utils/Types.h"
 #include "PlayerController.h"
+#include "ServiceRegistry.h"
+#include "UIManager.h"
+#include "utils/Logger.h"
 
 namespace game
 {
@@ -20,7 +23,26 @@ class HUDUpdater : public core::EventHandler
     void updateResourcePanel();
     void updateProgressBar();
     void updatePlayerControllerRef();
-    void updateLabelRef(core::Ref<core::ui::Label>& label, const std::string& text);
+
+    template <typename T>
+    void updateUIElementRef(core::Ref<T>& elementRef, const std::string& text)
+    {
+        if (elementRef == nullptr)
+        {
+            auto uiManager = core::ServiceRegistry::getInstance().getService<core::UIManager>();
+            auto& windows = uiManager->getWindows();
+            for (auto& window : windows)
+            {
+                auto child = window->findChild(text);
+                if (child != nullptr)
+                {
+                    elementRef = std::static_pointer_cast<T>(child);
+                    return;
+                }
+            }
+            spdlog::error("Could not find {} element", text);
+        }
+    }
     void onUnitSelection(const core::Event& e);
 
   private:
@@ -37,6 +59,8 @@ class HUDUpdater : public core::EventHandler
     core::Ref<core::ui::Label> m_queuedUnitIcons[core::Constants::ABSOLUTE_MAX_UNIT_QUEUE_SIZE];
     core::EntitySelection m_currentSelection;
     core::Ref<core::PlayerController> m_playerController;
+    core::Ref<core::ui::Widget> m_creationInProgressGroup;
+    core::Ref<core::ui::Widget> m_creationQueueGroup;
 };
 
 } // namespace game

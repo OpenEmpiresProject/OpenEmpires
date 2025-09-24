@@ -38,7 +38,7 @@
 #include <random>
 #include <string>
 
-#define WITH(statement) statement;
+#define WITH(statement) if(statement)
 
 namespace fs = std::filesystem;
 using namespace game;
@@ -427,12 +427,12 @@ void DemoWorldCreator::createHUD()
                              unitCreationLayout->createChild<ui::Layout>()
                                  ->withDirection(ui::LayoutDirection::Horizontal)
                                  ->withSpacing(10)
+                                 ->withName("creation_in_progress_group")
                                  ->withSize(0, 60))
                     {
                         currentInProgressDetailsLayout->createChild<ui::Label>()
                             ->withSize(m_iconSize, 0)
-                            ->withName("unit_creating_icon")
-                            ->withVisible(false);
+                            ->withName("unit_creating_icon");
 
                         WITH(auto progressBarLayout =
                                  currentInProgressDetailsLayout->createChild<ui::Layout>()
@@ -446,14 +446,12 @@ void DemoWorldCreator::createHUD()
                             progressBarLayout->createChild<ui::Label>()
                                 ->withTextColor(core::Color::BLACK)
                                 ->withSize(0, 20)
-                                ->withName("progress_label")
-                                ->withVisible(false);
+                                ->withName("progress_label");
 
                             progressBarLayout->createChild<ui::Label>()
                                 ->withTextColor(core::Color::BLACK)
                                 ->withSize(0, 20)
-                                ->withName("progress_item_name")
-                                ->withVisible(false);
+                                ->withName("progress_item_name");
 
                             GraphicsID progressBarBackground;
                             progressBarBackground.entityType = EntityTypes::ET_UI_ELEMENT;
@@ -461,15 +459,17 @@ void DemoWorldCreator::createHUD()
                             progressBarLayout->createChild<ui::Label>()
                                 ->withBackgroundImage(progressBarBackground)
                                 ->withName("progress_bar_label")
-                                ->withSize(0, 10)
-                                ->withVisible(false);
+                                ->withSize(0, 10);
                         }
+
+                        currentInProgressDetailsLayout->hide();
                     } 
 
                     WITH(auto restOfUnitQueuedLayout =
                         unitCreationLayout->createChild<ui::Layout>()
                         ->withDirection(ui::LayoutDirection::Horizontal)
                         ->withSpacing(5)
+                        ->withName("creation_queue_group")
                         ->withSize(0, m_iconSize))
                     {
                         for (int i = 0; i < Constants::ABSOLUTE_MAX_UNIT_QUEUE_SIZE; ++i)

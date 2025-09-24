@@ -88,6 +88,8 @@ class Widget : public std::enable_shared_from_this<Widget>
             this->shared_from_this());
     }
 
+    void hide();
+    void show();
 
     DEFINE_GETTER_SETTER(rect, Rect);
     DEFINE_GETTER_SETTER(name, Name);
