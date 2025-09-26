@@ -38,7 +38,7 @@
 #include <random>
 #include <string>
 
-#define WITH(statement) if(statement)
+#define WITH(statement) if (statement)
 
 namespace fs = std::filesystem;
 using namespace game;
@@ -394,7 +394,8 @@ void DemoWorldCreator::createHUD()
         WITH(auto hLayout = controlPanel->createChild<ui::Layout>())
         {
             WITH(auto commandsLayout = hLayout->createChild<ui::Layout>()->withSize(275, 0))
-            {}
+            {
+            }
 
             WITH(auto infoLayout = hLayout->createChild<ui::Layout>()
                                        ->withDirection(ui::LayoutDirection::Horizontal)
@@ -419,9 +420,9 @@ void DemoWorldCreator::createHUD()
                 }
 
                 WITH(auto unitCreationLayout = infoLayout->createChild<ui::Layout>()
-                                                ->withDirection(ui::LayoutDirection::Vertical)
-                                                ->withMargin(20)
-                                                ->withSize(250, 0))
+                                                   ->withDirection(ui::LayoutDirection::Vertical)
+                                                   ->withMargin(20)
+                                                   ->withSize(250, 0))
                 {
                     WITH(auto currentInProgressDetailsLayout =
                              unitCreationLayout->createChild<ui::Layout>()
@@ -463,14 +464,14 @@ void DemoWorldCreator::createHUD()
                         }
 
                         currentInProgressDetailsLayout->setVisible(false);
-                    } 
+                    }
 
                     WITH(auto restOfUnitQueuedLayout =
-                        unitCreationLayout->createChild<ui::Layout>()
-                        ->withDirection(ui::LayoutDirection::Horizontal)
-                        ->withSpacing(5)
-                        ->withName("creation_queue_group")
-                        ->withSize(0, m_iconSize))
+                             unitCreationLayout->createChild<ui::Layout>()
+                                 ->withDirection(ui::LayoutDirection::Horizontal)
+                                 ->withSpacing(5)
+                                 ->withName("creation_queue_group")
+                                 ->withSize(0, m_iconSize))
                     {
                         for (int i = 0; i < Constants::ABSOLUTE_MAX_UNIT_QUEUE_SIZE; ++i)
                         {
@@ -481,8 +482,6 @@ void DemoWorldCreator::createHUD()
                         }
                     }
                 }
-
-               
             }
         }
     }

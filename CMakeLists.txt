@@ -14,6 +14,8 @@ set(PROJECT_VERSION_PATCH 0)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+message(STATUS "clang-format TEST1")
+
 if(MSVC)
 # Explicitly setting the flags to force static runtime. CMAKE_MSVC_RUNTIME_LIBRARY didn't work.
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd /W1") #  Temporarilty lowering to make the build faster
@@ -40,6 +42,7 @@ find_program(CLANG_FORMAT_BIN clang-format)
 
 # Check if clang-format was found
 if(CLANG_FORMAT_BIN)
+    message(STATUS "clang-format found at: ${CLANG_FORMAT_BIN}")
     # Add a custom target to run clang-format
     add_custom_target(format
         COMMAND ${CLANG_FORMAT_BIN}

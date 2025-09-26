@@ -82,7 +82,7 @@ void Widget::updateGraphicCommand()
 
     // OPTIMIZATION
     // Either the parent should be visible in order to display children or
-    // this is a dirty tick (where parent might be getting hidden) to let children 
+    // this is a dirty tick (where parent might be getting hidden) to let children
     // update graphic commands accordingly
     //
     if (visible || wasDirty)
@@ -103,7 +103,7 @@ void Widget::updateGraphicCommand()
                 newHeight = rect.h;
             }
             // Both the child's dirty and parentVisible should be based parent (this)
-            // Eg: 
+            // Eg:
             // 1) If I was dirty then my children are dirty too
             // 2) If I was hidden or my parent was hidden, then my children are hidden too
             //
@@ -239,12 +239,12 @@ Layout::Layout(Ref<Widget> parent) : Widget(parent)
 void Layout::updateGraphicCommand()
 {
     /*
-    *   Approach: Check whether visible children of this layout would exceed the size
-    *   (width or height depending on the layout direction). Then calculate the offset
-    *   that each child has to bring back (i.e. adjust) to avoid overflowing children.
-    *   These new positions will be assigned forcefully to children (only the width 
-    *   and height of children will be preserved).
-    */
+     *   Approach: Check whether visible children of this layout would exceed the size
+     *   (width or height depending on the layout direction). Then calculate the offset
+     *   that each child has to bring back (i.e. adjust) to avoid overflowing children.
+     *   These new positions will be assigned forcefully to children (only the width
+     *   and height of children will be preserved).
+     */
 
     if (direction == LayoutDirection::Horizontal)
     {
@@ -303,7 +303,7 @@ void Layout::updateGraphicCommand()
             int overflowHeight = std::max(0, totalHeightRequiredForChildren - availableTotalHeight);
             overflowNegationOffset = overflowHeight / std::max((size_t) 1, children.size());
         }
-      
+
         int newY = margin;
         int i = 0;
         for (auto& child : children)

@@ -854,7 +854,8 @@ bool isInstanceOf(py::object module,
     return false;
 }
 
-ComponentType EntityDefinitionLoader::createCompSelectible(uint32_t entityType, py::object module,
+ComponentType EntityDefinitionLoader::createCompSelectible(uint32_t entityType,
+                                                           py::object module,
                                                            pybind11::handle entityDefinition)
 {
     if (isInstanceOf(module, entityDefinition, "Unit"))

@@ -2,14 +2,14 @@
 #define HUD_H
 
 #include "EntitySelection.h"
+#include "EntityTypeRegistry.h"
 #include "EventHandler.h"
-#include "UI.h"
-#include "utils/Types.h"
 #include "PlayerController.h"
 #include "ServiceRegistry.h"
+#include "UI.h"
 #include "UIManager.h"
 #include "utils/Logger.h"
-#include "EntityTypeRegistry.h"
+#include "utils/Types.h"
 
 namespace game
 {
@@ -29,8 +29,7 @@ class HUDUpdater : public core::EventHandler
     void updateFactoryUnitCreations(uint32_t factoryEntity);
     void updateBuildingConstruction(core::CompBuilding& building, core::CompEntityInfo& info);
 
-    template <typename T>
-    void updateUIElementRef(core::Ref<T>& elementRef, const std::string& text)
+    template <typename T> void updateUIElementRef(core::Ref<T>& elementRef, const std::string& text)
     {
         if (elementRef == nullptr)
         {

@@ -103,7 +103,8 @@ class EntityDefinitionLoader : public core::EntityFactory, public core::Property
                                              pybind11::handle entityDefinition);
     static ComponentType createCompResource(pybind11::object module,
                                             pybind11::handle entityDefinition);
-    ComponentType createCompSelectible(uint32_t entityType, pybind11::object module,
+    ComponentType createCompSelectible(uint32_t entityType,
+                                       pybind11::object module,
                                        pybind11::handle entityDefinition);
     static ComponentType createCompBuilding(pybind11::object module,
                                             pybind11::handle entityDefinition);

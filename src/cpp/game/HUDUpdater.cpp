@@ -154,8 +154,7 @@ void HUDUpdater::updateFactoryUnitCreations(uint32_t entity)
     }
 }
 
-void HUDUpdater::updateBuildingConstruction(CompBuilding& building,
-                                            CompEntityInfo& info)
+void HUDUpdater::updateBuildingConstruction(CompBuilding& building, CompEntityInfo& info)
 {
     auto displayName = m_typeRegistry->getHUDDisplayName(info.entityType);
 

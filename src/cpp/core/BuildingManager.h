@@ -4,8 +4,8 @@
 #include "EventHandler.h"
 #include "components/CompUnitFactory.h"
 
-#include <map>
 #include <functional>
+#include <map>
 
 namespace core
 {

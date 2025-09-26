@@ -80,7 +80,7 @@ class Widget : public std::enable_shared_from_this<Widget>
     {
         setPos(x, y);
         return std::static_pointer_cast<std::remove_reference_t<decltype(*this)>>(
-            this->shared_from_this());     
+            this->shared_from_this());
     }
 
     auto withSize(int width, int height)
