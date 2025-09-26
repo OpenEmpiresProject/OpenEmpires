@@ -9,6 +9,7 @@
 #include "ServiceRegistry.h"
 #include "UIManager.h"
 #include "utils/Logger.h"
+#include "EntityTypeRegistry.h"
 
 namespace game
 {
@@ -16,13 +17,17 @@ class HUDUpdater : public core::EventHandler
 {
   public:
     HUDUpdater();
-    ~HUDUpdater();
+    ~HUDUpdater() = default;
 
   private:
     void onTick(const core::Event& e);
+
+  private:
+    void updateUIElementReferences();
     void updateResourcePanel();
     void updateProgressBar();
-    void updatePlayerControllerRef();
+    void updateFactoryUnitCreations(uint32_t factoryEntity);
+    void updateBuildingConstruction(core::CompBuilding& building, core::CompEntityInfo& info);
 
     template <typename T>
     void updateUIElementRef(core::Ref<T>& elementRef, const std::string& text)
@@ -61,6 +66,8 @@ class HUDUpdater : public core::EventHandler
     core::Ref<core::PlayerController> m_playerController;
     core::Ref<core::ui::Widget> m_creationInProgressGroup;
     core::Ref<core::ui::Widget> m_creationQueueGroup;
+    core::Ref<core::GameState> m_gameState;
+    core::Ref<core::EntityTypeRegistry> m_typeRegistry;
 };
 
 } // namespace game

@@ -462,7 +462,7 @@ void DemoWorldCreator::createHUD()
                                 ->withSize(0, 10);
                         }
 
-                        currentInProgressDetailsLayout->hide();
+                        currentInProgressDetailsLayout->setVisible(false);
                     } 
 
                     WITH(auto restOfUnitQueuedLayout =

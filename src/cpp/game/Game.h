@@ -108,11 +108,11 @@ class Game
         auto resourceManager = std::make_shared<ResourceManager>();
         core::ServiceRegistry::getInstance().registerService(resourceManager);
 
-        auto hud = std::make_shared<HUDUpdater>();
-        core::ServiceRegistry::getInstance().registerService(hud);
-
         auto entityTypeRegistry = std::make_shared<core::EntityTypeRegistry>();
         core::ServiceRegistry::getInstance().registerService(entityTypeRegistry);
+
+        auto hud = std::make_shared<HUDUpdater>();
+        core::ServiceRegistry::getInstance().registerService(hud);
 
         auto renderer = std::make_shared<core::Renderer>(
             &stopSource, graphicsRegistry, simulatorRendererSynchronizer, graphicsLoader);

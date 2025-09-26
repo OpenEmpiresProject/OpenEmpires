@@ -54,6 +54,8 @@ class Widget : public std::enable_shared_from_this<Widget>
     bool dirty = true;
     GraphicsID backgroundImage;
     std::vector<Ref<Widget>> children;
+    // Indicate whether the parent's visibility. Internal use only.
+    bool parentVisible = true;
 
   public:
     Widget(Ref<Widget> parent);
@@ -87,9 +89,6 @@ class Widget : public std::enable_shared_from_this<Widget>
         return std::static_pointer_cast<std::remove_reference_t<decltype(*this)>>(
             this->shared_from_this());
     }
-
-    void hide();
-    void show();
 
     DEFINE_GETTER_SETTER(rect, Rect);
     DEFINE_GETTER_SETTER(name, Name);

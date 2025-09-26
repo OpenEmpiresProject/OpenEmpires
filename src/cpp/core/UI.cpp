@@ -55,6 +55,8 @@ void Widget::feedInput(const Event& e)
 
 void Widget::updateGraphicCommand()
 {
+    bool wasDirty = dirty;
+
     if (dirty)
     {
         auto coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
@@ -68,7 +70,7 @@ void Widget::updateGraphicCommand()
         transform.position = {pixelPos.x, pixelPos.y};
         ui.rect = getAbsoluteRect();
         ui.backgroundImage = backgroundImage;
-        ui.isVisible = visible;
+        ui.isVisible = visible && parentVisible;
         if (backgroundImage.isValid())
             ui.type = UIRenderingType::TEXTURE;
         else
@@ -78,23 +80,38 @@ void Widget::updateGraphicCommand()
         this->dirty = false;
     }
 
-    for (auto& child : children)
+    // OPTIMIZATION
+    // Either the parent should be visible in order to display children or
+    // this is a dirty tick (where parent might be getting hidden) to let children 
+    // update graphic commands accordingly
+    //
+    if (visible || wasDirty)
     {
-        // Stretch child to fit to this widget
-        auto& childRect = child->getRect();
-        int newWidth = childRect.w;
-        int newHeight = childRect.h;
+        for (auto& child : children)
+        {
+            // Stretch child to fit to this widget
+            auto& childRect = child->getRect();
+            int newWidth = childRect.w;
+            int newHeight = childRect.h;
 
-        if (childRect.w == 0)
-        {
-            newWidth = rect.w;
+            if (childRect.w == 0)
+            {
+                newWidth = rect.w;
+            }
+            if (childRect.h == 0)
+            {
+                newHeight = rect.h;
+            }
+            // Both the child's dirty and parentVisible should be based parent (this)
+            // Eg: 
+            // 1) If I was dirty then my children are dirty too
+            // 2) If I was hidden or my parent was hidden, then my children are hidden too
+            //
+            child->dirty |= wasDirty;
+            child->parentVisible = visible && parentVisible;
+            child->setSize(newWidth, newHeight);
+            child->updateGraphicCommand();
         }
-        if (childRect.h == 0)
-        {
-            newHeight = rect.h;
-        }
-        child->setSize(newWidth, newHeight);
-        child->updateGraphicCommand();
     }
 }
 
@@ -159,24 +176,6 @@ void Widget::setSize(int width, int height)
 {
     rect.w = width;
     rect.h = height;
-}
-
-void Widget::hide()
-{
-    setVisible(false);
-    for (auto& child : children)
-    {
-        child->hide();
-    }
-}
-
-void Widget::show()
-{
-    setVisible(true);
-    for (auto& child : children)
-    {
-        child->show();
-    }
 }
 
 Label::Label(Ref<Widget> parent) : Widget(parent)
