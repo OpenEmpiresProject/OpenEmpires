@@ -43,6 +43,11 @@ class GameState
         return m_registry.all_of<T>(entity);
     }
 
+    template <typename T> T* tryGetComponent(uint32_t entity)
+    {
+        return m_registry.try_get<T>(entity);
+    }
+
     template <typename T> T& getComponent(uint32_t entity)
     {
         return m_registry.get<T>(entity);

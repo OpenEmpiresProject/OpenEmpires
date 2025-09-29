@@ -119,23 +119,21 @@ void HUDUpdater::updateFactoryUnitCreations(uint32_t entity)
     m_creationInProgressGroup->setVisible(false);
     m_creationQueueGroup->setVisible(false);
 
-    if (m_gameState->hasComponent<CompUnitFactory>(entity))
+    if (auto factory = m_gameState->tryGetComponent<CompUnitFactory>(entity))
     {
-        auto& factory = m_gameState->getComponent<CompUnitFactory>(entity);
-
-        if (factory.productionQueue.empty() == false && factory.currentUnitProgress < 100)
+        if (factory->productionQueue.empty() == false && factory->currentUnitProgress < 100)
         {
-            auto displayName = m_typeRegistry->getHUDDisplayName(factory.productionQueue[0]);
-            auto unitIcon = m_typeRegistry->getHUDIcon(factory.productionQueue[0]);
+            auto displayName = m_typeRegistry->getHUDDisplayName(factory->productionQueue[0]);
+            auto unitIcon = m_typeRegistry->getHUDIcon(factory->productionQueue[0]);
             m_progressTextLabel->setText(
-                std::format("Creating - {}%", (int) factory.currentUnitProgress));
+                std::format("Creating - {}%", (int) factory->currentUnitProgress));
 
             m_progressItemNameLabel->setText(displayName);
             m_unitInProgressIcon->setBackgroundImage(unitIcon);
 
             // Taking a copy to update variation
             auto graphic = m_progressBarLabel->getBackgroundImage();
-            graphic.variation = factory.currentUnitProgress;
+            graphic.variation = factory->currentUnitProgress;
             m_progressBarLabel->setBackgroundImage(graphic);
 
             m_creationInProgressGroup->setVisible(true);
@@ -143,9 +141,9 @@ void HUDUpdater::updateFactoryUnitCreations(uint32_t entity)
 
         for (int i = 1; i < Constants::ABSOLUTE_MAX_UNIT_QUEUE_SIZE; ++i)
         {
-            if (i < factory.productionQueue.size())
+            if (i < factory->productionQueue.size())
             {
-                auto unitIcon = m_typeRegistry->getHUDIcon(factory.productionQueue[i]);
+                auto unitIcon = m_typeRegistry->getHUDIcon(factory->productionQueue[i]);
                 m_queuedUnitIcons[i - 1]->setBackgroundImage(unitIcon);
                 m_queuedUnitIcons[i - 1]->setVisible(true);
                 m_creationQueueGroup->setVisible(true);
