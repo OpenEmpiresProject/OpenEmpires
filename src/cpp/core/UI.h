@@ -14,10 +14,6 @@
     {                                                                                              \
         return Field;                                                                              \
     }                                                                                              \
-    decltype(Field)& get##Capital()                                                                \
-    {                                                                                              \
-        return Field;                                                                              \
-    }                                                                                              \
     void set##Capital(const decltype(Field)& value)                                                \
     {                                                                                              \
         if (Field != value)                                                                        \

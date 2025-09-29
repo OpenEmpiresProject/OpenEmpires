@@ -1,9 +1,10 @@
 #include "Player.h"
 
 #include "GameSettings.h"
-#include "GameState.h"
 #include "ServiceRegistry.h"
 #include "components/CompBuilding.h"
+#include "components/CompHousing.h"
+#include "components/CompUnit.h"
 #include "debug.h"
 
 using namespace core;
@@ -19,6 +20,8 @@ void Player::init(uint8_t id)
     auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
     m_fow->init(settings->getWorldSizeInTiles().width, settings->getWorldSizeInTiles().height,
                 settings->getFOWRevealStatus());
+
+    m_gameState = ServiceRegistry::getInstance().getService<GameState>();
 }
 
 void Player::grantResource(uint8_t resourceType, uint32_t amount)
@@ -62,21 +65,44 @@ void Player::addEntity(uint32_t entityId)
 {
     m_ownedEntities.insert(entityId);
 
-    if (ServiceRegistry::getInstance().getService<GameState>()->hasComponent<CompBuilding>(
-            entityId))
+    if (m_gameState->hasComponent<CompBuilding>(entityId))
     {
         m_myBuildings.insert(entityId);
+        if (m_gameState->hasComponent<CompHousing>(entityId))
+        {
+            auto& housing = m_gameState->getComponent<CompHousing>(entityId);
+            m_housingCapacity += housing.housingCapacity;
+        }
+    }
+
+    if (m_gameState->hasComponent<CompUnit>(entityId))
+    {
+        auto& unit = m_gameState->getComponent<CompUnit>(entityId);
+        m_currentPopulation += unit.housingNeed;
     }
 }
 
 void Player::removeEntity(uint32_t entityId)
 {
-    m_ownedEntities.erase(entityId);
-
-    if (ServiceRegistry::getInstance().getService<GameState>()->hasComponent<CompBuilding>(
-            entityId))
+    if (isOwned(entityId))
     {
-        m_myBuildings.erase(entityId);
+        m_ownedEntities.erase(entityId);
+
+        if (m_gameState->hasComponent<CompBuilding>(entityId))
+        {
+            m_myBuildings.erase(entityId);
+            if (m_gameState->hasComponent<CompHousing>(entityId))
+            {
+                auto& housing = m_gameState->getComponent<CompHousing>(entityId);
+                m_housingCapacity -= housing.housingCapacity;
+            }
+        }
+
+        if (m_gameState->hasComponent<CompUnit>(entityId))
+        {
+            auto& unit = m_gameState->getComponent<CompUnit>(entityId);
+            m_currentPopulation -= unit.housingNeed;
+        }
     }
 }
 

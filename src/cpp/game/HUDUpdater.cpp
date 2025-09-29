@@ -87,6 +87,8 @@ void HUDUpdater::updateResourcePanel()
     m_woodLabel->setText(std::to_string(player->getResourceAmount(ResourceType::WOOD)));
     m_stoneabel->setText(std::to_string(player->getResourceAmount(ResourceType::STONE)));
     m_goldLabel->setText(std::to_string(player->getResourceAmount(ResourceType::GOLD)));
+    m_populationLabel->setText(
+        fmt::format("{}/{}", player->getPopulation(), player->getHousingCapacity()));
     m_playerIdLabel->setText("Player " + std::to_string(player->getId()));
 }
 
@@ -95,6 +97,7 @@ void HUDUpdater::updateUIElementReferences()
     updateUIElementRef(m_woodLabel, "wood");
     updateUIElementRef(m_stoneabel, "stone");
     updateUIElementRef(m_goldLabel, "gold");
+    updateUIElementRef(m_populationLabel, "population");
     updateUIElementRef(m_playerIdLabel, "player");
     updateUIElementRef(m_progressTextLabel, "progress_label");
     updateUIElementRef(m_progressItemNameLabel, "progress_item_name");
@@ -130,7 +133,8 @@ void HUDUpdater::updateFactoryUnitCreations(uint32_t entity)
             m_progressItemNameLabel->setText(displayName);
             m_unitInProgressIcon->setBackgroundImage(unitIcon);
 
-            auto& graphic = m_progressBarLabel->getBackgroundImage();
+            // Taking a copy to update variation
+            auto graphic = m_progressBarLabel->getBackgroundImage();
             graphic.variation = factory.currentUnitProgress;
             m_progressBarLabel->setBackgroundImage(graphic);
 
@@ -160,7 +164,8 @@ void HUDUpdater::updateBuildingConstruction(CompBuilding& building, CompEntityIn
 
     m_progressTextLabel->setText(std::format("Building - {}%", building.constructionProgress));
     m_progressItemNameLabel->setText(displayName);
-    auto& graphic = m_progressBarLabel->getBackgroundImage();
+    // Need a copy to update variation
+    auto graphic = m_progressBarLabel->getBackgroundImage();
     graphic.variation = building.constructionProgress;
     m_progressBarLabel->setBackgroundImage(graphic);
 

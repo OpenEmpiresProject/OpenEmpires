@@ -56,6 +56,7 @@ class Unit:
     moving_speed: int
     animations: List[Animation]
     icon: Icon
+    housing_need: int
 
 
 class Villager(Unit):
@@ -109,6 +110,11 @@ class UnitFactory:
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
 
+class Housing:
+    housing_capacity: int
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+
 class ConstructionSite:
     name: str = "construction_site"
     size: str
@@ -134,7 +140,11 @@ class UIElement:
 
 # Start of composite entity definitions. These can't have new attributes defined, but only overrides.
 
-class TownCenter(ResourceDropOff, UnitFactory):
+class TownCenter(ResourceDropOff, UnitFactory, Housing):
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+    
+class House(Building, Housing):
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
 
@@ -147,9 +157,10 @@ all_units: List[Unit] = [
         display_name="Villager",
         line_of_sight=256*5,
         moving_speed=256,
-        build_speed=40,
+        build_speed=10,
         gather_speed=10,
         resource_capacity=100,
+        housing_need=1,
         icon=Icon(drs_file="interfac.drs", slp_id=50730, index=16),
         animations=[
             Animation(name="idle", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1388),
@@ -227,6 +238,7 @@ all_buildings: List[Building] = [
         unit_creation_speed=10,
         producible_units=[ProducibleUnit(name="villager", shortcut="v")],
         max_queue_size=10,
+        housing_capacity=5,
         graphics={"default": CompositeGraphic(
             anchor=Point(x=187, y=290),
             parts=[
@@ -238,6 +250,15 @@ all_buildings: List[Building] = [
                 Graphic(slp_id=3597, anchor=Point(x=185,y=47)), 
                 Graphic(slp_id=4613, anchor=Point(x=-46,y=48))])},
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=28)
+    ),
+    House(
+        housing_capacity=5,
+        name="house", 
+        display_name="House",
+        line_of_sight=256*2,
+        size="medium",
+        graphics={"default":Graphic(slp_id=2223)},
+        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=34)
     ),
 ]
 

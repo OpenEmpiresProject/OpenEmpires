@@ -359,25 +359,30 @@ void DemoWorldCreator::createHUD()
     {
         ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(window);
 
-        auto woodLabel = window->createChild<ui::Label>()
-                             ->withText("0")
-                             ->withRect(Rect<int>(35, 5, 50, 20))
-                             ->withName("wood");
+        window->createChild<ui::Label>()
+            ->withText("0")
+            ->withRect(Rect<int>(35, 5, 50, 20))
+            ->withName("wood");
 
-        auto stoneLabel = window->createChild<ui::Label>()
-                              ->withText("0")
-                              ->withRect(Rect<int>(265, 5, 50, 20))
-                              ->withName("stone");
+        window->createChild<ui::Label>()
+            ->withText("0")
+            ->withRect(Rect<int>(195, 5, 50, 20))
+            ->withName("gold");
 
-        auto goldLabel = window->createChild<ui::Label>()
-                             ->withText("0")
-                             ->withRect(Rect<int>(195, 5, 50, 20))
-                             ->withName("gold");
+        window->createChild<ui::Label>()
+            ->withText("0")
+            ->withRect(Rect<int>(265, 5, 50, 20))
+            ->withName("stone");
 
-        auto playerIdLabel = window->createChild<ui::Label>()
-                                 ->withTextColor(core::Color::WHITE)
-                                 ->withRect(Rect<int>(420, 5, 50, 20))
-                                 ->withName("player");
+        window->createChild<ui::Label>()
+            ->withText("0")
+            ->withRect(Rect<int>(350, 5, 50, 20))
+            ->withName("population");
+
+        window->createChild<ui::Label>()
+            ->withTextColor(core::Color::WHITE)
+            ->withRect(Rect<int>(420, 5, 50, 20))
+            ->withName("player");
     }
 
     WITH(auto controlPanel = CreateRef<ui::Window>())
@@ -438,6 +443,7 @@ void DemoWorldCreator::createHUD()
                         WITH(auto progressBarLayout =
                                  currentInProgressDetailsLayout->createChild<ui::Layout>()
                                      ->withDirection(ui::LayoutDirection::Vertical)
+                                     ->withName("progress_bar_noerror_group")
                                      ->withSize(250 - m_iconSize - 10 /*spacing*/, 0))
                         {
                             // Two labels to display the progress and item in two lines. eg:
@@ -462,6 +468,12 @@ void DemoWorldCreator::createHUD()
                                 ->withName("progress_bar_label")
                                 ->withSize(0, 10);
                         }
+
+                        currentInProgressDetailsLayout->createChild<ui::Label>()
+                            ->withTextColor(core::Color::RED)
+                            ->withSize(0, 20)
+                            ->withName("progress_bar_error_label")
+                            ->withVisible(false);
 
                         currentInProgressDetailsLayout->setVisible(false);
                     }

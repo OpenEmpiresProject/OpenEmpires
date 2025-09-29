@@ -3,6 +3,7 @@
 #include "EntityTypeRegistry.h"
 #include "GameTypes.h"
 #include "commands/CmdIdle.h"
+#include "components/CompHousing.h"
 #include "components/CompUnitFactory.h"
 #include "debug.h"
 #include "utils/Logger.h"
@@ -45,6 +46,7 @@ uint32_t getEntityType(const std::string& entityName)
         {"mine_camp", EntityTypes::ET_MINING_CAMP},
         {"construction_site", EntityTypes::ET_CONSTRUCTION_SITE},
         {"town_center", EntityTypes::ET_TOWN_CENTER},
+        {"house", EntityTypes::ET_HOUSE},
     };
     return entityTypes.at(entityName);
 }
@@ -425,6 +427,7 @@ void EntityDefinitionLoader::addCommonComponents(py::object module,
     addComponentIfNotNull(entityType, createCompResource(module, entityDefinition));
     addComponentIfNotNull(entityType, createCompBuilding(module, entityDefinition));
     addComponentIfNotNull(entityType, createCompUnitFactory(module, entityDefinition));
+    addComponentIfNotNull(entityType, createCompHousing(module, entityDefinition));
     addComponentIfNotNull(entityType, createCompSelectible(entityType, module, entityDefinition));
     addComponentIfNotNull(entityType, CompEntityInfo(entityType));
 }
@@ -804,6 +807,8 @@ ComponentType EntityDefinitionLoader::createCompUnit(py::object module,
             CompUnit comp;
             PropertyInitializer::set<uint32_t>(comp.lineOfSight,
                                                entityDefinition.attr("line_of_sight").cast<int>());
+            PropertyInitializer::set<uint32_t>(comp.housingNeed,
+                                               entityDefinition.attr("housing_need").cast<int>());
             return ComponentType(comp);
         }
     }
@@ -988,6 +993,24 @@ ComponentType EntityDefinitionLoader::createCompUnitFactory(pybind11::object mod
                                                                producibleUnitNames);
             PropertyInitializer::set<std::unordered_map<char, std::string>>(
                 comp.producibleUnitNamesByShortcuts, entityNameByShortcut);
+            return ComponentType(comp);
+        }
+    }
+    return std::monostate{};
+}
+
+ComponentType EntityDefinitionLoader::createCompHousing(pybind11::object module,
+                                                        pybind11::handle entityDefinition)
+{
+    if (py::hasattr(module, "Housing"))
+    {
+        py::object housingClass = module.attr("Housing");
+        if (py::isinstance(entityDefinition, housingClass))
+        {
+            CompHousing comp;
+            auto housing = readValue<int>(entityDefinition, "housing_capacity");
+
+            PropertyInitializer::set<uint32_t>(comp.housingCapacity, housing);
             return ComponentType(comp);
         }
     }

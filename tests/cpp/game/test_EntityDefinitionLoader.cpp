@@ -279,6 +279,7 @@ class Unit:
 	line_of_sight = 100
 	moving_speed = 256
 	animations = []
+	housing_need = 1
 	
 class Villager(Unit):
 	def __init__(self):

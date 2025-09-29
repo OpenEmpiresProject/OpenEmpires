@@ -20,6 +20,7 @@ enum EntityTypes
     ET_MINING_CAMP = 10,
     ET_CONSTRUCTION_SITE = 11,
     ET_TOWN_CENTER = 12,
+    ET_HOUSE = 13,
 
     ET_UI_ELEMENT = 10000
 };

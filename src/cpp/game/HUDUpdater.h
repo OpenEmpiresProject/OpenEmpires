@@ -53,6 +53,7 @@ class HUDUpdater : public core::EventHandler
     core::Ref<core::ui::Label> m_woodLabel;
     core::Ref<core::ui::Label> m_stoneabel;
     core::Ref<core::ui::Label> m_goldLabel;
+    core::Ref<core::ui::Label> m_populationLabel;
     core::Ref<core::ui::Label> m_playerIdLabel;
     core::Ref<core::ui::Label> m_selectedName;
     core::Ref<core::ui::Label> m_selectedIcon;

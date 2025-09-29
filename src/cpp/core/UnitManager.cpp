@@ -65,6 +65,7 @@ void UnitManager::onCreateUnit(const Event& e)
 
     auto newTile = transform.position.toTile();
     gameState->gameMap().addEntity(MapLayerType::UNITS, newTile, unit);
+    playerComp.player->addEntity(unit);
 
     data.player->getFogOfWar()->markAsExplored(transform.position, unitComp.lineOfSight);
 }

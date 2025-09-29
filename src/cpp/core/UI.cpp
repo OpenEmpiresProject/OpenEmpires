@@ -104,8 +104,8 @@ void Widget::updateGraphicCommand()
             }
             // Both the child's dirty and parentVisible should be based parent (this)
             // Eg:
-            // 1) If I was dirty then my children are dirty too
-            // 2) If I was hidden or my parent was hidden, then my children are hidden too
+            // 1) If I am dirty then my children are dirty too
+            // 2) If I am hidden or my parent is hidden, then my children are hidden too
             //
             child->dirty |= wasDirty;
             child->parentVisible = visible && parentVisible;
@@ -274,7 +274,8 @@ void Layout::updateGraphicCommand()
         {
             if (child->getVisible())
             {
-                auto& rect = child->getRect();
+                // Taking a copy to modify coordinates
+                auto rect = child->getRect();
                 rect.x = newX;
                 rect.y = margin;
                 child->setRect(rect);
@@ -310,7 +311,8 @@ void Layout::updateGraphicCommand()
         {
             if (child->getVisible())
             {
-                auto& rect = child->getRect();
+                // Taking a copy to modify coordinates
+                auto rect = child->getRect();
                 rect.y = newY;
                 rect.x = margin;
                 child->setRect(rect);
