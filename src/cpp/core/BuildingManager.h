@@ -12,6 +12,7 @@ namespace core
 class CompBuilding;
 class CompTransform;
 class CompPlayer;
+class EntityTypeRegistry;
 class BuildingManager : public EventHandler
 {
   public:
@@ -26,6 +27,7 @@ class BuildingManager : public EventHandler
     };
 
     Ref<GameState> m_gameState;
+    Ref<EntityTypeRegistry> m_typeRegistry;
     std::map<uint32_t /*building id*/, ActiveFactoryInfo> m_activeFactories;
 
   private:

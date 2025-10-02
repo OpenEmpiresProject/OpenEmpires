@@ -34,6 +34,11 @@ class Player
     void removeEntity(uint32_t entityId);
     bool isOwned(uint32_t entityId) const;
 
+    uint32_t getVacantHousingCapacity() const
+    {
+        return std::max((int) m_housingCapacity - (int) m_currentPopulation, 0);
+    }
+
     uint32_t getHousingCapacity() const
     {
         return m_housingCapacity;

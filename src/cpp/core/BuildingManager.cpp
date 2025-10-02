@@ -1,6 +1,7 @@
 #include "BuildingManager.h"
 
 #include "EntityFactory.h"
+#include "EntityTypeRegistry.h"
 #include "GameState.h"
 #include "ServiceRegistry.h"
 #include "commands/CmdBuild.h"
@@ -18,6 +19,8 @@ using namespace core;
 BuildingManager::BuildingManager()
 {
     m_gameState = ServiceRegistry::getInstance().getService<GameState>();
+    m_typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+
     registerCallback(Event::Type::TICK, this, &BuildingManager::onTick);
     registerCallback(Event::Type::BUILDING_REQUESTED, this, &BuildingManager::onBuildingRequest);
     registerCallback(Event::Type::UNIT_QUEUE_REQUEST, this, &BuildingManager::onQueueUnit);
@@ -179,15 +182,44 @@ void BuildingManager::updateInProgressUnitCreations(auto& tick)
 {
     for (auto it = m_activeFactories.begin(); it != m_activeFactories.end();)
     {
+        /*
+         *   Approach: Checking for sufficient housing capacity is done at
+         *   the very beginning before start creating the unit and just after creating
+         *   the unit but before placing it on the map.
+         *   Factory will no longer be tracked if the queue is completed/empty.
+         */
         auto& activeFactoryInfo = it->second;
         CompUnitFactory& factory = activeFactoryInfo.factory.get();
+        factory.pausedDueToInsufficientHousing = false;
+        auto unitType = factory.productionQueue.at(0);
+
+        if (factory.currentUnitProgress == 0)
+        {
+            if (activeFactoryInfo.player->getVacantHousingCapacity() <
+                m_typeRegistry->getUnitTypeHousingNeed(unitType))
+            {
+                factory.pausedDueToInsufficientHousing = true;
+                ++it;
+                continue;
+            }
+        }
+
         factory.currentUnitProgress +=
             float(factory.unitCreationSpeed) * tick.deltaTimeMs / 1000.0f;
 
         if (factory.currentUnitProgress > 100)
         {
+            factory.currentUnitProgress = 100; //  Cap at 100 to avoid unnecessary behaviors
+
+            if (activeFactoryInfo.player->getVacantHousingCapacity() <
+                m_typeRegistry->getUnitTypeHousingNeed(unitType))
+            {
+                factory.pausedDueToInsufficientHousing = true;
+                ++it;
+                continue;
+            }
             UnitCreationData data;
-            data.entityType = factory.productionQueue.at(0);
+            data.entityType = unitType;
             data.player = activeFactoryInfo.player;
             data.position = findVacantPositionAroundBuilding(activeFactoryInfo.building);
             publishEvent(Event::Type::UNIT_CREATION_FINISHED, data);

@@ -61,6 +61,8 @@ class HUDUpdater : public core::EventHandler
     core::Ref<core::ui::Label> m_progressItemNameLabel;
     core::Ref<core::ui::Label> m_unitInProgressIcon;
     core::Ref<core::ui::Label> m_progressBarLabel;
+    core::Ref<core::ui::Label> m_progressErrorLabel;
+    core::Ref<core::ui::Label> m_progressNoErrorGroup;
     core::Ref<core::ui::Label> m_queuedUnitIcons[core::Constants::ABSOLUTE_MAX_UNIT_QUEUE_SIZE];
     core::EntitySelection m_currentSelection;
     core::Ref<core::PlayerController> m_playerController;

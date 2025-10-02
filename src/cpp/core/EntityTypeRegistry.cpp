@@ -54,3 +54,13 @@ void EntityTypeRegistry::registerHUDIcon(uint32_t entityType, const GraphicsID& 
 {
     m_icons[entityType] = icon;
 }
+
+void EntityTypeRegistry::registerUnitTypeHousingNeed(uint32_t entityType, uint32_t housingNeed)
+{
+    m_unitTypeHousingNeeds[entityType] = housingNeed;
+}
+
+uint32_t EntityTypeRegistry::getUnitTypeHousingNeed(uint32_t entityType) const
+{
+    return m_unitTypeHousingNeeds.at(entityType);
+}

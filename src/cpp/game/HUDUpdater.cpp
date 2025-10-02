@@ -107,6 +107,8 @@ void HUDUpdater::updateUIElementReferences()
     updateUIElementRef(m_creationQueueGroup, "creation_queue_group");
     updateUIElementRef(m_selectedIcon, "selected_icon");
     updateUIElementRef(m_selectedName, "selected_name");
+    updateUIElementRef(m_progressErrorLabel, "progress_bar_error_label");
+    updateUIElementRef(m_progressNoErrorGroup, "progress_bar_noerror_group");
 
     for (int i = 0; i < Constants::ABSOLUTE_MAX_UNIT_QUEUE_SIZE; ++i)
     {
@@ -121,12 +123,24 @@ void HUDUpdater::updateFactoryUnitCreations(uint32_t entity)
 
     if (auto factory = m_gameState->tryGetComponent<CompUnitFactory>(entity))
     {
-        if (factory->productionQueue.empty() == false && factory->currentUnitProgress < 100)
+        if (factory->productionQueue.empty() == false && factory->currentUnitProgress <= 100)
         {
             auto displayName = m_typeRegistry->getHUDDisplayName(factory->productionQueue[0]);
             auto unitIcon = m_typeRegistry->getHUDIcon(factory->productionQueue[0]);
-            m_progressTextLabel->setText(
-                std::format("Creating - {}%", (int) factory->currentUnitProgress));
+
+            if (factory->pausedDueToInsufficientHousing)
+            {
+                m_progressErrorLabel->setText("Needs more houses");
+                m_progressErrorLabel->setVisible(true);
+                m_progressNoErrorGroup->setVisible(false);
+            }
+            else
+            {
+                m_progressErrorLabel->setVisible(false);
+                m_progressNoErrorGroup->setVisible(true);
+                m_progressTextLabel->setText(
+                    std::format("Creating - {}%", (int) factory->currentUnitProgress));
+            }
 
             m_progressItemNameLabel->setText(displayName);
             m_unitInProgressIcon->setBackgroundImage(unitIcon);

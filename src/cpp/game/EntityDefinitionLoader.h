@@ -100,7 +100,9 @@ class EntityDefinitionLoader : public core::EntityFactory, public core::Property
     static ComponentType createBuilder(pybind11::object module, pybind11::handle entityDefinition);
     static ComponentType createCompResourceGatherer(pybind11::object module,
                                                     pybind11::handle entityDefinition);
-    static ComponentType createCompUnit(pybind11::object module, pybind11::handle entityDefinition);
+    static ComponentType createCompUnit(uint32_t entityType,
+                                        pybind11::object module,
+                                        pybind11::handle entityDefinition);
     static ComponentType createCompTransform(pybind11::object module,
                                              pybind11::handle entityDefinition);
     static ComponentType createCompResource(pybind11::object module,

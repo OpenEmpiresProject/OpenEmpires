@@ -422,7 +422,7 @@ void EntityDefinitionLoader::addCommonComponents(py::object module,
     addComponentIfNotNull(entityType, createAnimation(module, entityDefinition));
     addComponentIfNotNull(entityType, createBuilder(module, entityDefinition));
     addComponentIfNotNull(entityType, createCompResourceGatherer(module, entityDefinition));
-    addComponentIfNotNull(entityType, createCompUnit(module, entityDefinition));
+    addComponentIfNotNull(entityType, createCompUnit(entityType, module, entityDefinition));
     addComponentIfNotNull(entityType, createCompTransform(module, entityDefinition));
     addComponentIfNotNull(entityType, createCompResource(module, entityDefinition));
     addComponentIfNotNull(entityType, createCompBuilding(module, entityDefinition));
@@ -796,7 +796,8 @@ ComponentType EntityDefinitionLoader::createCompResourceGatherer(py::object modu
     return ComponentType(comp);
 }
 
-ComponentType EntityDefinitionLoader::createCompUnit(py::object module,
+ComponentType EntityDefinitionLoader::createCompUnit(uint32_t entityType,
+                                                     py::object module,
                                                      pybind11::handle entityDefinition)
 {
     if (py::hasattr(module, "Unit"))
@@ -809,6 +810,10 @@ ComponentType EntityDefinitionLoader::createCompUnit(py::object module,
                                                entityDefinition.attr("line_of_sight").cast<int>());
             PropertyInitializer::set<uint32_t>(comp.housingNeed,
                                                entityDefinition.attr("housing_need").cast<int>());
+
+            auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+            typeRegistry->registerUnitTypeHousingNeed(entityType, comp.housingNeed);
+
             return ComponentType(comp);
         }
     }

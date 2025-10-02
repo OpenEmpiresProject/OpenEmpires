@@ -440,11 +440,13 @@ void DemoWorldCreator::createHUD()
                             ->withSize(m_iconSize, 0)
                             ->withName("unit_creating_icon");
 
+                        const int barWithoutIconWidth = 250 - m_iconSize - 10 /*spacing*/;
+
                         WITH(auto progressBarLayout =
                                  currentInProgressDetailsLayout->createChild<ui::Layout>()
                                      ->withDirection(ui::LayoutDirection::Vertical)
                                      ->withName("progress_bar_noerror_group")
-                                     ->withSize(250 - m_iconSize - 10 /*spacing*/, 0))
+                                     ->withSize(barWithoutIconWidth, 0))
                         {
                             // Two labels to display the progress and item in two lines. eg:
                             // Creating - 50%
@@ -471,7 +473,7 @@ void DemoWorldCreator::createHUD()
 
                         currentInProgressDetailsLayout->createChild<ui::Label>()
                             ->withTextColor(core::Color::RED)
-                            ->withSize(0, 20)
+                            ->withSize(barWithoutIconWidth, 20)
                             ->withName("progress_bar_error_label")
                             ->withVisible(false);
 

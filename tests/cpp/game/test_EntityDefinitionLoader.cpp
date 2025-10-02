@@ -133,7 +133,7 @@ TEST(EntityDefinitionLoaderTest, CreateCompUnitReturnsMonostateIfNotAUnit)
     py::exec(R"()");
     py::object module = py::module_::import("__main__");
 
-    auto comp = EntityDefinitionLoader::createCompUnit(module, d);
+    auto comp = EntityDefinitionLoader::createCompUnit(1, module, d);
     EXPECT_TRUE(std::holds_alternative<std::monostate>(comp));
 }
 
@@ -293,7 +293,7 @@ entity = Villager()
         py::object def = py::globals()["entity"];
         py::object module = py::module_::import("__main__");
 
-        ComponentType result = EntityDefinitionLoader::createCompUnit(module, def);
+        ComponentType result = EntityDefinitionLoader::createCompUnit(1, module, def);
         ASSERT_TRUE(std::holds_alternative<CompUnit>(result));
         EXPECT_EQ(std::get<CompUnit>(result).lineOfSight, 100);
     }
