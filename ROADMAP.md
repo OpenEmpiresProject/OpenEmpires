@@ -48,7 +48,7 @@ We use milestone versions for planning. Early versions are experimental. Feature
 ### Features:
 - [ ] Town center, house and barracks mechanics
 - [x] Building queue system
-- [ ] Population limit system
+- [x] Population limit system
 - [x] Multiple player support (not networking)
 - [x] Scripting for entity definition
 - [x] Unit abilities modeling

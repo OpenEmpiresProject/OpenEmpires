@@ -2,9 +2,9 @@
 
 # openEmpires
 
-openEmpires is a cross-platform clone of Age of Empires 2, designed to provide a similar gameplay experience while allowing for modern enhancements and modifications. This project is built using C++ for the core game engine and Python for scripting and game logic.
+openEmpires is a cross-platform clone of Age of Empires 2, designed to provide a similar gameplay experience while allowing for modern enhancements and modifications. This project is built using C++ for the game logic and Python for entity definitions.
 
-![](doc/images/screenshot-v0.2.png)
+![](doc/images/screenshot-v0.3.png)
 
 ## Features (Planned)
 

@@ -128,7 +128,13 @@ void HUDUpdater::updateFactoryUnitCreations(uint32_t entity)
             auto displayName = m_typeRegistry->getHUDDisplayName(factory->productionQueue[0]);
             auto unitIcon = m_typeRegistry->getHUDIcon(factory->productionQueue[0]);
 
-            if (factory->pausedDueToInsufficientHousing)
+            if (factory->pausedDueToPopulationLimit)
+            {
+                m_progressErrorLabel->setText("Population limit reached");
+                m_progressErrorLabel->setVisible(true);
+                m_progressNoErrorGroup->setVisible(false);
+            }
+            else if (factory->pausedDueToInsufficientHousing)
             {
                 m_progressErrorLabel->setText("Needs more houses");
                 m_progressErrorLabel->setVisible(true);

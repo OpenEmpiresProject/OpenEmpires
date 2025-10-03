@@ -23,6 +23,7 @@ class CompUnitFactory
     std::vector<uint32_t> productionQueue; // Entity types
     float currentUnitProgress = 0;
     bool pausedDueToInsufficientHousing = false;
+    bool pausedDueToPopulationLimit = false;
 
     CompUnitFactory()
     {

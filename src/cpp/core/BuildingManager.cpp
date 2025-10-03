@@ -20,6 +20,7 @@ BuildingManager::BuildingManager()
 {
     m_stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     m_typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+    m_settings = ServiceRegistry::getInstance().getService<Settings>();
 
     registerCallback(Event::Type::TICK, this, &BuildingManager::onTick);
     registerCallback(Event::Type::BUILDING_REQUESTED, this, &BuildingManager::onBuildingRequest);
@@ -191,10 +192,19 @@ void BuildingManager::updateInProgressUnitCreations(auto& tick)
         auto& activeFactoryInfo = it->second;
         CompUnitFactory& factory = activeFactoryInfo.factory.get();
         factory.pausedDueToInsufficientHousing = false;
+        factory.pausedDueToPopulationLimit = false;
         auto unitType = factory.productionQueue.at(0);
 
         if (factory.currentUnitProgress == 0)
         {
+            auto newPopulation = activeFactoryInfo.player->getPopulation() +
+                                 m_typeRegistry->getUnitTypeHousingNeed(unitType);
+            if (newPopulation > m_settings->getMaxPopulation())
+            {
+                factory.pausedDueToPopulationLimit = true;
+                ++it;
+                continue;
+            }
             if (activeFactoryInfo.player->getVacantHousingCapacity() <
                 m_typeRegistry->getUnitTypeHousingNeed(unitType))
             {
@@ -210,6 +220,15 @@ void BuildingManager::updateInProgressUnitCreations(auto& tick)
         if (factory.currentUnitProgress > 100)
         {
             factory.currentUnitProgress = 100; //  Cap at 100 to avoid unnecessary behaviors
+
+            auto newPopulation = activeFactoryInfo.player->getPopulation() +
+                                 m_typeRegistry->getUnitTypeHousingNeed(unitType);
+            if (newPopulation > m_settings->getMaxPopulation())
+            {
+                factory.pausedDueToPopulationLimit = true;
+                ++it;
+                continue;
+            }
 
             if (activeFactoryInfo.player->getVacantHousingCapacity() <
                 m_typeRegistry->getUnitTypeHousingNeed(unitType))

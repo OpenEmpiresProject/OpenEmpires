@@ -27,6 +27,7 @@ class BuildingManager : public EventHandler
     };
 
     Ref<StateManager> m_stateMan;
+    Ref<Settings> m_settings;
     Ref<EntityTypeRegistry> m_typeRegistry;
     std::map<uint32_t /*building id*/, ActiveFactoryInfo> m_activeFactories;
 

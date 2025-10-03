@@ -158,6 +158,11 @@ class Settings
         m_fowTRevealStatus = mode;
     }
 
+    uint32_t getMaxPopulation() const
+    {
+        return m_maxPopulation;
+    }
+
   private:
     Size m_resolution{800, 600};
     Size m_windowDimensions{800, 600};
@@ -171,6 +176,7 @@ class Settings
     int m_ticksPerSecond = 60;
     int m_targetFPS = 60;
     RevealStatus m_fowTRevealStatus = RevealStatus::UNEXPLORED;
+    uint32_t m_maxPopulation = 10;
 };
 } // namespace core
 
