@@ -1,7 +1,7 @@
 #include "FogOfWar.h"
 
 #include "Feet.h"
-#include "GameState.h"
+#include "StateManager.h"
 #include "Tile.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"

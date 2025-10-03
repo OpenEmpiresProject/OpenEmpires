@@ -2,7 +2,7 @@
 
 #include "Coordinates.h"
 #include "Event.h"
-#include "GameState.h"
+#include "StateManager.h"
 #include "PlayerController.h"
 #include "PlayerFactory.h"
 #include "ServiceRegistry.h"
@@ -87,7 +87,7 @@ void Simulator::onTickStart()
 
     if (!m_initialized)
     {
-        ServiceRegistry::getInstance().getService<GameState>()->getEntities<CompDirty>().each(
+        ServiceRegistry::getInstance().getService<StateManager>()->getEntities<CompDirty>().each(
             [this](uint32_t entity, CompDirty& dirty) { dirty.markDirty(entity); });
         m_initialized = true;
     }
@@ -112,7 +112,7 @@ void Simulator::onUnitSelection(const Event& e)
     if (selectedEntities.size() == 1)
     {
         auto resourceEntity = selectedEntities[0];
-        auto state = ServiceRegistry::getInstance().getService<GameState>();
+        auto state = ServiceRegistry::getInstance().getService<StateManager>();
 
         if (state->hasComponent<CompResource>(resourceEntity))
         {
@@ -124,7 +124,7 @@ void Simulator::onUnitSelection(const Event& e)
 
 void Simulator::sendGraphicsInstructions()
 {
-    auto state = ServiceRegistry::getInstance().getService<GameState>();
+    auto state = ServiceRegistry::getInstance().getService<StateManager>();
 
     for (auto entity : CompDirty::g_dirtyEntities)
     {
@@ -141,7 +141,7 @@ void Simulator::sendGraphicsInstructions()
 
 void Simulator::updateGraphicComponents()
 {
-    auto state = ServiceRegistry::getInstance().getService<GameState>();
+    auto state = ServiceRegistry::getInstance().getService<StateManager>();
     for (auto entity : CompDirty::g_dirtyEntities)
     {
         auto [transform, entityInfo, gc] =

@@ -2,7 +2,7 @@
 #define PLAYER_H
 
 #include "FogOfWar.h"
-#include "GameState.h"
+#include "StateManager.h"
 #include "InGameResource.h"
 
 #include <limits>
@@ -72,7 +72,7 @@ class Player
     std::unordered_set<uint8_t> m_ownedEntities;
     Ref<FogOfWar> m_fow;
     std::unordered_set<uint32_t> m_myBuildings;
-    Ref<GameState> m_gameState;
+    Ref<StateManager> m_stateMan;
     uint32_t m_housingCapacity = 0;
     uint32_t m_currentPopulation = 0;
 };

@@ -2,7 +2,7 @@
 
 #include "Coordinates.h"
 #include "EventPublisher.h"
-#include "GameState.h"
+#include "StateManager.h"
 #include "PathFinderBase.h"
 #include "Player.h"
 #include "Rect.h"
@@ -42,19 +42,19 @@ void CmdMove::onStart()
  */
 void CmdMove::onQueue()
 {
-    if (targetEntity != entt::null && m_gameState->hasComponent<CompBuilding>(targetEntity))
+    if (targetEntity != entt::null && m_stateMan->hasComponent<CompBuilding>(targetEntity))
     {
         auto [building, buildingTransform] =
-            m_gameState->getComponents<CompBuilding, CompTransform>(targetEntity);
+            m_stateMan->getComponents<CompBuilding, CompTransform>(targetEntity);
         auto rect = building.getLandInFeetRect(buildingTransform.position);
 
         targetPos =
             findClosestEdgeOfStaticEntity(targetEntity, m_components->transform.position, rect);
     }
-    else if (targetEntity != entt::null && m_gameState->hasComponent<CompResource>(targetEntity))
+    else if (targetEntity != entt::null && m_stateMan->hasComponent<CompResource>(targetEntity))
     {
         auto [resource, resourceTransform] =
-            m_gameState->getComponents<CompResource, CompTransform>(targetEntity);
+            m_stateMan->getComponents<CompResource, CompTransform>(targetEntity);
         auto rect = resource.getLandInFeetRect(resourceTransform.position);
 
         targetPos =
@@ -72,8 +72,8 @@ void CmdMove::onQueue()
 
 #ifndef NDEBUG
         auto tileEntity =
-            m_gameState->gameMap().getEntity(MapLayerType::GROUND, targetPos.toTile());
-        auto [graphics, dirty] = m_gameState->getComponents<CompGraphics, CompDirty>(tileEntity);
+            m_stateMan->gameMap().getEntity(MapLayerType::GROUND, targetPos.toTile());
+        auto [graphics, dirty] = m_stateMan->getComponents<CompGraphics, CompDirty>(tileEntity);
 
         graphics.debugOverlays.clear();
         DebugOverlay filledCircle;
@@ -187,7 +187,7 @@ bool CmdMove::move(int deltaTimeMs)
             Feet finalDir = desiredDirection + separationForce + avoidanceForce;
 
 #ifndef NDEBUG
-            auto& debugOverlays = m_gameState->getComponent<CompGraphics>(m_entityID).debugOverlays;
+            auto& debugOverlays = m_stateMan->getComponent<CompGraphics>(m_entityID).debugOverlays;
 
             if (separationForce != Feet(0, 0))
                 debugOverlays[1].arrowEnd = m_coordinates->feetToScreenUnits(
@@ -238,15 +238,15 @@ void CmdMove::setPosition(const Feet& newPosFeet)
     const auto newTile = newPosFeet.toTile();
 
 #ifndef NDEBUG
-    m_gameState->getComponent<CompGraphics>(m_entityID).debugOverlays[0].arrowEnd =
+    m_stateMan->getComponent<CompGraphics>(m_entityID).debugOverlays[0].arrowEnd =
         m_coordinates->feetToScreenUnits(
             (newPosFeet + (m_components->transform.getVelocityVector() * 2)));
 #endif
 
     if (oldTile != newTile)
     {
-        m_gameState->gameMap().removeEntity(MapLayerType::UNITS, oldTile, m_entityID);
-        m_gameState->gameMap().addEntity(MapLayerType::UNITS, newTile, m_entityID);
+        m_stateMan->gameMap().removeEntity(MapLayerType::UNITS, oldTile, m_entityID);
+        m_stateMan->gameMap().addEntity(MapLayerType::UNITS, newTile, m_entityID);
 
         publishEvent(Event::Type::UNIT_TILE_MOVEMENT,
                      UnitTileMovementData{m_entityID, newTile, m_components->transform.position});
@@ -267,7 +267,7 @@ void CmdMove::setPosition(const Feet& newPosFeet)
  */
 bool CmdMove::hasLineOfSight(const Feet& target) const
 {
-    return m_gameState->gameMap().intersectsStaticObstacle(m_components->transform.position,
+    return m_stateMan->gameMap().intersectsStaticObstacle(m_components->transform.position,
                                                            target) == false;
 }
 
@@ -332,9 +332,9 @@ std::list<Feet> CmdMove::findPath(const Feet& endPosInFeet)
     const Tile startPos = m_components->transform.position.toTile();
     const auto endPos = endPosInFeet.toTile();
 
-    const TileMap map = m_gameState->gameMap();
+    const TileMap map = m_stateMan->gameMap();
     const std::vector<Feet> newPath =
-        m_gameState->getPathFinder()->findPath(map, m_components->transform.position, endPosInFeet);
+        m_stateMan->getPathFinder()->findPath(map, m_components->transform.position, endPosInFeet);
 
     if (newPath.empty())
     {
@@ -387,7 +387,7 @@ Feet CmdMove::resolveCollision()
 {
     // Static collision resolution
     const auto newTilePos = m_components->transform.position.toTile();
-    auto& gameMap = m_gameState->gameMap();
+    auto& gameMap = m_stateMan->gameMap();
     Feet totalAvoidance{0, 0};
 
     if (gameMap.isOccupied(MapLayerType::STATIC, newTilePos))
@@ -415,7 +415,7 @@ Feet CmdMove::resolveCollision()
                 if (e == entt::null || e == m_entityID)
                     continue;
 
-                auto& otherTransform = m_gameState->getComponent<CompTransform>(e);
+                auto& otherTransform = m_stateMan->getComponent<CompTransform>(e);
                 Feet toOther = otherTransform.position - m_components->transform.position;
 
                 float distSq = toOther.lengthSquared();
@@ -459,14 +459,14 @@ Feet CmdMove::avoidCollision()
                                        m_components->transform.position, rayEnd);
 
 #ifndef NDEBUG
-    m_gameState->getComponent<CompGraphics>(m_entityID).debugOverlays[3].arrowEnd =
+    m_stateMan->getComponent<CompGraphics>(m_entityID).debugOverlays[3].arrowEnd =
         m_coordinates->feetToScreenUnits(rayEnd);
 #endif
 
     if (unitToAvoid != entt::null)
     {
         spam("Posible collision with entity {}", unitToAvoid);
-        auto& otherTransform = m_gameState->getComponent<CompTransform>(unitToAvoid);
+        auto& otherTransform = m_stateMan->getComponent<CompTransform>(unitToAvoid);
 
         Feet dir = otherTransform.position - m_components->transform.position;
         auto forward = dir.normalized();
@@ -534,7 +534,7 @@ uint32_t CmdMove::intersectsUnits(uint32_t self,
                                   const Feet& start,
                                   const Feet& end) const
 {
-    auto& gameMap = m_gameState->gameMap();
+    auto& gameMap = m_stateMan->gameMap();
 
     float distance = start.distance(end);
     int numSteps =
@@ -558,7 +558,7 @@ uint32_t CmdMove::intersectsUnits(uint32_t self,
             {
                 if (otherUnit != entt::null && otherUnit != self)
                 {
-                    auto& otherTransform = m_gameState->getComponent<CompTransform>(otherUnit);
+                    auto& otherTransform = m_stateMan->getComponent<CompTransform>(otherUnit);
                     double d = distancePointToSegment(start, end, otherTransform.position);
                     auto totalRadius = transform.collisionRadius + otherTransform.collisionRadius;
 
@@ -690,20 +690,20 @@ bool CmdMove::isTargetCloseEnough() const
 {
     if (targetEntity != entt::null)
     {
-        if (m_gameState->hasComponent<CompBuilding>(targetEntity))
+        if (m_stateMan->hasComponent<CompBuilding>(targetEntity))
         {
             auto [transform, building] =
-                m_gameState->getComponents<CompTransform, CompBuilding>(targetEntity);
+                m_stateMan->getComponents<CompTransform, CompBuilding>(targetEntity);
             auto pos = m_components->transform.position;
             auto radiusSq = m_components->transform.goalRadiusSquared;
             auto rect = building.getLandInFeetRect(transform.position);
 
             return overlaps(pos, radiusSq, rect);
         }
-        else if (m_gameState->hasComponent<CompResource>(targetEntity))
+        else if (m_stateMan->hasComponent<CompResource>(targetEntity))
         {
             auto [transform, resource] =
-                m_gameState->getComponents<CompTransform, CompResource>(targetEntity);
+                m_stateMan->getComponents<CompTransform, CompResource>(targetEntity);
             auto pos = m_components->transform.position;
             auto radiusSq = m_components->transform.goalRadiusSquared;
             auto rect = resource.getLandInFeetRect(transform.position);

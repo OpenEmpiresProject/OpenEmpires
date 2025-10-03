@@ -23,9 +23,9 @@ const ShortcutResolver::Action game::GameShortcutResolver::resolve(
     {
         // TODO: Handle heterogeneous entity type selection
         auto firstEntity = currentSelection.selection.selectedEntities[0];
-        auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+        auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
 
-        if (gameState->hasComponent<CompBuilder>(firstEntity) == false)
+        if (stateMan->hasComponent<CompBuilder>(firstEntity) == false)
         {
             spdlog::warn("Cannot resolve shortcut to construct building since selected entity "
                          "{} is not a builder",
@@ -58,9 +58,9 @@ const ShortcutResolver::Action game::GameShortcutResolver::resolve(
     {
         // TODO: Handle heterogeneous entity type selection
         auto firstEntity = currentSelection.selection.selectedEntities[0];
-        auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+        auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
 
-        if (gameState->hasComponent<CompUnitFactory>(firstEntity) == false)
+        if (stateMan->hasComponent<CompUnitFactory>(firstEntity) == false)
         {
             spdlog::warn("Cannot resolve shortcut to create unit since selected entity "
                          "{} is not a unit factory",
@@ -68,7 +68,7 @@ const ShortcutResolver::Action game::GameShortcutResolver::resolve(
             return {};
         }
 
-        auto& factory = gameState->getComponent<CompUnitFactory>(firstEntity);
+        auto& factory = stateMan->getComponent<CompUnitFactory>(firstEntity);
         if (factory.producibleUnitShortcuts.value().contains(shortcutLetter))
         {
             uint32_t entityTypeToCreate =

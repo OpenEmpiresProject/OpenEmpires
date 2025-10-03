@@ -2,7 +2,7 @@
 
 #include "EntityFactory.h"
 #include "EntityTypeRegistry.h"
-#include "GameState.h"
+#include "StateManager.h"
 #include "ServiceRegistry.h"
 #include "commands/CmdBuild.h"
 #include "components/CompBuilding.h"
@@ -18,7 +18,7 @@ using namespace core;
 
 BuildingManager::BuildingManager()
 {
-    m_gameState = ServiceRegistry::getInstance().getService<GameState>();
+    m_stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     m_typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
 
     registerCallback(Event::Type::TICK, this, &BuildingManager::onTick);
@@ -56,7 +56,7 @@ uint32_t BuildingManager::createBuilding(const BuildingPlacementData& request)
     auto entity = factory->createEntity(request.entityType, 0);
 
     auto [transform, playerComp, building, info, dirty] =
-        m_gameState
+        m_stateMan
             ->getComponents<CompTransform, CompPlayer, CompBuilding, CompEntityInfo, CompDirty>(
                 entity);
 
@@ -68,7 +68,7 @@ uint32_t BuildingManager::createBuilding(const BuildingPlacementData& request)
     info.variation = building.getVariationByConstructionProgress();
     dirty.markDirty(entity);
 
-    auto& gameMap = m_gameState->gameMap();
+    auto& gameMap = m_stateMan->gameMap();
 
     for (size_t i = 0; i < building.size.value().width; i++)
     {
@@ -87,7 +87,7 @@ void BuildingManager::onQueueUnit(const Event& e)
     spdlog::debug("On queuing unit {} for building {}", data.entityType, data.building);
 
     auto [building, factory] =
-        m_gameState->getComponents<CompBuilding, CompUnitFactory>(data.building);
+        m_stateMan->getComponents<CompBuilding, CompUnitFactory>(data.building);
     factory.productionQueue.push_back(data.entityType);
 
     ActiveFactoryInfo info{.factory = factory, .building = data.building, .player = data.player};
@@ -97,13 +97,13 @@ void BuildingManager::onQueueUnit(const Event& e)
 Feet BuildingManager::findVacantPositionAroundBuilding(uint32_t building)
 {
     auto [transform, buildingComp] =
-        m_gameState->getComponents<CompTransform, CompBuilding>(building);
+        m_stateMan->getComponents<CompTransform, CompBuilding>(building);
     auto tile = transform.position.toTile();
     auto bottomCorner = tile + 1;
     Tile pos = bottomCorner;
 
     auto size = buildingComp.size.value();
-    auto tileMap = m_gameState->gameMap();
+    auto tileMap = m_stateMan->gameMap();
 
     // Find vacant tile through bottom left edge of the building
     for (int dx = 0; dx < size.width + 2; ++dx)
@@ -137,11 +137,11 @@ void BuildingManager::updateInProgressConstructions()
 {
     for (auto entity : CompDirty::g_dirtyEntities)
     {
-        if (ServiceRegistry::getInstance().getService<GameState>()->hasComponent<CompBuilding>(
+        if (ServiceRegistry::getInstance().getService<StateManager>()->hasComponent<CompBuilding>(
                 entity))
         {
             auto [transform, building, info, player] =
-                m_gameState->getComponents<CompTransform, CompBuilding, CompEntityInfo, CompPlayer>(
+                m_stateMan->getComponents<CompTransform, CompBuilding, CompEntityInfo, CompPlayer>(
                     entity);
 
             info.variation = building.getVariationByConstructionProgress();
@@ -159,7 +159,7 @@ void BuildingManager::updateInProgressConstructions()
 
             if (building.constructionProgress > 1 && building.isInStaticMap == false)
             {
-                auto& gameMap = ServiceRegistry::getInstance().getService<GameState>()->gameMap();
+                auto& gameMap = ServiceRegistry::getInstance().getService<StateManager>()->gameMap();
 
                 for (size_t i = 0; i < building.size.value().width; i++)
                 {

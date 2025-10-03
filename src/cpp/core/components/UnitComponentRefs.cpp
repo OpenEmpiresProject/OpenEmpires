@@ -25,8 +25,8 @@ UnitComponentRefs::UnitComponentRefs(std::tuple<CompAction&,
 {
 }
 
-UnitComponentRefs::UnitComponentRefs(Ref<GameState> gameState, uint32_t entityID)
-    : UnitComponentRefs(gameState->getComponents<CompAction,
+UnitComponentRefs::UnitComponentRefs(Ref<StateManager> stateMan, uint32_t entityID)
+    : UnitComponentRefs(stateMan->getComponents<CompAction,
                                                  CompAnimation,
                                                  CompDirty,
                                                  CompEntityInfo,

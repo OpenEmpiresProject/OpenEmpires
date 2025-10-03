@@ -17,7 +17,7 @@ HUDUpdater::HUDUpdater()
     registerCallback(Event::Type::ENTITY_SELECTION, this, &HUDUpdater::onUnitSelection);
     registerCallback(Event::Type::TICK, this, &HUDUpdater::onTick);
 
-    m_gameState = ServiceRegistry::getInstance().getService<GameState>();
+    m_stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     m_typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
     m_playerController = ServiceRegistry::getInstance().getService<PlayerController>();
 }
@@ -40,7 +40,7 @@ void HUDUpdater::onUnitSelection(const Event& e)
 
     for (auto unit : m_currentSelection.selectedEntities)
     {
-        auto& comSelectible = m_gameState->getComponent<CompSelectible>(unit);
+        auto& comSelectible = m_stateMan->getComponent<CompSelectible>(unit);
         if (m_selectedIcon != nullptr)
         {
             m_selectedIcon->setVisible(true);
@@ -63,10 +63,10 @@ void HUDUpdater::updateProgressBar()
     if (m_currentSelection.selectedEntities.size() == 1)
     {
         auto entity = m_currentSelection.selectedEntities[0];
-        if (m_gameState->hasComponent<CompBuilding>(entity))
+        if (m_stateMan->hasComponent<CompBuilding>(entity))
         {
             auto [building, entityInfo] =
-                m_gameState->getComponents<CompBuilding, CompEntityInfo>(entity);
+                m_stateMan->getComponents<CompBuilding, CompEntityInfo>(entity);
 
             if (building.isConstructed())
             {
@@ -121,7 +121,7 @@ void HUDUpdater::updateFactoryUnitCreations(uint32_t entity)
     m_creationInProgressGroup->setVisible(false);
     m_creationQueueGroup->setVisible(false);
 
-    if (auto factory = m_gameState->tryGetComponent<CompUnitFactory>(entity))
+    if (auto factory = m_stateMan->tryGetComponent<CompUnitFactory>(entity))
     {
         if (factory->productionQueue.empty() == false && factory->currentUnitProgress <= 100)
         {

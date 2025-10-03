@@ -26,7 +26,7 @@ class BuildingManager : public EventHandler
         Ref<Player> player;
     };
 
-    Ref<GameState> m_gameState;
+    Ref<StateManager> m_stateMan;
     Ref<EntityTypeRegistry> m_typeRegistry;
     std::map<uint32_t /*building id*/, ActiveFactoryInfo> m_activeFactories;
 

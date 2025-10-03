@@ -2,8 +2,8 @@
 #define DEMOWORLDCREATOR_H
 
 #include "DRSFile.h"
-#include "GameSettings.h"
-#include "GameState.h"
+#include "Settings.h"
+#include "StateManager.h"
 #include "GameTypes.h"
 #include "GraphicsRegistry.h"
 #include "Player.h"
@@ -20,7 +20,7 @@ class DemoWorldCreator : public core::SubSystem, public core::PropertyInitialize
 {
   public:
     DemoWorldCreator(std::stop_token* stopToken,
-                     std::shared_ptr<core::GameSettings> settings,
+                     std::shared_ptr<core::Settings> settings,
                      bool populateWorld);
     ~DemoWorldCreator() = default;
 
@@ -36,7 +36,7 @@ class DemoWorldCreator : public core::SubSystem, public core::PropertyInitialize
     void generateMap(core::TileMap& gameMap);
     void createTile(uint32_t x,
                     uint32_t y,
-                    core::Ref<core::GameState> gameState,
+                    core::Ref<core::StateManager> stateMan,
                     EntityTypes entityType);
     void createTree(core::TileMap& gameMap, uint32_t x, uint32_t y);
     void createStoneOrGoldCluster(EntityTypes entityType,
@@ -48,7 +48,7 @@ class DemoWorldCreator : public core::SubSystem, public core::PropertyInitialize
     void createVillager(core::Ref<core::Player> player, const core::Tile& pos);
 
   private:
-    std::shared_ptr<core::GameSettings> m_settings;
+    std::shared_ptr<core::Settings> m_settings;
     bool m_populateWorld = false;
     bool m_isReady = false;
     const int m_iconSize = 36;

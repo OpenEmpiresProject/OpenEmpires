@@ -1,7 +1,7 @@
 #ifndef UNITCOMPONENTREFS_H
 #define UNITCOMPONENTREFS_H
 
-#include "GameState.h"
+#include "StateManager.h"
 
 #include <cstdint>
 #include <tuple>
@@ -27,7 +27,7 @@ class UnitComponentRefs
     CompTransform& transform;
     CompUnit& unit;
 
-    UnitComponentRefs(Ref<GameState> gameState, uint32_t entityID);
+    UnitComponentRefs(Ref<StateManager> stateMan, uint32_t entityID);
 
   private:
     UnitComponentRefs(std::tuple<CompAction&,

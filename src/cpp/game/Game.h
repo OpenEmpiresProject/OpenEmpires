@@ -9,7 +9,7 @@
 #include "EntityTypeRegistry.h"
 #include "EventLoop.h"
 #include "GameShortcutResolver.h"
-#include "GameState.h"
+#include "StateManager.h"
 #include "GraphicsLoaderFromDRS.h"
 #include "GraphicsLoaderFromImages.h"
 #include "GraphicsRegistry.h"
@@ -69,7 +69,7 @@ class Game
 
         core::GraphicsRegistry graphicsRegistry;
 
-        auto settings = std::make_shared<core::GameSettings>();
+        auto settings = std::make_shared<core::Settings>();
         settings->setWindowDimensions(1366, 768);
 
         if (params.revealAll)
@@ -84,10 +84,10 @@ class Game
         // game::GraphicsLoaderFromImages graphicsLoader;
         game::GraphicsLoaderFromDRS graphicsLoader;
 
-        auto gameState = std::make_shared<core::GameState>();
-        gameState->gameMap().init(settings->getWorldSizeInTiles().width,
+        auto stateMan = std::make_shared<core::StateManager>();
+        stateMan->gameMap().init(settings->getWorldSizeInTiles().width,
                                   settings->getWorldSizeInTiles().height);
-        core::ServiceRegistry::getInstance().registerService(gameState);
+        core::ServiceRegistry::getInstance().registerService(stateMan);
 
         auto coordinates = std::make_shared<core::Coordinates>(settings);
         core::ServiceRegistry::getInstance().registerService(coordinates);

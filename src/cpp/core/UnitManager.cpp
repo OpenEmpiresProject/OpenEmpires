@@ -14,7 +14,7 @@ using namespace core;
 
 UnitManager::UnitManager()
 {
-    m_gameState = ServiceRegistry::getInstance().getService<GameState>();
+    m_stateMan = ServiceRegistry::getInstance().getService<StateManager>();
 
     registerCallback(Event::Type::ENTITY_DELETE, this, &UnitManager::onUnitDeletion);
     registerCallback(Event::Type::UNIT_CREATION_FINISHED, this, &UnitManager::onCreateUnit);
@@ -24,23 +24,23 @@ UnitManager::UnitManager()
 void UnitManager::onUnitTileMovement(const Event& e)
 {
     auto& data = e.getData<UnitTileMovementData>();
-    auto [player, unit] = m_gameState->getComponents<CompPlayer, CompUnit>(data.unit);
+    auto [player, unit] = m_stateMan->getComponents<CompPlayer, CompUnit>(data.unit);
 
     player.player->getFogOfWar()->markAsExplored(data.positionFeet, unit.lineOfSight);
 }
 
 void UnitManager::onUnitDeletion(const Event& e)
 {
-    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+    auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
 
     auto entity = e.getData<EntityDeleteData>().entity;
-    if (entity != entt::null && gameState->hasComponent<CompUnit>(entity))
+    if (entity != entt::null && stateMan->hasComponent<CompUnit>(entity))
     {
         auto [info, dirty, transform] =
-            gameState->getComponents<CompEntityInfo, CompDirty, CompTransform>(entity);
+            stateMan->getComponents<CompEntityInfo, CompDirty, CompTransform>(entity);
         info.isDestroyed = true;
         dirty.markDirty(entity);
-        gameState->gameMap().removeEntity(MapLayerType::UNITS, transform.position.toTile(), entity);
+        stateMan->gameMap().removeEntity(MapLayerType::UNITS, transform.position.toTile(), entity);
     }
 }
 
@@ -48,12 +48,12 @@ void UnitManager::onCreateUnit(const Event& e)
 {
     auto& data = e.getData<UnitCreationData>();
 
-    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+    auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
     auto unit = factory->createEntity(data.entityType, 0);
     auto [transform, unitComp, selectible, playerComp] =
-        gameState->getComponents<CompTransform, CompUnit, CompSelectible, CompPlayer>(unit);
+        stateMan->getComponents<CompTransform, CompUnit, CompSelectible, CompPlayer>(unit);
 
     transform.position = data.position;
     transform.face(Direction::SOUTH);
@@ -64,7 +64,7 @@ void UnitManager::onCreateUnit(const Event& e)
     playerComp.player = data.player;
 
     auto newTile = transform.position.toTile();
-    gameState->gameMap().addEntity(MapLayerType::UNITS, newTile, unit);
+    stateMan->gameMap().addEntity(MapLayerType::UNITS, newTile, unit);
     playerComp.player->addEntity(unit);
 
     data.player->getFogOfWar()->markAsExplored(transform.position, unitComp.lineOfSight);

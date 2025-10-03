@@ -6,7 +6,7 @@
 
 namespace core
 {
-class GameState;
+class StateManager;
 
 class UnitManager : public EventHandler
 {
@@ -19,7 +19,7 @@ class UnitManager : public EventHandler
     void onUnitTileMovement(const Event& e);
 
   private:
-    Ref<GameState> m_gameState;
+    Ref<StateManager> m_stateMan;
 };
 
 } // namespace core

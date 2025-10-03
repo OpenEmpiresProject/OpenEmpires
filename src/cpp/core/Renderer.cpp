@@ -4,8 +4,8 @@
 #include "Coordinates.h"
 #include "EventLoop.h"
 #include "FPSCounter.h"
-#include "GameSettings.h"
-#include "GameState.h"
+#include "Settings.h"
+#include "StateManager.h"
 #include "GraphicsLoader.h"
 #include "GraphicsRegistry.h"
 #include "SDL3_gfxPrimitives.h"
@@ -186,7 +186,7 @@ class RendererImpl
 
     std::thread m_renderThread;
     std::atomic<bool> m_running = false;
-    std::shared_ptr<GameSettings> m_settings;
+    std::shared_ptr<Settings> m_settings;
     GraphicsRegistry& m_graphicsRegistry;
 
     std::condition_variable m_sdlInitCV;
@@ -237,9 +237,9 @@ RendererImpl::RendererImpl(std::stop_source* stopSource,
                            ThreadSynchronizer<FrameData>& synchronizer,
                            GraphicsLoader& graphicsLoader)
     : m_stopSource(stopSource),
-      m_settings(ServiceRegistry::getInstance().getService<GameSettings>()),
+      m_settings(ServiceRegistry::getInstance().getService<Settings>()),
       m_graphicsRegistry(graphicsRegistry),
-      m_coordinates(ServiceRegistry::getInstance().getService<GameSettings>()),
+      m_coordinates(ServiceRegistry::getInstance().getService<Settings>()),
       m_synchronizer(synchronizer), m_graphicsLoader(graphicsLoader),
       m_zOrderStrategy(std::move(std::make_unique<ZOrderStrategyWithSlicing>()))
 {
@@ -483,13 +483,13 @@ void RendererImpl::updateRenderingComponents()
 {
     // spdlog::debug("Handling graphic instructions...");
     auto& frameData = m_synchronizer.getReceiverFrameData().graphicUpdates;
-    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+    auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     std::list<GraphicsID> idsNeedToLoad;
     std::list<CompGraphics*> lazyLoadedInstructions;
 
     for (const auto& instruction : frameData)
     {
-        auto& rc = gameState->getComponent<CompRendering>(instruction->entityID);
+        auto& rc = stateMan->getComponent<CompRendering>(instruction->entityID);
         static_cast<CompGraphics&>(rc) = *instruction;
         rc.additionalZOffset = 0;
 
@@ -527,7 +527,7 @@ void RendererImpl::updateRenderingComponents()
                                       idsNeedToLoad);
         for (auto& instruction : lazyLoadedInstructions)
         {
-            auto& rc = gameState->getComponent<CompRendering>(instruction->entityID);
+            auto& rc = stateMan->getComponent<CompRendering>(instruction->entityID);
             static_cast<CompGraphics&>(rc) = *instruction;
             rc.updateTextureDetails(m_graphicsRegistry);
 

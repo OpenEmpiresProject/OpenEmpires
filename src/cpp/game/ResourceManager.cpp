@@ -1,6 +1,6 @@
 #include "ResourceManager.h"
 
-#include "GameState.h"
+#include "StateManager.h"
 #include "GameTypes.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
@@ -26,14 +26,14 @@ void ResourceManager::onEvent(const Event& e)
 
 void ResourceManager::onTick(const Event& e)
 {
-    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+    auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     for (auto entity : CompDirty::g_dirtyEntities)
     {
-        if (gameState->hasComponent<CompResource>(entity))
+        if (stateMan->hasComponent<CompResource>(entity))
         {
             auto [resource, dirty, info, select, transform] =
                 ServiceRegistry::getInstance()
-                    .getService<GameState>()
+                    .getService<StateManager>()
                     ->getComponents<CompResource, CompDirty, CompEntityInfo, CompSelectible,
                                     CompTransform>(entity);
 
@@ -41,7 +41,7 @@ void ResourceManager::onTick(const Event& e)
             {
                 info.isDestroyed = true;
                 auto tile = transform.position.toTile();
-                gameState->gameMap().removeStaticEntity(tile, entity);
+                stateMan->gameMap().removeStaticEntity(tile, entity);
             }
             else if (resource.remainingAmount < resource.original.value().amount)
             {
@@ -57,15 +57,15 @@ void ResourceManager::onTick(const Event& e)
                         Rect<int>(tw / 2, th / 2, tw, th);
 
                     auto tile = transform.position.toTile();
-                    auto shadow = gameState->gameMap().getEntity(MapLayerType::ON_GROUND, tile);
+                    auto shadow = stateMan->gameMap().getEntity(MapLayerType::ON_GROUND, tile);
 
                     if (shadow != entt::null)
                     {
                         auto [shadowInfo, shadowDirty] =
-                            gameState->getComponents<CompEntityInfo, CompDirty>(shadow);
+                            stateMan->getComponents<CompEntityInfo, CompDirty>(shadow);
                         shadowInfo.isDestroyed = true;
                         shadowDirty.markDirty(shadow);
-                        gameState->gameMap().removeStaticEntity(tile, shadow);
+                        stateMan->gameMap().removeStaticEntity(tile, shadow);
                     }
                 }
             }

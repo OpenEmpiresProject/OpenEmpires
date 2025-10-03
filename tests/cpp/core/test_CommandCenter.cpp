@@ -3,7 +3,7 @@
 #include "CommandCenter.h"
 #include "EventLoop.h"
 #include "Event.h"
-#include "GameState.h"
+#include "StateManager.h"
 #include "components/CompUnit.h"
 #include "commands/Command.h"
 #include "components/CompAction.h"
@@ -15,7 +15,7 @@
 #include "components/CompTransform.h"
 
 #include "ServiceRegistry.h"
-#include "GameSettings.h"
+#include "Settings.h"
 
 namespace core
 {
@@ -41,15 +41,15 @@ class CommandCenterTest : public ::testing::Test
     void SetUp() override
     {
         ccEventHandlerPtr = &commandCenter;
-        ServiceRegistry::getInstance().registerService(std::make_shared<GameSettings>());
+        ServiceRegistry::getInstance().registerService(std::make_shared<Settings>());
 
-        auto gameState = std::make_shared<core::GameState>();
-        ServiceRegistry::getInstance().registerService(gameState);
+        auto stateMan = std::make_shared<core::StateManager>();
+        ServiceRegistry::getInstance().registerService(stateMan);
     }
 
     void TearDown() override
     {
-        ServiceRegistry::getInstance().getService<GameState>()->clearAll();
+        ServiceRegistry::getInstance().getService<StateManager>()->clearAll();
     }
 };
 
@@ -64,20 +64,20 @@ TEST_F(CommandCenterTest, ExecutesCommandsInQueue_CommandComplete)
 {
     CompUnit unit;
     auto mockCommand = new MockCommand();
-    auto entity = ServiceRegistry::getInstance().getService<GameState>()->createEntity();
+    auto entity = ServiceRegistry::getInstance().getService<StateManager>()->createEntity();
     std::list<Command*> subCommands;
 
     EXPECT_CALL(*mockCommand, onExecute(0, 0, subCommands))
         .WillOnce(::testing::Return(true)); // mark command as completed
 
     unit.commandQueue.push(mockCommand);
-    ServiceRegistry::getInstance().getService<GameState>()->addComponent(entity, unit);
+    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, unit);
 
     Event tickEvent{Event::Type::TICK, TickData{0}};
     commandCenter.onTick(tickEvent);
 
     auto unitActual =
-        ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompUnit>(entity);
+        ServiceRegistry::getInstance().getService<StateManager>()->getComponent<CompUnit>(entity);
 
     ASSERT_TRUE(unitActual.commandQueue.empty());
 }
@@ -86,20 +86,20 @@ TEST_F(CommandCenterTest, ExecutesCommandsInQueue_CommandNotComplete)
 {
     CompUnit unit;
     auto mockCommand = new MockCommand();
-    auto entity = ServiceRegistry::getInstance().getService<GameState>()->createEntity();
+    auto entity = ServiceRegistry::getInstance().getService<StateManager>()->createEntity();
     std::list<Command*> subCommands;
 
     EXPECT_CALL(*mockCommand, onExecute(0, 0, subCommands))
         .WillOnce(::testing::Return(false)); // mark command as not completed
 
     unit.commandQueue.push(mockCommand);
-    ServiceRegistry::getInstance().getService<GameState>()->addComponent(entity, unit);
+    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, unit);
 
     Event tickEvent{Event::Type::TICK, TickData{0}};
     ccEventHandlerPtr->onEvent(tickEvent);
 
     auto unitActual =
-        ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompUnit>(entity);
+        ServiceRegistry::getInstance().getService<StateManager>()->getComponent<CompUnit>(entity);
 
     ASSERT_EQ(1, unitActual.commandQueue.size());
 }
@@ -109,7 +109,7 @@ TEST_F(CommandCenterTest, CreatesSubCommands)
     CompUnit unit;
     auto mockCommand = new MockCommand();
     auto subCommand = new MockCommand();
-    auto entity = ServiceRegistry::getInstance().getService<GameState>()->createEntity();
+    auto entity = ServiceRegistry::getInstance().getService<StateManager>()->createEntity();
     std::list<Command*> subCommands;
 
     EXPECT_CALL(*mockCommand, onExecute(0, 0, subCommands))
@@ -122,19 +122,19 @@ TEST_F(CommandCenterTest, CreatesSubCommands)
 
     unit.commandQueue.push(mockCommand);
 
-    ServiceRegistry::getInstance().getService<GameState>()->addComponent(entity, unit);
-    ServiceRegistry::getInstance().getService<GameState>()->addComponent(entity, CompAction(0));
-    ServiceRegistry::getInstance().getService<GameState>()->addComponent(entity, CompAnimation());
-    ServiceRegistry::getInstance().getService<GameState>()->addComponent(entity, CompDirty());
-    ServiceRegistry::getInstance().getService<GameState>()->addComponent(entity, CompEntityInfo(0));
-    ServiceRegistry::getInstance().getService<GameState>()->addComponent(entity, CompPlayer());
-    ServiceRegistry::getInstance().getService<GameState>()->addComponent(entity, CompTransform());
+    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, unit);
+    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompAction(0));
+    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompAnimation());
+    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompDirty());
+    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompEntityInfo(0));
+    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompPlayer());
+    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompTransform());
 
     Event tickEvent{Event::Type::TICK, TickData{0}};
     commandCenter.onTick(tickEvent);
 
     auto unitActual =
-        ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompUnit>(entity);
+        ServiceRegistry::getInstance().getService<StateManager>()->getComponent<CompUnit>(entity);
 
     ASSERT_EQ(unitActual.commandQueue.size(), 2);
 }

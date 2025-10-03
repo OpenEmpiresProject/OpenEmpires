@@ -1,7 +1,7 @@
 #include "PlayerController.h"
 
 #include "EntityFactory.h"
-#include "GameState.h"
+#include "StateManager.h"
 #include "Player.h"
 #include "PlayerFactory.h"
 #include "ServiceRegistry.h"
@@ -25,7 +25,7 @@ using namespace core;
 PlayerController::PlayerController()
 {
     m_coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
-    m_gameState = ServiceRegistry::getInstance().getService<GameState>();
+    m_stateMan = ServiceRegistry::getInstance().getService<StateManager>();
 
     registerCallback(Event::Type::KEY_UP, this, &PlayerController::onKeyUp);
     registerCallback(Event::Type::MOUSE_BTN_UP, this, &PlayerController::onMouseButtonUp);
@@ -103,7 +103,7 @@ void PlayerController::onMouseButtonUp(const Event& e)
         if (m_currentBuildingPlacement.entity != entt::null)
         {
             auto [building, transform, player, info, dirty] =
-                m_gameState->getComponents<CompBuilding, CompTransform, CompPlayer, CompEntityInfo,
+                m_stateMan->getComponents<CompBuilding, CompTransform, CompPlayer, CompEntityInfo,
                                            CompDirty>(m_currentBuildingPlacement.entity);
 
             if (building.validPlacement)
@@ -140,13 +140,13 @@ void PlayerController::onMouseMove(const Event& e)
     if (m_currentBuildingPlacement.entity != entt::null)
     {
         auto [transform, dirty, building] =
-            m_gameState->getComponents<CompTransform, CompDirty, CompBuilding>(
+            m_stateMan->getComponents<CompTransform, CompDirty, CompBuilding>(
                 m_currentBuildingPlacement.entity);
 
         auto feet = m_coordinates->screenUnitsToFeet(e.getData<MouseMoveData>().screenPos);
 
         bool outOfMap = false;
-        building.validPlacement = m_gameState->canPlaceBuildingAt(building, feet, outOfMap);
+        building.validPlacement = m_stateMan->canPlaceBuildingAt(building, feet, outOfMap);
 
         if (!outOfMap)
         {
@@ -188,12 +188,12 @@ void PlayerController::selectEntities(const Vec2& screenPos)
 
 void PlayerController::resolveAction(const Vec2& screenPos)
 {
-    auto result = m_gameState->whatIsAt(screenPos);
+    auto result = m_stateMan->whatIsAt(screenPos);
     auto target = result.entity;
     auto layer = result.layer;
-    auto m_gameState = ServiceRegistry::getInstance().getService<GameState>();
-    bool gatherable = m_gameState->hasComponent<CompResource>(target);
-    bool construction = m_gameState->hasComponent<CompBuilding>(target);
+    auto m_stateMan = ServiceRegistry::getInstance().getService<StateManager>();
+    bool gatherable = m_stateMan->hasComponent<CompResource>(target);
+    bool construction = m_stateMan->hasComponent<CompBuilding>(target);
 
     for (auto entity : m_currentEntitySelection.selection.selectedEntities)
     {
@@ -203,7 +203,7 @@ void PlayerController::resolveAction(const Vec2& screenPos)
             // TODO: Ensure target is within the map
             // TODO: Ensure we have control over this unit
 
-            if (m_gameState->hasComponent<CompUnit>(entity))
+            if (m_stateMan->hasComponent<CompUnit>(entity))
             {
                 auto worldPos = m_coordinates->screenUnitsToFeet(screenPos);
                 auto cmd = ObjectPool<CmdMove>::acquire();
@@ -246,19 +246,19 @@ void PlayerController::selectHomogeneousEntities(const std::vector<uint32_t>& se
 
     for (auto entity : selectedEntities)
     {
-        if (m_gameState->hasComponent<CompUnit>(entity)) [[likely]]
+        if (m_stateMan->hasComponent<CompUnit>(entity)) [[likely]]
         {
             containsUnits = true;
             selectionType = EntitySelectionData::Type::UNIT;
             break;
         }
-        else if (m_gameState->hasComponent<CompBuilding>(entity))
+        else if (m_stateMan->hasComponent<CompBuilding>(entity))
         {
             containsBuildings = true;
             selectionType = EntitySelectionData::Type::BUILDING;
             break;
         }
-        else if (m_gameState->hasComponent<CompResource>(entity))
+        else if (m_stateMan->hasComponent<CompResource>(entity))
         {
             containsNaturalResources = true;
             selectionType = EntitySelectionData::Type::NATURAL_RESOURCE;
@@ -273,15 +273,15 @@ void PlayerController::selectHomogeneousEntities(const std::vector<uint32_t>& se
         bool isValid = false;
         if (containsUnits) [[likely]]
         {
-            isValid = m_gameState->hasComponent<CompUnit>(entity);
+            isValid = m_stateMan->hasComponent<CompUnit>(entity);
         }
         else if (containsBuildings)
         {
-            isValid = m_gameState->hasComponent<CompBuilding>(entity);
+            isValid = m_stateMan->hasComponent<CompBuilding>(entity);
         }
         else if (containsNaturalResources)
         {
-            isValid = m_gameState->hasComponent<CompResource>(entity);
+            isValid = m_stateMan->hasComponent<CompResource>(entity);
         }
         else [[unlikely]]
         {
@@ -291,7 +291,7 @@ void PlayerController::selectHomogeneousEntities(const std::vector<uint32_t>& se
 
         if (isValid)
         {
-            auto [dirty, select] = m_gameState->getComponents<CompDirty, CompSelectible>(entity);
+            auto [dirty, select] = m_stateMan->getComponents<CompDirty, CompSelectible>(entity);
 
             selection.selectedEntities.push_back(entity);
             select.isSelected = true;
@@ -309,7 +309,7 @@ void PlayerController::selectHomogeneousEntities(const std::vector<uint32_t>& se
 
 void PlayerController::handleClickToSelect(const Vec2& screenPos)
 {
-    auto result = m_gameState->whatIsAt(screenPos);
+    auto result = m_stateMan->whatIsAt(screenPos);
 
     // FIXME: Doesn't work for units
     if (result.entity != entt::null)
@@ -346,7 +346,7 @@ void PlayerController::updateSelection(const EntitySelectionData& newSelection)
     // Clear any existing selections
     for (auto& entity : m_currentEntitySelection.selection.selectedEntities)
     {
-        auto [dirty, select] = m_gameState->getComponents<CompDirty, CompSelectible>(entity);
+        auto [dirty, select] = m_stateMan->getComponents<CompDirty, CompSelectible>(entity);
 
         select.isSelected = false;
         dirty.markDirty(entity);
@@ -373,7 +373,7 @@ void PlayerController::cancelBuildingPlacement()
 {
     if (m_currentBuildingPlacement.entity != entt::null)
     {
-        auto [info, dirty] = m_gameState->getComponents<CompEntityInfo, CompDirty>(
+        auto [info, dirty] = m_stateMan->getComponents<CompEntityInfo, CompDirty>(
             m_currentBuildingPlacement.entity);
 
         info.isDestroyed = true;
@@ -397,7 +397,7 @@ void PlayerController::getAllOverlappingEntities(const Vec2& startScreenPos,
     // Following consider only units since selection box cannot be used for non-unit entities
     // such as buildings and trees
     // TODO: Optimize this by using tilemap
-    m_gameState->getEntities<CompUnit, CompTransform, CompDirty, CompPlayer>().each(
+    m_stateMan->getEntities<CompUnit, CompTransform, CompDirty, CompPlayer>().each(
         [this, selectionLeft, selectionRight, selectionTop, selectionBottom, &player,
          &entitiesToAddToSelection](uint32_t entity, CompUnit& unit, CompTransform& transform,
                                     CompDirty& dirty, CompPlayer& playerComp)
@@ -434,7 +434,7 @@ void PlayerController::onBuildingApproved(const Event& e)
     {
         for (auto unit : m_currentEntitySelection.selection.selectedEntities)
         {
-            if (m_gameState->hasComponent<CompBuilder>(unit))
+            if (m_stateMan->hasComponent<CompBuilder>(unit))
             {
                 // Send build instruction
                 auto cmd = ObjectPool<CmdBuild>::acquire();
@@ -457,7 +457,7 @@ void PlayerController::createBuilding(const ShortcutResolver::Action& action)
     auto entity = factory->createEntity(action.entityType, 0);
 
     auto [transform, playerComp, building, info, dirty] =
-        m_gameState
+        m_stateMan
             ->getComponents<CompTransform, CompPlayer, CompBuilding, CompEntityInfo, CompDirty>(
                 entity);
 

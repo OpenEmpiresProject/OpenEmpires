@@ -356,8 +356,8 @@ EntityDefinitionLoader::EntityDRSData EntityDefinitionLoader::getDRSData(const G
 
 uint32_t EntityDefinitionLoader::createEntity(uint32_t entityType, uint32_t entitySubType)
 {
-    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
-    auto entity = gameState->createEntity();
+    auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
+    auto entity = stateMan->createEntity();
 
     auto mapKey = entityType + entitySubType * m_entitySubTypeMapKeyOffset;
 
@@ -374,29 +374,29 @@ uint32_t EntityDefinitionLoader::createEntity(uint32_t entityType, uint32_t enti
                     {
                         spam("Adding component {} to entity {} of type {} subtype {}",
                              typeid(comp).name(), entity, entityType, entitySubType);
-                        gameState->addComponent(entity, comp);
+                        stateMan->addComponent(entity, comp);
                     }
                 },
                 variantComponent);
         }
     }
-    gameState->getComponent<CompEntityInfo>(entity).entityId = entity;
+    stateMan->getComponent<CompEntityInfo>(entity).entityId = entity;
 
     // Adding default idle command
-    if (gameState->hasComponent<CompUnit>(entity))
+    if (stateMan->hasComponent<CompUnit>(entity))
     {
         auto idleCmd = ObjectPool<CmdIdle>::acquire(entity);
         idleCmd->setPriority(Command::DEFAULT_PRIORITY);
-        gameState->getComponent<CompUnit>(entity).commandQueue.push(idleCmd);
+        stateMan->getComponent<CompUnit>(entity).commandQueue.push(idleCmd);
     }
 
     // Late binding of entity names to types
-    if (gameState->hasComponent<CompUnitFactory>(entity))
+    if (stateMan->hasComponent<CompUnitFactory>(entity))
     {
         auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
 
         std::vector<uint32_t> possibleUnitTypes;
-        auto& factory = gameState->getComponent<CompUnitFactory>(entity);
+        auto& factory = stateMan->getComponent<CompUnitFactory>(entity);
         for (auto& possibleUnit : factory.producibleUnitNames.value())
         {
             possibleUnitTypes.push_back(typeRegistry->getEntityType(possibleUnit));

@@ -3,7 +3,7 @@
 
 #include "Coordinates.h"
 #include "Feet.h"
-#include "GameState.h"
+#include "StateManager.h"
 #include "Player.h"
 #include "ServiceRegistry.h"
 #include "commands/CmdDropResource.h"
@@ -53,18 +53,18 @@ class CmdGatherResource : public Command
 
         m_coordinateSystem = ServiceRegistry::getInstance().getService<Coordinates>();
         m_collectedResourceAmount = 0;
-        m_gatherer = &(m_gameState->getComponent<CompResourceGatherer>(m_entityID));
+        m_gatherer = &(m_stateMan->getComponent<CompResourceGatherer>(m_entityID));
     }
 
     void setTarget(uint32_t targetEntity)
     {
-        debug_assert(m_gameState->hasComponent<CompResource>(targetEntity),
+        debug_assert(m_stateMan->hasComponent<CompResource>(targetEntity),
                      "Target entity is not a resource");
 
         target = targetEntity;
 
         auto [transformTarget, resourceTarget] =
-            m_gameState->getComponents<CompTransform, CompResource>(target);
+            m_stateMan->getComponents<CompTransform, CompResource>(target);
         m_targetPosition = transformTarget.position;
         m_targetResourceType = resourceTarget.original.value().type;
     }
@@ -144,7 +144,7 @@ class CmdGatherResource : public Command
     {
         if (target != entt::null)
         {
-            const auto& info = m_gameState->getComponent<CompEntityInfo>(target);
+            const auto& info = m_stateMan->getComponent<CompEntityInfo>(target);
             return !info.isDestroyed;
         }
         return false;
@@ -188,7 +188,7 @@ class CmdGatherResource : public Command
      */
     void gather(int deltaTimeMs)
     {
-        auto& resource = m_gameState->getComponent<CompResource>(target);
+        auto& resource = m_stateMan->getComponent<CompResource>(target);
 
         m_collectedResourceAmount += float(m_choppingSpeed) * deltaTimeMs / 1000.0f;
         uint32_t rounded = m_collectedResourceAmount;
@@ -201,7 +201,7 @@ class CmdGatherResource : public Command
                 std::min(actualDelta, (m_gatherer->capacity - m_gatherer->gatheredAmount));
             resource.remainingAmount -= actualDelta;
             m_gatherer->gatheredAmount += actualDelta;
-            m_gameState->getComponent<CompDirty>(target).markDirty(target);
+            m_stateMan->getComponent<CompDirty>(target).markDirty(target);
         }
     }
 
@@ -254,16 +254,16 @@ class CmdGatherResource : public Command
                               uint32_t& resourceEntity) const
     {
         resourceEntity = entt::null;
-        auto& map = m_gameState->gameMap();
+        auto& map = m_stateMan->gameMap();
         auto e = map.getEntity(MapLayerType::STATIC, posTile);
         if (e != entt::null)
         {
-            const auto& info = m_gameState->getComponent<CompEntityInfo>(e);
+            const auto& info = m_stateMan->getComponent<CompEntityInfo>(e);
             if (!info.isDestroyed)
             {
-                if (m_gameState->hasComponent<CompResource>(e))
+                if (m_stateMan->hasComponent<CompResource>(e))
                 {
-                    const auto& resource = m_gameState->getComponent<CompResource>(e);
+                    const auto& resource = m_stateMan->getComponent<CompResource>(e);
                     if (resource.original.value().type == resourceType)
                     {
                         resourceEntity = e;

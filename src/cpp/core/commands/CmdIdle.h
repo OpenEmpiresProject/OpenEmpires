@@ -1,7 +1,7 @@
 #ifndef CMDIDLEH
 #define CMDIDLEH
 
-#include "GameState.h"
+#include "StateManager.h"
 #include "commands/Command.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"

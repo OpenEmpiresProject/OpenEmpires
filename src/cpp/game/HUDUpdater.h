@@ -68,7 +68,7 @@ class HUDUpdater : public core::EventHandler
     core::Ref<core::PlayerController> m_playerController;
     core::Ref<core::ui::Widget> m_creationInProgressGroup;
     core::Ref<core::ui::Widget> m_creationQueueGroup;
-    core::Ref<core::GameState> m_gameState;
+    core::Ref<core::StateManager> m_stateMan;
     core::Ref<core::EntityTypeRegistry> m_typeRegistry;
 };
 

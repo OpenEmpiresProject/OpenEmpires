@@ -11,12 +11,12 @@ namespace core
 class PathFinderBase;
 class CompBuilding;
 
-class GameState
+class StateManager
 {
   public:
-    GameState();
-    GameState(const GameState&) = delete;
-    GameState& operator=(const GameState&) = delete;
+    StateManager();
+    StateManager(const StateManager&) = delete;
+    StateManager& operator=(const StateManager&) = delete;
 
     uint32_t createEntity();
 

@@ -2,7 +2,7 @@
 
 #include "Coordinates.h"
 #include "Event.h"
-#include "GameState.h"
+#include "StateManager.h"
 #include "ServiceRegistry.h"
 #include "UIManager.h"
 #include "components/CompDirty.h"
@@ -16,21 +16,21 @@ using namespace core;
 using namespace core::ui;
 
 Widget::Widget(Ref<Widget> parent)
-    : id(ServiceRegistry::getInstance().getService<GameState>()->createEntity()), parent(parent)
+    : id(ServiceRegistry::getInstance().getService<StateManager>()->createEntity()), parent(parent)
 {
-    ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, CompUIElement());
-    ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, CompTransform());
+    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(id, CompUIElement());
+    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(id, CompTransform());
 
     CompGraphics graphics;
     graphics.entityID = id;
     graphics.layer = GraphicLayer::UI;
-    ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, graphics);
-    ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, CompRendering());
-    ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, CompDirty());
+    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(id, graphics);
+    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(id, CompRendering());
+    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(id, CompDirty());
 
     CompEntityInfo entityInfo(s_entityType, s_entitySubType, 0);
     entityInfo.entityId = id;
-    ServiceRegistry::getInstance().getService<GameState>()->addComponent(id, entityInfo);
+    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(id, entityInfo);
 }
 
 void Widget::feedInput(const Event& e)
@@ -62,7 +62,7 @@ void Widget::updateGraphicCommand()
         auto coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
         auto [ui, transform, info, dirty] =
             ServiceRegistry::getInstance()
-                .getService<GameState>()
+                .getService<StateManager>()
                 ->getComponents<CompUIElement, CompTransform, CompEntityInfo, CompDirty>(id);
         auto pixelPos = getAbsoluteRect().position();
         // HACK: We are hacking transform's position to carry UI element positions as well.
@@ -133,7 +133,7 @@ Rect<int> Widget::getAbsoluteRect() const
 
     if (rect.x < 0 || rect.y < 0)
     {
-        auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
+        auto settings = ServiceRegistry::getInstance().getService<Settings>();
 
         if (rect.x < 0)
             negativeTranslated.x = settings->getWindowDimensions().width + rect.x - rect.w;
@@ -195,7 +195,7 @@ void Label::updateGraphicCommand()
      *
      */
     auto& ui =
-        ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompUIElement>(id);
+        ServiceRegistry::getInstance().getService<StateManager>()->getComponent<CompUIElement>(id);
     // if (ui.text != text || ui.backgroundImage != backgroundImage)
     //     dirty = true;
 

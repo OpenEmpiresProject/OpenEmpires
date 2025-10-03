@@ -1,7 +1,7 @@
-#include "GameState.h"
+#include "StateManager.h"
 
 #include "Coordinates.h"
-#include "GameSettings.h"
+#include "Settings.h"
 #include "PathFinderAStar.h"
 #include "PathFinderBase.h"
 #include "ServiceRegistry.h"
@@ -12,22 +12,22 @@
 
 using namespace core;
 
-GameState::GameState()
+StateManager::StateManager()
 {
     m_pathFinder = CreateRef<PathFinderAStar>();
 }
 
-uint32_t GameState::createEntity()
+uint32_t StateManager::createEntity()
 {
     return m_registry.create();
 }
 
-void GameState::destroyEntity(uint32_t entity)
+void StateManager::destroyEntity(uint32_t entity)
 {
     m_entitiesToDestroy.push_back(entity);
 }
 
-void core::GameState::destroyAllPendingEntities()
+void core::StateManager::destroyAllPendingEntities()
 {
     for (auto entity : m_entitiesToDestroy)
     {
@@ -36,19 +36,19 @@ void core::GameState::destroyAllPendingEntities()
     m_entitiesToDestroy.clear();
 }
 
-bool GameState::isEntityValid(uint32_t entity) const
+bool StateManager::isEntityValid(uint32_t entity) const
 {
     return m_registry.valid(entity) &&
            std::find(m_entitiesToDestroy.begin(), m_entitiesToDestroy.end(), entity) ==
                m_entitiesToDestroy.end();
 }
 
-void GameState::clearAll()
+void StateManager::clearAll()
 {
     m_registry.clear();
 }
 
-GameState::TileMapQueryResult GameState::whatIsAt(const Vec2& screenPos)
+StateManager::TileMapQueryResult StateManager::whatIsAt(const Vec2& screenPos)
 {
     auto coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
 
@@ -116,9 +116,9 @@ GameState::TileMapQueryResult GameState::whatIsAt(const Vec2& screenPos)
     return result;
 }
 
-bool GameState::canPlaceBuildingAt(const CompBuilding& building, const Feet& feet, bool& outOfMap)
+bool StateManager::canPlaceBuildingAt(const CompBuilding& building, const Feet& feet, bool& outOfMap)
 {
-    auto settings = ServiceRegistry::getInstance().getService<GameSettings>();
+    auto settings = ServiceRegistry::getInstance().getService<Settings>();
     auto tile = feet.toTile();
     auto staticMap = m_gameMap.getMap(MapLayerType::STATIC);
 

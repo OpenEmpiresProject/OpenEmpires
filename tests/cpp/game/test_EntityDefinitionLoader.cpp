@@ -567,12 +567,12 @@ all_construction_sites= [
 	    auto drsData = loader.getDRSData(id);
 	    EXPECT_EQ(drsData.parts[0].slpId, 3483);
 	
-	    auto gameState = std::make_shared<core::GameState>();
-	    core::ServiceRegistry::getInstance().registerService(gameState);
+	    auto stateMan = std::make_shared<core::StateManager>();
+	    core::ServiceRegistry::getInstance().registerService(stateMan);
 	
 	    auto mill = loader.createEntity(EntityTypes::ET_MILL, 0);
 	
-	    auto building = gameState->getComponent<CompBuilding>(mill);
+	    auto building = stateMan->getComponent<CompBuilding>(mill);
 	    EXPECT_EQ(building.visualVariationByProgress.at(66), 2);
     }
     catch (const py::error_already_set& e)

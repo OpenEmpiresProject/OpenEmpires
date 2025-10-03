@@ -1,7 +1,7 @@
 #include "ZOrderStrategyWithSlicing.h"
 
-#include "GameSettings.h"
-#include "GameState.h"
+#include "Settings.h"
+#include "StateManager.h"
 #include "ServiceRegistry.h"
 #include "utils/ObjectPool.h"
 
@@ -10,12 +10,12 @@ using namespace core;
 std::list<CompRendering*> slice(CompRendering& rc);
 
 ZOrderStrategyWithSlicing::ZOrderStrategyWithSlicing()
-    : m_settings(ServiceRegistry::getInstance().getService<GameSettings>()),
+    : m_settings(ServiceRegistry::getInstance().getService<Settings>()),
       m_zBucketsSize(
-          ServiceRegistry::getInstance().getService<GameSettings>()->getWorldSizeInTiles().height *
+          ServiceRegistry::getInstance().getService<Settings>()->getWorldSizeInTiles().height *
           Constants::FEET_PER_TILE * 3),
       m_zBuckets(
-          ServiceRegistry::getInstance().getService<GameSettings>()->getWorldSizeInTiles().height *
+          ServiceRegistry::getInstance().getService<Settings>()->getWorldSizeInTiles().height *
           Constants::FEET_PER_TILE * 3)
 {
     m_finalListToRender.reserve(10000);
@@ -82,7 +82,7 @@ const std::vector<CompRendering*>& ZOrderStrategyWithSlicing::zOrder(const Coord
         m_objectsToRenderByLayer[i].clear();
     }
 
-    ServiceRegistry::getInstance().getService<GameState>()->getEntities<CompRendering>().each(
+    ServiceRegistry::getInstance().getService<StateManager>()->getEntities<CompRendering>().each(
         [this, &coordinates](CompRendering& rc)
         {
             if (!rc.isBig())

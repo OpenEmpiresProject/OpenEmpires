@@ -1,7 +1,7 @@
 #include "CmdBuild.h"
 
 #include "Feet.h"
-#include "GameState.h"
+#include "StateManager.h"
 #include "Rect.h"
 #include "commands/CmdMove.h"
 #include "components/CompAction.h"
@@ -99,7 +99,7 @@ bool CmdBuild::isCloseEnough()
 {
     debug_assert(target != entt::null, "Proposed entity to build is null");
 
-    auto [transform, building] = m_gameState->getComponents<CompTransform, CompBuilding>(target);
+    auto [transform, building] = m_stateMan->getComponents<CompTransform, CompBuilding>(target);
     auto pos = m_components->transform.position;
     auto radiusSq = m_components->transform.goalRadiusSquared;
     auto rect = building.getLandInFeetRect(transform.position);
@@ -117,7 +117,7 @@ bool CmdBuild::isCloseEnough()
  */
 bool CmdBuild::isComplete()
 {
-    return m_gameState->getComponent<CompBuilding>(target).constructionProgress == 100;
+    return m_stateMan->getComponent<CompBuilding>(target).constructionProgress == 100;
 }
 
 /**
@@ -132,8 +132,8 @@ bool CmdBuild::isComplete()
  */
 void CmdBuild::build(int deltaTimeMs)
 {
-    auto [building, dirty] = m_gameState->getComponents<CompBuilding, CompDirty>(target);
-    auto& builder = m_gameState->getComponent<CompBuilder>(m_entityID);
+    auto [building, dirty] = m_stateMan->getComponents<CompBuilding, CompDirty>(target);
+    auto& builder = m_stateMan->getComponent<CompBuilder>(m_entityID);
 
     m_constructionContribution += float(builder.buildSpeed) * deltaTimeMs / 1000.0f;
     uint32_t roundedContribution = m_constructionContribution;
@@ -161,7 +161,7 @@ void CmdBuild::moveCloser(std::list<Command*>& subCommands)
 {
     debug_assert(target != entt::null, "Proposed entity to build is null");
 
-    const auto& targetPosition = m_gameState->getComponent<CompTransform>(target).position;
+    const auto& targetPosition = m_stateMan->getComponent<CompTransform>(target).position;
 
     spdlog::debug("Target {} at {} is not close enough to build, moving...", target,
                   targetPosition.toString());

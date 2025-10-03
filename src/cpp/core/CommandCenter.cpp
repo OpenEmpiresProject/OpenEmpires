@@ -1,6 +1,6 @@
 #include "CommandCenter.h"
 
-#include "GameState.h"
+#include "StateManager.h"
 #include "commands/Command.h"
 #include "components/CompUnit.h"
 #include "utils/Logger.h"
@@ -22,7 +22,7 @@ void CommandCenter::onCommandRequest(const Event& e)
     data.command->setEntityID(data.entity);
 
     CompUnit& unit =
-        ServiceRegistry::getInstance().getService<GameState>()->getComponent<CompUnit>(data.entity);
+        ServiceRegistry::getInstance().getService<StateManager>()->getComponent<CompUnit>(data.entity);
 
     // Remove all the components except the default one (i.e. idle)
     while (unit.commandQueue.size() > 1)
@@ -43,7 +43,7 @@ void CommandCenter::onCommandRequest(const Event& e)
 void CommandCenter::onTick(const Event& e)
 {
     std::list<Command*> newCommands;
-    ServiceRegistry::getInstance().getService<GameState>()->getEntities<CompUnit>().each(
+    ServiceRegistry::getInstance().getService<StateManager>()->getEntities<CompUnit>().each(
         [this, &newCommands, &e](uint32_t entity, CompUnit& unit)
         {
             if (!unit.commandQueue.empty())

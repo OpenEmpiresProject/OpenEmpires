@@ -2,7 +2,7 @@
 #define TEST_GAMESTATE_H
 
 #include <gtest/gtest.h>
-#include "GameState.h"
+#include "StateManager.h"
 #include "ServiceRegistry.h"
 
 
@@ -10,94 +10,94 @@ namespace core
 {
     TEST(GameStateTest, CreateEntity)
     {
-        auto gameState = new GameState();
+        auto stateMan = new StateManager();
 
-        uint32_t entity = gameState->createEntity();
-        EXPECT_TRUE(gameState->isEntityValid(entity)) << "Entity should be valid after creation";
+        uint32_t entity = stateMan->createEntity();
+        EXPECT_TRUE(stateMan->isEntityValid(entity)) << "Entity should be valid after creation";
     }
 
     TEST(GameStateTest, DestroyEntity)
     {
-        auto gameState = new GameState();
+        auto stateMan = new StateManager();
 
-        uint32_t entity = gameState->createEntity();
-        gameState->destroyEntity(entity);
-        EXPECT_FALSE(gameState->isEntityValid(entity)) << "Entity should be invalid after destruction";
+        uint32_t entity = stateMan->createEntity();
+        stateMan->destroyEntity(entity);
+        EXPECT_FALSE(stateMan->isEntityValid(entity)) << "Entity should be invalid after destruction";
     }
 
     TEST(GameStateTest, IsEntityValid)
     {
-        auto gameState = new GameState();
+        auto stateMan = new StateManager();
 
-        uint32_t entity = gameState->createEntity();
-        EXPECT_TRUE(gameState->isEntityValid(entity)) << "Entity should be valid after creation";
+        uint32_t entity = stateMan->createEntity();
+        EXPECT_TRUE(stateMan->isEntityValid(entity)) << "Entity should be valid after creation";
 
-        gameState->destroyEntity(entity);
-        EXPECT_FALSE(gameState->isEntityValid(entity)) << "Entity should be invalid after destruction";
+        stateMan->destroyEntity(entity);
+        EXPECT_FALSE(stateMan->isEntityValid(entity)) << "Entity should be invalid after destruction";
     }
 
     TEST(GameStateTest, AddComponent)
     {
-        auto gameState = new GameState();
+        auto stateMan = new StateManager();
 
-        uint32_t entity = gameState->createEntity();
+        uint32_t entity = stateMan->createEntity();
         struct TestComponent { int value; };
-        gameState->addComponent<TestComponent>(entity, 42);
+        stateMan->addComponent<TestComponent>(entity, 42);
 
-        EXPECT_TRUE(gameState->hasComponent<TestComponent>(entity)) << "Entity should have TestComponent";
-        EXPECT_EQ(gameState->getComponent<TestComponent>(entity).value, 42) << "TestComponent value should be 42";
+        EXPECT_TRUE(stateMan->hasComponent<TestComponent>(entity)) << "Entity should have TestComponent";
+        EXPECT_EQ(stateMan->getComponent<TestComponent>(entity).value, 42) << "TestComponent value should be 42";
     }
 
     TEST(GameStateTest, HasComponent)
     {
-        auto gameState = new GameState();
-        uint32_t entity = gameState->createEntity();
+        auto stateMan = new StateManager();
+        uint32_t entity = stateMan->createEntity();
         struct TestComponent { int value; };
-        EXPECT_FALSE(gameState->hasComponent<TestComponent>(entity)) << "Entity should not have TestComponent initially";
+        EXPECT_FALSE(stateMan->hasComponent<TestComponent>(entity)) << "Entity should not have TestComponent initially";
 
-        gameState->addComponent<TestComponent>(entity, 42);
-        EXPECT_TRUE(gameState->hasComponent<TestComponent>(entity)) << "Entity should have TestComponent after adding it";
+        stateMan->addComponent<TestComponent>(entity, 42);
+        EXPECT_TRUE(stateMan->hasComponent<TestComponent>(entity)) << "Entity should have TestComponent after adding it";
     }
 
     TEST(GameStateTest, GetComponent)
     {
-        auto gameState = new GameState();
+        auto stateMan = new StateManager();
 
-        uint32_t entity = gameState->createEntity();
+        uint32_t entity = stateMan->createEntity();
         struct TestComponent { int value; };
-        gameState->addComponent<TestComponent>(entity, 42);
+        stateMan->addComponent<TestComponent>(entity, 42);
 
-        TestComponent& component = gameState->getComponent<TestComponent>(entity);
+        TestComponent& component = stateMan->getComponent<TestComponent>(entity);
         EXPECT_EQ(component.value, 42) << "TestComponent value should be 42";
     }
 
     TEST(GameStateTest, GetComponents)
     {
-        auto gameState = new GameState();
+        auto stateMan = new StateManager();
 
-        uint32_t entity = gameState->createEntity();
+        uint32_t entity = stateMan->createEntity();
         struct TestComponent { int value; };
         struct AnotherComponent { float data; };
 
-        gameState->addComponent<TestComponent>(entity, 42);
-        gameState->addComponent<AnotherComponent>(entity, 3.14f);
+        stateMan->addComponent<TestComponent>(entity, 42);
+        stateMan->addComponent<AnotherComponent>(entity, 3.14f);
 
-        auto [testComp, anotherComp] = gameState->getComponents<TestComponent, AnotherComponent>(entity);
+        auto [testComp, anotherComp] = stateMan->getComponents<TestComponent, AnotherComponent>(entity);
         EXPECT_EQ(testComp.value, 42) << "TestComponent value should be 42";
         EXPECT_FLOAT_EQ(anotherComp.data, 3.14f) << "AnotherComponent data should be 3.14";
     }
 
     TEST(GameStateTest, ClearAll)
     {
-        auto gameState = new GameState();
+        auto stateMan = new StateManager();
 
-        uint32_t entity1 = gameState->createEntity();
-        uint32_t entity2 = gameState->createEntity();
+        uint32_t entity1 = stateMan->createEntity();
+        uint32_t entity2 = stateMan->createEntity();
 
-        gameState->clearAll();
+        stateMan->clearAll();
 
-        EXPECT_FALSE(gameState->isEntityValid(entity1)) << "Entity1 should be invalid after clearing";
-        EXPECT_FALSE(gameState->isEntityValid(entity2)) << "Entity2 should be invalid after clearing";
+        EXPECT_FALSE(stateMan->isEntityValid(entity1)) << "Entity1 should be invalid after clearing";
+        EXPECT_FALSE(stateMan->isEntityValid(entity2)) << "Entity2 should be invalid after clearing";
     }
 }
 

@@ -8,12 +8,12 @@
 
 namespace core
 {
-class GameSettings;
+class Settings;
 
 class Coordinates
 {
   public:
-    Coordinates(std::shared_ptr<GameSettings> settings);
+    Coordinates(std::shared_ptr<Settings> settings);
 
     Vec2 feetToPixels(const Feet& feet) const;
     Feet pixelsToFeet(const Vec2& pixels) const;
@@ -40,7 +40,7 @@ class Coordinates
 
   private:
     Vec2 m_viewportPositionInPixels;
-    std::shared_ptr<GameSettings> m_settings;
+    std::shared_ptr<Settings> m_settings;
     const Vec2 m_windowMiddle;
 };
 

@@ -1,5 +1,5 @@
 #include "Coordinates.h"
-#include "GameSettings.h"
+#include "Settings.h"
 #include "Feet.h"
 #include "utils/Size.h"
 #include "utils/Constants.h"
@@ -11,7 +11,7 @@ namespace core
 {
 
 // Mock GameSettings for testing
-class MockGameSettings : public GameSettings
+class MockGameSettings : public Settings
 {
   public:
     MockGameSettings()

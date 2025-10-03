@@ -1,8 +1,8 @@
 #ifndef COMMAND_H
 #define COMMAND_H
 
-#include "GameSettings.h"
-#include "GameState.h"
+#include "Settings.h"
+#include "StateManager.h"
 #include "ServiceRegistry.h"
 #include "components/UnitComponentRefs.h"
 #include "utils/Types.h"
@@ -20,8 +20,8 @@ class Command
 
     Command()
     {
-        m_settings = ServiceRegistry::getInstance().getService<GameSettings>();
-        m_gameState = ServiceRegistry::getInstance().getService<GameState>();
+        m_settings = ServiceRegistry::getInstance().getService<Settings>();
+        m_stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     }
 
     virtual ~Command() = default;
@@ -69,7 +69,7 @@ class Command
     void setEntityID(uint32_t entityID)
     {
         m_entityID = entityID;
-        m_components = std::make_shared<UnitComponentRefs>(m_gameState, entityID);
+        m_components = std::make_shared<UnitComponentRefs>(m_stateMan, entityID);
     }
 
     uint32_t getEntityID() const
@@ -88,8 +88,8 @@ class Command
     }
 
   protected:
-    std::shared_ptr<GameSettings> m_settings;
-    std::shared_ptr<GameState> m_gameState;
+    std::shared_ptr<Settings> m_settings;
+    std::shared_ptr<StateManager> m_stateMan;
     int m_priority = -1;
     uint32_t m_entityID = entt::null;
     Ref<UnitComponentRefs> m_components;

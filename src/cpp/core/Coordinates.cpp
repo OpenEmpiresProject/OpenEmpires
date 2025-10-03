@@ -1,6 +1,6 @@
 #include "Coordinates.h"
 
-#include "GameSettings.h"
+#include "Settings.h"
 #include "utils/Constants.h"
 #include "utils/Logger.h"
 
@@ -8,7 +8,7 @@
 
 using namespace core;
 
-Coordinates::Coordinates(std::shared_ptr<GameSettings> settings)
+Coordinates::Coordinates(std::shared_ptr<Settings> settings)
     : m_settings(std::move(settings)), m_windowMiddle(m_settings->getWindowDimensions().width / 2,
                                                       m_settings->getWindowDimensions().height / 2)
 {

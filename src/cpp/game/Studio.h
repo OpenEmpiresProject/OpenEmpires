@@ -2,7 +2,7 @@
 #define STUDIO_H
 
 #include "AtlasGeneratorBasic.h"
-#include "GameState.h"
+#include "StateManager.h"
 #include "GameTypes.h"
 #include "GraphicsLoader.h"
 #include "GraphicsLoaderFromDRS.h"
@@ -39,7 +39,7 @@ class Studio : public PropertyInitializer
 
     void run()
     {
-        auto state = ServiceRegistry::getInstance().getService<GameState>();
+        auto state = ServiceRegistry::getInstance().getService<StateManager>();
         bool running = true;
         auto last = SDL_GetTicks();
 
@@ -155,7 +155,7 @@ class Studio : public PropertyInitializer
             {
                 if (event.key.scancode == SDL_SCANCODE_RIGHT)
                 {
-                    auto state = ServiceRegistry::getInstance().getService<GameState>();
+                    auto state = ServiceRegistry::getInstance().getService<StateManager>();
                     auto& animation = state->getComponent<CompAnimation>(m_villager);
                     auto& action = state->getComponent<CompAction>(m_villager);
 
@@ -165,7 +165,7 @@ class Studio : public PropertyInitializer
                 }
                 else if (event.key.scancode == SDL_SCANCODE_LEFT)
                 {
-                    auto state = ServiceRegistry::getInstance().getService<GameState>();
+                    auto state = ServiceRegistry::getInstance().getService<StateManager>();
                     auto& animation = state->getComponent<CompAnimation>(m_villager);
                     auto& action = state->getComponent<CompAction>(m_villager);
 
@@ -176,7 +176,7 @@ class Studio : public PropertyInitializer
                 }
                 else if (event.key.scancode == SDL_SCANCODE_UP)
                 {
-                    auto state = ServiceRegistry::getInstance().getService<GameState>();
+                    auto state = ServiceRegistry::getInstance().getService<StateManager>();
                     auto& animation = state->getComponent<CompAnimation>(m_villager);
                     auto& action = state->getComponent<CompAction>(m_villager);
 
@@ -187,25 +187,25 @@ class Studio : public PropertyInitializer
                 }
                 else if (event.key.scancode == SDL_SCANCODE_0)
                 {
-                    auto state = ServiceRegistry::getInstance().getService<GameState>();
+                    auto state = ServiceRegistry::getInstance().getService<StateManager>();
                     auto& action = state->getComponent<CompAction>(m_villager);
                     action.action = 0;
                 }
                 else if (event.key.scancode == SDL_SCANCODE_1)
                 {
-                    auto state = ServiceRegistry::getInstance().getService<GameState>();
+                    auto state = ServiceRegistry::getInstance().getService<StateManager>();
                     auto& action = state->getComponent<CompAction>(m_villager);
                     action.action = 1;
                 }
                 else if (event.key.scancode == SDL_SCANCODE_2)
                 {
-                    auto state = ServiceRegistry::getInstance().getService<GameState>();
+                    auto state = ServiceRegistry::getInstance().getService<StateManager>();
                     auto& action = state->getComponent<CompAction>(m_villager);
                     action.action = 2;
                 }
                 else if (event.key.scancode == SDL_SCANCODE_3)
                 {
-                    auto state = ServiceRegistry::getInstance().getService<GameState>();
+                    auto state = ServiceRegistry::getInstance().getService<StateManager>();
                     auto& action = state->getComponent<CompAction>(m_villager);
                     action.action = 3;
                 }
@@ -220,8 +220,8 @@ class Studio : public PropertyInitializer
 
     void createVillager()
     {
-        auto gameState = ServiceRegistry::getInstance().getService<GameState>();
-        m_villager = gameState->createEntity();
+        auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
+        m_villager = stateMan->createEntity();
         auto transform = CompTransform(100, 100);
         transform.face(Direction::SOUTH);
         PropertyInitializer::set(transform.hasRotation, true);
@@ -238,11 +238,11 @@ class Studio : public PropertyInitializer
         PropertyInitializer::set(anim.animations[UnitAction::MINING],
                                  CompAnimation::ActionAnimation{15, 10, true});
 
-        gameState->addComponent(m_villager, transform);
-        gameState->addComponent(m_villager, m_rc);
-        gameState->addComponent(m_villager, CompEntityInfo(3));
-        gameState->addComponent(m_villager, anim);
-        gameState->addComponent(m_villager, CompAction(0));
+        stateMan->addComponent(m_villager, transform);
+        stateMan->addComponent(m_villager, m_rc);
+        stateMan->addComponent(m_villager, CompEntityInfo(3));
+        stateMan->addComponent(m_villager, anim);
+        stateMan->addComponent(m_villager, CompAction(0));
 
         m_rc.entityID = m_villager;
         m_rc.entityType = EntityTypes::ET_VILLAGER;

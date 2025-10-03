@@ -8,7 +8,7 @@
 
 namespace core
 {
-class GameState;
+class StateManager;
 class Player;
 class Coordinates;
 
@@ -24,7 +24,7 @@ class PlayerController : public EventHandler
     // Common
     Ref<Player> m_player;
     bool m_fowEnabled = true;
-    Ref<GameState> m_gameState;
+    Ref<StateManager> m_stateMan;
     Ref<Coordinates> m_coordinates;
 
     // Selection related

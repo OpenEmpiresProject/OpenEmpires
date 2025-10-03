@@ -9,7 +9,7 @@
 
 namespace core
 {
-class GameSettings
+class Settings
 {
   public:
     void setResolution(int width, int height)

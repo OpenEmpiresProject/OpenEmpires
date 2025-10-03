@@ -32,7 +32,7 @@ class ZOrderStrategyWithSlicing : public ZOrderStrategyBase
     std::vector<ZBucketVersion> m_zBuckets;
     const size_t m_zBucketsSize = 0;
     int64_t m_zBucketVersion = 0;
-    std::shared_ptr<GameSettings> m_settings;
+    std::shared_ptr<Settings> m_settings;
     std::vector<CompRendering*> m_finalListToRender;
     std::vector<CompRendering*> m_objectsToRenderByLayer[g_graphicLayersOrder.size()];
 };

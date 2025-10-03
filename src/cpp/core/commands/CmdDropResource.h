@@ -3,7 +3,7 @@
 
 #include "Coordinates.h"
 #include "Feet.h"
-#include "GameState.h"
+#include "StateManager.h"
 #include "Player.h"
 #include "Rect.h"
 #include "ServiceRegistry.h"
@@ -52,7 +52,7 @@ class CmdDropResource : public Command
 
     void onQueue() override
     {
-        m_gatherer = &(m_gameState->getComponent<CompResourceGatherer>(m_entityID));
+        m_gatherer = &(m_stateMan->getComponent<CompResourceGatherer>(m_entityID));
     }
 
     /**
@@ -91,7 +91,7 @@ class CmdDropResource : public Command
     void animate()
     {
         auto [action, animation, dirty] =
-            m_gameState->getComponents<CompAction, CompAnimation, CompDirty>(m_entityID);
+            m_stateMan->getComponents<CompAction, CompAnimation, CompDirty>(m_entityID);
 
         action.action = m_gatherer->getCarryingAction(resourceType);
         animation.frame = 0;
@@ -110,7 +110,7 @@ class CmdDropResource : public Command
     {
         if (m_dropOffEntity != entt::null)
         {
-            const auto& dropOff = m_gameState->getComponent<CompTransform>(m_dropOffEntity);
+            const auto& dropOff = m_stateMan->getComponent<CompTransform>(m_dropOffEntity);
 
             spdlog::debug("Target {} at {} is not close enough to drop-off, moving...",
                           m_dropOffEntity, dropOff.position.toString());
@@ -136,9 +136,9 @@ class CmdDropResource : public Command
     {
         if (m_dropOffEntity != entt::null)
         {
-            const auto& transformMy = m_gameState->getComponent<CompTransform>(m_entityID);
+            const auto& transformMy = m_stateMan->getComponent<CompTransform>(m_entityID);
             auto [transform, building] =
-                m_gameState->getComponents<CompTransform, CompBuilding>(m_dropOffEntity);
+                m_stateMan->getComponents<CompTransform, CompBuilding>(m_dropOffEntity);
             auto pos = transformMy.position;
             auto radiusSq = transformMy.goalRadiusSquared;
             auto rect = building.getLandInFeetRect(transform.position);
@@ -161,7 +161,7 @@ class CmdDropResource : public Command
     {
         if (m_dropOffEntity != entt::null)
         {
-            const auto& info = m_gameState->getComponent<CompEntityInfo>(m_dropOffEntity);
+            const auto& info = m_stateMan->getComponent<CompEntityInfo>(m_dropOffEntity);
             return !info.isDestroyed &&
                    m_components->player.player->isBuildingOwned(m_dropOffEntity);
         }
@@ -192,7 +192,7 @@ class CmdDropResource : public Command
         for (auto buildingEntity : m_components->player.player->getMyBuildings())
         {
             auto [transform, building] =
-                m_gameState->getComponents<CompTransform, CompBuilding>(buildingEntity);
+                m_stateMan->getComponents<CompTransform, CompBuilding>(buildingEntity);
 
             if (building.acceptResource(resourceType))
             {

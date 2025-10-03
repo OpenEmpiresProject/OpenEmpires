@@ -2,7 +2,7 @@
 
 #include "Coordinates.h"
 #include "EntityFactory.h"
-#include "GameState.h"
+#include "StateManager.h"
 #include "GameTypes.h"
 #include "PlayerController.h"
 #include "PlayerFactory.h"
@@ -47,7 +47,7 @@ using namespace drs;
 using namespace std;
 
 DemoWorldCreator::DemoWorldCreator(std::stop_token* stopToken,
-                                   std::shared_ptr<GameSettings> settings,
+                                   std::shared_ptr<Settings> settings,
                                    bool populateWorld)
     : SubSystem(stopToken), m_settings(std::move(settings)), m_populateWorld(populateWorld)
 {
@@ -68,7 +68,7 @@ void DemoWorldCreator::loadEntities()
     auto playercontroller = ServiceRegistry::getInstance().getService<PlayerController>();
     playercontroller->setPlayer(player);
 
-    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+    auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
 
     auto size = m_settings->getWorldSizeInTiles();
 
@@ -76,15 +76,15 @@ void DemoWorldCreator::loadEntities()
     {
         for (size_t j = 0; j < size.height; j++)
         {
-            createTile(i, j, gameState, EntityTypes::ET_TILE);
+            createTile(i, j, stateMan, EntityTypes::ET_TILE);
         }
     }
 
     if (m_populateWorld)
     {
-        generateMap(gameState->gameMap());
-        createStoneOrGoldCluster(EntityTypes::ET_STONE, gameState->gameMap(), 30, 30, 4);
-        createStoneOrGoldCluster(EntityTypes::ET_GOLD, gameState->gameMap(), 20, 30, 4);
+        generateMap(stateMan->gameMap());
+        createStoneOrGoldCluster(EntityTypes::ET_STONE, stateMan->gameMap(), 30, 30, 4);
+        createStoneOrGoldCluster(EntityTypes::ET_GOLD, stateMan->gameMap(), 20, 30, 4);
         createVillager(player2, Tile(25, 25));
         createVillager(player, Tile(20, 20));
     }
@@ -103,12 +103,12 @@ void DemoWorldCreator::loadEntities()
 
 void DemoWorldCreator::createTree(TileMap& map, uint32_t x, uint32_t y)
 {
-    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+    auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
     auto tree = factory->createEntity(EntityTypes::ET_TREE, 0);
     auto [transform, selectible, info] =
-        gameState->getComponents<CompTransform, CompSelectible, CompEntityInfo>(tree);
+        stateMan->getComponents<CompTransform, CompSelectible, CompEntityInfo>(tree);
 
     int variation = rand() % 10;
 
@@ -120,7 +120,7 @@ void DemoWorldCreator::createTree(TileMap& map, uint32_t x, uint32_t y)
     // Add shadow
     auto shadow = factory->createEntity(EntityTypes::ET_TREE, EntitySubTypes::EST_TREE_SHADOW);
     auto [transformShadow, infoShadow] =
-        gameState->getComponents<CompTransform, CompEntityInfo>(shadow);
+        stateMan->getComponents<CompTransform, CompEntityInfo>(shadow);
 
     infoShadow.variation = variation;
     transformShadow.position = Feet(x * 256 + 128, y * 256 + 128);
@@ -133,12 +133,12 @@ void DemoWorldCreator::createStoneOrGold(EntityTypes entityType,
                                          uint32_t x,
                                          uint32_t y)
 {
-    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+    auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
     auto entity = factory->createEntity(entityType, 0);
     auto [transform, selectible, info] =
-        gameState->getComponents<CompTransform, CompSelectible, CompEntityInfo>(entity);
+        stateMan->getComponents<CompTransform, CompSelectible, CompEntityInfo>(entity);
 
     transform.position = Feet(x * 256 + 128, y * 256 + 128);
     info.variation = rand() % 7;
@@ -148,12 +148,12 @@ void DemoWorldCreator::createStoneOrGold(EntityTypes entityType,
 
 void DemoWorldCreator::createVillager(Ref<core::Player> player, const Tile& tilePos)
 {
-    auto gameState = ServiceRegistry::getInstance().getService<GameState>();
+    auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
     auto villager = factory->createEntity(EntityTypes::ET_VILLAGER, 0);
     auto [transform, unit, selectible, playerComp] =
-        gameState->getComponents<CompTransform, CompUnit, CompSelectible, CompPlayer>(villager);
+        stateMan->getComponents<CompTransform, CompUnit, CompSelectible, CompPlayer>(villager);
 
     transform.position = Feet(tilePos.x * 256 + 128, tilePos.x * 256 + 50);
     transform.face(Direction::SOUTH);
@@ -162,7 +162,7 @@ void DemoWorldCreator::createVillager(Ref<core::Player> player, const Tile& tile
     playerComp.player = player;
 
     auto newTile = transform.position.toTile();
-    gameState->gameMap().addEntity(MapLayerType::UNITS, newTile, villager);
+    stateMan->gameMap().addEntity(MapLayerType::UNITS, newTile, villager);
 
     player->getFogOfWar()->markAsExplored(transform.position, unit.lineOfSight);
 }
@@ -309,7 +309,7 @@ void DemoWorldCreator::generateMap(TileMap& gameMap)
 
 void DemoWorldCreator::createTile(uint32_t x,
                                   uint32_t y,
-                                  core::Ref<core::GameState> gameState,
+                                  core::Ref<core::StateManager> stateMan,
                                   EntityTypes entityType)
 {
     auto size = m_settings->getWorldSizeInTiles();
@@ -317,7 +317,7 @@ void DemoWorldCreator::createTile(uint32_t x,
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
     auto entity = factory->createEntity(entityType, 0);
-    auto [transform, info] = gameState->getComponents<CompTransform, CompEntityInfo>(entity);
+    auto [transform, info] = stateMan->getComponents<CompTransform, CompEntityInfo>(entity);
 
     int tc = 10;
     // Convet our top corner based coordinate to left corner based coordinate
@@ -329,7 +329,7 @@ void DemoWorldCreator::createTile(uint32_t x,
     transform.position = Feet(x * 256, y * 256);
     info.variation = tileVariation;
 
-    gameState->gameMap().addEntity(MapLayerType::GROUND, Tile(x, y), entity);
+    stateMan->gameMap().addEntity(MapLayerType::GROUND, Tile(x, y), entity);
 }
 
 void DemoWorldCreator::init()
