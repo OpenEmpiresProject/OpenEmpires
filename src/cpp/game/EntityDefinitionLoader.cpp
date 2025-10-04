@@ -380,7 +380,8 @@ uint32_t EntityDefinitionLoader::createEntity(uint32_t entityType, uint32_t enti
                 variantComponent);
         }
     }
-    stateMan->getComponent<CompEntityInfo>(entity).entityId = entity;
+    auto& info = stateMan->getComponent<CompEntityInfo>(entity);
+    PropertyInitializer::set(info.entityId, entity);
 
     // Adding default idle command
     if (stateMan->hasComponent<CompUnit>(entity))

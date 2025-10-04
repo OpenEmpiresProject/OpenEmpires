@@ -5,6 +5,7 @@
 #include "GraphicsRegistry.h"
 #include "Rect.h"
 #include "utils/Types.h"
+#include "Property.h"
 
 #include <string>
 #include <vector>
@@ -37,7 +38,7 @@ class Event;
 
 namespace ui
 {
-class Widget : public std::enable_shared_from_this<Widget>
+class Widget : public std::enable_shared_from_this<Widget>, public core::PropertyInitializer
 {
   protected:
     const uint32_t id = 0;

@@ -251,15 +251,6 @@ all_buildings: List[Building] = [
                 Graphic(slp_id=4613, anchor=Point(x=-46,y=48))])},
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=28)
     ),
-    House(
-        housing_capacity=5,
-        name="house", 
-        display_name="House",
-        line_of_sight=256*2,
-        size="medium",
-        graphics={"default":Graphic(slp_id=2223)},
-        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=34)
-    ),
 ]
 
 all_construction_sites: List[ConstructionSite] = [

@@ -10,25 +10,30 @@ class PropertyInitializer;
 template <typename T> class Property
 {
   public:
+    Property() {}
+    // Default value is not considered as a set value, hence m_isSet is false
+    Property(const T& defaultValue) : m_value(defaultValue)
+    {}
+
     // Implicit cast operator to T
     operator T() const
     {
-        return value_;
+        return m_value;
     }
 
     const T& value() const
     {
-        return value_;
+        return m_value;
     }
     bool isSet() const
     {
-        return is_set_;
+        return m_isSet;
     }
 
   private:
     friend class PropertyInitializer;
-    T value_{};
-    bool is_set_ = false;
+    T m_value{};
+    bool m_isSet = false;
 };
 
 class PropertyInitializer
@@ -36,12 +41,12 @@ class PropertyInitializer
   protected:
     template <typename T> static void set(Property<T>& ability, const T& t)
     {
-        if (ability.is_set_)
+        if (ability.m_isSet)
         {
             throw std::logic_error("Property already set!");
         }
-        ability.value_ = t;
-        ability.is_set_ = true;
+        ability.m_value = t;
+        ability.m_isSet = true;
     }
 };
 } // namespace core
