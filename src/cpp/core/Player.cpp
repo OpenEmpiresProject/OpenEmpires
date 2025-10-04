@@ -1,7 +1,7 @@
 #include "Player.h"
 
-#include "Settings.h"
 #include "ServiceRegistry.h"
+#include "Settings.h"
 #include "components/CompBuilding.h"
 #include "components/CompHousing.h"
 #include "components/CompUnit.h"

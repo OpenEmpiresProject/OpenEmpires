@@ -1,8 +1,8 @@
 #include "ZOrderStrategyWithSlicing.h"
 
+#include "ServiceRegistry.h"
 #include "Settings.h"
 #include "StateManager.h"
-#include "ServiceRegistry.h"
 #include "utils/ObjectPool.h"
 
 using namespace core;

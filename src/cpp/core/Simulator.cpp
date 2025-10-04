@@ -2,10 +2,10 @@
 
 #include "Coordinates.h"
 #include "Event.h"
-#include "StateManager.h"
 #include "PlayerController.h"
 #include "PlayerFactory.h"
 #include "ServiceRegistry.h"
+#include "StateManager.h"
 #include "UI.h"
 #include "commands/CmdGatherResource.h"
 #include "commands/CmdIdle.h"

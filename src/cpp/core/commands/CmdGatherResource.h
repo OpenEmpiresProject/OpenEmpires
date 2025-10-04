@@ -3,9 +3,9 @@
 
 #include "Coordinates.h"
 #include "Feet.h"
-#include "StateManager.h"
 #include "Player.h"
 #include "ServiceRegistry.h"
+#include "StateManager.h"
 #include "commands/CmdDropResource.h"
 #include "commands/CmdMove.h"
 #include "commands/Command.h"

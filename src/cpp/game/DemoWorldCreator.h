@@ -2,13 +2,13 @@
 #define DEMOWORLDCREATOR_H
 
 #include "DRSFile.h"
-#include "Settings.h"
-#include "StateManager.h"
 #include "GameTypes.h"
 #include "GraphicsRegistry.h"
 #include "Player.h"
 #include "Property.h"
 #include "Renderer.h"
+#include "Settings.h"
+#include "StateManager.h"
 #include "SubSystem.h"
 #include "Tile.h"
 #include "TileMap.h"

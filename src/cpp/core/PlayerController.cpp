@@ -1,10 +1,10 @@
 #include "PlayerController.h"
 
 #include "EntityFactory.h"
-#include "StateManager.h"
 #include "Player.h"
 #include "PlayerFactory.h"
 #include "ServiceRegistry.h"
+#include "StateManager.h"
 #include "commands/CmdBuild.h"
 #include "commands/CmdGatherResource.h"
 #include "commands/CmdMove.h"
@@ -104,7 +104,7 @@ void PlayerController::onMouseButtonUp(const Event& e)
         {
             auto [building, transform, player, info, dirty] =
                 m_stateMan->getComponents<CompBuilding, CompTransform, CompPlayer, CompEntityInfo,
-                                           CompDirty>(m_currentBuildingPlacement.entity);
+                                          CompDirty>(m_currentBuildingPlacement.entity);
 
             if (building.validPlacement)
                 confirmBuildingPlacement(transform, building, info, dirty);
@@ -373,8 +373,8 @@ void PlayerController::cancelBuildingPlacement()
 {
     if (m_currentBuildingPlacement.entity != entt::null)
     {
-        auto [info, dirty] = m_stateMan->getComponents<CompEntityInfo, CompDirty>(
-            m_currentBuildingPlacement.entity);
+        auto [info, dirty] =
+            m_stateMan->getComponents<CompEntityInfo, CompDirty>(m_currentBuildingPlacement.entity);
 
         info.isDestroyed = true;
         dirty.markDirty(m_currentBuildingPlacement.entity);

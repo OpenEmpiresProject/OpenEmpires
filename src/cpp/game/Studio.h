@@ -2,13 +2,13 @@
 #define STUDIO_H
 
 #include "AtlasGeneratorBasic.h"
-#include "StateManager.h"
 #include "GameTypes.h"
 #include "GraphicsLoader.h"
 #include "GraphicsLoaderFromDRS.h"
 #include "GraphicsRegistry.h"
 #include "Property.h"
 #include "SDL3_gfxPrimitives.h"
+#include "StateManager.h"
 #include "commands/CmdIdle.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"

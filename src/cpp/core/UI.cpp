@@ -2,8 +2,8 @@
 
 #include "Coordinates.h"
 #include "Event.h"
-#include "StateManager.h"
 #include "ServiceRegistry.h"
+#include "StateManager.h"
 #include "UIManager.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"

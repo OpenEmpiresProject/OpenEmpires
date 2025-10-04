@@ -1,9 +1,9 @@
 #ifndef COMMAND_H
 #define COMMAND_H
 
+#include "ServiceRegistry.h"
 #include "Settings.h"
 #include "StateManager.h"
-#include "ServiceRegistry.h"
 #include "components/UnitComponentRefs.h"
 #include "utils/Types.h"
 

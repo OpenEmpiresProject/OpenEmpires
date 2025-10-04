@@ -27,11 +27,11 @@ UnitComponentRefs::UnitComponentRefs(std::tuple<CompAction&,
 
 UnitComponentRefs::UnitComponentRefs(Ref<StateManager> stateMan, uint32_t entityID)
     : UnitComponentRefs(stateMan->getComponents<CompAction,
-                                                 CompAnimation,
-                                                 CompDirty,
-                                                 CompEntityInfo,
-                                                 CompPlayer,
-                                                 CompTransform,
-                                                 CompUnit>(entityID))
+                                                CompAnimation,
+                                                CompDirty,
+                                                CompEntityInfo,
+                                                CompPlayer,
+                                                CompTransform,
+                                                CompUnit>(entityID))
 {
 }

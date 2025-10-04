@@ -2,8 +2,8 @@
 
 #include "EntityFactory.h"
 #include "EntityTypeRegistry.h"
-#include "StateManager.h"
 #include "ServiceRegistry.h"
+#include "StateManager.h"
 #include "commands/CmdBuild.h"
 #include "components/CompBuilding.h"
 #include "components/CompDirty.h"
@@ -160,7 +160,8 @@ void BuildingManager::updateInProgressConstructions()
 
             if (building.constructionProgress > 1 && building.isInStaticMap == false)
             {
-                auto& gameMap = ServiceRegistry::getInstance().getService<StateManager>()->gameMap();
+                auto& gameMap =
+                    ServiceRegistry::getInstance().getService<StateManager>()->gameMap();
 
                 for (size_t i = 0; i < building.size.value().width; i++)
                 {

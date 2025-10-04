@@ -2,8 +2,8 @@
 #define PLAYER_H
 
 #include "FogOfWar.h"
-#include "StateManager.h"
 #include "InGameResource.h"
+#include "StateManager.h"
 
 #include <limits>
 #include <unordered_set>

@@ -2,12 +2,12 @@
 
 #include "Coordinates.h"
 #include "EntityFactory.h"
-#include "StateManager.h"
 #include "GameTypes.h"
 #include "PlayerController.h"
 #include "PlayerFactory.h"
 #include "Renderer.h"
 #include "ServiceRegistry.h"
+#include "StateManager.h"
 #include "SubSystemRegistry.h"
 #include "Tile.h"
 #include "UI.h"

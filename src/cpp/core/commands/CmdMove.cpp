@@ -2,11 +2,11 @@
 
 #include "Coordinates.h"
 #include "EventPublisher.h"
-#include "StateManager.h"
 #include "PathFinderBase.h"
 #include "Player.h"
 #include "Rect.h"
 #include "ServiceRegistry.h"
+#include "StateManager.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
 #include "components/CompBuilding.h"
@@ -71,8 +71,7 @@ void CmdMove::onQueue()
             m_nextIntermediateGoal = Feet::null;
 
 #ifndef NDEBUG
-        auto tileEntity =
-            m_stateMan->gameMap().getEntity(MapLayerType::GROUND, targetPos.toTile());
+        auto tileEntity = m_stateMan->gameMap().getEntity(MapLayerType::GROUND, targetPos.toTile());
         auto [graphics, dirty] = m_stateMan->getComponents<CompGraphics, CompDirty>(tileEntity);
 
         graphics.debugOverlays.clear();
@@ -268,7 +267,7 @@ void CmdMove::setPosition(const Feet& newPosFeet)
 bool CmdMove::hasLineOfSight(const Feet& target) const
 {
     return m_stateMan->gameMap().intersectsStaticObstacle(m_components->transform.position,
-                                                           target) == false;
+                                                          target) == false;
 }
 
 /**

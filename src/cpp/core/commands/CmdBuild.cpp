@@ -1,8 +1,8 @@
 #include "CmdBuild.h"
 
 #include "Feet.h"
-#include "StateManager.h"
 #include "Rect.h"
+#include "StateManager.h"
 #include "commands/CmdMove.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"

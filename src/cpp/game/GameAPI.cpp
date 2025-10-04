@@ -105,7 +105,7 @@ std::list<uint32_t> GameAPI::getVillagers()
     std::list<uint32_t> villagers;
 
     stateMan->getEntities<CompBuilder>().each([&villagers](uint32_t entity, CompBuilder&)
-                                               { villagers.push_back(entity); });
+                                              { villagers.push_back(entity); });
     return villagers;
 }
 

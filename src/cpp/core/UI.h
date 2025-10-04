@@ -3,9 +3,9 @@
 
 #include "Color.h"
 #include "GraphicsRegistry.h"
+#include "Property.h"
 #include "Rect.h"
 #include "utils/Types.h"
-#include "Property.h"
 
 #include <string>
 #include <vector>

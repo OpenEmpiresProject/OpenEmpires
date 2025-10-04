@@ -10,10 +10,13 @@ class PropertyInitializer;
 template <typename T> class Property
 {
   public:
-    Property() {}
+    Property()
+    {
+    }
     // Default value is not considered as a set value, hence m_isSet is false
     Property(const T& defaultValue) : m_value(defaultValue)
-    {}
+    {
+    }
 
     // Implicit cast operator to T
     operator T() const

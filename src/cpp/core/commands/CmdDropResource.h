@@ -3,10 +3,10 @@
 
 #include "Coordinates.h"
 #include "Feet.h"
-#include "StateManager.h"
 #include "Player.h"
 #include "Rect.h"
 #include "ServiceRegistry.h"
+#include "StateManager.h"
 #include "commands/CmdMove.h"
 #include "commands/Command.h"
 #include "components/CompAction.h"

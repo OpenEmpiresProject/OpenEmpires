@@ -4,12 +4,12 @@
 #include "Coordinates.h"
 #include "EventLoop.h"
 #include "FPSCounter.h"
-#include "Settings.h"
-#include "StateManager.h"
 #include "GraphicsLoader.h"
 #include "GraphicsRegistry.h"
 #include "SDL3_gfxPrimitives.h"
 #include "ServiceRegistry.h"
+#include "Settings.h"
+#include "StateManager.h"
 #include "StatsCounter.h"
 #include "Tile.h"
 #include "Version.h"
@@ -236,8 +236,7 @@ RendererImpl::RendererImpl(std::stop_source* stopSource,
                            GraphicsRegistry& graphicsRegistry,
                            ThreadSynchronizer<FrameData>& synchronizer,
                            GraphicsLoader& graphicsLoader)
-    : m_stopSource(stopSource),
-      m_settings(ServiceRegistry::getInstance().getService<Settings>()),
+    : m_stopSource(stopSource), m_settings(ServiceRegistry::getInstance().getService<Settings>()),
       m_graphicsRegistry(graphicsRegistry),
       m_coordinates(ServiceRegistry::getInstance().getService<Settings>()),
       m_synchronizer(synchronizer), m_graphicsLoader(graphicsLoader),

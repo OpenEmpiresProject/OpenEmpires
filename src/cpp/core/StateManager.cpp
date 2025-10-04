@@ -1,10 +1,10 @@
 #include "StateManager.h"
 
 #include "Coordinates.h"
-#include "Settings.h"
 #include "PathFinderAStar.h"
 #include "PathFinderBase.h"
 #include "ServiceRegistry.h"
+#include "Settings.h"
 #include "components/CompBuilding.h"
 #include "components/CompSelectible.h"
 #include "components/CompTransform.h"
@@ -116,7 +116,9 @@ StateManager::TileMapQueryResult StateManager::whatIsAt(const Vec2& screenPos)
     return result;
 }
 
-bool StateManager::canPlaceBuildingAt(const CompBuilding& building, const Feet& feet, bool& outOfMap)
+bool StateManager::canPlaceBuildingAt(const CompBuilding& building,
+                                      const Feet& feet,
+                                      bool& outOfMap)
 {
     auto settings = ServiceRegistry::getInstance().getService<Settings>();
     auto tile = feet.toTile();

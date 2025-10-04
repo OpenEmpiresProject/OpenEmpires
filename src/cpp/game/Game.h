@@ -9,7 +9,6 @@
 #include "EntityTypeRegistry.h"
 #include "EventLoop.h"
 #include "GameShortcutResolver.h"
-#include "StateManager.h"
 #include "GraphicsLoaderFromDRS.h"
 #include "GraphicsLoaderFromImages.h"
 #include "GraphicsRegistry.h"
@@ -20,6 +19,7 @@
 #include "ResourceManager.h"
 #include "ServiceRegistry.h"
 #include "Simulator.h"
+#include "StateManager.h"
 #include "SubSystemRegistry.h"
 #include "ThreadSynchronizer.h"
 #include "UIManager.h"
@@ -86,7 +86,7 @@ class Game
 
         auto stateMan = std::make_shared<core::StateManager>();
         stateMan->gameMap().init(settings->getWorldSizeInTiles().width,
-                                  settings->getWorldSizeInTiles().height);
+                                 settings->getWorldSizeInTiles().height);
         core::ServiceRegistry::getInstance().registerService(stateMan);
 
         auto coordinates = std::make_shared<core::Coordinates>(settings);

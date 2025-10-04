@@ -1,7 +1,7 @@
 #include "ResourceManager.h"
 
-#include "StateManager.h"
 #include "GameTypes.h"
+#include "StateManager.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompResource.h"

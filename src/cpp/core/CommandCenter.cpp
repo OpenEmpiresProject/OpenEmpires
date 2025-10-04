@@ -22,7 +22,8 @@ void CommandCenter::onCommandRequest(const Event& e)
     data.command->setEntityID(data.entity);
 
     CompUnit& unit =
-        ServiceRegistry::getInstance().getService<StateManager>()->getComponent<CompUnit>(data.entity);
+        ServiceRegistry::getInstance().getService<StateManager>()->getComponent<CompUnit>(
+            data.entity);
 
     // Remove all the components except the default one (i.e. idle)
     while (unit.commandQueue.size() > 1)
