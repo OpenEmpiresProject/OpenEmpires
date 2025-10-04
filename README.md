@@ -1,6 +1,8 @@
 # openEmpires - README.md
 
-![](doc/images/logo.png)
+<p align="center">
+  <img src="doc/images/logo.png" alt="OpenEmpires Logo" width="300"/>
+</p>
 
 # openEmpires
 
