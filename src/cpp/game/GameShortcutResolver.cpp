@@ -53,6 +53,11 @@ const ShortcutResolver::Action game::GameShortcutResolver::resolve(
             action.type = Action::Type::CREATE_BUILDING;
             action.entityType = EntityTypes::ET_TOWN_CENTER;
         }
+        else if (key == SDL_SCANCODE_H)
+        {
+            action.type = Action::Type::CREATE_BUILDING;
+            action.entityType = EntityTypes::ET_HOUSE;
+        }
     }
     else if (currentSelection.type == EntitySelectionData::Type::BUILDING)
     {
