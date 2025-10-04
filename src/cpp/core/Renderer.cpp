@@ -316,6 +316,15 @@ void RendererImpl::initSDL()
         m_sdlInitialized = true;
     }
 
+    SDL_Surface* icon = IMG_Load("assets/images/icon.bmp");
+    if (!icon)
+    {
+        spdlog::warn("Failed to load icon. error: {}", SDL_GetError());
+        throw std::runtime_error("Failed to load icon");
+    }
+    SDL_SetWindowIcon(m_window, icon);
+    SDL_DestroySurface(icon);
+
     loadFonts();
 
     m_sdlInitCV.notify_all();

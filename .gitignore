@@ -23,7 +23,6 @@ default_log.txt
 vcpkg_installed
 .vs
 .vscode
-*.bmp
 *.VSCodeCounter
 *.csv
 *.drs
