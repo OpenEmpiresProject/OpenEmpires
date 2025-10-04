@@ -43,6 +43,8 @@ format:
 	@echo "Formatting sources..."
 	cmake --build $(BUILD_DIR) --target format
 
+	python normalize_line_endings.py
+
 # Analyze the source code using cppcheck
 cppcheck:
 	@echo "Cppchecking sources..."
