@@ -411,6 +411,19 @@ uint32_t EntityDefinitionLoader::createEntity(uint32_t entityType, uint32_t enti
         PropertyInitializer::set(factory.producibleUnitTypes, possibleUnitTypes);
         PropertyInitializer::set(factory.producibleUnitShortcuts, entityTypesByShortcut);
     }
+
+    // Late binding of entity names to types
+    if (auto builder = stateMan->tryGetComponent<CompBuilder>(entity))
+    {
+        auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+
+        std::unordered_map<char, uint32_t> entityTypesByShortcut;
+        for (auto& [key, name] : builder->buildableNameByShortcut.value())
+        {
+            entityTypesByShortcut[key] = typeRegistry->getEntityType(name);
+        }
+        PropertyInitializer::set(builder->buildableTypesByShortcut, entityTypesByShortcut);
+    }
     return entity;
 }
 
@@ -777,9 +790,26 @@ ComponentType EntityDefinitionLoader::createBuilder(py::object module,
     if (py::hasattr(entityDefinition, "build_speed") == false)
         return std::monostate{};
 
+    py::object buildables = entityDefinition.attr("buildables");
+    std::unordered_map<char, std::string> entityNameByShortcut;
+
+    for (auto building : buildables)
+    {
+        auto name = readValue<std::string>(building, "name");
+        auto shortcut = readValue<std::string>(building, "shortcut");
+        char key = 0;
+        if (shortcut.empty() == false)
+        {
+            key = shortcut.c_str()[0];
+        }
+        entityNameByShortcut[key] = name;
+    }
+
     auto buildSpeed = entityDefinition.attr("build_speed").cast<int>();
     CompBuilder builder;
     PropertyInitializer::set<uint32_t>(builder.buildSpeed, buildSpeed);
+    PropertyInitializer::set<std::unordered_map<char, std::string>>(builder.buildableNameByShortcut,
+                                                                    entityNameByShortcut);
     return ComponentType(builder);
 }
 

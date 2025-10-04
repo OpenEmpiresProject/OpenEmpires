@@ -59,8 +59,18 @@ class Unit:
     housing_need: int
 
 
-class Villager(Unit):
+class Shortcut:
+    name: str
+    shortcut: str # A single character shortcut. Relative to the selection.
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+
+class Builder:
     build_speed: int
+    buildables:  List[Shortcut] # List of buildings can create from this
+
+
+class Villager(Unit, Builder):
     gather_speed: int
     resource_capacity: int
 
@@ -98,14 +108,8 @@ class ResourceDropOff(Building):
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
 
-class ProducibleUnit:
-    name: str
-    shortcut: str # A single character shortcut. Relative to the building.
-    def __init__(self, **kwargs): self.__dict__.update(kwargs)
-
-
 class UnitFactory:
-    producible_units: List[ProducibleUnit] # List of units can create from this factory
+    producible_units: List[Shortcut] # List of units can create from this factory
     max_queue_size: int
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
@@ -161,6 +165,11 @@ all_units: List[Unit] = [
         gather_speed=10,
         resource_capacity=100,
         housing_need=1,
+        buildables=[Shortcut(name="mill", shortcut="m"),
+                    Shortcut(name="wood_camp", shortcut="l"),
+                    Shortcut(name="mine_camp", shortcut="n"),
+                    Shortcut(name="town_center", shortcut="c"),
+                    Shortcut(name="house", shortcut="h")],
         icon=Icon(drs_file="interfac.drs", slp_id=50730, index=16),
         animations=[
             Animation(name="idle", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1388),
@@ -236,7 +245,7 @@ all_buildings: List[Building] = [
         size="huge",
         accepted_resources=["gold", "stone", "food"],
         unit_creation_speed=40,
-        producible_units=[ProducibleUnit(name="villager", shortcut="v")],
+        producible_units=[Shortcut(name="villager", shortcut="v")],
         max_queue_size=10,
         housing_capacity=5,
         graphics={"default": CompositeGraphic(

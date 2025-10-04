@@ -33,30 +33,13 @@ const ShortcutResolver::Action game::GameShortcutResolver::resolve(
             return {};
         }
 
-        if (key == SDL_SCANCODE_M)
+        auto& builder = stateMan->getComponent<CompBuilder>(firstEntity);
+        if (builder.buildableTypesByShortcut.value().contains(shortcutLetter))
         {
+            uint32_t entityTypeToCreate =
+                builder.buildableTypesByShortcut.value().at(shortcutLetter);
+            action.entityType = entityTypeToCreate;
             action.type = Action::Type::CREATE_BUILDING;
-            action.entityType = EntityTypes::ET_MILL;
-        }
-        else if (key == SDL_SCANCODE_L)
-        {
-            action.type = Action::Type::CREATE_BUILDING;
-            action.entityType = EntityTypes::ET_LUMBER_CAMP;
-        }
-        else if (key == SDL_SCANCODE_N)
-        {
-            action.type = Action::Type::CREATE_BUILDING;
-            action.entityType = EntityTypes::ET_MINING_CAMP;
-        }
-        else if (key == SDL_SCANCODE_C)
-        {
-            action.type = Action::Type::CREATE_BUILDING;
-            action.entityType = EntityTypes::ET_TOWN_CENTER;
-        }
-        else if (key == SDL_SCANCODE_H)
-        {
-            action.type = Action::Type::CREATE_BUILDING;
-            action.entityType = EntityTypes::ET_HOUSE;
         }
     }
     else if (currentSelection.type == EntitySelectionData::Type::BUILDING)
