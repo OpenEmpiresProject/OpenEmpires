@@ -46,7 +46,7 @@ We use milestone versions for planning. Early versions are experimental. Feature
 > Goal: Enable building construction, population limits.
 
 ### Features:
-- [ ] Town center, house and barracks mechanics
+- [x] Town center, house and barracks mechanics
 - [x] Building queue system
 - [x] Population limit system
 - [x] Multiple player support (not networking)

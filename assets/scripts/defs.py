@@ -170,7 +170,8 @@ all_entity_names: List[str] = [
     "mine_camp",
     "town_center",
     "house",
-    "construction_site"
+    "construction_site",
+    "barracks"
 ]
 
 
@@ -188,6 +189,7 @@ all_units: List[Unit] = [
                     Shortcut(name="wood_camp", shortcut="l"),
                     Shortcut(name="mine_camp", shortcut="n"),
                     Shortcut(name="town_center", shortcut="c"),
+                    Shortcut(name="barracks", shortcut="b"),
                     Shortcut(name="house", shortcut="h")],
         icon=Icon(drs_file="interfac.drs", slp_id=50730, index=16),
         animations=[
@@ -287,6 +289,15 @@ all_buildings: List[Building] = [
         size="medium",
         graphics={"default":Graphic(slp_id=2223)},
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=34)
+    ),
+    MilitaryBuilding(
+        name="barracks", 
+        display_name="Barracks",
+        line_of_sight=256*2,
+        size="large",
+        graphics={"default":Graphic(slp_id=130)},
+        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=3),
+        producible_units=[]
     ),
 ]
 
