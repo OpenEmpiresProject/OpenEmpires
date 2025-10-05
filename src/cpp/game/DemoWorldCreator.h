@@ -39,12 +39,12 @@ class DemoWorldCreator : public core::SubSystem, public core::PropertyInitialize
                     core::Ref<core::StateManager> stateMan,
                     EntityTypes entityType);
     void createTree(core::TileMap& gameMap, uint32_t x, uint32_t y);
-    void createStoneOrGoldCluster(EntityTypes entityType,
+    void createStoneOrGoldCluster(uint32_t entityType,
                                   core::TileMap& gameMap,
                                   uint32_t xHint,
                                   uint32_t yHint,
                                   uint8_t amount);
-    void createStoneOrGold(EntityTypes entityType, core::TileMap& gameMap, uint32_t x, uint32_t y);
+    void createStoneOrGold(uint32_t entityType, core::TileMap& gameMap, uint32_t x, uint32_t y);
     void createVillager(core::Ref<core::Player> player, const core::Tile& pos);
 
   private:

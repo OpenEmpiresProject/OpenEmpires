@@ -2,6 +2,9 @@
 
 #include "utils/Logger.h"
 
+#include <algorithm>
+#include <vector>
+
 using namespace core;
 
 bool EntityTypeRegistry::isValid(uint32_t entityTye) const
@@ -63,4 +66,21 @@ void EntityTypeRegistry::registerUnitTypeHousingNeed(uint32_t entityType, uint32
 uint32_t EntityTypeRegistry::getUnitTypeHousingNeed(uint32_t entityType) const
 {
     return m_unitTypeHousingNeeds.at(entityType);
+}
+
+uint32_t EntityTypeRegistry::getNextAvailableEntityType() const
+{
+    std::vector<uint32_t> orderedEntityEypes(m_entityTypes.begin(), m_entityTypes.end());
+    std::sort(orderedEntityEypes.begin(), orderedEntityEypes.end());
+
+    uint32_t nextEntityType = orderedEntityEypes.empty() ? 1 : orderedEntityEypes[0];
+    for (auto entityType : orderedEntityEypes)
+    {
+        if (nextEntityType != entityType)
+        {
+            return nextEntityType;
+        }
+        ++nextEntityType;
+    }
+    return nextEntityType;
 }

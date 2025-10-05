@@ -25,6 +25,11 @@ class EntityDefinitionLoaderExposure : public EntityDefinitionLoader
         ServiceRegistry::getInstance().registerService(registry);
 	}
 
+	void loadEntityTypes(pybind11::object module)
+	{
+        EntityDefinitionLoader::loadEntityTypes(module);
+	}
+
     void loadBuildings(pybind11::object module)
     {
         EntityDefinitionLoader::loadBuildings(module);
@@ -311,6 +316,10 @@ TEST(EntityDefinitionLoaderTest, LoadAllBuilding)
     {
         // Arrange	
 	    std::string code = R"(
+all_entity_names = [
+    "mill"
+]
+
 class Graphic:
 	drs_file = "graphics.drs"
 	slp_id = 0
@@ -363,15 +372,18 @@ all_buildings= [
 	    loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
 	    loader.setBoundingBoxReadFunc([](core::Ref<drs::DRSFile>, uint32_t) -> core::Rect<int>
 	                                    { return core::Rect<int>(); });
+        loader.loadEntityTypes(module);
 	
 	    // Act
 	    loader.loadBuildings(module);
 	
 	    // Assert
+        auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+        auto millType = typeRegistry->getEntityType("mill");
 	    // Main building
-	    EXPECT_EQ(loader.getDRSData(GraphicsID(EntityTypes::ET_MILL)).parts[0].slpId, 3483);
+        EXPECT_EQ(loader.getDRSData(GraphicsID(millType)).parts[0].slpId, 3483);
 	    // One of construction sites
-	    EXPECT_EQ(loader.getDRSData(GraphicsID(EntityTypes::ET_MILL, 2)).parts[0].slpId, 111);
+        EXPECT_EQ(loader.getDRSData(GraphicsID(millType, 2)).parts[0].slpId, 111);
     }
     catch (const py::error_already_set& e)
     {
@@ -433,6 +445,10 @@ TEST(EntityDefinitionLoaderTest, LoadAllConstructionSites)
 	try
     {
         py::exec(R"(
+all_entity_names = [
+    "construction_site"
+]
+
 class Graphic:
 	drs_file = "graphics.drs"
 	slp_id = 0
@@ -469,6 +485,7 @@ all_construction_sites= [
                                 { return nullptr; });
         loader.setBoundingBoxReadFunc([](core::Ref<drs::DRSFile>, uint32_t) -> core::Rect<int>
                                       { return core::Rect<int>(); });
+        loader.loadEntityTypes(module);
         loader.loadConstructionSites(module);
 
         {
@@ -510,6 +527,11 @@ TEST(EntityDefinitionLoaderTest, LoadBuildingsWithConstructionSiteLinks)
 	try
     {
 	    py::exec(R"(
+all_entity_names = [
+    "construction_site",
+    "mill"
+]
+
 class Graphic:
 	drs_file = "graphics.drs"
 	slp_id = 0
@@ -559,18 +581,22 @@ all_construction_sites= [
 	    loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
 	    loader.setBoundingBoxReadFunc([](core::Ref<drs::DRSFile>, uint32_t) -> core::Rect<int>
 	                                    { return core::Rect<int>(); });
+        loader.loadEntityTypes(module);
 	    loader.loadConstructionSites(module);
 	    loader.loadBuildings(module);
 	
+		auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+        auto millType = typeRegistry->getEntityType("mill");
+
 	    GraphicsID id;
-	    id.entityType = EntityTypes::ET_MILL;
+        id.entityType = millType;
 	    auto drsData = loader.getDRSData(id);
 	    EXPECT_EQ(drsData.parts[0].slpId, 3483);
 	
 	    auto stateMan = std::make_shared<core::StateManager>();
 	    core::ServiceRegistry::getInstance().registerService(stateMan);
 	
-	    auto mill = loader.createEntity(EntityTypes::ET_MILL, 0);
+	    auto mill = loader.createEntity(millType, 0);
 	
 	    auto building = stateMan->getComponent<CompBuilding>(mill);
 	    EXPECT_EQ(building.visualVariationByProgress.at(66), 2);
@@ -630,6 +656,10 @@ TEST(EntityDefinitionLoaderTest, LoadTreeWithStump)
 	try
 	{
 		py::exec(R"(
+all_entity_names = [
+    "wood"
+]
+
 class Graphic:
 	drs_file = "graphics.drs"
 	slp_id = 0
@@ -665,6 +695,7 @@ all_natural_resources= [
 		loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
 		loader.setBoundingBoxReadFunc([](core::Ref<drs::DRSFile>, uint32_t) -> core::Rect<int>
 										{ return core::Rect<int>(); });
+        loader.loadEntityTypes(module);
 		loader.loadNaturalResources(module);
 	
 		// Assert

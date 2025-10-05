@@ -34,23 +34,6 @@ UnitAction getAction(const std::string actionname)
     return actions.at(actionname);
 }
 
-uint32_t getEntityType(const std::string& entityName)
-{
-    static unordered_map<string, uint32_t> entityTypes = {
-        {"villager", EntityTypes::ET_VILLAGER},
-        {"wood", EntityTypes::ET_TREE},
-        {"gold", EntityTypes::ET_GOLD},
-        {"stone", EntityTypes::ET_STONE},
-        {"mill", EntityTypes::ET_MILL},
-        {"wood_camp", EntityTypes::ET_LUMBER_CAMP},
-        {"mine_camp", EntityTypes::ET_MINING_CAMP},
-        {"construction_site", EntityTypes::ET_CONSTRUCTION_SITE},
-        {"town_center", EntityTypes::ET_TOWN_CENTER},
-        {"house", EntityTypes::ET_HOUSE},
-    };
-    return entityTypes.at(entityName);
-}
-
 uint32_t getEntitySubType(uint32_t entityType, const std::string& name)
 {
     if (entityType == EntityTypes::ET_CONSTRUCTION_SITE)
@@ -146,6 +129,7 @@ void EntityDefinitionLoader::load()
     sys.attr("path").attr("insert")(0, "./assets/scripts");
 
     py::object module = py::module_::import("defs");
+    loadEntityTypes(module);
     loadUnits(module);
     loadNaturalResources(module);
     loadConstructionSites(module);
@@ -164,10 +148,7 @@ void EntityDefinitionLoader::loadUnits(py::object module)
         for (auto py_unit : all_units)
         {
             std::string name = py_unit.attr("name").cast<std::string>();
-
-            auto entityType = getEntityType(name);
-            if (typeRegistry->isValid(name) == false)
-                typeRegistry->registerEntityType(name, entityType);
+            auto entityType = typeRegistry->getEntityType(name);
 
             addComponentsForUnit(entityType);
             addCommonComponents(module, entityType, py_unit);
@@ -197,11 +178,7 @@ void EntityDefinitionLoader::loadNaturalResources(py::object module)
         for (auto entry : entries)
         {
             std::string name = entry.attr("name").cast<std::string>();
-
-            auto entityType = getEntityType(name);
-
-            if (typeRegistry->isValid(name) == false)
-                typeRegistry->registerEntityType(name, entityType);
+            auto entityType = typeRegistry->getEntityType(name);
 
             addComponentsForNaturalResource(entityType);
             addCommonComponents(module, entityType, entry);
@@ -262,10 +239,7 @@ void EntityDefinitionLoader::loadBuildings(pybind11::object module)
             std::string name = entry.attr("name").cast<std::string>();
             std::string size = entry.attr("size").cast<std::string>();
 
-            auto entityType = getEntityType(name);
-
-            if (typeRegistry->isValid(name) == false)
-                typeRegistry->registerEntityType(name, entityType);
+            auto entityType = typeRegistry->getEntityType(name);
 
             addComponentsForBuilding(entityType);
             addCommonComponents(module, entityType, entry);
@@ -298,9 +272,7 @@ void EntityDefinitionLoader::loadConstructionSites(pybind11::object module)
             data.progressToFrames = entry.attr("progress_frame_map").cast<std::map<int, int>>();
             m_constructionSitesBySize[sizeStr] = data;
 
-            auto entityType = getEntityType(name);
-            if (typeRegistry->isValid(name) == false)
-                typeRegistry->registerEntityType(name, entityType);
+            auto entityType = typeRegistry->getEntityType(name);
 
             auto entitySubType = getEntitySubType(entityType, sizeStr);
             loadDRSForStillImage(module, entityType, entitySubType, entry);
@@ -1051,4 +1023,29 @@ ComponentType EntityDefinitionLoader::createCompHousing(pybind11::object module,
         }
     }
     return std::monostate{};
+}
+
+void EntityDefinitionLoader::loadEntityTypes(pybind11::object module)
+{
+    auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+
+    // TODO: Need to remove these hard codes along with stone and gold names
+    // Specialized core entity types
+    typeRegistry->registerEntityType("villager", EntityTypes::ET_VILLAGER);
+    typeRegistry->registerEntityType("wood", EntityTypes::ET_TREE);
+    typeRegistry->registerEntityType("construction_site", EntityTypes::ET_CONSTRUCTION_SITE);
+
+    // Generic entity types
+    if (py::hasattr(module, "all_entity_names"))
+    {
+        py::list allEntities = module.attr("all_entity_names");
+
+        for (auto entry : allEntities)
+        {
+            auto name = entry.cast<std::string>();
+            auto entityType = typeRegistry->getNextAvailableEntityType();
+
+            typeRegistry->registerEntityType(name, entityType);
+        }
+    }
 }

@@ -21,6 +21,7 @@ class EntityTypeRegistry
     GraphicsID getHUDIcon(uint32_t entityType) const;
     std::string getHUDDisplayName(uint32_t entityType) const;
     uint32_t getUnitTypeHousingNeed(uint32_t entityType) const;
+    uint32_t getNextAvailableEntityType() const;
 
     void registerHUDIcon(uint32_t entityType, const GraphicsID& icon);
     void registerHUDDisplayName(uint32_t entityType, const std::string& displayName);

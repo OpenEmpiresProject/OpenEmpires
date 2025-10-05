@@ -70,11 +70,9 @@ class Builder:
     buildables:  List[Shortcut] # List of buildings can create from this
 
 
-class Villager(Unit, Builder):
+class Gatherer:
     gather_speed: int
     resource_capacity: int
-
-    def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
 
 class NaturalResource:
@@ -152,7 +150,24 @@ class House(Building, Housing):
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
 
+class Villager(Unit, Builder, Gatherer):
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+
 # End of composite entity definitions
+
+all_entity_names: List[str] = [
+    "villager",
+    "gold",
+    "stone",
+    "wood",
+    "mill",
+    "wood_camp",
+    "mine_camp",
+    "town_center",
+    "house",
+    "construction_site"
+]
 
 
 all_units: List[Unit] = [

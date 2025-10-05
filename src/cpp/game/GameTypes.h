@@ -12,15 +12,7 @@ enum EntityTypes
     ET_TILE = 2,
     ET_VILLAGER = 3,
     ET_TREE = 4,
-    ET_MILL = 5,
-    ET_MARKETPLACE = 6,
-    ET_STONE = 7,
-    ET_GOLD = 8,
-    ET_LUMBER_CAMP = 9,
-    ET_MINING_CAMP = 10,
-    ET_CONSTRUCTION_SITE = 11,
-    ET_TOWN_CENTER = 12,
-    ET_HOUSE = 13,
+    ET_CONSTRUCTION_SITE = 5,
 
     ET_UI_ELEMENT = 10000
 };

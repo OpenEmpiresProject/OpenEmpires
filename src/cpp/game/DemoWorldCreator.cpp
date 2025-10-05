@@ -2,6 +2,7 @@
 
 #include "Coordinates.h"
 #include "EntityFactory.h"
+#include "EntityTypeRegistry.h"
 #include "GameTypes.h"
 #include "PlayerController.h"
 #include "PlayerFactory.h"
@@ -82,9 +83,13 @@ void DemoWorldCreator::loadEntities()
 
     if (m_populateWorld)
     {
+        auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+        auto stoneType = typeRegistry->getEntityType("stone");
+        auto goldType = typeRegistry->getEntityType("gold");
+
         generateMap(stateMan->gameMap());
-        createStoneOrGoldCluster(EntityTypes::ET_STONE, stateMan->gameMap(), 30, 30, 4);
-        createStoneOrGoldCluster(EntityTypes::ET_GOLD, stateMan->gameMap(), 20, 30, 4);
+        createStoneOrGoldCluster(stoneType, stateMan->gameMap(), 30, 30, 4);
+        createStoneOrGoldCluster(goldType, stateMan->gameMap(), 20, 30, 4);
         createVillager(player2, Tile(25, 25));
         createVillager(player, Tile(20, 20));
     }
@@ -128,7 +133,7 @@ void DemoWorldCreator::createTree(TileMap& map, uint32_t x, uint32_t y)
     map.addEntity(MapLayerType::ON_GROUND, Tile(x, y), shadow);
 }
 
-void DemoWorldCreator::createStoneOrGold(EntityTypes entityType,
+void DemoWorldCreator::createStoneOrGold(uint32_t entityType,
                                          core::TileMap& gameMap,
                                          uint32_t x,
                                          uint32_t y)
@@ -168,7 +173,7 @@ void DemoWorldCreator::createVillager(Ref<core::Player> player, const Tile& tile
 }
 
 void DemoWorldCreator::createStoneOrGoldCluster(
-    EntityTypes entityType, core::TileMap& gameMap, uint32_t xHint, uint32_t yHint, uint8_t amount)
+    uint32_t entityType, core::TileMap& gameMap, uint32_t xHint, uint32_t yHint, uint8_t amount)
 {
     if (amount == 0)
         return;
