@@ -42,6 +42,8 @@ uint32_t getEntitySubType(uint32_t entityType, const std::string& name)
             return EntitySubTypes::EST_SMALL_SIZE;
         else if (name == "medium")
             return EntitySubTypes::EST_MEDIUM_SIZE;
+        else if (name == "large")
+            return EntitySubTypes::EST_LARGE_SIZE;
         else if (name == "huge")
             return EntitySubTypes::EST_HUGE_SIZE;
         else
@@ -85,6 +87,8 @@ Size getBuildingSize(const std::string& name)
         return Size(1, 1);
     else if (name == "medium")
         return Size(2, 2);
+    else if (name == "large")
+        return Size(3, 3);
     else if (name == "huge")
         return Size(4, 4);
     else
@@ -148,21 +152,29 @@ void EntityDefinitionLoader::loadUnits(py::object module)
         for (auto py_unit : all_units)
         {
             std::string name = py_unit.attr("name").cast<std::string>();
-            auto entityType = typeRegistry->getEntityType(name);
 
-            addComponentsForUnit(entityType);
-            addCommonComponents(module, entityType, py_unit);
-            loadDRSForAnimations(entityType, EntitySubTypes::EST_DEFAULT, py_unit);
-
-            GraphicsID id;
-            id.entityType = entityType;
-            auto drsData = m_DRSDataByGraphicsIdHash.at(id);
-
-            auto& sc = getComponent<CompSelectible>(entityType, EntitySubTypes::EST_DEFAULT);
-            for (int i = static_cast<int>(Direction::NORTH);
-                 i <= static_cast<int>(Direction::NORTHWEST); ++i)
+            if (typeRegistry->isValid(name))
             {
-                sc.boundingBoxes[i] = drsData.boundingRect;
+                auto entityType = typeRegistry->getEntityType(name);
+
+                addComponentsForUnit(entityType);
+                addCommonComponents(module, entityType, py_unit);
+                loadDRSForAnimations(entityType, EntitySubTypes::EST_DEFAULT, py_unit);
+
+                GraphicsID id;
+                id.entityType = entityType;
+                auto drsData = m_DRSDataByGraphicsIdHash.at(id);
+
+                auto& sc = getComponent<CompSelectible>(entityType, EntitySubTypes::EST_DEFAULT);
+                for (int i = static_cast<int>(Direction::NORTH);
+                     i <= static_cast<int>(Direction::NORTHWEST); ++i)
+                {
+                    sc.boundingBoxes[i] = drsData.boundingRect;
+                }
+            }
+            else
+            {
+                spdlog::error("Invalid entity {}, skipping loading", name);
             }
         }
     }
@@ -178,49 +190,53 @@ void EntityDefinitionLoader::loadNaturalResources(py::object module)
         for (auto entry : entries)
         {
             std::string name = entry.attr("name").cast<std::string>();
-            auto entityType = typeRegistry->getEntityType(name);
 
-            addComponentsForNaturalResource(entityType);
-            addCommonComponents(module, entityType, entry);
-            loadDRSForStillImage(module, entityType, EntitySubTypes::EST_DEFAULT, entry);
-
-            GraphicsID id;
-            id.entityType = entityType;
-            auto drsData = m_DRSDataByGraphicsIdHash.at(id);
-
-            auto& sc = getComponent<CompSelectible>(entityType, EntitySubTypes::EST_DEFAULT);
-            sc.boundingBoxes[static_cast<int>(Direction::NONE)] = drsData.boundingRect;
-
-            py::object treeClass = module.attr("Tree");
-            if (py::isinstance(entry, treeClass))
+            if (typeRegistry->isValid(name))
             {
-                if (py::hasattr(entry, "stump"))
+                auto entityType = typeRegistry->getEntityType(name);
+
+                addComponentsForNaturalResource(entityType);
+                addCommonComponents(module, entityType, entry);
+                loadDRSForStillImage(module, entityType, EntitySubTypes::EST_DEFAULT, entry);
+
+                GraphicsID id;
+                id.entityType = entityType;
+                auto drsData = m_DRSDataByGraphicsIdHash.at(id);
+
+                auto& sc = getComponent<CompSelectible>(entityType, EntitySubTypes::EST_DEFAULT);
+                sc.boundingBoxes[static_cast<int>(Direction::NONE)] = drsData.boundingRect;
+
+                py::object treeClass = module.attr("Tree");
+                if (py::isinstance(entry, treeClass))
                 {
-                    auto stumpSubType = getEntitySubType(entityType, "stump");
-                    py::object stump = entry.attr("stump");
-                    loadDRSForStillImage(module, entityType, stumpSubType, stump);
-                }
+                    if (py::hasattr(entry, "stump"))
+                    {
+                        auto stumpSubType = getEntitySubType(entityType, "stump");
+                        py::object stump = entry.attr("stump");
+                        loadDRSForStillImage(module, entityType, stumpSubType, stump);
+                    }
 
-                if (py::hasattr(entry, "shadow"))
-                {
-                    auto shadowSubType = getEntitySubType(entityType, "shadow");
-                    py::object stump = entry.attr("shadow");
-                    loadDRSForStillImage(module, entityType, shadowSubType, stump);
+                    if (py::hasattr(entry, "shadow"))
+                    {
+                        auto shadowSubType = getEntitySubType(entityType, "shadow");
+                        py::object stump = entry.attr("shadow");
+                        loadDRSForStillImage(module, entityType, shadowSubType, stump);
 
-                    CompGraphics graphics;
-                    graphics.layer = GraphicLayer::ON_GROUND;
+                        CompGraphics graphics;
+                        graphics.layer = GraphicLayer::ON_GROUND;
 
-                    CompEntityInfo info(entityType);
-                    info.entitySubType = shadowSubType;
+                        CompEntityInfo info(entityType);
+                        info.entitySubType = shadowSubType;
 
-                    auto entityTypeAndSubType =
-                        entityType + m_entitySubTypeMapKeyOffset * shadowSubType;
+                        auto entityTypeAndSubType =
+                            entityType + m_entitySubTypeMapKeyOffset * shadowSubType;
 
-                    addComponentIfNotNull(entityTypeAndSubType, graphics);
-                    addComponentIfNotNull(entityTypeAndSubType, info);
-                    addComponentIfNotNull(entityTypeAndSubType, CompRendering());
-                    addComponentIfNotNull(entityTypeAndSubType, CompTransform());
-                    addComponentIfNotNull(entityTypeAndSubType, CompDirty());
+                        addComponentIfNotNull(entityTypeAndSubType, graphics);
+                        addComponentIfNotNull(entityTypeAndSubType, info);
+                        addComponentIfNotNull(entityTypeAndSubType, CompRendering());
+                        addComponentIfNotNull(entityTypeAndSubType, CompTransform());
+                        addComponentIfNotNull(entityTypeAndSubType, CompDirty());
+                    }
                 }
             }
         }
@@ -239,19 +255,26 @@ void EntityDefinitionLoader::loadBuildings(pybind11::object module)
             std::string name = entry.attr("name").cast<std::string>();
             std::string size = entry.attr("size").cast<std::string>();
 
-            auto entityType = typeRegistry->getEntityType(name);
+            if (typeRegistry->isValid(name))
+            {
+                auto entityType = typeRegistry->getEntityType(name);
 
-            addComponentsForBuilding(entityType);
-            addCommonComponents(module, entityType, entry);
-            loadDRSForStillImage(module, entityType, EntitySubTypes::EST_DEFAULT, entry);
-            attachedConstructionSites(entityType, size);
+                addComponentsForBuilding(entityType);
+                addCommonComponents(module, entityType, entry);
+                loadDRSForStillImage(module, entityType, EntitySubTypes::EST_DEFAULT, entry);
+                attachedConstructionSites(entityType, size);
 
-            GraphicsID id;
-            id.entityType = entityType;
-            auto drsData = m_DRSDataByGraphicsIdHash.at(id);
+                GraphicsID id;
+                id.entityType = entityType;
+                auto drsData = m_DRSDataByGraphicsIdHash.at(id);
 
-            auto& sc = getComponent<CompSelectible>(entityType, EntitySubTypes::EST_DEFAULT);
-            sc.boundingBoxes[static_cast<int>(Direction::NONE)] = drsData.boundingRect;
+                auto& sc = getComponent<CompSelectible>(entityType, EntitySubTypes::EST_DEFAULT);
+                sc.boundingBoxes[static_cast<int>(Direction::NONE)] = drsData.boundingRect;
+            }
+            else
+            {
+                spdlog::error("Invalid entity {}, skipping loading", name);
+            }
         }
     }
 }
@@ -372,13 +395,19 @@ uint32_t EntityDefinitionLoader::createEntity(uint32_t entityType, uint32_t enti
         auto& factory = stateMan->getComponent<CompUnitFactory>(entity);
         for (auto& possibleUnit : factory.producibleUnitNames.value())
         {
-            possibleUnitTypes.push_back(typeRegistry->getEntityType(possibleUnit));
+            if (typeRegistry->isValid(possibleUnit))
+            {
+                possibleUnitTypes.push_back(typeRegistry->getEntityType(possibleUnit));
+            }
         }
 
         std::unordered_map<char, uint32_t> entityTypesByShortcut;
         for (auto [key, name] : factory.producibleUnitNamesByShortcuts.value())
         {
-            entityTypesByShortcut[key] = typeRegistry->getEntityType(name);
+            if (typeRegistry->isValid(name))
+            {
+                entityTypesByShortcut[key] = typeRegistry->getEntityType(name);
+            }
         }
         PropertyInitializer::set(factory.producibleUnitTypes, possibleUnitTypes);
         PropertyInitializer::set(factory.producibleUnitShortcuts, entityTypesByShortcut);
@@ -392,7 +421,10 @@ uint32_t EntityDefinitionLoader::createEntity(uint32_t entityType, uint32_t enti
         std::unordered_map<char, uint32_t> entityTypesByShortcut;
         for (auto& [key, name] : builder->buildableNameByShortcut.value())
         {
-            entityTypesByShortcut[key] = typeRegistry->getEntityType(name);
+            if (typeRegistry->isValid(name))
+            {
+                entityTypesByShortcut[key] = typeRegistry->getEntityType(name);
+            }
         }
         PropertyInitializer::set(builder->buildableTypesByShortcut, entityTypesByShortcut);
     }

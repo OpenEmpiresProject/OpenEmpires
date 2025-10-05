@@ -154,6 +154,10 @@ class Villager(Unit, Builder, Gatherer):
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
 
+class MilitaryBuilding(Building, UnitFactory):
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+
 # End of composite entity definitions
 
 all_entity_names: List[str] = [
@@ -290,6 +294,10 @@ all_construction_sites: List[ConstructionSite] = [
     ConstructionSite(
         size="medium", 
         graphics={"default": Graphic(slp_id=237)}, 
+        progress_frame_map={33:0, 66:1, 99:2}),
+    ConstructionSite(
+        size="large", 
+        graphics={"default": Graphic(slp_id=238)}, 
         progress_frame_map={33:0, 66:1, 99:2}),
     ConstructionSite(
         size="huge", 
