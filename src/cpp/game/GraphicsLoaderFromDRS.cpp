@@ -262,8 +262,8 @@ void loadSurfaces(AtlasGenerator& atlasGenerator,
                   uint32_t entitySubType,
                   uint32_t action,
                   uint32_t playerId,
-                  std::vector<Frame>& frames,
-                  std::vector<Vec2>& anchors,
+                  const std::vector<Frame>& frames,
+                  const std::vector<Vec2>& anchors,
                   GraphicsRegistry& graphicsRegistry)
 {
     std::vector<SDL_Rect> srcRects;
@@ -315,12 +315,13 @@ void loadSurfaces(AtlasGenerator& atlasGenerator,
         else if (typeRegistry->isAUnit(entityType))
         {
             /* if the file name is 1388_01.bmp pattern last two digit represents the frame. each
-                direction animation contains 15 frames. 1-15 for south, 16-30 for southwest, 31-45
-               for west, 46-60 for northwest, and so on. implement this logic to manipulate frame
-               number and direction of id (type of GraphicsID) */
+                direction animation can contains 15 (max) frames. 1-15 for south, 16-30 for
+               southwest, 31-45 for west, 46-60 for northwest, and so on. implement this logic to
+               manipulate frame number and direction of id (type of GraphicsID) */
             auto index = frames[i].getId() - 1;
-            id.frame = index % 15;               // 0-14
-            auto direction = (int) (index / 15); // 0-3
+            auto framesPerDirection = frames.size() / 5;
+            id.frame = index % framesPerDirection;               // 0-14 (max)
+            auto direction = (int) (index / framesPerDirection); // 0-4
             if (direction == 0)
             {
                 id.direction = static_cast<uint64_t>(Direction::SOUTH);

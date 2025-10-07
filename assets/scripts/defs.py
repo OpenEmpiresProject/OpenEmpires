@@ -109,6 +109,7 @@ class ResourceDropOff(Building):
 class UnitFactory:
     producible_units: List[Shortcut] # List of units can create from this factory
     max_queue_size: int
+    unit_creation_speed: int
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
 
@@ -155,6 +156,10 @@ class Villager(Unit, Builder, Gatherer):
 
 
 class MilitaryBuilding(Building, UnitFactory):
+    def __init__(self, **kwargs): self.__dict__.update(kwargs)
+
+
+class MilitaryUnit(Unit):
     def __init__(self, **kwargs): self.__dict__.update(kwargs)
 
 
@@ -295,6 +300,7 @@ all_buildings: List[Building] = [
         display_name="Barracks",
         line_of_sight=256*2,
         size="large",
+        unit_creation_speed=40,
         graphics={"default":Graphic(slp_id=130)},
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=3),
         producible_units=[]
