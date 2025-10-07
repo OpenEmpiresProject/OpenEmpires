@@ -156,6 +156,7 @@ void EntityDefinitionLoader::loadUnits(py::object module)
             if (typeRegistry->isValid(name))
             {
                 auto entityType = typeRegistry->getEntityType(name);
+                typeRegistry->registerUnitType(entityType);
 
                 addComponentsForUnit(entityType);
                 addCommonComponents(module, entityType, py_unit);

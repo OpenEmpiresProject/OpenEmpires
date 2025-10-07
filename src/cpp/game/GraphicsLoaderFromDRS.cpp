@@ -3,6 +3,7 @@
 #include "AtlasGenerator.h"
 #include "DRSFile.h"
 #include "EntityDefinitionLoader.h"
+#include "EntityTypeRegistry.h"
 #include "GameTypes.h"
 #include "SLPFile.h"
 #include "ServiceRegistry.h"
@@ -274,6 +275,8 @@ void loadSurfaces(AtlasGenerator& atlasGenerator,
         return;
     }
 
+    auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+
     for (size_t i = 0; i < surfaces.size(); ++i)
     {
         auto& srcRect = srcRects[i];
@@ -309,7 +312,7 @@ void loadSurfaces(AtlasGenerator& atlasGenerator,
             anchor = Vec2(imageSize.width / 2 + 1,
                           0); // Must override tile anchoring since their anchors don't work here
         }
-        else if (entityType == EntityTypes::ET_VILLAGER)
+        else if (typeRegistry->isAUnit(entityType))
         {
             /* if the file name is 1388_01.bmp pattern last two digit represents the frame. each
                 direction animation contains 15 frames. 1-15 for south, 16-30 for southwest, 31-45
@@ -434,7 +437,8 @@ void loadSLP(shared_ptr<DRSFile> drs,
 
 bool isTextureFlippingNeededEntity(int entityType)
 {
-    return entityType == EntityTypes::ET_VILLAGER;
+    auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+    return typeRegistry->isAUnit(entityType);
 }
 
 bool isTextureFlippingNeededDirection(Direction direction)

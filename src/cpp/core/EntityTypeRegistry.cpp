@@ -84,3 +84,13 @@ uint32_t EntityTypeRegistry::getNextAvailableEntityType() const
     }
     return nextEntityType;
 }
+
+void EntityTypeRegistry::registerUnitType(uint32_t entityType)
+{
+    m_unitEntityTypes.insert(entityType);
+}
+
+bool EntityTypeRegistry::isAUnit(uint32_t entityType) const
+{
+    return m_unitEntityTypes.contains(entityType);
+}
