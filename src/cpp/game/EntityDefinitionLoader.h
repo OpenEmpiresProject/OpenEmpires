@@ -125,6 +125,7 @@ class EntityDefinitionLoader : public core::EntityFactory, public core::Property
         std::map<int, int> progressToFrames;
     };
 
+    void validateEntities(pybind11::object module);
     void loadEntityTypes(pybind11::object module);
     void loadUnits(pybind11::object module);
     void loadNaturalResources(pybind11::object module);

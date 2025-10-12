@@ -47,6 +47,8 @@ openEmpires is a cross-platform clone of Age of Empires 2, designed to provide a
 - GTest
 - EnTT (for entity-component-system)
 - spdlog (for logging)
+- pybind11
+- pydantic (a python dependency)
 
 > Note: Above dependencies will be automatically installed with `make configure` (later step)
 

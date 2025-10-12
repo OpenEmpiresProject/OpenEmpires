@@ -106,6 +106,38 @@ Rect<int> getBoundingBox(shared_ptr<DRSFile> drs, uint32_t slpId)
     return box;
 }
 
+void validatePython(py::module_ sysModule)
+{
+    auto paths = sysModule.attr("path");
+    std::vector<std::string> pathVec;
+    spdlog::info("Python sys.path:");
+
+    for (auto item : paths)
+    {
+        spdlog::info("  {}", item.cast<std::string>());
+    }
+
+    // Try importing pydantic
+    py::module_ pydantic = py::module_::import("pydantic");
+    spdlog::info("Pydantic is found");
+
+    // Simple pydantic BaseModel test
+    py::exec(R"(
+from pydantic import BaseModel, ValidationError
+
+class MyModel(BaseModel):
+    x: int
+
+# valid instance
+m = MyModel(x=10)
+# invalid instance to see validation
+try:
+    m2 = MyModel(x="not an int")
+except ValidationError as e:
+    print("Validated pybind setup")
+)");
+}
+
 EntityDefinitionLoader::EntityDefinitionLoader()
 {
     m_drsLoadFunc = [](const std::string& drsFilename) -> Ref<DRSFile>
@@ -132,7 +164,10 @@ void EntityDefinitionLoader::load()
     py::module_ sys = py::module_::import("sys");
     sys.attr("path").attr("insert")(0, "./assets/scripts");
 
-    py::object module = py::module_::import("defs");
+    validatePython(sys);
+
+    py::object module = py::module_::import("importer");
+    validateEntities(module);
     loadEntityTypes(module);
     loadUnits(module);
     loadNaturalResources(module);
@@ -642,7 +677,8 @@ void EntityDefinitionLoader::loadDRSForStillImage(pybind11::object module,
             }
             else
             {
-                processGraphic(graphicsEntry, Vec2::null);
+                for (auto part : graphicsEntry)
+                    processGraphic(part, Vec2::null);
             }
         }
     }
@@ -1080,5 +1116,21 @@ void EntityDefinitionLoader::loadEntityTypes(pybind11::object module)
 
             typeRegistry->registerEntityType(name, entityType);
         }
+    }
+}
+
+void EntityDefinitionLoader::validateEntities(pybind11::object module)
+{
+    py::object validateAllFunc = module.attr("validate_all");
+    py::object result = validateAllFunc();
+    bool success = result.cast<bool>();
+
+    if (success == false)
+    {
+        throw std::runtime_error("Entity validation failed");
+    }
+    else
+    {
+        spdlog::debug("Entity validation passed");
     }
 }

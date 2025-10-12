@@ -344,7 +344,7 @@ all_buildings= [
 	    line_of_sight=256,
 	    size='medium',
 	    accepted_resources=['food'], 
-	    graphics={'default':Graphic(slp_id=3483)}
+	    graphics={'default':[Graphic(slp_id=3483)]}
 	)]
 	        )";
 
@@ -469,12 +469,12 @@ all_construction_sites= [
 	ConstructionSite(
 	    size='small',
 	    progress_frame_map={33:1, 66:2, 99:3}, 
-	    graphics={'default':Graphic(slp_id=236)}
+	    graphics={'default':[Graphic(slp_id=236)]}
 	),
 	ConstructionSite(
 	    size='medium',
 	    progress_frame_map={33:1, 66:2, 99:3}, 
-	    graphics={'default':Graphic(slp_id=237)}
+	    graphics={'default':[Graphic(slp_id=237)]}
 	)]
 	        )");
 
@@ -556,7 +556,7 @@ all_buildings= [
 	    line_of_sight=256,
 	    size='medium',
 	    accepted_resources=['food'], 
-	    graphics={'default':Graphic(slp_id=3483)}
+	    graphics={'default':[Graphic(slp_id=3483)]}
 	)]
 	
 class ConstructionSite:
@@ -571,7 +571,7 @@ all_construction_sites= [
 	ConstructionSite(
 	    size='medium',
 	    progress_frame_map={33:1, 66:2, 99:3}, 
-	    graphics={'default':Graphic(slp_id=237)}
+	    graphics={'default':[Graphic(slp_id=237)]}
 	)]
 	        )");
 	
@@ -627,7 +627,7 @@ class TileSet:
 	def __init__(self, **kwargs): self.__dict__.update(kwargs)
 	
 all_tilesets = [
-	TileSet(graphics={"grass":Graphic(drs_file="terrain.drs", slp_id=15001)})
+	TileSet(graphics={"grass":[Graphic(drs_file="terrain.drs", slp_id=15001)]})
 ]
 	        )");
 	
@@ -683,8 +683,8 @@ all_natural_resources= [
 	Tree(
 		name="wood",
 		resource_amount=100,
-		graphics={"oak":Graphic(slp_id=435)},
-		stump=NaturalResource(name="stump", graphics={"oak":Graphic(slp_id=1252)})
+		graphics={"oak":[Graphic(slp_id=435)]},
+		stump=NaturalResource(name="stump", graphics={"oak":[Graphic(slp_id=1252)]})
 	)]
 			)");
 	
@@ -732,7 +732,7 @@ class UIElement:
 	def __init__(self, **kwargs): self.__dict__.update(kwargs)
 	
 all_ui_elements = [
-	UIElement(name="resource_panel", graphics={"default":Graphic(drs_file="interfac.drs", slp_id=51101, clip_rect=Rect(w=400, h=25))})
+	UIElement(name="resource_panel", graphics={"default":[Graphic(drs_file="interfac.drs", slp_id=51101, clip_rect=Rect(w=400, h=25))]})
 ]
 			)");
 	
