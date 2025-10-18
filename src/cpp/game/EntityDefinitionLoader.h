@@ -12,6 +12,7 @@
 #include "components/CompBuilding.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
+#include "components/CompGarrison.h"
 #include "components/CompGraphics.h"
 #include "components/CompHousing.h"
 #include "components/CompPlayer.h"
@@ -51,6 +52,7 @@ using ComponentType = std::variant<std::monostate,
                                    core::CompTransform,
                                    core::CompUnit,
                                    core::CompUnitFactory,
+                                   core::CompGarrison,
                                    core::CompHousing>;
 
 class EntityDefinitionLoader : public core::EntityFactory, public core::PropertyInitializer
@@ -111,6 +113,8 @@ class EntityDefinitionLoader : public core::EntityFactory, public core::Property
                                        pybind11::object module,
                                        pybind11::handle entityDefinition);
     static ComponentType createCompBuilding(pybind11::object module,
+                                            pybind11::handle entityDefinition);
+    static ComponentType createCompGarrison(pybind11::object module,
                                             pybind11::handle entityDefinition);
     static ComponentType createCompUnitFactory(pybind11::object module,
                                                pybind11::handle entityDefinition);

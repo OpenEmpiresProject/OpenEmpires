@@ -3,6 +3,7 @@
 #include "EntityTypeRegistry.h"
 #include "GameTypes.h"
 #include "commands/CmdIdle.h"
+#include "components/CompGarrison.h"
 #include "components/CompHousing.h"
 #include "components/CompUnitFactory.h"
 #include "debug.h"
@@ -482,6 +483,7 @@ void EntityDefinitionLoader::addCommonComponents(py::object module,
     addComponentIfNotNull(entityType, createCompBuilding(module, entityDefinition));
     addComponentIfNotNull(entityType, createCompUnitFactory(module, entityDefinition));
     addComponentIfNotNull(entityType, createCompHousing(module, entityDefinition));
+    addComponentIfNotNull(entityType, createCompGarrison(module, entityDefinition));
     addComponentIfNotNull(entityType, createCompSelectible(entityType, module, entityDefinition));
     addComponentIfNotNull(entityType, CompEntityInfo(entityType));
 }
@@ -877,11 +879,15 @@ ComponentType EntityDefinitionLoader::createCompUnit(uint32_t entityType,
         py::object unitClass = module.attr("Unit");
         if (py::isinstance(entityDefinition, unitClass))
         {
+            uint32_t unitTypeInt = entityDefinition.attr("unit_type").cast<int>();
+            auto unitType = getUnitType(unitTypeInt);
+
             CompUnit comp;
             PropertyInitializer::set<uint32_t>(comp.lineOfSight,
                                                entityDefinition.attr("line_of_sight").cast<int>());
             PropertyInitializer::set<uint32_t>(comp.housingNeed,
                                                entityDefinition.attr("housing_need").cast<int>());
+            PropertyInitializer::set<UnitType>(comp.type, unitType);
 
             auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
             typeRegistry->registerUnitTypeHousingNeed(entityType, comp.housingNeed);
@@ -1133,4 +1139,33 @@ void EntityDefinitionLoader::validateEntities(pybind11::object module)
     {
         spdlog::debug("Entity validation passed");
     }
+}
+
+game::ComponentType EntityDefinitionLoader::createCompGarrison(pybind11::object module,
+                                                               pybind11::handle entityDefinition)
+{
+    if (py::hasattr(module, "Garrison"))
+    {
+        py::object buildingClass = module.attr("Garrison");
+        if (py::isinstance(entityDefinition, buildingClass))
+        {
+            CompGarrison comp;
+
+            auto capacity = readValue<uint32_t>(entityDefinition, "garrison_capacity");
+            auto unitTypesList =
+                readValue<std::list<uint32_t>>(entityDefinition, "garrisonable_unit_types");
+
+            std::unordered_set<UnitType> unitTypes;
+            for (auto typeInt : unitTypesList)
+            {
+                unitTypes.insert(getUnitType(typeInt));
+            }
+
+            PropertyInitializer::set<uint32_t>(comp.capacity, capacity);
+            PropertyInitializer::set<std::unordered_set<UnitType>>(comp.unitTypes, unitTypes);
+
+            return ComponentType(comp);
+        }
+    }
+    return std::monostate{};
 }

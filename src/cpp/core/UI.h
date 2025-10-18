@@ -146,11 +146,15 @@ class Layout : public Widget
 {
   protected:
     uint32_t margin = 0;
+    int32_t leftMargin = -1;
+    int32_t topMargin = -1;
     uint32_t spacing = 0;
     LayoutDirection direction = LayoutDirection::Horizontal;
 
   public:
     DEFINE_GETTER_SETTER(margin, Margin);
+    DEFINE_GETTER_SETTER(leftMargin, LeftMargin);
+    DEFINE_GETTER_SETTER(topMargin, TopMargin);
     DEFINE_GETTER_SETTER(spacing, Spacing);
     DEFINE_GETTER_SETTER(direction, Direction);
 

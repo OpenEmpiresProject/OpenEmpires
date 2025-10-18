@@ -32,6 +32,7 @@ class Constants
     static const int MAX_FRAME_DELAY_MS = 500;
 
     static const int ABSOLUTE_MAX_UNIT_QUEUE_SIZE = 20;
+    static const int ABSOLUTE_MAX_UNIT_GARRISON_SIZE = 20;
 };
 } // namespace core
 

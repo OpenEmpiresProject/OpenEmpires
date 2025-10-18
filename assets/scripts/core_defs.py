@@ -1,4 +1,5 @@
 ﻿from typing import Dict, List, Optional
+from enum import IntEnum
 
 # Core entity definitions. These definitions are known to the game. It is possible to compose these
 # to define new entity types. But not possible to change these.
@@ -45,6 +46,15 @@ class Icon(Graphic):
     index: int
 
 
+class UnitType(IntEnum):
+    VILLAGER = 1
+    INFANTRY = 2
+    ARCHER = 3
+    CAVALRY = 4
+    SHIP = 5
+    SIEGE = 6
+
+
 class Unit:
     name: str
     display_name: str
@@ -53,6 +63,7 @@ class Unit:
     animations: List[Animation]
     icon: Icon
     housing_need: int
+    unit_type: UnitType
 
 
 class Shortcut(_Constructible):
@@ -113,6 +124,11 @@ class UnitFactory:
 
 class Housing:
     housing_capacity: int
+
+
+class Garrison:
+    garrisonable_unit_types: List[UnitType]
+    garrison_capacity: int
 
 
 class ConstructionSite(_Constructible):

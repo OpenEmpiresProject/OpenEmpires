@@ -268,7 +268,7 @@ void Layout::updateGraphicCommand()
             overflowNegationOffset = overflowWidth / std::max(1, visibleChildCount);
         }
 
-        int newX = margin;
+        int newX = leftMargin >= 0 ? leftMargin : margin;
         int i = 0;
         for (auto& child : children)
         {
@@ -277,7 +277,7 @@ void Layout::updateGraphicCommand()
                 // Taking a copy to modify coordinates
                 auto rect = child->getRect();
                 rect.x = newX;
-                rect.y = margin;
+                rect.y = topMargin >= 0 ? topMargin : margin;
                 child->setRect(rect);
                 newX += rect.w + spacing - (overflowNegationOffset * 1);
             }
@@ -305,7 +305,7 @@ void Layout::updateGraphicCommand()
             overflowNegationOffset = overflowHeight / std::max((size_t) 1, children.size());
         }
 
-        int newY = margin;
+        int newY = topMargin >= 0 ? topMargin : margin;
         int i = 0;
         for (auto& child : children)
         {
@@ -314,7 +314,7 @@ void Layout::updateGraphicCommand()
                 // Taking a copy to modify coordinates
                 auto rect = child->getRect();
                 rect.y = newY;
-                rect.x = margin;
+                rect.x = leftMargin >= 0 ? leftMargin : margin;
                 child->setRect(rect);
                 newY += rect.h + spacing - (overflowNegationOffset * 1);
             }

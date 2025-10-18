@@ -37,6 +37,7 @@ class BuildingManager : public EventHandler
     void updateInProgressUnitCreations(auto& tick);
     void updateInProgressConstructions();
     void onQueueUnit(const Event& e);
+    void onUngarrison(const Event& e);
     uint32_t createBuilding(const BuildingPlacementData& request);
     void onCompleteBuilding(uint32_t entity,
                             const CompBuilding& building,

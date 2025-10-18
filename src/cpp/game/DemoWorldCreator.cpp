@@ -431,9 +431,26 @@ void DemoWorldCreator::createHUD()
 
                 WITH(auto unitCreationLayout = infoLayout->createChild<ui::Layout>()
                                                    ->withDirection(ui::LayoutDirection::Vertical)
-                                                   ->withMargin(20)
+                                                   ->withLeftMargin(20)
+                                                   ->withTopMargin(5)
+                                                   ->withSpacing(10)
                                                    ->withSize(250, 0))
                 {
+                    WITH(auto garrisonLayout = unitCreationLayout->createChild<ui::Layout>()
+                                                   ->withDirection(ui::LayoutDirection::Horizontal)
+                                                   ->withSpacing(5)
+                                                   ->withName("garrisoned_units_row")
+                                                   ->withSize(0, m_iconSize))
+                    {
+                        for (int i = 0; i < Constants::ABSOLUTE_MAX_UNIT_GARRISON_SIZE; ++i)
+                        {
+                            garrisonLayout->createChild<ui::Label>()
+                                ->withSize(m_iconSize, m_iconSize)
+                                ->withName(fmt::format("garrisoned_unit{}", i))
+                                ->withVisible(false);
+                        }
+                    }
+
                     WITH(auto currentInProgressDetailsLayout =
                              unitCreationLayout->createChild<ui::Layout>()
                                  ->withDirection(ui::LayoutDirection::Horizontal)

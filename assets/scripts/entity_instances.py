@@ -8,7 +8,7 @@ class Constructible:
 # Following are entity definitions composed of one or more core entity definitions. Composition will
 # determine the behaviour of the entity at runtime.
 #
-class TownCenter(Constructible, ResourceDropOff, UnitFactory, Housing, CompoSiteGraphicBuilding):
+class TownCenter(Constructible, ResourceDropOff, UnitFactory, Housing, CompoSiteGraphicBuilding, Garrison):
     pass
 
 
@@ -49,6 +49,7 @@ all_units: List[Unit] = [
     Villager(
         name="villager",
         display_name="Villager",
+        unit_type = UnitType.VILLAGER,
         line_of_sight=256*5,
         moving_speed=256,
         build_speed=40,
@@ -76,6 +77,7 @@ all_units: List[Unit] = [
     MilitaryUnit(
         name="militia",
         display_name="Milita",
+        unit_type = UnitType.INFANTRY,
         line_of_sight=256*5,
         moving_speed=256,
         housing_need=1,
@@ -151,6 +153,8 @@ all_buildings: List[Building] = [
         producible_units=[Shortcut(name="villager", shortcut="v")],
         max_queue_size=10,
         housing_capacity=5,
+        garrisonable_unit_types = [UnitType.VILLAGER],
+        garrison_capacity = 10,
         graphics={"default": CompositeGraphic(
             anchor=Point(x=187, y=290),
             parts=[

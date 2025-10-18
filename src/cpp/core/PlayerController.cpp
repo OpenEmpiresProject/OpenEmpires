@@ -6,12 +6,14 @@
 #include "ServiceRegistry.h"
 #include "StateManager.h"
 #include "commands/CmdBuild.h"
+#include "commands/CmdGarrison.h"
 #include "commands/CmdGatherResource.h"
 #include "commands/CmdMove.h"
 #include "components/CompBuilder.h"
 #include "components/CompBuilding.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
+#include "components/CompGarrison.h"
 #include "components/CompPlayer.h"
 #include "components/CompResource.h"
 #include "components/CompTransform.h"
@@ -84,6 +86,14 @@ void PlayerController::onKeyUp(const Event& e)
             else if (action.type == ShortcutResolver::Action::Type::CREATE_UNIT)
             {
                 createUnit(action.entityType, m_currentEntitySelection.selection);
+            }
+            else if (action.type == ShortcutResolver::Action::Type::GARRISON)
+            {
+                initiateGarrison();
+            }
+            else if (action.type == ShortcutResolver::Action::Type::UNGARRISON)
+            {
+                initiateUngarrison();
             }
         }
     }
@@ -194,6 +204,8 @@ void PlayerController::resolveAction(const Vec2& screenPos)
     auto m_stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     bool gatherable = m_stateMan->hasComponent<CompResource>(target);
     bool construction = m_stateMan->hasComponent<CompBuilding>(target);
+    bool isGarrisonInProgress = m_garrisonOperationInProgress;
+    m_garrisonOperationInProgress = false; //  One way of other garrison action will be concluded
 
     for (auto entity : m_currentEntitySelection.selection.selectedEntities)
     {
@@ -215,12 +227,18 @@ void PlayerController::resolveAction(const Vec2& screenPos)
         else if (gatherable)
         {
             // It is a request to gather the resource at target
-            // TODO: Check selected entity're capability to gather, if it isn't doable, fall back to
-            // move
+            // TODO: Check selected entities are capability to gather, if it isn't doable, fall back
+            // to move
             auto cmd = ObjectPool<CmdGatherResource>::acquire();
             cmd->target = target;
 
             publishEvent(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, entity});
+        }
+        else if (isGarrisonInProgress && construction)
+        {
+            // TODO: Original game allows to use both right and left clicks for garrison. Here we
+            // use only the right click
+            tryCompleteGarrison(entity, target);
         }
         else if (construction)
         {
@@ -482,5 +500,38 @@ void PlayerController::createUnit(uint32_t entityType, const EntitySelection& se
     {
         UnitQueueData data{.player = m_player, .entityType = entityType, .building = building};
         publishEvent(Event::Type::UNIT_QUEUE_REQUEST, data);
+    }
+}
+
+void PlayerController::initiateGarrison()
+{
+    spdlog::debug("Garrison initiated");
+    m_garrisonOperationInProgress = true;
+}
+
+void PlayerController::tryCompleteGarrison(uint32_t unitId, uint32_t targetBuildingEntityId)
+{
+    auto garrison = m_stateMan->tryGetComponent<CompGarrison>(targetBuildingEntityId);
+    if (garrison != nullptr && m_currentEntitySelection.type == EntitySelectionData::Type::UNIT)
+    {
+        auto& unitComp = m_stateMan->getComponent<CompUnit>(unitId);
+        if (garrison->unitTypes.value().contains(unitComp.type))
+        {
+            auto cmd = ObjectPool<CmdGarrison>::acquire();
+            cmd->target = targetBuildingEntityId;
+
+            publishEvent(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, unitId});
+        }
+    }
+}
+
+void PlayerController::initiateUngarrison()
+{
+    if (m_currentEntitySelection.type == EntitySelectionData::Type::BUILDING &&
+        m_currentEntitySelection.selection.selectedEntities.empty() == false)
+    {
+        publishEvent(
+            Event::Type::UNGARRISON_REQUEST,
+            UngarrisonData{m_player, m_currentEntitySelection.selection.selectedEntities[0]});
     }
 }

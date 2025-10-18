@@ -92,6 +92,12 @@ struct UnitQueueData
     uint32_t building = entt::null;
 };
 
+struct UngarrisonData
+{
+    Ref<Player> player;
+    uint32_t building = entt::null;
+};
+
 struct Event
 {
     enum class Type
@@ -111,6 +117,7 @@ struct Event
         BUILDING_REQUESTED, // Use BuildingPlacementData
         BUILDING_APPROVED,  // Use BuildingPlacementData
         COMMAND_REQUEST,
+        UNGARRISON_REQUEST,
         MAX_TYPE_MARKER,
     };
 
@@ -125,6 +132,7 @@ struct Event
                               EntityDeleteData,
                               UnitQueueData,
                               UnitCreationData,
+                              UngarrisonData,
                               BuildingPlacementData>;
 
     const Type type = Type::NONE;

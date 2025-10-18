@@ -6,6 +6,7 @@
 #include "PlayerFactory.h"
 #include "components/CompBuilding.h"
 #include "components/CompEntityInfo.h"
+#include "components/CompGarrison.h"
 #include "components/CompSelectible.h"
 #include "components/CompUnitFactory.h"
 
@@ -27,6 +28,7 @@ void HUDUpdater::onTick(const Event& e)
     updateUIElementReferences();
     updateResourcePanel();
     updateProgressBar();
+    updateGarrisonedUnits();
 }
 
 void HUDUpdater::onUnitSelection(const Event& e)
@@ -35,6 +37,7 @@ void HUDUpdater::onUnitSelection(const Event& e)
     m_selectedName->setVisible(false);
     m_creationInProgressGroup->setVisible(false);
     m_creationQueueGroup->setVisible(false);
+    m_garrisonedUnitsGroup->setVisible(false);
 
     m_currentSelection = e.getData<EntitySelectionData>().selection;
 
@@ -105,6 +108,7 @@ void HUDUpdater::updateUIElementReferences()
     updateUIElementRef(m_unitInProgressIcon, "unit_creating_icon");
     updateUIElementRef(m_creationInProgressGroup, "creation_in_progress_group");
     updateUIElementRef(m_creationQueueGroup, "creation_queue_group");
+    updateUIElementRef(m_garrisonedUnitsGroup, "garrisoned_units_row");
     updateUIElementRef(m_selectedIcon, "selected_icon");
     updateUIElementRef(m_selectedName, "selected_name");
     updateUIElementRef(m_progressErrorLabel, "progress_bar_error_label");
@@ -113,6 +117,11 @@ void HUDUpdater::updateUIElementReferences()
     for (int i = 0; i < Constants::ABSOLUTE_MAX_UNIT_QUEUE_SIZE; ++i)
     {
         updateUIElementRef(m_queuedUnitIcons[i], fmt::format("queued_unit_icon_{}", i));
+    }
+
+    for (int i = 0; i < Constants::ABSOLUTE_MAX_UNIT_GARRISON_SIZE; ++i)
+    {
+        updateUIElementRef(m_garrisonedUnitIcons[i], fmt::format("garrisoned_unit{}", i));
     }
 }
 
@@ -188,4 +197,35 @@ void HUDUpdater::updateBuildingConstruction(CompBuilding& building, CompEntityIn
     m_progressBarLabel->setBackgroundImage(graphic);
 
     m_creationInProgressGroup->setVisible(true);
+}
+
+void HUDUpdater::updateGarrisonedUnits()
+{
+    // It is not possible to display statuses of multiple buildings
+    //
+    if (m_currentSelection.selectedEntities.size() == 1)
+    {
+        auto entity = m_currentSelection.selectedEntities[0];
+        if (m_stateMan->hasComponent<CompGarrison>(entity))
+        {
+            auto [building, entityInfo] =
+                m_stateMan->getComponents<CompGarrison, CompEntityInfo>(entity);
+
+            for (int i = 0; i < Constants::ABSOLUTE_MAX_UNIT_GARRISON_SIZE; ++i)
+            {
+                if (i < building.garrisonedUnits.size())
+                {
+                    auto& garrisonedUnit = building.garrisonedUnits[i];
+                    auto unitIcon = m_typeRegistry->getHUDIcon(garrisonedUnit.unitType);
+                    m_garrisonedUnitIcons[i]->setBackgroundImage(unitIcon);
+                    m_garrisonedUnitIcons[i]->setVisible(true);
+                    m_garrisonedUnitsGroup->setVisible(true);
+                }
+                else
+                {
+                    m_garrisonedUnitIcons[i]->setVisible(false);
+                }
+            }
+        }
+    }
 }

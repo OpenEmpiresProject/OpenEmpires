@@ -25,21 +25,22 @@ const ShortcutResolver::Action game::GameShortcutResolver::resolve(
         auto firstEntity = currentSelection.selection.selectedEntities[0];
         auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
 
-        if (stateMan->hasComponent<CompBuilder>(firstEntity) == false)
+        if (stateMan->hasComponent<CompBuilder>(firstEntity))
         {
-            spdlog::warn("Cannot resolve shortcut to construct building since selected entity "
-                         "{} is not a builder",
-                         firstEntity);
-            return {};
+            auto& builder = stateMan->getComponent<CompBuilder>(firstEntity);
+            if (builder.buildableTypesByShortcut.value().contains(shortcutLetter))
+            {
+                uint32_t entityTypeToCreate =
+                    builder.buildableTypesByShortcut.value().at(shortcutLetter);
+                action.entityType = entityTypeToCreate;
+                action.type = Action::Type::CREATE_BUILDING;
+            }
         }
 
-        auto& builder = stateMan->getComponent<CompBuilder>(firstEntity);
-        if (builder.buildableTypesByShortcut.value().contains(shortcutLetter))
+        // TODO: Need better shortcut handling
+        if (shortcutLetter == 'g')
         {
-            uint32_t entityTypeToCreate =
-                builder.buildableTypesByShortcut.value().at(shortcutLetter);
-            action.entityType = entityTypeToCreate;
-            action.type = Action::Type::CREATE_BUILDING;
+            action.type = Action::Type::GARRISON;
         }
     }
     else if (currentSelection.type == EntitySelectionData::Type::BUILDING)
@@ -63,6 +64,11 @@ const ShortcutResolver::Action game::GameShortcutResolver::resolve(
                 factory.producibleUnitShortcuts.value().at(shortcutLetter);
             action.entityType = entityTypeToCreate;
             action.type = Action::Type::CREATE_UNIT;
+        }
+
+        if (shortcutLetter == 'u')
+        {
+            action.type = Action::Type::UNGARRISON;
         }
     }
     return action;

@@ -288,16 +288,17 @@ class Unit:
 	
 class Villager(Unit):
 	def __init__(self):
-	    super().__init__()
-	    self.name = 'villager'
-	    self.build_speed = 10
-	
+		super().__init__()
+		self.name = 'villager'
+		self.build_speed = 10
+		self.unit_type = 1
+
 entity = Villager()
 	        )");
 
         py::object def = py::globals()["entity"];
         py::object module = py::module_::import("__main__");
-
+        EntityDefinitionLoaderExposure loader;
         ComponentType result = EntityDefinitionLoader::createCompUnit(1, module, def);
         ASSERT_TRUE(std::holds_alternative<CompUnit>(result));
         EXPECT_EQ(std::get<CompUnit>(result).lineOfSight, 100);

@@ -224,6 +224,11 @@ void Simulator::updateGraphicComponents()
             auto& comp = state->getComponent<CompPlayer>(entity);
             gc.playerId = comp.player->getId();
         }
+
+        if (auto unit = state->tryGetComponent<CompUnit>(entity))
+        {
+            gc.isEnabled = unit->isGarrisoned == false;
+        }
     }
 }
 

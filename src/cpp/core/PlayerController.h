@@ -35,6 +35,7 @@ class PlayerController : public EventHandler
     // Building placement related
     BuildingPlacementData m_currentBuildingPlacement;
     Vec2 m_currentMouseScreenPos;
+    bool m_garrisonOperationInProgress = false;
 
   private:
     // Event callbacks
@@ -55,7 +56,9 @@ class PlayerController : public EventHandler
                                   CompDirty& dirty) const;
 
     void createUnit(uint32_t entityType, const EntitySelection& selectedBuildings);
-    void createUnit(uint32_t entityType, uint32_t fromBuildingEntityId);
+    void initiateGarrison();
+    void initiateUngarrison();
+    void tryCompleteGarrison(uint32_t unitId, uint32_t targetBuildingEntityId);
 
     // Selection related
     void selectHomogeneousEntities(const std::vector<uint32_t>& selectedEntities);

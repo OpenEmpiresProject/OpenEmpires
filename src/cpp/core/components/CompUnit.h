@@ -16,9 +16,11 @@ class CompUnit
   public:
     Property<uint32_t> lineOfSight; // In Feet
     Property<uint32_t> housingNeed;
+    Property<UnitType> type;
 
   public:
     CommandQueueType commandQueue;
+    bool isGarrisoned = false;
 };
 
 } // namespace core

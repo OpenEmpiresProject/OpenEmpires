@@ -8,9 +8,11 @@
 #include "components/CompBuilding.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
+#include "components/CompGarrison.h"
 #include "components/CompPlayer.h"
 #include "components/CompSelectible.h"
 #include "components/CompTransform.h"
+#include "components/CompUnit.h"
 #include "components/CompUnitFactory.h"
 #include "utils/ObjectPool.h"
 
@@ -25,6 +27,7 @@ BuildingManager::BuildingManager()
     registerCallback(Event::Type::TICK, this, &BuildingManager::onTick);
     registerCallback(Event::Type::BUILDING_REQUESTED, this, &BuildingManager::onBuildingRequest);
     registerCallback(Event::Type::UNIT_QUEUE_REQUEST, this, &BuildingManager::onQueueUnit);
+    registerCallback(Event::Type::UNGARRISON_REQUEST, this, &BuildingManager::onUngarrison);
 }
 
 void BuildingManager::onTick(const Event& e)
@@ -252,5 +255,24 @@ void BuildingManager::updateInProgressUnitCreations(auto& tick)
             it = m_activeFactories.erase(it);
         else
             ++it;
+    }
+}
+
+void BuildingManager::onUngarrison(const Event& e)
+{
+    auto& data = e.getData<UngarrisonData>();
+
+    auto garrisonBuilding = m_stateMan->tryGetComponent<CompGarrison>(data.building);
+    if (garrisonBuilding)
+    {
+        for (auto& unit : garrisonBuilding->garrisonedUnits)
+        {
+            auto [unitComp, transform] =
+                m_stateMan->getComponents<CompUnit, CompTransform>(unit.unitId);
+            unitComp.isGarrisoned = false;
+            m_stateMan->gameMap().addEntity(MapLayerType::UNITS, transform.getTilePosition(),
+                                            unit.unitId);
+        }
+        garrisonBuilding->garrisonedUnits.clear();
     }
 }

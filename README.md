@@ -110,6 +110,19 @@ Place these files inside a folder named **assets** in the same directory as the 
    ```
    make run
    ```
+
+#### Shortcuts
+- c for building Town Center
+- m for building Mill
+- l for building Lumber Camp
+- n for building Mining Camp
+- b for building Barrack
+- h for building House
+- g for garrison
+- u for ungarrison
+- v for producing Villager (from Town Center)
+- m for producing Militia (from Barracks)
+
 ### Running Tests
 
    ```

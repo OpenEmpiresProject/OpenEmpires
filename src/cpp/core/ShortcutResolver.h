@@ -18,7 +18,8 @@ class ShortcutResolver
             INVALID,
             CREATE_BUILDING,
             CREATE_UNIT,
-            UNIT_COMMAND
+            GARRISON,
+            UNGARRISON
         };
 
         Type type = Type::INVALID;

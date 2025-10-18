@@ -86,6 +86,44 @@ enum UnitAction
     CARRYING_STONE = 7,
 };
 
+enum class UnitType
+{
+    UNKNOWN = 0,
+    VILLAGER = 1,
+    INFANTRY = 2,
+    ARCHER = 3,
+    CAVALRY = 4,
+    SHIP = 5,
+    SIEGE = 6
+};
+
+static UnitType getUnitType(uint32_t unitTypeInt)
+{
+    switch (unitTypeInt)
+    {
+    case (uint32_t) UnitType::VILLAGER:
+        return UnitType::VILLAGER;
+    case (uint32_t) UnitType::INFANTRY:
+        return UnitType::INFANTRY;
+    case (uint32_t) UnitType::ARCHER:
+        return UnitType::ARCHER;
+    case (uint32_t) UnitType::CAVALRY:
+        return UnitType::CAVALRY;
+    case (uint32_t) UnitType::SHIP:
+        return UnitType::SHIP;
+    case (uint32_t) UnitType::SIEGE:
+        return UnitType::SIEGE;
+    default:
+        break;
+    }
+    return UnitType::UNKNOWN;
+}
+
+enum class UnitTagType
+{
+    GARRISONED
+};
+
 enum class RevealStatus : uint8_t
 {
     NONE = 0,

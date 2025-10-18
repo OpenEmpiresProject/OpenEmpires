@@ -52,7 +52,7 @@ We use milestone versions for planning. Early versions are experimental. Feature
 - [x] Multiple player support (not networking)
 - [x] Scripting for entity definition
 - [x] Unit abilities modeling
-- [ ] Garrison
+- [x] Garrison
 - [ ] Walls and gates
 
 ---
