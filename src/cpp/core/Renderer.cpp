@@ -158,6 +158,12 @@ class RendererImpl
     void updateRenderingComponents();
     void renderDebugInfo(FPSCounter& counter);
     void renderGameEntities();
+    void renderCursor();
+    bool isReady() const;
+
+  private:
+    void renderTexture(SDL_FRect& dstRect, CompRendering* rc);
+
     void renderText(const Vec2& screenPos, const std::string& text, const Color& color);
     void renderGraphicAddons(const Vec2& screenPos, CompRendering* rc);
     void renderDebugOverlays(const SDL_FRect& dstRect, CompRendering* rc);
@@ -178,7 +184,6 @@ class RendererImpl
                                  Uint8 blue,
                                  Uint8 alpha);
     void loadFonts();
-    bool isReady() const;
 
     SDL_Window* m_window = nullptr;
     SDL_Renderer* m_renderer = nullptr;
@@ -229,7 +234,10 @@ class RendererImpl
     bool m_showFogOfWar = true;
 
     volatile bool m_isReady = false;
+
+    GraphicsID m_currentCursor;
 };
+
 } // namespace core
 
 RendererImpl::RendererImpl(std::stop_source* stopSource,
@@ -369,6 +377,7 @@ void RendererImpl::renderingLoop()
         renderBackground();
         renderGameEntities();
         renderSelectionBox();
+        renderCursor();
         renderDebugInfo(fpsCounter);
 
         SDL_RenderPresent(m_renderer);
@@ -401,6 +410,38 @@ void RendererImpl::renderingLoop()
     SDL_Quit();
     m_synchronizer.shutdown();
     m_stopSource->request_stop();
+}
+
+void RendererImpl::renderCursor()
+{
+    auto& frameData = m_synchronizer.getReceiverFrameData();
+
+    if (frameData.cursor.isValid() && frameData.cursor != m_currentCursor)
+    {
+        if (m_graphicsRegistry.hasTexture(frameData.cursor) == false)
+        {
+            std::list ids = {frameData.cursor};
+            AtlasGeneratorBasic atlasGenerator;
+            m_graphicsLoader.loadCursors(*m_renderer, m_graphicsRegistry, atlasGenerator, ids);
+        }
+
+        auto& texture = m_graphicsRegistry.getTexture(frameData.cursor);
+        SDL_SetCursor(texture.cursor);
+        m_currentCursor = frameData.cursor;
+
+        spdlog::debug("Setting cursor to {}", frameData.cursor.toString());
+    }
+}
+
+void RendererImpl::renderTexture(SDL_FRect& dstRect, CompRendering* rc)
+{
+    if (dstRect.w > 0 && dstRect.h > 0 && rc->texture != nullptr)
+    {
+        SDL_SetTextureColorMod(rc->texture, rc->shading.r, rc->shading.g, rc->shading.b);
+        SDL_RenderTextureRotated(m_renderer, rc->texture, &(rc->srcRect), &dstRect, 0, nullptr,
+                                 rc->flip);
+        ++m_texturesDrew;
+    }
 }
 
 void RendererImpl::cleanup()
@@ -547,17 +588,21 @@ void RendererImpl::updateRenderingComponents()
 
 void RendererImpl::renderDebugInfo(FPSCounter& counter)
 {
-    // spdlog::debug("Rendering debug info...");
-
     addDebugText("Average FPS        : " + std::to_string(counter.getAverageFPS()));
     addDebugText("Avg Sleep/frame    : " + std::to_string(counter.getAverageSleepMs()));
     addDebugText("Avg frame time     : " + std::to_string(m_frameTime.average()));
     addDebugText("Avg wait time      : " + std::to_string(m_waitTime.average()));
     addDebugText("Textures Drew      : " + std::to_string(m_texturesDrew));
-    addDebugText("Viewport           : " + m_coordinates.getViewportPositionInPixels().toString());
-    addDebugText("Mouse clicked feet : " + m_lastMouseClickPosInFeet.toString());
-    addDebugText("Mouse clicked tile : " + m_lastMouseClickPosInTiles.toString());
-    addDebugText("Graphics loaded    : " + std::to_string(m_graphicsRegistry.getTextureCount()));
+
+    if (m_showDebugInfo)
+    {
+        addDebugText("Viewport           : " +
+                     m_coordinates.getViewportPositionInPixels().toString());
+        addDebugText("Mouse clicked feet : " + m_lastMouseClickPosInFeet.toString());
+        addDebugText("Mouse clicked tile : " + m_lastMouseClickPosInTiles.toString());
+        addDebugText("Graphics loaded    : " +
+                     std::to_string(m_graphicsRegistry.getTextureCount()));
+    }
 
     SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, SDL_ALPHA_OPAQUE); /* white, full alpha */
 
@@ -572,6 +617,20 @@ void RendererImpl::renderDebugInfo(FPSCounter& counter)
                         OPENEMPIRES_VERSION_STRING);
 
     clearDebugTexts();
+
+    // Show a small cross at center of the screen.
+    if (m_showDebugInfo)
+    {
+        auto windowSize = m_settings->getWindowDimensions();
+        Vec2 center(windowSize.width / 2, windowSize.height / 2);
+        auto horiLineStart = center - Vec2(5, 0);
+        auto vertLineStart = center - Vec2(0, 5);
+
+        lineRGBA(m_renderer, horiLineStart.x, horiLineStart.y, horiLineStart.x + 10,
+                 horiLineStart.y, 255, 255, 255, 255);
+        lineRGBA(m_renderer, vertLineStart.x, vertLineStart.y, vertLineStart.x,
+                 vertLineStart.y + 10, 255, 255, 255, 255);
+    }
 }
 
 void RendererImpl::renderGameEntities()
@@ -591,33 +650,11 @@ void RendererImpl::renderGameEntities()
                 continue;
         }
 
-        renderGraphicAddons(screenPos, rc);
-
         SDL_FRect dstRect = {screenPos.x, screenPos.y, rc->srcRect.w, rc->srcRect.h};
 
-        if (dstRect.w > 0 && dstRect.h > 0 && rc->texture != nullptr)
-        {
-            SDL_SetTextureColorMod(rc->texture, rc->shading.r, rc->shading.g, rc->shading.b);
-            SDL_RenderTextureRotated(m_renderer, rc->texture, &(rc->srcRect), &dstRect, 0, nullptr,
-                                     rc->flip);
-            ++m_texturesDrew;
-        }
-
+        renderGraphicAddons(screenPos, rc);
+        renderTexture(dstRect, rc);
         renderDebugOverlays(dstRect, rc);
-    }
-
-    // Show a small cross at center of the screen.
-    if (m_showDebugInfo)
-    {
-        auto windowSize = m_settings->getWindowDimensions();
-        Vec2 center(windowSize.width / 2, windowSize.height / 2);
-        auto horiLineStart = center - Vec2(5, 0);
-        auto vertLineStart = center - Vec2(0, 5);
-
-        lineRGBA(m_renderer, horiLineStart.x, horiLineStart.y, horiLineStart.x + 10,
-                 horiLineStart.y, 255, 255, 255, 255);
-        lineRGBA(m_renderer, vertLineStart.x, vertLineStart.y, vertLineStart.x,
-                 vertLineStart.y + 10, 255, 255, 255, 255);
     }
 }
 

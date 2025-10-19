@@ -49,7 +49,7 @@ class PlayerController : public EventHandler
 
     // Building placement related
     void createBuilding(const ShortcutResolver::Action& action);
-    void cancelBuildingPlacement();
+    void concludeBuildingPlacement();
     void confirmBuildingPlacement(CompTransform& transform,
                                   CompBuilding& building,
                                   CompEntityInfo& info,

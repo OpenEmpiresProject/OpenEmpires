@@ -73,6 +73,7 @@ class CompGraphics : public GraphicsID
     Size landSize{0, 0};
     bool isDestroyed = false;
     bool isEnabled = true;
+    bool bypass = false;
     GraphicLayer layer = GraphicLayer::NONE;
 
     CompGraphics()

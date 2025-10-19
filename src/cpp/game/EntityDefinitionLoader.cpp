@@ -67,6 +67,8 @@ uint32_t getEntitySubType(uint32_t entityType, const std::string& name)
             return EntitySubTypes::EST_UI_CONTROL_PANEL;
         else if (name == "progress_bar")
             return EntitySubTypes::UI_PROGRESS_BAR;
+        else if (name == "cursor")
+            return EntitySubTypes::UI_CURSOR;
     }
     return EntitySubTypes::EST_DEFAULT;
 }

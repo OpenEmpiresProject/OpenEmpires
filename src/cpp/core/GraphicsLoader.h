@@ -19,6 +19,10 @@ class GraphicsLoader
                               GraphicsRegistry& graphicsRegistry,
                               AtlasGenerator& atlasGenerator,
                               const std::list<GraphicsID>& idsToLoad) = 0;
+    virtual void loadCursors(SDL_Renderer& renderer,
+                              GraphicsRegistry& graphicsRegistry,
+                              AtlasGenerator& atlasGenerator,
+                              const std::list<GraphicsID>& idsToLoad) = 0;
     virtual ~GraphicsLoader() = default;
 };
 } // namespace core

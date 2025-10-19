@@ -216,5 +216,6 @@ all_tilesets: List[TileSet] = [
 all_ui_elements: List[UIElement] = [
     UIElement(name="resource_panel", graphics={"default":[Graphic(drs_file="interfac.drs", slp_id=51135, clip_rect=Rect(x=0, y=0, w=400, h=25))]}),
     UIElement(name="control_panel", graphics={"default":[Graphic(drs_file="interfac.drs", slp_id=51135, clip_rect=Rect(x=0, y=593, w=680, h=175))]}),
-    UIElement(name="progress_bar", graphics={"default":[Graphic(drs_file="interfac.drs", slp_id=50764)]})
+    UIElement(name="progress_bar", graphics={"default":[Graphic(drs_file="interfac.drs", slp_id=50764)]}),
+    UIElement(name="cursor", graphics={"default":[Graphic(drs_file="interfac.drs", slp_id=51000)]})
 ]

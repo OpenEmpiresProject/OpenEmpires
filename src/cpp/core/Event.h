@@ -114,6 +114,8 @@ struct Event
         ENTITY_SELECTION,
         UNIT_TILE_MOVEMENT,
         ENTITY_DELETE,
+        BUILDING_PLACEMENT_STARTED, // Use BuildingPlacementData. Sent only by active player
+        BUILDING_PLACEMENT_ENDED, // Use BuildingPlacementData. Sent only by active player
         BUILDING_REQUESTED, // Use BuildingPlacementData
         BUILDING_APPROVED,  // Use BuildingPlacementData
         COMMAND_REQUEST,
