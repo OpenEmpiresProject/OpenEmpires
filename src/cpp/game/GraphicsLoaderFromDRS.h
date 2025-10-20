@@ -15,6 +15,9 @@ class GraphicsLoaderFromDRS : public core::GraphicsLoader
                       core::GraphicsRegistry& graphicsRegistry,
                       core::AtlasGenerator& atlasGenerator,
                       const std::list<core::GraphicsID>& idsToLoad) override;
+    void loadCursor(SDL_Renderer& renderer,
+                    core::GraphicsRegistry& graphicsRegistry,
+                    const core::GraphicsID& cursorIdToLoad) override;
 };
 
 } // namespace game

@@ -3,6 +3,7 @@
 
 #include "Feet.h"
 #include "FogOfWar.h"
+#include "GraphicsRegistry.h"
 
 #include <vector>
 
@@ -17,6 +18,7 @@ struct FrameData
     // Even in a giant map (i.e. 240x240), fogOfWar information would take around 56KB
     // Therefore, it is totally acceptable to copy FogOfWar.
     FogOfWar fogOfWar;             // Simulator to Renderer
+    GraphicsID cursor;             // Simulator to Renderer
     Vec2 viewportPositionInPixels; // Renderer to simulator
 };
 } // namespace core

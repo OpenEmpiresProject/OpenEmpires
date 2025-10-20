@@ -1,6 +1,5 @@
 #include "StateManager.h"
 
-#include "Coordinates.h"
 #include "PathFinderAStar.h"
 #include "PathFinderBase.h"
 #include "ServiceRegistry.h"
@@ -50,11 +49,14 @@ void StateManager::clearAll()
 
 StateManager::TileMapQueryResult StateManager::whatIsAt(const Vec2& screenPos)
 {
-    auto coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
+    // Lazy loading coordinates service
+    if (m_coordinates == nullptr)
+    {
+        m_coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
+    }
 
-    auto clickedCellPos = coordinates->screenUnitsToTiles(screenPos);
-
-    spdlog::debug("Clicking at grid pos {} to select", clickedCellPos.toString());
+    auto clickedCellPos = m_coordinates->screenUnitsToTiles(screenPos);
+    spam("Checking what is at grid pos {}", clickedCellPos.toString());
 
     Tile gridStartPos = clickedCellPos + Constants::MAX_SELECTION_LOOKUP_HEIGHT;
     gridStartPos.limitTo(m_gameMap.width - 1, m_gameMap.height - 1);
@@ -75,7 +77,7 @@ StateManager::TileMapQueryResult StateManager::whatIsAt(const Vec2& screenPos)
                     {
                         auto [select, transform] =
                             getComponents<CompSelectible, CompTransform>(entity);
-                        auto entityScreenPos = coordinates->feetToScreenUnits(transform.position);
+                        auto entityScreenPos = m_coordinates->feetToScreenUnits(transform.position);
 
                         const auto& boundingBox = select.getBoundingBox(transform.getDirection());
                         auto screenRect = Rect<int>(entityScreenPos.x - boundingBox.x,
@@ -89,7 +91,7 @@ StateManager::TileMapQueryResult StateManager::whatIsAt(const Vec2& screenPos)
                     }
                     else if (hasComponent<CompBuilding>(entity))
                     {
-                        spdlog::debug("A building at the clicked position");
+                        spam("A building at the clicked position");
                         return {.entity = entity, .layer = MapLayerType::STATIC};
                     }
                     else [[unlikely]]
@@ -106,7 +108,7 @@ StateManager::TileMapQueryResult StateManager::whatIsAt(const Vec2& screenPos)
                 {
                     if (hasComponent<CompBuilding>(entity))
                     {
-                        spdlog::debug("A construction site at the clicked position");
+                        spam("A construction site at the position");
                         return {.entity = entity, .layer = MapLayerType::ON_GROUND};
                     }
                 }

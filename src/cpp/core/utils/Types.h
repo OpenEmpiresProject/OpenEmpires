@@ -119,6 +119,19 @@ static UnitType getUnitType(uint32_t unitTypeInt)
     return UnitType::UNKNOWN;
 }
 
+enum class CursorType
+{
+    DEFAULT_UI,
+    DEFAULT_INGAME,
+    LOADING,
+    ASSIGN_TASK,
+    BUILD,
+    ATTACK,
+    GARRISON,
+    CHOP_WOOD,
+    FLAG
+};
+
 enum class UnitTagType
 {
     GARRISONED

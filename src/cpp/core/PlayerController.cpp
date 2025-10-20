@@ -72,7 +72,7 @@ void PlayerController::onKeyUp(const Event& e)
     {
         if (scancode == SDL_SCANCODE_ESCAPE)
         {
-            cancelBuildingPlacement();
+            concludeBuildingPlacement();
         }
         else
         {
@@ -119,7 +119,7 @@ void PlayerController::onMouseButtonUp(const Event& e)
             if (building.validPlacement)
                 confirmBuildingPlacement(transform, building, info, dirty);
             else
-                cancelBuildingPlacement();
+                concludeBuildingPlacement();
         }
         else
         {
@@ -387,7 +387,7 @@ void PlayerController::confirmBuildingPlacement(CompTransform& transform,
     publishEvent(Event::Type::BUILDING_REQUESTED, data);
 }
 
-void PlayerController::cancelBuildingPlacement()
+void PlayerController::concludeBuildingPlacement()
 {
     if (m_currentBuildingPlacement.entity != entt::null)
     {
@@ -398,6 +398,7 @@ void PlayerController::cancelBuildingPlacement()
         dirty.markDirty(m_currentBuildingPlacement.entity);
 
         m_currentBuildingPlacement = BuildingPlacementData();
+        publishEvent(Event::Type::BUILDING_PLACEMENT_ENDED, m_currentBuildingPlacement);
     }
 }
 
@@ -463,7 +464,7 @@ void PlayerController::onBuildingApproved(const Event& e)
         }
 
         // Building is permanent now, no need to track for placement
-        cancelBuildingPlacement();
+        concludeBuildingPlacement();
     }
 }
 
@@ -490,6 +491,8 @@ void PlayerController::createBuilding(const ShortcutResolver::Action& action)
     data.entity = entity;
 
     m_currentBuildingPlacement = data;
+
+    publishEvent(Event::Type::BUILDING_PLACEMENT_STARTED, data);
 }
 
 void PlayerController::createUnit(uint32_t entityType, const EntitySelection& selectedBuildings)

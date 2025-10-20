@@ -4,6 +4,7 @@
 #include "BuildingManager.h"
 #include "CommandCenter.h"
 #include "Coordinates.h"
+#include "CursorManager.h"
 #include "DemoWorldCreator.h"
 #include "EntityDefinitionLoader.h"
 #include "EntityTypeRegistry.h"
@@ -131,6 +132,29 @@ class Game
         std::shared_ptr<core::ShortcutResolver> shortcutResolver = gameShortcutResolver;
         core::ServiceRegistry::getInstance().registerService(shortcutResolver);
 
+        std::unordered_map<core::CursorType, core::GraphicsID> cursorMap;
+
+        core::GraphicsID defaultIcon;
+        defaultIcon.entityType = game::EntityTypes::ET_UI_ELEMENT;
+        defaultIcon.entitySubType = game::EntitySubTypes::UI_CURSOR;
+        defaultIcon.variation = 0;
+
+        core::GraphicsID buildIcon;
+        buildIcon.entityType = game::EntityTypes::ET_UI_ELEMENT;
+        buildIcon.entitySubType = game::EntitySubTypes::UI_CURSOR;
+        buildIcon.variation = 7;
+
+        core::GraphicsID assignTaskCursor;
+        assignTaskCursor.entityType = game::EntityTypes::ET_UI_ELEMENT;
+        assignTaskCursor.entitySubType = game::EntitySubTypes::UI_CURSOR;
+        assignTaskCursor.variation = 3;
+
+        cursorMap[core::CursorType::DEFAULT_INGAME] = defaultIcon;
+        cursorMap[core::CursorType::BUILD] = buildIcon;
+        cursorMap[core::CursorType::ASSIGN_TASK] = assignTaskCursor;
+        auto cursorManager = std::make_shared<core::CursorManager>(cursorMap);
+        core::ServiceRegistry::getInstance().registerService(cursorManager);
+
         if (params.eventHandler)
             eventLoop->registerListener(params.eventHandler);
 
@@ -142,6 +166,7 @@ class Game
         eventLoop->registerListener(std::move(hud));
         eventLoop->registerListener(std::move(buildingMngr));
         eventLoop->registerListener(std::move(unitManager));
+        eventLoop->registerListener(std::move(cursorManager));
 
         auto resourceLoader =
             std::make_shared<DemoWorldCreator>(&stopToken, settings, params.populateWorld);

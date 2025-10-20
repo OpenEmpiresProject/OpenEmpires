@@ -15,6 +15,7 @@
 #include "components/CompAnimation.h"
 #include "components/CompBuilder.h"
 #include "components/CompBuilding.h"
+#include "components/CompCursor.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
@@ -129,18 +130,24 @@ void Simulator::sendGraphicsInstructions()
     for (auto entity : CompDirty::g_dirtyEntities)
     {
         auto& gc = state->getComponent<CompGraphics>(entity);
-        auto instruction = ObjectPool<CompGraphics>::acquire();
-        *instruction = gc;
 
-        if (gc.entityID != entt::null)
-            sendGraphiInstruction(instruction);
-        else
-            spdlog::error("Invalid entity found during simulation for id: {}", gc.toString());
+        if (gc.bypass == false)
+        {
+            auto instruction = ObjectPool<CompGraphics>::acquire();
+            *instruction = gc;
+
+            if (gc.entityID != entt::null)
+                sendGraphiInstruction(instruction);
+            else
+                spdlog::error("Invalid entity found during simulation for id: {}", gc.toString());
+        }
     }
 }
 
 void Simulator::updateGraphicComponents()
 {
+    m_synchronizer.getSenderFrameData().cursor = GraphicsID();
+
     auto state = ServiceRegistry::getInstance().getService<StateManager>();
     for (auto entity : CompDirty::g_dirtyEntities)
     {
@@ -155,6 +162,7 @@ void Simulator::updateGraphicComponents()
         gc.isDestroyed = entityInfo.isDestroyed;
         gc.isEnabled = entityInfo.isEnabled;
         gc.entityID = entityInfo.entityId;
+        gc.bypass = false;
 
         if (state->hasComponent<CompSelectible>(entity))
         {
@@ -228,6 +236,14 @@ void Simulator::updateGraphicComponents()
         if (auto unit = state->tryGetComponent<CompUnit>(entity))
         {
             gc.isEnabled = unit->isGarrisoned == false;
+        }
+
+        if (auto cursorComp = state->tryGetComponent<CompCursor>(entity))
+        {
+            // Avoid sending cursor as a regular graphics instruction, but set to 
+            // frame data directly.
+            gc.bypass = true;
+            m_synchronizer.getSenderFrameData().cursor = cursorComp->cursor;
         }
     }
 }

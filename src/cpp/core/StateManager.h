@@ -1,6 +1,7 @@
 #ifndef GAMESTATE_H
 #define GAMESTATE_H
 
+#include "Coordinates.h"
 #include "TileMap.h"
 
 #include <entt/entity/registry.hpp>
@@ -91,6 +92,7 @@ class StateManager
     entt::basic_registry<uint32_t> m_registry;
     Ref<PathFinderBase> m_pathFinder;
     std::vector<uint32_t> m_entitiesToDestroy;
+    Ref<Coordinates> m_coordinates;
 };
 } // namespace core
 

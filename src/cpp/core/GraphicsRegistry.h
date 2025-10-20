@@ -139,6 +139,7 @@ struct Texture
     Vec2 anchor;
     Size size{0, 0};
     bool flip = false;
+    SDL_Cursor* cursor = nullptr;
 };
 
 struct Animation
