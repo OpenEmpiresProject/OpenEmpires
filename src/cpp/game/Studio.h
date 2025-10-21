@@ -110,7 +110,7 @@ class Studio : public PropertyInitializer
         AtlasGeneratorBasic atlasGenerator;
         DRSGraphicsLoader drsLoader;
         GraphicsLoader& loader = drsLoader;
-        loader.loadAllGraphics(*m_renderer, m_graphicsRegistry, atlasGenerator);
+        loader.initGraphicsLoadup(*m_renderer, m_graphicsRegistry, atlasGenerator);
 
         createVillager();
     }

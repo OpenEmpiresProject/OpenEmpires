@@ -13,7 +13,7 @@
 #include "StatsCounter.h"
 #include "Tile.h"
 #include "Version.h"
-#include "ZOrderStrategyBase.h"
+#include "ZOrderStrategy.h"
 #include "ZOrderStrategyWithSlicing.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
@@ -222,7 +222,7 @@ class RendererImpl
 
     GraphicsLoader& m_graphicsLoader;
 
-    std::unique_ptr<ZOrderStrategyBase> m_zOrderStrategy;
+    std::unique_ptr<ZOrderStrategy> m_zOrderStrategy;
 
     std::stop_source* m_stopSource = nullptr;
 
@@ -343,7 +343,7 @@ void RendererImpl::threadEntry()
 {
     initSDL();
     AtlasGeneratorBasic atlasGenerator;
-    m_graphicsLoader.loadAllGraphics(*m_renderer, m_graphicsRegistry, atlasGenerator);
+    m_graphicsLoader.initGraphicsLoadup(*m_renderer, m_graphicsRegistry, atlasGenerator);
     renderingLoop();
 }
 

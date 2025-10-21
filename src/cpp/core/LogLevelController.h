@@ -12,7 +12,7 @@ class LogLevelController : public EventHandler
 
   private:
     void onKeyUp(const Event& e);
-    
+
   private:
     bool m_showSpamLogs = false;
 };

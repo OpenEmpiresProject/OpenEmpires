@@ -15,9 +15,9 @@ namespace game
 class GraphicsLoaderFromImages : public core::GraphicsLoader
 {
   public:
-    void loadAllGraphics(SDL_Renderer& renderer,
-                         core::GraphicsRegistry& graphicsRegistry,
-                         core::AtlasGenerator& atlasGenerator) override;
+    void initGraphicsLoadup(SDL_Renderer& renderer,
+                            core::GraphicsRegistry& graphicsRegistry,
+                            core::AtlasGenerator& atlasGenerator) override;
     void loadCursors();
     void setCursor(int variation);
 

@@ -12,9 +12,9 @@ class AtlasGenerator;
 class GraphicsLoader
 {
   public:
-    virtual void loadAllGraphics(SDL_Renderer& renderer,
-                                 GraphicsRegistry& graphicsRegistry,
-                                 AtlasGenerator& atlasGenerator) = 0;
+    virtual void initGraphicsLoadup(SDL_Renderer& renderer,
+                                    GraphicsRegistry& graphicsRegistry,
+                                    AtlasGenerator& atlasGenerator) = 0;
     virtual void loadGraphics(SDL_Renderer& renderer,
                               GraphicsRegistry& graphicsRegistry,
                               AtlasGenerator& atlasGenerator,

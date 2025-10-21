@@ -38,13 +38,6 @@ Together, the EventLoop and Renderer form the core game loop:
 2. **Update:** Run systems to update the game world (simulation).
 3. **Rendering:** Render the updated state.
 
-> ℹ️ The Renderer always displays **one frame behind** the GraphicInstructor due to synchronization.
-
-
-![](images/game-loop.png)
-
-Synchronization between GraphicInstructor and Renderer can occur on either side, depending on timing.
-
 ### GameState
 Open Empires uses an **Entity-Component-System (ECS)** model powered by the [`entt`](https://github.com/skypjack/entt) library. It manages all game entities—such as units, buildings, and resources—through data-driven components.
 

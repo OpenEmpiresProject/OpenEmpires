@@ -8,9 +8,9 @@ namespace game
 class DRSGraphicsLoader : public core::GraphicsLoader
 {
   private:
-    void loadAllGraphics(SDL_Renderer& renderer,
-                         core::GraphicsRegistry& graphicsRegistry,
-                         core::AtlasGenerator& atlasGenerator) override;
+    void initGraphicsLoadup(SDL_Renderer& renderer,
+                            core::GraphicsRegistry& graphicsRegistry,
+                            core::AtlasGenerator& atlasGenerator) override;
     void loadGraphics(SDL_Renderer& renderer,
                       core::GraphicsRegistry& graphicsRegistry,
                       core::AtlasGenerator& atlasGenerator,

@@ -25,9 +25,9 @@ using namespace core;
 namespace fs = std::filesystem;
 using namespace std;
 
-void GraphicsLoaderFromImages::loadAllGraphics(SDL_Renderer& renderer,
-                                               GraphicsRegistry& graphicsRegistry,
-                                               AtlasGenerator& atlasGenerator)
+void GraphicsLoaderFromImages::initGraphicsLoadup(SDL_Renderer& renderer,
+                                                  GraphicsRegistry& graphicsRegistry,
+                                                  AtlasGenerator& atlasGenerator)
 {
     loadTextures(renderer, graphicsRegistry, atlasGenerator);
     adjustDirections(graphicsRegistry);

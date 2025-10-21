@@ -441,9 +441,9 @@ class GraphicsLoaderFromDRSImpl
     }
 };
 
-void DRSGraphicsLoader::loadAllGraphics(SDL_Renderer& renderer,
-                                        GraphicsRegistry& graphicsRegistry,
-                                        AtlasGenerator& atlasGenerator)
+void DRSGraphicsLoader::initGraphicsLoadup(SDL_Renderer& renderer,
+                                           GraphicsRegistry& graphicsRegistry,
+                                           AtlasGenerator& atlasGenerator)
 {
     GraphicsLoaderFromDRSImpl::registerDummyTexture(EntityTypes::ET_UI_ELEMENT,
                                                     EntitySubTypes::EST_DEFAULT, graphicsRegistry);

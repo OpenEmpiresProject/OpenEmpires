@@ -1,14 +1,14 @@
 #ifndef ZORDERSTRATEGYWITHSLICING_H
 #define ZORDERSTRATEGYWITHSLICING_H
 
-#include "ZOrderStrategyBase.h"
+#include "ZOrderStrategy.h"
 
 #include <list>
 #include <unordered_map>
 
 namespace core
 {
-class ZOrderStrategyWithSlicing : public ZOrderStrategyBase
+class ZOrderStrategyWithSlicing : public ZOrderStrategy
 {
   public:
     ZOrderStrategyWithSlicing();
