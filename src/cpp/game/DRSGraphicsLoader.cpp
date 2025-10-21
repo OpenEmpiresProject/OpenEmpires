@@ -1,8 +1,8 @@
-﻿#include "GraphicsLoaderFromDRS.h"
+﻿#include "DRSGraphicsLoader.h"
 
 #include "AtlasGenerator.h"
 #include "DRSFile.h"
-#include "EntityDefinitionLoader.h"
+#include "EntityLoader.h"
 #include "EntityTypeRegistry.h"
 #include "GameTypes.h"
 #include "SLPFile.h"
@@ -316,7 +316,7 @@ class GraphicsLoaderFromDRSImpl
         }
     }
 
-    static void loadSLP(const EntityDefinitionLoader::EntityDRSData& drsData,
+    static void loadSLP(const EntityLoader::EntityDRSData& drsData,
                         const GraphicsID& baseId,
                         SDL_Renderer& renderer,
                         GraphicsRegistry& graphicsRegistry,
@@ -441,22 +441,21 @@ class GraphicsLoaderFromDRSImpl
     }
 };
 
-void GraphicsLoaderFromDRS::loadAllGraphics(SDL_Renderer& renderer,
-                                            GraphicsRegistry& graphicsRegistry,
-                                            AtlasGenerator& atlasGenerator)
+void DRSGraphicsLoader::loadAllGraphics(SDL_Renderer& renderer,
+                                        GraphicsRegistry& graphicsRegistry,
+                                        AtlasGenerator& atlasGenerator)
 {
     GraphicsLoaderFromDRSImpl::registerDummyTexture(EntityTypes::ET_UI_ELEMENT,
                                                     EntitySubTypes::EST_DEFAULT, graphicsRegistry);
 }
 
-void GraphicsLoaderFromDRS::loadGraphics(SDL_Renderer& renderer,
-                                         GraphicsRegistry& graphicsRegistry,
-                                         AtlasGenerator& atlasGenerator,
-                                         const std::list<GraphicsID>& idsToLoad)
+void DRSGraphicsLoader::loadGraphics(SDL_Renderer& renderer,
+                                     GraphicsRegistry& graphicsRegistry,
+                                     AtlasGenerator& atlasGenerator,
+                                     const std::list<GraphicsID>& idsToLoad)
 {
     auto entityFactory = ServiceRegistry::getInstance().getService<EntityFactory>();
-    Ref<EntityDefinitionLoader> defLoader =
-        dynamic_pointer_cast<EntityDefinitionLoader>(entityFactory);
+    Ref<EntityLoader> defLoader = dynamic_pointer_cast<EntityLoader>(entityFactory);
 
     std::set<GraphicsID> uniqueBaseIds;
     for (auto& id : idsToLoad)
@@ -491,13 +490,12 @@ void GraphicsLoaderFromDRS::loadGraphics(SDL_Renderer& renderer,
     GraphicsLoaderFromDRSImpl::adjustDirections(graphicsRegistry);
 }
 
-void GraphicsLoaderFromDRS::loadCursor(SDL_Renderer& renderer,
-                                       GraphicsRegistry& graphicsRegistry,
-                                       const GraphicsID& cursorIdToLoad)
+void DRSGraphicsLoader::loadCursor(SDL_Renderer& renderer,
+                                   GraphicsRegistry& graphicsRegistry,
+                                   const GraphicsID& cursorIdToLoad)
 {
     auto entityFactory = ServiceRegistry::getInstance().getService<EntityFactory>();
-    Ref<EntityDefinitionLoader> defLoader =
-        dynamic_pointer_cast<EntityDefinitionLoader>(entityFactory);
+    Ref<EntityLoader> defLoader = dynamic_pointer_cast<EntityLoader>(entityFactory);
 
     auto baseId = cursorIdToLoad.getBaseId();
     baseId.playerId = 0;

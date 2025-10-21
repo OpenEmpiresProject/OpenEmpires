@@ -13,36 +13,37 @@ This document outlines the architecture of the **Open Empires** game.
 
 ### Renderer
 - Runs on its own thread.
-- Receives **graphic instructions** from the Simulator.
+- Receives **graphic instructions** from the GraphicInstructor.
 - Maintains its **own copy of the graphic state** based on these instructions.
 - Uses the **SDL3** library for rendering.
 
 The Renderer also captures **keyboard and mouse events** and handles viewport movement and selection box rendering directly, to ensure smooth and responsive interactions.  
-> ⚠️ These input events are **not forwarded** to the Simulator; it captures inputs independently.
+> ⚠️ These input events are **not forwarded** to the GraphicInstructor; it captures inputs independently.
 
 ### EventLoop
 - Operates in its own thread.
 - Maintains a consistent **frame rate**.
 - Generates **simulation ticks**.
 - Captures and distributes **input events** (keyboard, mouse) to relevant subsystems.
+- Facilitate dispatching custom game events as well.
 
-### Simulator
+### GraphicInstructor
 - Runs on the **same thread as the EventLoop**.
 - Updates the game world each frame (tick) and sends corresponding rendering instructions to the Renderer.
 - Synchronizes with the Renderer at the end of each frame, ensuring that simulation and rendering proceed in lockstep.
 
-Together, the Simulator and Renderer form the core game loop:
+Together, the EventLoop and Renderer form the core game loop:
 
 1. **Input Handling:** Process input (mouse, keyboard).
 2. **Update:** Run systems to update the game world (simulation).
 3. **Rendering:** Render the updated state.
 
-> ℹ️ The Renderer always displays **one frame behind** the Simulator due to synchronization.
+> ℹ️ The Renderer always displays **one frame behind** the GraphicInstructor due to synchronization.
 
 
 ![](images/game-loop.png)
 
-Synchronization between Simulator and Renderer can occur on either side, depending on timing.
+Synchronization between GraphicInstructor and Renderer can occur on either side, depending on timing.
 
 ### GameState
 Open Empires uses an **Entity-Component-System (ECS)** model powered by the [`entt`](https://github.com/skypjack/entt) library. It manages all game entities—such as units, buildings, and resources—through data-driven components.
@@ -56,7 +57,7 @@ Unlike traditional **Object-Oriented Programming (OOP)** approaches, Open Empire
 
 
 ### CommandCenter
-- Runs on the same thread as the EventLoop and Simulator.
+- Runs on the same thread as the EventLoop and GraphicInstructor.
 - Manages **command queues** for entity actions.
 - Each high-level behavior (e.g., moving, harvesting, idling) is represented as a **command**.
 - Responsible for transitions like a villager returning to idle after completing a task.

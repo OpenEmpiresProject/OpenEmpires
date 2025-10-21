@@ -2,9 +2,9 @@
 #define STUDIO_H
 
 #include "AtlasGeneratorBasic.h"
+#include "DRSGraphicsLoader.h"
 #include "GameTypes.h"
 #include "GraphicsLoader.h"
-#include "GraphicsLoaderFromDRS.h"
 #include "GraphicsRegistry.h"
 #include "Property.h"
 #include "SDL3_gfxPrimitives.h"
@@ -108,7 +108,7 @@ class Studio : public PropertyInitializer
 
         initSDL();
         AtlasGeneratorBasic atlasGenerator;
-        GraphicsLoaderFromDRS drsLoader;
+        DRSGraphicsLoader drsLoader;
         GraphicsLoader& loader = drsLoader;
         loader.loadAllGraphics(*m_renderer, m_graphicsRegistry, atlasGenerator);
 

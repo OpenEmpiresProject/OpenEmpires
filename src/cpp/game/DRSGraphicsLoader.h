@@ -5,7 +5,7 @@
 
 namespace game
 {
-class GraphicsLoaderFromDRS : public core::GraphicsLoader
+class DRSGraphicsLoader : public core::GraphicsLoader
 {
   private:
     void loadAllGraphics(SDL_Renderer& renderer,

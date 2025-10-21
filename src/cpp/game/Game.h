@@ -5,21 +5,22 @@
 #include "CommandCenter.h"
 #include "Coordinates.h"
 #include "CursorManager.h"
+#include "DRSGraphicsLoader.h"
 #include "DemoWorldCreator.h"
-#include "EntityDefinitionLoader.h"
+#include "EntityLoader.h"
 #include "EntityTypeRegistry.h"
 #include "EventLoop.h"
 #include "GameShortcutResolver.h"
-#include "GraphicsLoaderFromDRS.h"
+#include "GraphicsInstructor.h"
 #include "GraphicsLoaderFromImages.h"
 #include "GraphicsRegistry.h"
 #include "HUDUpdater.h"
+#include "LogLevelController.h"
 #include "PlayerController.h"
 #include "PlayerFactory.h"
 #include "Renderer.h"
 #include "ResourceManager.h"
 #include "ServiceRegistry.h"
-#include "Simulator.h"
 #include "StateManager.h"
 #include "SubSystemRegistry.h"
 #include "ThreadSynchronizer.h"
@@ -83,7 +84,7 @@ class Game
 
         core::ThreadSynchronizer<core::FrameData> simulatorRendererSynchronizer;
         // game::GraphicsLoaderFromImages graphicsLoader;
-        game::GraphicsLoaderFromDRS graphicsLoader;
+        game::DRSGraphicsLoader graphicsLoader;
 
         auto stateMan = std::make_shared<core::StateManager>();
         stateMan->gameMap().init(settings->getWorldSizeInTiles().width,
@@ -94,7 +95,7 @@ class Game
         core::ServiceRegistry::getInstance().registerService(coordinates);
 
         auto eventLoop = std::make_shared<core::EventLoop>(&stopToken);
-        auto simulator = std::make_shared<core::Simulator>(simulatorRendererSynchronizer);
+        auto simulator = std::make_shared<core::GraphicsInstructor>(simulatorRendererSynchronizer);
         core::ServiceRegistry::getInstance().registerService(simulator);
 
         auto uiManager = std::make_shared<core::UIManager>();
@@ -120,7 +121,7 @@ class Game
         auto cc = std::make_shared<core::CommandCenter>();
         core::ServiceRegistry::getInstance().registerService(cc);
 
-        auto entityDefLoader = std::make_shared<game::EntityDefinitionLoader>();
+        auto entityDefLoader = std::make_shared<game::EntityLoader>();
         entityDefLoader->load();
         std::shared_ptr<core::EntityFactory> entityFactory = entityDefLoader;
         core::ServiceRegistry::getInstance().registerService(entityFactory);
@@ -155,6 +156,8 @@ class Game
         auto cursorManager = std::make_shared<core::CursorManager>(cursorMap);
         core::ServiceRegistry::getInstance().registerService(cursorManager);
 
+        auto logController = std::make_shared<core::LogLevelController>();
+
         if (params.eventHandler)
             eventLoop->registerListener(params.eventHandler);
 
@@ -167,6 +170,7 @@ class Game
         eventLoop->registerListener(std::move(buildingMngr));
         eventLoop->registerListener(std::move(unitManager));
         eventLoop->registerListener(std::move(cursorManager));
+        eventLoop->registerListener(std::move(logController));
 
         auto resourceLoader =
             std::make_shared<DemoWorldCreator>(&stopToken, settings, params.populateWorld);

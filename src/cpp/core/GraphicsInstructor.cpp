@@ -1,26 +1,18 @@
-#include "Simulator.h"
+#include "GraphicsInstructor.h"
 
 #include "Coordinates.h"
 #include "Event.h"
 #include "PlayerController.h"
-#include "PlayerFactory.h"
 #include "ServiceRegistry.h"
 #include "StateManager.h"
-#include "UI.h"
-#include "commands/CmdGatherResource.h"
-#include "commands/CmdIdle.h"
-#include "commands/CmdMove.h"
-#include "commands/cmdBuild.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
-#include "components/CompBuilder.h"
 #include "components/CompBuilding.h"
 #include "components/CompCursor.h"
 #include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
 #include "components/CompPlayer.h"
-#include "components/CompRendering.h"
 #include "components/CompResource.h"
 #include "components/CompSelectible.h"
 #include "components/CompTransform.h"
@@ -33,25 +25,17 @@
 
 using namespace core;
 
-char scancodeToChar(SDL_Scancode scancode, bool shiftPressed);
-
-Simulator::Simulator(ThreadSynchronizer<FrameData>& synchronizer)
+GraphicsInstructor::GraphicsInstructor(ThreadSynchronizer<FrameData>& synchronizer)
     : m_synchronizer(synchronizer),
       m_coordinates(ServiceRegistry::getInstance().getService<Coordinates>())
 {
     CompDirty::g_dirtyEntities.reserve(10000);
-
-    registerCallback(Event::Type::TICK, this, &Simulator::onTick);
-    registerCallback(Event::Type::KEY_UP, this, &Simulator::onKeyUp);
-    registerCallback(Event::Type::ENTITY_SELECTION, this, &Simulator::onUnitSelection);
-}
-
-void Simulator::onInit(EventLoop& eventLoop)
-{
     ObjectPool<CompGraphics>::reserve(1000);
+
+    registerCallback(Event::Type::TICK, this, &GraphicsInstructor::onTick);
 }
 
-void Simulator::onTick(const Event& e)
+void GraphicsInstructor::onTick(const Event& e)
 {
     onTickStart();
     updateGraphicComponents();
@@ -59,30 +43,12 @@ void Simulator::onTick(const Event& e)
     onTickEnd();
 }
 
-void Simulator::onKeyUp(const Event& e)
-{
-    SDL_Scancode scancode = static_cast<SDL_Scancode>(e.getData<KeyboardData>().keyCode);
-
-    if (scancode == SDL_SCANCODE_T)
-    {
-        m_showSpamLogs = !m_showSpamLogs;
-        if (m_showSpamLogs)
-        {
-            spdlog::default_logger()->set_level(spdlog::level::trace);
-        }
-        else
-        {
-            spdlog::default_logger()->set_level(spdlog::level::debug);
-        }
-    }
-}
-
-void Simulator::onTickStart()
+void GraphicsInstructor::onTickStart()
 {
     // Read and send data
     auto player = ServiceRegistry::getInstance().getService<PlayerController>()->getPlayer();
     m_synchronizer.getSenderFrameData().fogOfWar = *(player->getFogOfWar().get());
-    m_synchronizer.getSenderFrameData().frameNumber = m_frame;
+    m_synchronizer.getSenderFrameData().frameNumber = m_frameCount;
     m_coordinates->setViewportPositionInPixels(
         m_synchronizer.getSenderFrameData().viewportPositionInPixels);
 
@@ -94,36 +60,14 @@ void Simulator::onTickStart()
     }
 }
 
-void Simulator::onTickEnd()
+void GraphicsInstructor::onTickEnd()
 {
-    m_frame++;
-    m_synchronizer.waitForReceiver([&]() { onSynchorizedBlock(); });
+    m_frameCount++;
+    m_synchronizer.waitForReceiver([&]() {});
     CompDirty::g_dirtyEntities.clear();
 }
 
-void Simulator::onSynchorizedBlock()
-{
-    // TODO: Make this work, might need to delay destroying entities
-    // ServiceRegistry::getInstance().getService<GameState>()->destroyAllPendingEntities();
-}
-
-void Simulator::onUnitSelection(const Event& e)
-{
-    auto& selectedEntities = e.getData<EntitySelectionData>().selection.selectedEntities;
-    if (selectedEntities.size() == 1)
-    {
-        auto resourceEntity = selectedEntities[0];
-        auto state = ServiceRegistry::getInstance().getService<StateManager>();
-
-        if (state->hasComponent<CompResource>(resourceEntity))
-        {
-            auto resource = state->getComponent<CompResource>(resourceEntity);
-            spdlog::info("Selected entity has {} resources", resource.remainingAmount);
-        }
-    }
-}
-
-void Simulator::sendGraphicsInstructions()
+void GraphicsInstructor::sendGraphicsInstructions()
 {
     auto state = ServiceRegistry::getInstance().getService<StateManager>();
 
@@ -144,7 +88,7 @@ void Simulator::sendGraphicsInstructions()
     }
 }
 
-void Simulator::updateGraphicComponents()
+void GraphicsInstructor::updateGraphicComponents()
 {
     m_synchronizer.getSenderFrameData().cursor = GraphicsID();
 
@@ -240,7 +184,7 @@ void Simulator::updateGraphicComponents()
 
         if (auto cursorComp = state->tryGetComponent<CompCursor>(entity))
         {
-            // Avoid sending cursor as a regular graphics instruction, but set to 
+            // Avoid sending cursor as a regular graphics instruction, but set to
             // frame data directly.
             gc.bypass = true;
             m_synchronizer.getSenderFrameData().cursor = cursorComp->cursor;
@@ -248,48 +192,7 @@ void Simulator::updateGraphicComponents()
     }
 }
 
-void Simulator::sendGraphiInstruction(CompGraphics* instruction)
+void GraphicsInstructor::sendGraphiInstruction(CompGraphics* instruction)
 {
     m_synchronizer.getSenderFrameData().graphicUpdates.push_back(instruction);
-}
-
-char scancodeToChar(SDL_Scancode scancode, bool shiftPressed)
-{
-    // Handle letters (A-Z)
-    if (scancode >= SDL_SCANCODE_A && scancode <= SDL_SCANCODE_Z)
-    {
-        return shiftPressed ? 'A' + (scancode - SDL_SCANCODE_A) : 'a' + (scancode - SDL_SCANCODE_A);
-    }
-
-    // Handle numbers (0–9)
-    if (scancode >= SDL_SCANCODE_1 && scancode <= SDL_SCANCODE_0)
-    {
-        if (!shiftPressed)
-        {
-            static const char numMap[] = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'};
-            return numMap[(scancode - SDL_SCANCODE_1) % 10];
-        }
-        else
-        {
-            static const char shiftNumMap[] = {'!', '@', '#', '$', '%', '^', '&', '*', '(', ')'};
-            return shiftNumMap[(scancode - SDL_SCANCODE_1) % 10];
-        }
-    }
-
-    // Special cases (US QWERTY)
-    static const std::unordered_map<SDL_Scancode, std::pair<char, char>> specialMap = {
-        {SDL_SCANCODE_SPACE, {' ', ' '}},        {SDL_SCANCODE_MINUS, {'-', '_'}},
-        {SDL_SCANCODE_EQUALS, {'=', '+'}},       {SDL_SCANCODE_LEFTBRACKET, {'[', '{'}},
-        {SDL_SCANCODE_RIGHTBRACKET, {']', '}'}}, {SDL_SCANCODE_BACKSLASH, {'\\', '|'}},
-        {SDL_SCANCODE_SEMICOLON, {';', ':'}},    {SDL_SCANCODE_APOSTROPHE, {'\'', '"'}},
-        {SDL_SCANCODE_GRAVE, {'`', '~'}},        {SDL_SCANCODE_COMMA, {',', '<'}},
-        {SDL_SCANCODE_PERIOD, {'.', '>'}},       {SDL_SCANCODE_SLASH, {'/', '?'}}};
-
-    auto it = specialMap.find(scancode);
-    if (it != specialMap.end())
-    {
-        return shiftPressed ? it->second.second : it->second.first;
-    }
-
-    return '\0'; // Unhandled key
 }

@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <pybind11/embed.h>
 #include <pybind11/pybind11.h>
-#include "EntityDefinitionLoader.h"
+#include "EntityLoader.h"
 #include "components/CompAnimation.h"
 #include "GameTypes.h"
 
@@ -16,7 +16,7 @@ namespace py = pybind11;
 namespace game
 {
 
-class EntityDefinitionLoaderExposure : public EntityDefinitionLoader
+class EntityDefinitionLoaderExposure : public EntityLoader
 {
   public:
 	EntityDefinitionLoaderExposure()
@@ -27,63 +27,63 @@ class EntityDefinitionLoaderExposure : public EntityDefinitionLoader
 
 	void loadEntityTypes(pybind11::object module)
 	{
-        EntityDefinitionLoader::loadEntityTypes(module);
+        EntityLoader::loadEntityTypes(module);
 	}
 
     void loadBuildings(pybind11::object module)
     {
-        EntityDefinitionLoader::loadBuildings(module);
+        EntityLoader::loadBuildings(module);
     }
 
     void loadConstructionSites(pybind11::object module)
     {
-        EntityDefinitionLoader::loadConstructionSites(module);
+        EntityLoader::loadConstructionSites(module);
     }
 
     void loadTileSets(pybind11::object module)
     {
-        EntityDefinitionLoader::loadTileSets(module);
+        EntityLoader::loadTileSets(module);
     }
 
     void loadNaturalResources(pybind11::object module)
     {
-        EntityDefinitionLoader::loadNaturalResources(module);
+        EntityLoader::loadNaturalResources(module);
     }
 
     void loadUIElements(pybind11::object module)
     {
-        EntityDefinitionLoader::loadUIElements(module);
+        EntityLoader::loadUIElements(module);
     }
 
-    EntityDefinitionLoader::ConstructionSiteData getSite(const std::string& sizeStr)
+    EntityLoader::ConstructionSiteData getSite(const std::string& sizeStr)
     {
-        return EntityDefinitionLoader::getSite(sizeStr);
+        return EntityLoader::getSite(sizeStr);
     }
 
     void setSite(const std::string& sizeStr, const std::map<int, int>& progressToFrame)
     {
-        EntityDefinitionLoader::setSite(sizeStr, progressToFrame);
+        EntityLoader::setSite(sizeStr, progressToFrame);
     }
 
     uint32_t createEntity(uint32_t entityType, uint32_t entitySubType) override
     {
-        return EntityDefinitionLoader::createEntity(entityType, entitySubType);
+        return EntityLoader::createEntity(entityType, entitySubType);
     }
 
     void setDRSData(const GraphicsID& id, const EntityDRSData& data)
     {
-        EntityDefinitionLoader::setDRSData(id, data);
+        EntityLoader::setDRSData(id, data);
     }
 
     void setDRSLoaderFunc(std::function<Ref<DRSFile>(const std::string&)> func)
     {
-        EntityDefinitionLoader::setDRSLoaderFunc(func);
+        EntityLoader::setDRSLoaderFunc(func);
     }
 
     void setBoundingBoxReadFunc(
         std::function<core::Rect<int>(core::Ref<drs::DRSFile>, uint32_t)> func)
     {
-        EntityDefinitionLoader::setBoundingBoxReadFunc(func);
+        EntityLoader::setBoundingBoxReadFunc(func);
     }
 };
 
@@ -103,7 +103,7 @@ TEST(EntityDefinitionLoaderTest, CreateAnimationReturnsMonostateIfNoAnimations)
     py::scoped_interpreter guard{};
     py::dict d;
     py::object module;
-    auto comp = EntityDefinitionLoader::createAnimation(module, d);
+    auto comp = EntityLoader::createAnimation(module, d);
     EXPECT_TRUE(std::holds_alternative<std::monostate>(comp));
 }
 
@@ -114,7 +114,7 @@ TEST(EntityDefinitionLoaderTest, CreateBuilderReturnsMonostateIfNoBuildSpeed)
     py::dict d;
     py::object module;
 
-    auto comp = EntityDefinitionLoader::createBuilder(module, d);
+    auto comp = EntityLoader::createBuilder(module, d);
     EXPECT_TRUE(std::holds_alternative<std::monostate>(comp));
 }
 
@@ -125,7 +125,7 @@ TEST(EntityDefinitionLoaderTest, CreateCompResourceGathererReturnsMonostateIfNoG
     py::dict d;
     py::object module;
 
-    auto comp = EntityDefinitionLoader::createCompResourceGatherer(module, d);
+    auto comp = EntityLoader::createCompResourceGatherer(module, d);
     EXPECT_TRUE(std::holds_alternative<std::monostate>(comp));
 }
 
@@ -138,7 +138,7 @@ TEST(EntityDefinitionLoaderTest, CreateCompUnitReturnsMonostateIfNotAUnit)
     py::exec(R"()");
     py::object module = py::module_::import("__main__");
 
-    auto comp = EntityDefinitionLoader::createCompUnit(1, module, d);
+    auto comp = EntityLoader::createCompUnit(1, module, d);
     EXPECT_TRUE(std::holds_alternative<std::monostate>(comp));
 }
 
@@ -149,7 +149,7 @@ TEST(EntityDefinitionLoaderTest, CreateCompTransformReturnsMonostateIfNoMovingSp
     py::dict d;
     py::object module;
 
-    auto comp = EntityDefinitionLoader::createCompTransform(module, d);
+    auto comp = EntityLoader::createCompTransform(module, d);
     EXPECT_TRUE(std::holds_alternative<std::monostate>(comp));
 }
 
@@ -160,7 +160,7 @@ TEST(EntityDefinitionLoaderTest, CreateCompResourceReturnsMonostateIfNoResourceA
     py::dict d;
     py::object module;
 
-    auto comp = EntityDefinitionLoader::createCompResource(module, d);
+    auto comp = EntityLoader::createCompResource(module, d);
     EXPECT_TRUE(std::holds_alternative<std::monostate>(comp));
 }
 
@@ -193,7 +193,7 @@ entity = DummyEntity()
         py::object entityDef = py::globals()["entity"];
         py::object module = py::module_::import("__main__");
 
-        ComponentType result = EntityDefinitionLoader::createAnimation(module, entityDef);
+        ComponentType result = EntityLoader::createAnimation(module, entityDef);
         ASSERT_TRUE(std::holds_alternative<CompAnimation>(result));
 
         auto comp = std::get<CompAnimation>(result);
@@ -299,7 +299,7 @@ entity = Villager()
         py::object def = py::globals()["entity"];
         py::object module = py::module_::import("__main__");
         EntityDefinitionLoaderExposure loader;
-        ComponentType result = EntityDefinitionLoader::createCompUnit(1, module, def);
+        ComponentType result = EntityLoader::createCompUnit(1, module, def);
         ASSERT_TRUE(std::holds_alternative<CompUnit>(result));
         EXPECT_EQ(std::get<CompUnit>(result).lineOfSight, 100);
     }
@@ -367,8 +367,8 @@ all_buildings= [
 	    GraphicsID siteId;
 	    siteId.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
 	    siteId.entitySubType = 2;
-	    EntityDefinitionLoader::EntityDRSData data;
-	    data.parts.push_back(EntityDefinitionLoader::EntityDRSData::Part(nullptr, 111, Vec2::null));
+	    EntityLoader::EntityDRSData data;
+	    data.parts.push_back(EntityLoader::EntityDRSData::Part(nullptr, 111, Vec2::null));
 	    loader.setDRSData(siteId, data);
 	    loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
 	    loader.setBoundingBoxReadFunc([](core::Ref<drs::DRSFile>, uint32_t) -> core::Rect<int>
