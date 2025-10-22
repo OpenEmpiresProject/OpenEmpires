@@ -29,13 +29,16 @@ class CursorManager : public EventHandler, public PropertyInitializer
     EntitySelectionData m_currentEntitySelectionData;
     bool m_cursorMovedAcrossTiles = false;
     Tile m_lastCursorTilePos;
+    bool m_garrisonInprogress = false;
 
     void onMouseMove(const Event& e);
     void onInit(EventLoop& eventLoop) override;
     void onBuildingPlacementStarted(const Event& e);
     void onBuildingPlacementEnded(const Event& e);
+    void onGarrisonRequest(const Event& e);
     void onTick(const Event& e);
     void onEntitySelection(const Event& e);
+    void setCursor(const CursorType& type);
 };
 } // namespace core
 

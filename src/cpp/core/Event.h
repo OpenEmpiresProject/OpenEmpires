@@ -98,6 +98,12 @@ struct UngarrisonData
     uint32_t building = entt::null;
 };
 
+struct GarrisonData
+{
+    Ref<Player> player;
+    bool inprogress = true; // false means ended
+};
+
 struct Event
 {
     enum class Type
@@ -120,6 +126,7 @@ struct Event
         BUILDING_APPROVED,          // Use BuildingPlacementData
         COMMAND_REQUEST,
         UNGARRISON_REQUEST,
+        GARRISON_REQUEST,
         MAX_TYPE_MARKER,
     };
 
@@ -135,6 +142,7 @@ struct Event
                               UnitQueueData,
                               UnitCreationData,
                               UngarrisonData,
+                              GarrisonData,
                               BuildingPlacementData>;
 
     const Type type = Type::NONE;

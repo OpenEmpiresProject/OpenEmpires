@@ -150,9 +150,15 @@ class Game
         assignTaskCursor.entitySubType = game::EntitySubTypes::UI_CURSOR;
         assignTaskCursor.variation = 3;
 
+        core::GraphicsID garrisonCursor;
+        garrisonCursor.entityType = game::EntityTypes::ET_UI_ELEMENT;
+        garrisonCursor.entitySubType = game::EntitySubTypes::UI_CURSOR;
+        garrisonCursor.variation = 13;
+
         cursorMap[core::CursorType::DEFAULT_INGAME] = defaultIcon;
         cursorMap[core::CursorType::BUILD] = buildIcon;
         cursorMap[core::CursorType::ASSIGN_TASK] = assignTaskCursor;
+        cursorMap[core::CursorType::GARRISON] = garrisonCursor;
         auto cursorManager = std::make_shared<core::CursorManager>(cursorMap);
         core::ServiceRegistry::getInstance().registerService(cursorManager);
 

@@ -47,6 +47,9 @@ class PlayerController : public EventHandler
 
     void resolveAction(const Vec2& screenPos);
 
+    // Garrison
+    void concludeGarrison();
+
     // Building placement related
     void createBuilding(const ShortcutResolver::Action& action);
     void concludeBuildingPlacement();

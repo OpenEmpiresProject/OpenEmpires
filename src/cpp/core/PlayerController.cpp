@@ -130,6 +130,7 @@ void PlayerController::onMouseButtonUp(const Event& e)
     {
         resolveAction(mousePos);
     }
+    concludeGarrison();
 }
 
 void PlayerController::onMouseButtonDown(const Event& e)
@@ -205,7 +206,6 @@ void PlayerController::resolveAction(const Vec2& screenPos)
     bool gatherable = m_stateMan->hasComponent<CompResource>(target);
     bool construction = m_stateMan->hasComponent<CompBuilding>(target);
     bool isGarrisonInProgress = m_garrisonOperationInProgress;
-    m_garrisonOperationInProgress = false; //  One way of other garrison action will be concluded
 
     for (auto entity : m_currentEntitySelection.selection.selectedEntities)
     {
@@ -510,6 +510,8 @@ void PlayerController::initiateGarrison()
 {
     spdlog::debug("Garrison initiated");
     m_garrisonOperationInProgress = true;
+    publishEvent(Event::Type::GARRISON_REQUEST,
+                 GarrisonData{.player = m_player, .inprogress = true});
 }
 
 void PlayerController::tryCompleteGarrison(uint32_t unitId, uint32_t targetBuildingEntityId)
@@ -536,5 +538,15 @@ void PlayerController::initiateUngarrison()
         publishEvent(
             Event::Type::UNGARRISON_REQUEST,
             UngarrisonData{m_player, m_currentEntitySelection.selection.selectedEntities[0]});
+    }
+}
+
+void PlayerController::concludeGarrison()
+{
+    if (m_garrisonOperationInProgress)
+    {
+        m_garrisonOperationInProgress = false;
+        publishEvent(Event::Type::GARRISON_REQUEST,
+                     GarrisonData{.player = m_player, .inprogress = false});
     }
 }

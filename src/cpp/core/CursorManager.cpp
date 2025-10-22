@@ -19,6 +19,7 @@ CursorManager::CursorManager(const std::unordered_map<CursorType, GraphicsID>& c
     registerCallback(Event::Type::BUILDING_PLACEMENT_ENDED, this,
                      &CursorManager::onBuildingPlacementEnded);
     registerCallback(Event::Type::ENTITY_SELECTION, this, &CursorManager::onEntitySelection);
+    registerCallback(Event::Type::GARRISON_REQUEST, this, &CursorManager::onGarrisonRequest);
 }
 
 void CursorManager::onMouseMove(const Event& e)
@@ -50,17 +51,14 @@ void CursorManager::onInit(EventLoop& eventLoop)
 
 void CursorManager::onBuildingPlacementStarted(const Event& e)
 {
-    GraphicsID id = m_cursors.at(CursorType::BUILD);
-    m_cursorComp->cursor = id;
-    CompDirty().markDirty(m_cursorEntityId);
+    setCursor(CursorType::BUILD);
     m_buildingPlacementInProgress = true;
 }
 
 void CursorManager::onBuildingPlacementEnded(const Event& e)
 {
-    GraphicsID id = m_cursors.at(CursorType::DEFAULT_INGAME);
-    m_cursorComp->cursor = id;
-    CompDirty().markDirty(m_cursorEntityId);
+    setCursor(CursorType::DEFAULT_INGAME);
+
     m_buildingPlacementInProgress = false;
 }
 
@@ -87,27 +85,25 @@ void CursorManager::onTick(const Event& e)
 
         m_cursorMovedAcrossTiles = false;
 
-        // Already set the proper icon for building placement (the hammer)
-        if (m_buildingPlacementInProgress)
+        // For building placement and garrison, cursor is already set the proper icon
+        // without waiting for cursor movement
+
+        if (m_buildingPlacementInProgress or m_garrisonInprogress)
             return;
 
-        if (m_currentEntitySelectionData.selection.selectedEntities.empty() == false &&
+        if (m_currentEntitySelectionData.selection.selectedEntities.empty() == false and
             m_currentEntitySelectionData.type == EntitySelectionData::Type::UNIT)
         {
             auto queryResult = m_stateMan->whatIsAt(m_currentCursorPosition);
             if (queryResult.entity != entt::null)
             {
                 // TODO: Check whether at least 1 villager present
-                GraphicsID id = m_cursors.at(CursorType::ASSIGN_TASK);
-                m_cursorComp->cursor = id;
-                CompDirty().markDirty(m_cursorEntityId);
+                setCursor(CursorType::ASSIGN_TASK);
                 return;
             }
             // TODO: Military tasks
         }
-        GraphicsID id = m_cursors.at(CursorType::DEFAULT_INGAME);
-        m_cursorComp->cursor = id;
-        CompDirty().markDirty(m_cursorEntityId);
+        setCursor(CursorType::DEFAULT_INGAME);
     }
     else
     {
@@ -125,4 +121,19 @@ void CursorManager::onTick(const Event& e)
 void CursorManager::onEntitySelection(const Event& e)
 {
     m_currentEntitySelectionData = e.getData<EntitySelectionData>();
+}
+
+void CursorManager::onGarrisonRequest(const Event& e)
+{
+    auto& data = e.getData<GarrisonData>();
+    m_garrisonInprogress = data.inprogress;
+
+    setCursor(m_garrisonInprogress ? CursorType::GARRISON : CursorType::DEFAULT_INGAME);
+}
+
+void CursorManager::setCursor(const CursorType& type)
+{
+    GraphicsID id = m_cursors.at(type);
+    m_cursorComp->cursor = id;
+    CompDirty().markDirty(m_cursorEntityId);
 }
