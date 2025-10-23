@@ -57,16 +57,16 @@ Unlike traditional **Object-Oriented Programming (OOP)** approaches, Open Empire
 
 In essence, CommandCenter abstracts **game logic into command execution**, allowing flexible, layered behaviors.
 
-## Design Philosophy
+## Design Principles
 
-> ⚠️ **Are we building a generic game engine?**  
+- **Are we building a generic game engine?**  
 No — we are **not** in the business of creating a general-purpose RTS engine. Our focus is to **do the bare minimum required** to get **Open Empires** up and running as a fully playable, moddable, and extensible game.
-
-> 🤔 **Then why not use an existing game engine?**  
+- **Then why not use an existing game engine?**  
 We chose **not** to rely on large, general-purpose game engines because we need **fine-grained control and performance**. Open Empires plans to go **beyond the original 8-player limit** and support **thousands of units** in real time — something that would be harder to achieve efficiently with existing engines.
-
-> 💡 **We intend and promise** to maintain the ability to **run this version on low-end systems**, just like the original game. Performance, scalability, and accessibility are all first-class goals of this project.
-
+- **We intend and promise** to maintain the ability to **run this version on low-end systems**, just like the original game. Performance, scalability, and accessibility are all first-class goals of this project.
+- **Composition over Inheritance:** Prefer composition over inheritance, and avoid multiple or deep inheritance hierarchies to reduce coupling and improve flexibility and reusability.
+- **Data-Oriented Design:** Keep data separate from behavior to improve scalability and extensibility; model entities as collections of data components managed by independent subsystems.
+- **Event-Driven:** Subsystems should be decoupled and unaware of each other; once a subsystem completes its task, it should emit an event and let other subsystems react as needed instead of chaining behaviors.
 
 ## Modules
 
