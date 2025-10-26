@@ -2,6 +2,7 @@
 #define CORE_CURSORMANAGER_H
 
 #include "Coordinates.h"
+#include "EntityTypeRegistry.h"
 #include "EventHandler.h"
 #include "GraphicsRegistry.h"
 #include "Property.h"
@@ -14,12 +15,12 @@ namespace core
 class CursorManager : public EventHandler, public PropertyInitializer
 {
   public:
-    CursorManager(const std::unordered_map<CursorType, GraphicsID>& cursors);
+    CursorManager();
 
   private:
     Ref<StateManager> m_stateMan;
     Ref<Coordinates> m_coordinates;
-    std::unordered_map<CursorType, GraphicsID> m_cursors;
+    Ref<EntityTypeRegistry> m_registry;
     uint32_t m_cursorEntityId = entt::null;
     CompCursor* m_cursorComp = nullptr;
     bool m_buildingPlacementInProgress = false;

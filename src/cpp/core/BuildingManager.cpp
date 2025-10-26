@@ -68,6 +68,7 @@ uint32_t BuildingManager::createBuilding(const BuildingPlacementData& request)
     playerComp.player = request.player;
 
     building.constructionProgress = 0;
+    building.orientation = request.orientation;
     info.entitySubType = building.constructionSiteEntitySubType;
     info.variation = building.getVariationByConstructionProgress();
     dirty.markDirty(entity);
@@ -154,8 +155,9 @@ void BuildingManager::updateInProgressConstructions()
             {
                 onCompleteBuilding(entity, building, transform, player);
                 info.variation = 0;
-                info.entitySubType =
-                    0; // Reseting entity sub type will essentially remove construction site
+
+                // Reseting entity sub type will essentially remove construction site
+                info.entitySubType = 0;
             }
 
             spam("Progress {}, Building subtype: {}, variation {}", building.constructionProgress,

@@ -26,18 +26,30 @@ class PlayerController : public EventHandler
     bool m_fowEnabled = true;
     Ref<StateManager> m_stateMan;
     Ref<Coordinates> m_coordinates;
+    Vec2 m_currentMouseScreenPos;
+
+    // Building placement related
+    std::unordered_map<uint32_t, BuildingPlacementData> m_currentBuildingPlacements;
+    std::unordered_map<uint32_t, std::list<uint32_t>> m_entityByTypeRecyclePool;
+    bool m_seriesConstructionAllowed = false;
+    bool m_seriesConstructionInitiated = false;
+    Tile m_firstBuildingPos = Tile::null;
+
+    // Garrison related
+    bool m_garrisonOperationInProgress = false;
 
     // Selection related
     Vec2 m_selectionStartPosScreenUnits;
     bool m_isSelectionBoxInProgress = false;
     EntitySelectionData m_currentEntitySelection;
 
-    // Building placement related
-    BuildingPlacementData m_currentBuildingPlacement;
-    Vec2 m_currentMouseScreenPos;
-    bool m_garrisonOperationInProgress = false;
-
   private:
+    struct ConnectedBuildingPosition
+    {
+        Tile pos;
+        BuildingOrientation orientation;
+    };
+
     // Event callbacks
     void onKeyUp(const Event& e);
     void onMouseButtonUp(const Event& e);
@@ -46,29 +58,37 @@ class PlayerController : public EventHandler
     void onBuildingApproved(const Event& e);
 
     void resolveAction(const Vec2& screenPos);
-
-    // Garrison
-    void concludeGarrison();
+    void createUnit(uint32_t entityType, const EntitySelection& selectedBuildings);
 
     // Building placement related
-    void createBuilding(const ShortcutResolver::Action& action);
-    void concludeBuildingPlacement();
-    void confirmBuildingPlacement(CompTransform& transform,
-                                  CompBuilding& building,
-                                  CompEntityInfo& info,
-                                  CompDirty& dirty) const;
+    void startBuildingPlacement(uint32_t buildingType);
+    BuildingPlacementData createBuildingPlacement(uint32_t buildingType,
+                                                  const Feet& pos,
+                                                  const BuildingOrientation& orientation);
+    uint32_t getOrCreateBuildingEntity(uint32_t buildingType);
+    void concludeBuildingPlacement(uint32_t placementId);
+    void concludeAllBuildingPlacements();
+    void confirmBuildingPlacement(const BuildingPlacementData& placement) const;
+    void validateAndSnapBuildingToTile(BuildingPlacementData& placement, const Feet& pos);
+    void removeAllExistingBuildingPlacements();
+    void calculateConnectedBuildingsPath(const Tile& start,
+                                         const Tile& end,
+                                         std::list<ConnectedBuildingPosition>& connectedBuildings);
+    void createConnectedBuildingPlacements(
+        const std::list<ConnectedBuildingPosition>& connectedBuildings, uint32_t buildingType);
 
-    void createUnit(uint32_t entityType, const EntitySelection& selectedBuildings);
+    // Garrison related
     void initiateGarrison();
     void initiateUngarrison();
+    void concludeGarrison();
     void tryCompleteGarrison(uint32_t unitId, uint32_t targetBuildingEntityId);
 
     // Selection related
-    void selectHomogeneousEntities(const std::vector<uint32_t>& selectedEntities);
-    void updateSelection(const EntitySelectionData& newSelection);
-    void handleClickToSelect(const Vec2& screenPos);
     void selectEntities(const Vec2& screenPos);
+    void selectHomogeneousEntities(const std::vector<uint32_t>& selectedEntities);
+    void handleClickToSelect(const Vec2& screenPos);
     void completeSelectionBox(const Vec2& startScreenPos, const Vec2& endScreenPos);
+    void updateSelection(const EntitySelectionData& newSelection);
     void getAllOverlappingEntities(const Vec2& startScreenPos,
                                    const Vec2& endScreenPos,
                                    std::vector<uint32_t>& entitiesToAddToSelection);

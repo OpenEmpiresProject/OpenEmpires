@@ -494,7 +494,7 @@ bool RendererImpl::handleEvents()
             {
                 m_showFogOfWar = !m_showFogOfWar;
             }
-            else if (event.key.scancode == SDL_SCANCODE_P)
+            else if (event.key.scancode == SDL_SCANCODE_F10)
             {
                 EventLoop::setPaused(!EventLoop::isPaused());
             }

@@ -84,6 +84,18 @@ ResourceType getResourceType(const std::string& name)
     return resTypes.at(name);
 }
 
+BuildingOrientation getBuildingOrientation(const std::string& name)
+{
+    static unordered_map<string, BuildingOrientation> orientations = {
+        {"right_angled", BuildingOrientation::RIGHT_ANGLED},
+        {"left_angled", BuildingOrientation::LEFT_ANGLED},
+        {"corner", BuildingOrientation::CORNER},
+        {"horizontal", BuildingOrientation::HORIZONTAL},
+        {"vertical", BuildingOrientation::VERTICAL},
+    };
+    return orientations.at(name);
+}
+
 Size getBuildingSize(const std::string& name)
 {
     if (name == "small")
@@ -213,7 +225,7 @@ void EntityLoader::loadUnits(py::object module)
             }
             else
             {
-                spdlog::error("Invalid entity {}, skipping loading", name);
+                spdlog::error("Unknown entity {}, skipping loading. Check all_units.", name);
             }
         }
     }
@@ -312,7 +324,7 @@ void EntityLoader::loadBuildings(pybind11::object module)
             }
             else
             {
-                spdlog::error("Invalid entity {}, skipping loading", name);
+                spdlog::error("Unknown entity {}, skipping loading. Check all_buildings", name);
             }
         }
     }
@@ -1021,6 +1033,30 @@ ComponentType EntityLoader::createCompBuilding(py::object module, pybind11::hand
                     PropertyInitializer::set(comp.dropOffForResourceType, acceptedResourceFlag);
                 }
             }
+
+            if (py::hasattr(entityDefinition, "orientations"))
+            {
+                std::unordered_map<BuildingOrientation, uint32_t> frameByOrientation;
+                py::dict orientationsDict = entityDefinition.attr("orientations");
+
+                for (auto item : orientationsDict)
+                {
+                    std::string orientationStr = py::cast<std::string>(item.first);
+                    int frameIndex = py::cast<int>(item.second);
+
+                    BuildingOrientation orientation = getBuildingOrientation(orientationStr);
+                    frameByOrientation[orientation] = frameIndex;
+                }
+                PropertyInitializer::set(comp.framesByOrientation, frameByOrientation);
+            }
+
+            if (py::hasattr(entityDefinition, "connected_constructions_allowed"))
+            {
+                auto seriesOfConstructions =
+                    readValue<bool>(entityDefinition, "connected_constructions_allowed");
+                PropertyInitializer::set(comp.connectedConstructionsAllowed, seriesOfConstructions);
+            }
+
             return ComponentType(comp);
         }
     }

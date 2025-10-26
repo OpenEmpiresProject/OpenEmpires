@@ -132,6 +132,16 @@ enum class CursorType
     FLAG
 };
 
+enum class BuildingOrientation
+{
+    DEFAULT,
+    RIGHT_ANGLED,
+    LEFT_ANGLED,
+    CORNER,
+    HORIZONTAL,
+    VERTICAL
+};
+
 enum class UnitTagType
 {
     GARRISONED

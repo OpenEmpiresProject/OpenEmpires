@@ -143,6 +143,13 @@ void GraphicsInstructor::updateGraphicComponents()
                 gc.shading = Color::RED;
 
             gc.landSize = building.size;
+
+            if (building.isConstructed() and
+                building.orientation != BuildingOrientation::DEFAULT and
+                building.framesByOrientation.value().empty() == false)
+            {
+                gc.variation = building.framesByOrientation.value().at(building.orientation);
+            }
         }
 
         if (state->hasComponent<CompUIElement>(entity))

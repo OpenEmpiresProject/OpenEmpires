@@ -106,7 +106,8 @@ class Building:
     size: str
     graphics: Dict[str, List[Graphic]] # Graphics by theme
     icon: Icon
-
+    orientations: Optional[Dict[str, int]] # orientation name to frame id mapping
+    connected_constructions_allowed: Optional[bool] # Allows to constructing series of same building such as walls
 
 class CompoSiteGraphicBuilding(Building):
     graphics: Dict[str, CompositeGraphic] # Graphics by theme

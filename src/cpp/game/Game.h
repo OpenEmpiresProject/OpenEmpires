@@ -133,8 +133,6 @@ class Game
         std::shared_ptr<core::ShortcutResolver> shortcutResolver = gameShortcutResolver;
         core::ServiceRegistry::getInstance().registerService(shortcutResolver);
 
-        std::unordered_map<core::CursorType, core::GraphicsID> cursorMap;
-
         core::GraphicsID defaultIcon;
         defaultIcon.entityType = game::EntityTypes::ET_UI_ELEMENT;
         defaultIcon.entitySubType = game::EntitySubTypes::UI_CURSOR;
@@ -155,11 +153,12 @@ class Game
         garrisonCursor.entitySubType = game::EntitySubTypes::UI_CURSOR;
         garrisonCursor.variation = 13;
 
-        cursorMap[core::CursorType::DEFAULT_INGAME] = defaultIcon;
-        cursorMap[core::CursorType::BUILD] = buildIcon;
-        cursorMap[core::CursorType::ASSIGN_TASK] = assignTaskCursor;
-        cursorMap[core::CursorType::GARRISON] = garrisonCursor;
-        auto cursorManager = std::make_shared<core::CursorManager>(cursorMap);
+        entityTypeRegistry->registerCursorGraphic(core::CursorType::DEFAULT_INGAME, defaultIcon);
+        entityTypeRegistry->registerCursorGraphic(core::CursorType::BUILD, buildIcon);
+        entityTypeRegistry->registerCursorGraphic(core::CursorType::ASSIGN_TASK, assignTaskCursor);
+        entityTypeRegistry->registerCursorGraphic(core::CursorType::GARRISON, garrisonCursor);
+
+        auto cursorManager = std::make_shared<core::CursorManager>();
         core::ServiceRegistry::getInstance().registerService(cursorManager);
 
         auto logController = std::make_shared<core::LogLevelController>();

@@ -94,3 +94,13 @@ bool EntityTypeRegistry::isAUnit(uint32_t entityType) const
 {
     return m_unitEntityTypes.contains(entityType);
 }
+
+void EntityTypeRegistry::registerCursorGraphic(const CursorType& type, const GraphicsID& id)
+{
+    m_cursorGraphics[type] = id;
+}
+
+GraphicsID EntityTypeRegistry::getCursorGraphic(const CursorType& type)
+{
+    return m_cursorGraphics.at(type);
+}

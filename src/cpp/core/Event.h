@@ -71,6 +71,22 @@ struct BuildingPlacementData
     uint32_t entityType = 0;
     Feet pos = Feet::null;
     uint32_t entity = entt::null;
+    uint32_t placementId = 0;
+    bool seriesConstructionsAllowed = false;
+    BuildingOrientation orientation = BuildingOrientation::DEFAULT;
+
+    bool operator==(const BuildingPlacementData& other) const
+    {
+        return placementId == other.placementId;
+    }
+
+    BuildingPlacementData()
+    {
+        placementId = g_currentPlacementId++;
+    }
+
+  private:
+    inline static uint32_t g_currentPlacementId = 0;
 };
 
 struct EntityDeleteData

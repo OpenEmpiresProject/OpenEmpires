@@ -24,6 +24,10 @@ class MilitaryBuilding(Constructible, Building, UnitFactory):
     pass
 
 
+class Wall(Constructible, Building):
+    pass
+
+
 class MilitaryUnit(Constructible, Unit):
     pass
 
@@ -42,6 +46,7 @@ all_entity_names: List[str] = [
     "construction_site",
     "barracks",
     "militia",
+    "palisade"
 ]
 
 
@@ -61,6 +66,7 @@ all_units: List[Unit] = [
                     Shortcut(name="mine_camp", shortcut="n"),
                     Shortcut(name="town_center", shortcut="c"),
                     Shortcut(name="barracks", shortcut="b"),
+                    Shortcut(name="palisade", shortcut="p"),
                     Shortcut(name="house", shortcut="h")],
         icon=Icon(drs_file="interfac.drs", slp_id=50730, index=16),
         animations=[
@@ -187,9 +193,24 @@ all_buildings: List[Building] = [
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=3),
         producible_units=[Shortcut(name="militia", shortcut="m")]
     ),
+    Wall(
+        name="palisade",
+        display_name="Palisade",
+        line_of_sight=256*2,
+        size="small",
+        graphics={"default":[Graphic(slp_id=1828)]},
+        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=30),
+        orientations={"right_angled": 0, "left_angled": 1, "corner": 2, "horizontal": 3, "vertical": 4},
+        connected_constructions_allowed=True
+    ),
 ]
 
 all_construction_sites: List[ConstructionSite] = [
+    ConstructionSite(
+        name="construction_site",
+        size="small",
+        graphics={"default": [Graphic(slp_id=236)]},
+        progress_frame_map={33:0, 66:1, 99:2}),
     ConstructionSite(
         name="construction_site",
         size="medium",

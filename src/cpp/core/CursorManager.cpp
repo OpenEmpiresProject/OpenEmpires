@@ -8,8 +8,7 @@
 
 using namespace core;
 
-CursorManager::CursorManager(const std::unordered_map<CursorType, GraphicsID>& cursors)
-    : m_cursors(cursors)
+CursorManager::CursorManager()
 {
 
     registerCallback(Event::Type::TICK, this, &CursorManager::onTick);
@@ -32,16 +31,17 @@ void CursorManager::onInit(EventLoop& eventLoop)
 {
     m_stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     m_coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
+    m_registry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
 
     m_cursorEntityId = m_stateMan->createEntity();
     m_cursorComp = &(m_stateMan->addComponent<CompCursor>(m_cursorEntityId));
 
-    GraphicsID id = m_cursors.at(CursorType::DEFAULT_INGAME);
-    m_cursorComp->cursor = id;
+    m_cursorComp->cursor = m_registry->getCursorGraphic(CursorType::DEFAULT_INGAME);
 
     m_stateMan->addComponent<CompTransform>(m_cursorEntityId);
 
-    CompEntityInfo info(id.entityType, id.entitySubType, id.variation);
+    CompEntityInfo info(m_cursorComp->cursor.entityType, m_cursorComp->cursor.entitySubType,
+                        m_cursorComp->cursor.variation);
     PropertyInitializer::set(info.entityId, m_cursorEntityId);
 
     m_stateMan->addComponent<CompEntityInfo>(m_cursorEntityId, info);
@@ -133,7 +133,6 @@ void CursorManager::onGarrisonRequest(const Event& e)
 
 void CursorManager::setCursor(const CursorType& type)
 {
-    GraphicsID id = m_cursors.at(type);
-    m_cursorComp->cursor = id;
+    m_cursorComp->cursor = m_registry->getCursorGraphic(type);
     CompDirty().markDirty(m_cursorEntityId);
 }
