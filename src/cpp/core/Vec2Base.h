@@ -38,7 +38,14 @@ template <typename T, typename Tag> class Vec2Base
 
     constexpr bool isNull() const
     {
-        return std::isnan(x) || std::isnan(y);
+        if constexpr (std::is_floating_point_v<T>)
+        {
+            return std::isnan(x) || std::isnan(y);
+        }
+        else
+        {
+            return x == std::numeric_limits<T>::max() && y == std::numeric_limits<T>::max();
+        }
     }
 
     // Epsilon for floating point comparisons
@@ -202,8 +209,17 @@ template <typename T, typename Tag> class Vec2Base
 template <typename T, typename Tag> const Vec2Base<T, Tag> Vec2Base<T, Tag>::zero = Vec2Base(0, 0);
 
 template <typename T, typename Tag>
-const Vec2Base<T, Tag> Vec2Base<T, Tag>::null =
-    Vec2Base(std::numeric_limits<T>::quiet_NaN(), std::numeric_limits<T>::quiet_NaN());
+const Vec2Base<T, Tag> Vec2Base<T, Tag>::null = []
+{
+    if constexpr (std::is_floating_point_v<T>)
+    {
+        return Vec2Base(std::numeric_limits<T>::quiet_NaN(), std::numeric_limits<T>::quiet_NaN());
+    }
+    else
+    {
+        return Vec2Base(std::numeric_limits<T>::max(), std::numeric_limits<T>::max());
+    }
+}();
 
 } // namespace core
 

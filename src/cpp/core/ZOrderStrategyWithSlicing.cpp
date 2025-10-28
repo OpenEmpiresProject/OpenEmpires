@@ -183,11 +183,23 @@ std::list<CompRendering*> slice(CompRendering& rc)
         // Slice at the original image's anchor
         auto slice = ObjectPool<CompRendering>::acquire();
         *slice = rc;
-        slice->srcRect.w = Constants::TILE_PIXEL_WIDTH;
-        slice->srcRect.x = rc.srcRect.x + rc.anchor.x - (Constants::TILE_PIXEL_WIDTH / 2);
         slice->anchor.y = slice->srcRect.h;
-        slice->anchor.x = slice->srcRect.w / 2;
         slice->additionalZOffset += Constants::FEET_PER_TILE;
+
+        // If the building is a single tile, then there won't be any left/right slicers
+        // Therefore, need to draw the full width of the original texture.
+        if (rc.landSize.width == 1 and rc.landSize.height == 1)
+        {
+            slice->srcRect.w = rc.srcRect.w;
+            slice->srcRect.x = rc.srcRect.x;
+            slice->anchor.x = rc.anchor.x;
+        }
+        else
+        {
+            slice->srcRect.w = Constants::TILE_PIXEL_WIDTH;
+            slice->srcRect.x = rc.srcRect.x + rc.anchor.x - (Constants::TILE_PIXEL_WIDTH / 2);
+            slice->anchor.x = slice->srcRect.w / 2;
+        }
 
         subComponentsToReturn.push_back(slice);
 

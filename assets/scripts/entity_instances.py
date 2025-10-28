@@ -46,7 +46,8 @@ all_entity_names: List[str] = [
     "construction_site",
     "barracks",
     "militia",
-    "palisade"
+    "palisade",
+    "stone_wall",
 ]
 
 
@@ -67,6 +68,7 @@ all_units: List[Unit] = [
                     Shortcut(name="town_center", shortcut="c"),
                     Shortcut(name="barracks", shortcut="b"),
                     Shortcut(name="palisade", shortcut="p"),
+                    Shortcut(name="stone_wall", shortcut="o"),
                     Shortcut(name="house", shortcut="h")],
         icon=Icon(drs_file="interfac.drs", slp_id=50730, index=16),
         animations=[
@@ -200,6 +202,16 @@ all_buildings: List[Building] = [
         size="small",
         graphics={"default":[Graphic(slp_id=1828)]},
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=30),
+        orientations={"right_angled": 0, "left_angled": 1, "corner": 2, "horizontal": 3, "vertical": 4},
+        connected_constructions_allowed=True
+    ),
+    Wall(
+        name="stone_wall",
+        display_name="Stone Wall",
+        line_of_sight=256*2,
+        size="small",
+        graphics={"default":[Graphic(slp_id=2110)]},
+        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=29),
         orientations={"right_angled": 0, "left_angled": 1, "corner": 2, "horizontal": 3, "vertical": 4},
         connected_constructions_allowed=True
     ),

@@ -397,7 +397,7 @@ void PlayerController::createConnectedBuildingPlacements(
 {
     for (auto& connectedBuilding : connectedBuildings)
     {
-        auto placement = createBuildingPlacement(buildingType, connectedBuilding.pos.centerInFeet(),
+        auto placement = createBuildingPlacement(buildingType, connectedBuilding.pos.toFeet(),
                                                  connectedBuilding.orientation);
     }
 }
@@ -532,19 +532,21 @@ void PlayerController::calculateConnectedBuildingsPath(
 
         const int angle = xDirection * yDirection;
 
-        int newX = start.x;
-        int newY = start.y;
+        // Moving in both direction by 1 tile. i.e. skipping start building since it will be
+        // added later anyway
+        int newX = start.x + xDirection;
+        int newY = start.y + yDirection;
 
         while (newX != end.x and newY != end.y)
         {
-            newX += xDirection;
-            newY += yDirection;
-
             Tile newPos(newX, newY);
 
             connectedBuildings.push_back(ConnectedBuildingPosition{
                 newPos,
                 (angle >= 0 ? BuildingOrientation::VERTICAL : BuildingOrientation::HORIZONTAL)});
+
+            newX += xDirection;
+            newY += yDirection;
         }
     }
 
