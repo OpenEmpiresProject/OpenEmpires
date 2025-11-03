@@ -14,7 +14,7 @@ class ZOrderStrategyWithSlicing : public ZOrderStrategy
     ZOrderStrategyWithSlicing();
     ~ZOrderStrategyWithSlicing();
 
-    void preProcess(CompRendering& graphic) override;
+    void onUpdate(const CompRendering& current, CompRendering& update) override;
     const std::vector<CompRendering*>& zOrder(const Coordinates& coordinates) override;
 
   private:

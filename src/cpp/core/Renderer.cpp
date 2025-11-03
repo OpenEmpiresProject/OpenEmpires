@@ -41,6 +41,7 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
+#include "ZOrderStrategyByTiles.h"
 
 namespace fs = std::filesystem;
 using namespace core;
@@ -244,7 +245,7 @@ RendererImpl::RendererImpl(std::stop_source* stopSource,
       m_graphicsRegistry(graphicsRegistry),
       m_coordinates(ServiceRegistry::getInstance().getService<Settings>()),
       m_synchronizer(synchronizer), m_graphicsLoader(graphicsLoader),
-      m_zOrderStrategy(std::move(std::make_unique<ZOrderStrategyWithSlicing>()))
+      m_zOrderStrategy(std::move(std::make_unique<ZOrderStrategyByTiles>()))
 {
     m_running = false;
     m_lastTickTime = steady_clock::now();
@@ -533,6 +534,7 @@ void RendererImpl::updateRenderingComponents()
     for (const auto& instruction : frameData)
     {
         auto& rc = stateMan->getComponent<CompRendering>(instruction->entityID);
+        CompRendering currentState = rc;
         static_cast<CompGraphics&>(rc) = *instruction;
         rc.additionalZOffset = 0;
 
@@ -552,7 +554,7 @@ void RendererImpl::updateRenderingComponents()
         if (m_graphicsRegistry.hasTexture(rc))
         {
             rc.updateTextureDetails(m_graphicsRegistry);
-            m_zOrderStrategy->preProcess(rc);
+            m_zOrderStrategy->onUpdate(currentState, rc);
             ObjectPool<CompGraphics>::release(instruction);
         }
         else
@@ -571,10 +573,12 @@ void RendererImpl::updateRenderingComponents()
         for (auto& instruction : lazyLoadedInstructions)
         {
             auto& rc = stateMan->getComponent<CompRendering>(instruction->entityID);
+            CompRendering currentState = rc;
+
             static_cast<CompGraphics&>(rc) = *instruction;
             rc.updateTextureDetails(m_graphicsRegistry);
 
-            m_zOrderStrategy->preProcess(rc);
+            m_zOrderStrategy->onUpdate(currentState, rc);
             ObjectPool<CompGraphics>::release(instruction);
         }
     }

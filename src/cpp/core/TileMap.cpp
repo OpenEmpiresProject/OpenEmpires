@@ -98,6 +98,20 @@ void TileMap::addEntity(MapLayerType layerType, const Tile& pos, uint32_t entity
     }
 }
 
+void TileMap::addEntity(MapLayerType layerType,
+                        const Tile& pos,
+                        uint32_t entity,
+                        const Size& landSize)
+{
+    for (size_t i = 0; i < landSize.width; i++)
+    {
+        for (size_t j = 0; j < landSize.height; j++)
+        {
+            addEntity(layerType, pos - Tile(i, j), entity);
+        }
+    }
+}
+
 void TileMap::removeStaticEntity(const Tile& pos, uint32_t entity)
 {
     auto layerTypeInt = toInt(MapLayerType::STATIC);
@@ -127,6 +141,20 @@ void TileMap::removeEntity(MapLayerType layerType, const Tile& pos, uint32_t ent
     else [[unlikely]]
     {
         spdlog::error("Invalid grid position: ({}, {}) to remove entity {}", pos.x, pos.y, entity);
+    }
+}
+
+void TileMap::removeEntity(MapLayerType layerType,
+                           const Tile& pos,
+                           uint32_t entity,
+                           const Size& landSize)
+{
+    for (size_t i = 0; i < landSize.width; i++)
+    {
+        for (size_t j = 0; j < landSize.height; j++)
+        {
+            removeEntity(layerType, pos - Tile(i, j), entity);
+        }
     }
 }
 
@@ -221,4 +249,14 @@ void TileMap::init(uint32_t width, uint32_t height)
             layer.cells[i] = new MapCell[height];
         }
     }
+}
+
+void TileMap::addStaticEntity(uint32_t entity, const Tile& pos, const Size& landSize)
+{
+    addEntity(MapLayerType::STATIC, pos, entity, landSize);
+}
+
+bool TileMap::isValidPos(const Tile& pos) const
+{
+    return pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height;
 }

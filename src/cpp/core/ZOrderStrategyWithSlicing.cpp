@@ -29,7 +29,7 @@ ZOrderStrategyWithSlicing::~ZOrderStrategyWithSlicing()
 {
 }
 
-void ZOrderStrategyWithSlicing::preProcess(CompRendering& cr)
+void ZOrderStrategyWithSlicing::onUpdate(const CompRendering& current, CompRendering& cr)
 {
     if (cr.isBig())
     {

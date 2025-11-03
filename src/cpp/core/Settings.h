@@ -88,6 +88,8 @@ class Settings
     {
         switch (m_worldSizeType)
         {
+        case WorldSizeType::TEST:
+            return {10 * Constants::FEET_PER_TILE, 10 * Constants::FEET_PER_TILE};
         case WorldSizeType::DEMO:
             return {50 * Constants::FEET_PER_TILE, 50 * Constants::FEET_PER_TILE};
         case WorldSizeType::TINY:

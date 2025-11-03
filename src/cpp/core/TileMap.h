@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <entt/entity/registry.hpp>
 #include <list>
+#include "utils/Size.h"
 
 namespace core
 {
@@ -50,6 +51,8 @@ struct TileMap
     MapCell** getStaticMap();
     MapCell** getGroundMap();
 
+    bool isValidPos(const Tile& pos) const;
+
     /**
      * @brief Checks if a cell at the specified grid position is occupied in the given map layer.
      *
@@ -80,9 +83,15 @@ struct TileMap
      * @param entity The unique identifier of the entity to add.
      */
     void addEntity(MapLayerType layerType, const Tile& pos, uint32_t entity);
+    void addEntity(MapLayerType layerType, const Tile& pos, uint32_t entity, const Size& landSize);
+    void addStaticEntity(uint32_t entity, const Tile& pos, const Size& landSize);
 
     void removeStaticEntity(const Tile& pos, uint32_t entity);
     void removeEntity(MapLayerType layerType, const Tile& pos, uint32_t entity);
+    void removeEntity(MapLayerType layerType,
+                      const Tile& pos,
+                      uint32_t entity,
+                      const Size& landSize);
     void removeAllEntities(MapLayerType layerType, const Tile& pos);
 
     /**
