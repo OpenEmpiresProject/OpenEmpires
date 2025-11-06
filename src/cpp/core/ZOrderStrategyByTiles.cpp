@@ -34,7 +34,7 @@ constexpr GraphicLayer getGraphicLayer(MapLayerType mapLayerType) noexcept
     return GraphicLayer::ENTITIES;
 }
 
-void addGraphicToBackOfLayer(std::vector<CompRendering*>& layerObjects,
+void pushBackGraphicToLayer(std::vector<CompRendering*>& layerObjects,
                              CompRendering* graphic,
                              const SDL_Rect& viewport,
                              const Coordinates& coordinates)
@@ -57,6 +57,15 @@ void addGraphicToBackOfLayer(std::vector<CompRendering*>& layerObjects,
     layerObjects.emplace_back(graphic);
 }
 
+static Feet getBuildingAnchor(const Feet& center, const Size& size)
+{
+    const float halfWidth = (float) size.width / 2;
+    const float halfHeight = (float) size.height / 2;
+
+    return center +
+           Feet(halfWidth * Constants::FEET_PER_TILE, halfHeight * Constants::FEET_PER_TILE) - 10;
+}
+
 constexpr auto g_allMapLayers =
     make_enum_array<MapLayerType, MapLayerType::GROUND, MapLayerType::MAX_LAYERS>();
 
@@ -73,8 +82,11 @@ ZOrderStrategyByTiles::ZOrderStrategyByTiles()
         m_objectsToRenderByLayer[i].reserve(2000);
     }
 
-    m_bucketsByZ.resize(Constants::FEET_PER_TILE * 10);
+    m_bucketsByZ.resize(Constants::FEET_PER_TILE * 3);
     m_uiZBuckets.resize(m_settings->getWindowDimensions().height);
+    m_renderingComponents.resize(Constants::MAX_ENTITIES);
+    m_alreadyProcessedTiles = Flat2DArray<uint64_t>(m_settings->getWindowDimensions().width,
+                                                    m_settings->getWindowDimensions().height);
 }
 
 ZOrderStrategyByTiles::~ZOrderStrategyByTiles()
@@ -92,11 +104,33 @@ void ZOrderStrategyByTiles::onUpdate(const CompRendering& current, CompRendering
     {
         const auto& layer = getMapLayerType(update.layer);
         Size size = update.isBig() ? update.landSize : Size(1, 1);
+        const bool positionChanged =
+            current.positionInFeet.toTile() != update.positionInFeet.toTile();
+        Feet updatePosition = update.positionInFeet;
+        Feet currentPosition = current.positionInFeet;
 
-        if (current.positionInFeet.toTile() != update.positionInFeet.toTile())
-            m_gameMap.removeEntity(layer, current.positionInFeet.toTile(), current.entityID, size);
+        if (update.isBig())
+        {
+            updatePosition = getBuildingAnchor(update.positionInFeet, size); // Bottom tile
+            currentPosition = getBuildingAnchor(current.positionInFeet, size); // Bottom tile
+        }
 
-        m_gameMap.addEntity(layer, update.positionInFeet.toTile(), update.entityID, size);
+        if (update.isDestroyed or not update.isEnabled)
+        {
+            m_gameMap.removeEntity(layer, currentPosition.toTile(), current.entityID, size);
+        }
+        else if (positionChanged)
+        {
+            if (current.entityID != entt::null)
+                m_gameMap.removeEntity(layer, currentPosition.toTile(), current.entityID, size);
+            
+            if (layer == MapLayerType::STATIC)
+            {
+                auto type = update.entityType;
+                spdlog::debug("Adding entity {} at {}", type, updatePosition.toTile().toString());
+            }
+            m_gameMap.addEntity(layer, updatePosition.toTile(), update.entityID, size);
+        }
     }
     else
     {
@@ -108,7 +142,7 @@ void ZOrderStrategyByTiles::onUpdate(const CompRendering& current, CompRendering
         }
         m_uiGraphicsByEntity[update.entityID] = &update;
     }
-    m_renderingCompsByEntity[update.entityID] = &update;
+    m_renderingComponents[update.entityID] = &update;
 }
 
 const std::vector<core::CompRendering*>& ZOrderStrategyByTiles::zOrder(
@@ -143,30 +177,57 @@ const std::vector<core::CompRendering*>& ZOrderStrategyByTiles::consolidateAllLa
     return m_finalListToRender;
 }
 
+struct PendingEntityStartPosition
+{
+    Tile entityLeftTopCorner = Tile::null;
+    uint32_t entityId = entt::null;
+};
+
 void ZOrderStrategyByTiles::processLayer(const MapLayerType& layer, const Coordinates& coordinates)
 {
-    std::unordered_set<int> alreadyOrderedTiles;
-    std::stack<std::pair<int, int>> pendingY;
+    if (layer == MapLayerType::STATIC)
+    {
+         spdlog::debug("Processing layer");
+    }
+
+    static uint64_t iteration = 0;
+    ++iteration;
+    std::stack<PendingEntityStartPosition> pendingEntities;
     SDL_Rect viewportRect = {0, 0, m_settings->getWindowDimensions().width,
                              m_settings->getWindowDimensions().height};
+
+    bool repositioned = false;
 
     for (int y = 0; y < m_gameMap.height; y++)
     {
         bool continueXAxis = true;
+        repositioned = false;
+
         for (int x = 0; x < m_gameMap.width and continueXAxis; x++)
         {
-            const int tileId = x + y * m_gameMap.width;
-            if (alreadyOrderedTiles.contains(tileId))
+            if (m_alreadyProcessedTiles.at(x, y) == iteration)
+            {
+                if (layer == MapLayerType::STATIC)
+                {
+                    spdlog::debug("Skipping already processed tile {},{} as processed", x, y);
+                }
                 continue;
+            }
 
             ++m_currentBucketVersion;
 
             Tile tile(x, y);
             const auto& entities = m_gameMap.getEntities(layer, tile);
+            const size_t numEntities = entities.size(); // This is O(1) since C++11
 
             for (auto entity : entities)
             {
-                auto rc = m_renderingCompsByEntity[entity];
+                auto rc = m_renderingComponents[entity];
+                if (rc == nullptr)
+                {
+                    spdlog::debug("Unknown entity {}. Cannot happen.", entity);
+                    continue;
+                }
 
                 if (rc->isDestroyed || rc->isEnabled == false)
                     continue;
@@ -192,90 +253,116 @@ void ZOrderStrategyByTiles::processLayer(const MapLayerType& layer, const Coordi
 
                     if (isCornerOfEntity)
                     {
-                        // std::cout<< fmt::format("Found building {} corner at {}", entity,
-                        //               tile.toString())<< std::endl;
+                        if (layer == MapLayerType::STATIC)
+                        {
+                            spdlog::debug("Building corner found at {}", tile.toString());
+                        }
                         auto& graphicsLayer =
                             m_objectsToRenderByLayer[toInt(getGraphicLayer(layer))];
-                        addGraphicToBackOfLayer(graphicsLayer, rc, viewportRect, coordinates);
+                        pushBackGraphicToLayer(graphicsLayer, rc, viewportRect, coordinates);
                         
-
                         // Taking left bottom (logically) corner as anchor and marking rest of
                         // the land size as already considered
                         //
-                        for (int i = 0; i < rc->landSize.width; i++)
+                        for (uint32_t i = 0; i < rc->landSize.width; i++)
                         {
-                            for (int j = 0; j < rc->landSize.height; j++)
+                            for (uint32_t j = 0; j < rc->landSize.height; j++)
                             {
-                                const int sameEntityTileId = (x + i) + (y - j) * m_gameMap.width;
-                                alreadyOrderedTiles.insert(sameEntityTileId);
+                                m_alreadyProcessedTiles.at((uint64_t) x + i, (uint64_t) y - j) =
+                                    iteration;
+
+                                if (layer == MapLayerType::STATIC)
+                                {
+                                    spdlog::debug("Marking tile {},{} as processed", x + i, y - j);
+                                }
                             }
                         }
 
-                        if (not pendingY.empty())
+                        if (not pendingEntities.empty())
                         {
-                            auto [newY, newX] = pendingY.top();
-                            x = newX - 1; // -1 is to let the loop increment adjust it back
-                            y = newY - 1;
-                            pendingY.pop();
+                            const auto& pending = pendingEntities.top();
+                            x = pending.entityLeftTopCorner.x - 1; // -1 is to let the loop increment adjust it back
+                            y = pending.entityLeftTopCorner.y - 1;
+                            pendingEntities.pop();
+                            repositioned = true;
 
-                            // std::cout << fmt::format("Switching pending Y of entity {}
-                            // at{},{}",
-                            //     entity, newX, newY)
-                            //           << std::endl;
+                            spdlog::debug("Resuming processing tile {},{}", x + 1, y + 1);
+
+                            break; // break from entities, x break will be handled outside
                         }
                     }
                     else
                     {
-                        // std::cout << fmt::format("Not a corner for building {} at {}",
-                        // entity,
-                        //                          tile.toString())
-                        //           << std::endl;
-                        //  Still the same entity, will complete rest of x cells later. For now,
-                        //  move to next row (i.e. y)
-                        //
-                        pendingY.push(std::make_pair(y, x));
+                        if (layer == MapLayerType::STATIC)
+                        {
+                            spdlog::debug("Building edge found at {}", tile.toString());
+                        }
+                        // Put the entity to pending to visit later once its dependencies are resolved, 
+                        // but only if it is not already tracked.
+                        if (pendingEntities.empty() or pendingEntities.top().entityId != entity)
+                        {
+                            pendingEntities.push(PendingEntityStartPosition{Tile(x, y), entity});
+                        }
+                        // Either way dependencies are not resolved, so can't continue to process remaining of Xs
                         continueXAxis = false;
                         break;
                     }
                 }
                 else
                 {
-                    // std::cout << fmt::format("Not a big entity {} at {}", entity,
-                    //                          tile.toString())
-                    //           << std::endl;
-
-                    int withinTileX = rc->positionInFeet.x - rc->positionInFeet.toTile().toFeet().x;
-                    int withinTileY = rc->positionInFeet.y - rc->positionInFeet.toTile().toFeet().y;
-                    int zOrder = withinTileX + withinTileY + rc->additionalZOffset;
-
-                    if (zOrder < 0 or zOrder >= m_bucketsByZ.size())
+                    if (numEntities == 1)
                     {
-                        spdlog::error("Z-order out of bounds: {}", zOrder);
-                        continue;
-                    }
-
-                    if (m_currentBucketVersion != m_bucketsByZ[zOrder].version)
+                        if (layer == MapLayerType::STATIC)
+                        {
+                            spdlog::debug("Single entity tile found at {}", tile.toString());
+                        }
+                        auto& graphicsLayer =
+                            m_objectsToRenderByLayer[toInt(getGraphicLayer(layer))];
+                        pushBackGraphicToLayer(graphicsLayer, rc, viewportRect, coordinates);
+                    } 
+                    else
                     {
-                        m_bucketsByZ[zOrder].version = m_currentBucketVersion;
-                        m_bucketsByZ[zOrder].graphics.clear();
+                        int withinTileX =
+                            rc->positionInFeet.x - rc->positionInFeet.toTile().toFeet().x;
+                        int withinTileY =
+                            rc->positionInFeet.y - rc->positionInFeet.toTile().toFeet().y;
+                        int zOrder = withinTileX + withinTileY + rc->additionalZOffset;
+
+                        if (zOrder < 0 or zOrder >= m_bucketsByZ.size())
+                        {
+                            spdlog::error("Z-order out of bounds: {}", zOrder);
+                            continue;
+                        }
+
+                        if (m_currentBucketVersion != m_bucketsByZ[zOrder].version)
+                        {
+                            m_bucketsByZ[zOrder].version = m_currentBucketVersion;
+                            m_bucketsByZ[zOrder].graphics.clear();
+                        }
+                        m_bucketsByZ[zOrder].graphics.push_back(rc);
                     }
-                    m_bucketsByZ[zOrder].graphics.push_back(rc);
-                    alreadyOrderedTiles.insert(tileId);
+                    m_alreadyProcessedTiles.at(x, y) = iteration;
                 }
             }
 
-            for (int z = 0; z < m_bucketsByZ.size(); ++z)
-            {
-                if (m_bucketsByZ[z].version != m_currentBucketVersion)
-                {
-                    continue; // Bucket wasn't updated for the current tile
-                }
+            if (repositioned)
+                break; // breaks x
 
-                for (auto& rc : m_bucketsByZ[z].graphics)
+            if (numEntities > 1)
+            {
+                for (int z = 0; z < m_bucketsByZ.size(); ++z)
                 {
-                    //m_objectsToRenderByLayer[toInt(getGraphicLayer(layer))].emplace_back(rc);
-                    auto& graphicsLayer = m_objectsToRenderByLayer[toInt(getGraphicLayer(layer))];
-                    addGraphicToBackOfLayer(graphicsLayer, rc, viewportRect, coordinates);
+                    if (m_bucketsByZ[z].version != m_currentBucketVersion)
+                    {
+                        continue; // Bucket wasn't updated for the current tile
+                    }
+
+                    for (auto& rc : m_bucketsByZ[z].graphics)
+                    {
+                        auto& graphicsLayer =
+                            m_objectsToRenderByLayer[toInt(getGraphicLayer(layer))];
+                        pushBackGraphicToLayer(graphicsLayer, rc, viewportRect, coordinates);
+                    }
                 }
             }
         }

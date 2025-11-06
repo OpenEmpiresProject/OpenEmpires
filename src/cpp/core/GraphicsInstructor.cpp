@@ -150,6 +150,8 @@ void GraphicsInstructor::updateGraphicComponents()
             {
                 gc.variation = building.framesByOrientation.value().at(building.orientation);
             }
+
+            gc.positionInFeet = building.getBuildingCenter(gc.positionInFeet);
         }
 
         if (state->hasComponent<CompUIElement>(entity))

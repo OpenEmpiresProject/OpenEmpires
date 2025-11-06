@@ -56,7 +56,10 @@ class ZOrderStrategyByTilesTest : public ::testing::Test
 
     CompRendering& createBuilding(const Tile& anchor, const Size& landSize)
     {
-        return createEntity(anchor.centerInFeet(), landSize);
+        float dx = (float)landSize.width / 2 * Constants::FEET_PER_TILE;
+        float dy = (float) landSize.height / 2 * Constants::FEET_PER_TILE;
+        Tile center = anchor + Tile(1, 1);
+        return createEntity(center.toFeet() - Feet(dx, dy), landSize);
     }
 
     CompRendering& createUnit(const Feet& pos)
@@ -118,7 +121,7 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_AllTilesAndNoBuildings)
             tile.srcRect.w = 100;
             tile.srcRect.h = 100;
 
-            strategy->onUpdate(tile, tile);
+            strategy->onUpdate(CompRendering(), tile);
         }
     }
 
@@ -170,7 +173,7 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_SingleBuildingAtMiddle)
 {
     // Arrange
     auto& building = createBuilding(Tile(4, 4), Size(2, 2));
-    strategy->onUpdate(building, building);
+    strategy->onUpdate(CompRendering(), building);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -212,7 +215,7 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_SingleBuildingAtLeftTopCorner)
 {
     // Arrange
     auto& building = createBuilding(Tile(2, 2), Size(3, 3));
-    strategy->onUpdate(building, building);
+    strategy->onUpdate(CompRendering(), building);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -220,7 +223,8 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_SingleBuildingAtLeftTopCorner)
     // Assert
     EXPECT_EQ(order.size(), 1);
     EXPECT_EQ(order[0]->entityID, building.entityID);
-    EXPECT_EQ(order[0]->positionInFeet.toTile(), Tile(2, 2));
+    // Renderer use building center as the position, but not the simulator side bottom corner
+    EXPECT_EQ(order[0]->positionInFeet.toTile(), Tile(1, 1));
 }
 
 /*
@@ -254,7 +258,7 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_SingleBuildingAtRightTopCorner)
 {
     // Arrange
     auto& building = createBuilding(Tile(9, 3), Size(4, 4));
-    strategy->onUpdate(building, building);
+    strategy->onUpdate(CompRendering(), building);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -262,7 +266,7 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_SingleBuildingAtRightTopCorner)
     // Assert
     EXPECT_EQ(order.size(), 1);
     EXPECT_EQ(order[0]->entityID, building.entityID);
-    EXPECT_EQ(order[0]->positionInFeet.toTile(), Tile(9, 3));
+    EXPECT_EQ(order[0]->positionInFeet.toTile(), Tile(8, 2));
 }
 
 /*
@@ -296,7 +300,7 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_SingleBuildingAtLeftBottomCorner)
 {
     // Arrange
     auto& building = createBuilding(Tile(1, 9), Size(2, 2));
-    strategy->onUpdate(building, building);
+    strategy->onUpdate(CompRendering(), building);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -338,7 +342,7 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_SingleBuildingAtRightBottomCorner)
 {
     // Arrange
     auto& building = createBuilding(Tile(9, 9), Size(2, 2));
-    strategy->onUpdate(building, building);
+    strategy->onUpdate(CompRendering(), building);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -380,7 +384,7 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_SingleBuildingSingleTile)
 {
     // Arrange
     auto& building = createBuilding(Tile(4, 4), Size(1, 1));
-    strategy->onUpdate(building, building);
+    strategy->onUpdate(CompRendering(), building);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -432,15 +436,15 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_AllSingleTileBuildings)
     auto& b8 = createBuilding(Tile(3, 3), Size(1, 1));
     auto& b9 = createBuilding(Tile(5, 3), Size(1, 1));
 
-    strategy->onUpdate(b1, b1);
-    strategy->onUpdate(b2, b2);
-    strategy->onUpdate(b3, b3);
-    strategy->onUpdate(b4, b4);
-    strategy->onUpdate(b5, b5);
-    strategy->onUpdate(b6, b6);
-    strategy->onUpdate(b7, b7);
-    strategy->onUpdate(b8, b8);
-    strategy->onUpdate(b9, b9);
+    strategy->onUpdate(CompRendering(), b1);
+    strategy->onUpdate(CompRendering(), b2);
+    strategy->onUpdate(CompRendering(), b3);
+    strategy->onUpdate(CompRendering(), b4);
+    strategy->onUpdate(CompRendering(), b5);
+    strategy->onUpdate(CompRendering(), b6);
+    strategy->onUpdate(CompRendering(), b7);
+    strategy->onUpdate(CompRendering(), b8);
+    strategy->onUpdate(CompRendering(), b9);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -489,8 +493,8 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_SingleBuildingWithUnitAtLeftSide)
     // Arrange
     auto& building = createBuilding(Tile(5, 4), Size(2, 2));
     auto& unit = createUnit(Tile(3, 4).centerInFeet());
-    strategy->onUpdate(building, building);
-    strategy->onUpdate(unit, unit);
+    strategy->onUpdate(CompRendering(), building);
+    strategy->onUpdate(CompRendering(), unit);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -535,8 +539,8 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_SingleBuildingWithUnitAtRightSide)
     // Arrange
     auto& building = createBuilding(Tile(5, 4), Size(2, 2));
     auto& unit = createUnit(Tile(6, 4).centerInFeet());
-    strategy->onUpdate(building, building);
-    strategy->onUpdate(unit, unit);
+    strategy->onUpdate(CompRendering(), building);
+    strategy->onUpdate(CompRendering(), unit);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -581,8 +585,8 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_SingleBuildingWithUnitAtTopSide)
     // Arrange
     auto& building = createBuilding(Tile(5, 4), Size(2, 2));
     auto& unit = createUnit(Tile(5, 2).centerInFeet());
-    strategy->onUpdate(building, building);
-    strategy->onUpdate(unit, unit);
+    strategy->onUpdate(CompRendering(), building);
+    strategy->onUpdate(CompRendering(), unit);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -626,8 +630,8 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_SingleBuildingWithUnitAtBottomSide)
     // Arrange
     auto& building = createBuilding(Tile(5, 4), Size(2, 2));
     auto& unit = createUnit(Tile(5, 5).centerInFeet());
-    strategy->onUpdate(building, building);
-    strategy->onUpdate(unit, unit);
+    strategy->onUpdate(CompRendering(), building);
+    strategy->onUpdate(CompRendering(), unit);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -671,8 +675,8 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_TwoConsecutiveBuildingsAlongXAxis)
     // Arrange
     auto& b1 = createBuilding(Tile(3, 3), Size(2, 2));
     auto& b2 = createBuilding(Tile(5, 3), Size(2, 2));
-    strategy->onUpdate(b1, b1);
-    strategy->onUpdate(b2, b2);
+    strategy->onUpdate(CompRendering(), b1);
+    strategy->onUpdate(CompRendering(), b2);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -716,8 +720,8 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_TwoConsecutiveBuildingsAlongYAxis)
     // Arrange
     auto& b1 = createBuilding(Tile(3, 3), Size(2, 2));
     auto& b2 = createBuilding(Tile(3, 5), Size(2, 2));
-    strategy->onUpdate(b1, b1);
-    strategy->onUpdate(b2, b2);
+    strategy->onUpdate(CompRendering(), b1);
+    strategy->onUpdate(CompRendering(), b2);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -762,9 +766,9 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_MultipleNearbyBuildings)
     auto& b1 = createBuilding(Tile(7, 3), Size(3, 3));
     auto& b2 = createBuilding(Tile(3, 5), Size(2, 3));
     auto& b3 = createBuilding(Tile(0, 6), Size(1, 2));
-    strategy->onUpdate(b1, b1);
-    strategy->onUpdate(b2, b2);
-    strategy->onUpdate(b3, b3);
+    strategy->onUpdate(CompRendering(), b1);
+    strategy->onUpdate(CompRendering(), b2);
+    strategy->onUpdate(CompRendering(), b3);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -810,8 +814,8 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_OneHugeBuildingWithTinyBuilding)
     // Arrange
     auto& b1 = createBuilding(Tile(6, 6), Size(3, 3));
     auto& b2 = createBuilding(Tile(3, 5), Size(1, 1));
-    strategy->onUpdate(b1, b1);
-    strategy->onUpdate(b2, b2);
+    strategy->onUpdate(CompRendering(), b1);
+    strategy->onUpdate(CompRendering(), b2);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -854,7 +858,7 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_IrregularSizeBuilding)
 {
     // Arrange
     auto& b1 = createBuilding(Tile(4, 1), Size(4, 1));
-    strategy->onUpdate(b1, b1);
+    strategy->onUpdate(CompRendering(), b1);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -898,8 +902,8 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_MultipleUnitsSameTile)
     // Arrange
     auto& u = createUnit(Tile(1, 1).centerInFeet() - Feet(50, 50));
     auto& v = createUnit(Tile(1, 1).centerInFeet());
-    strategy->onUpdate(v, v); // Adding south unit first to break the adding order
-    strategy->onUpdate(u, u);
+    strategy->onUpdate(CompRendering(), v); // Adding south unit first to break the adding order
+    strategy->onUpdate(CompRendering(), u);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -943,8 +947,8 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_MultipleUnitsDifferentTile)
     // Arrange
     auto& u = createUnit(Tile(1, 1).centerInFeet());
     auto& v = createUnit(Tile(2, 1).centerInFeet());
-    strategy->onUpdate(v, v); // Adding east unit first to break the adding order
-    strategy->onUpdate(u, u);
+    strategy->onUpdate(CompRendering(), v); // Adding east unit first to break the adding order
+    strategy->onUpdate(CompRendering(), u);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -961,8 +965,8 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_MovingUnit)
     // Arrange
     auto& u = createUnit(Tile(1, 1).centerInFeet());
     auto& v = createUnit(Tile(2, 1).centerInFeet());
-    strategy->onUpdate(v, v); // Adding east unit first to break the adding order
-    strategy->onUpdate(u, u);
+    strategy->onUpdate(CompRendering(), v); // Adding east unit first to break the adding order
+    strategy->onUpdate(CompRendering(), u);
 
     CompRendering uBefore = u;
 
@@ -990,9 +994,9 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_SkippingDisabledOrDestroyed)
     auto& b3 = createBuilding(Tile(5, 5), Size(1, 1));
     b3.isEnabled = false;
 
-    strategy->onUpdate(b1, b1);
-    strategy->onUpdate(b2, b2);
-    strategy->onUpdate(b3, b3);
+    strategy->onUpdate(CompRendering(), b1);
+    strategy->onUpdate(CompRendering(), b2);
+    strategy->onUpdate(CompRendering(), b3);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -1006,19 +1010,19 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_HandleUIItems)
 {
     // Arrange
     auto& building = createBuilding(Tile(6, 6), Size(1, 1));
-    strategy->onUpdate(building, building);
+    strategy->onUpdate(CompRendering(), building);
 
     auto& ui1 = createEntity(Feet(), Size());
     ui1.layer = GraphicLayer::UI;
     ui1.positionInFeet = Feet::null;
     ui1.positionInScreenUnits = Vec2(0, 100);
-    strategy->onUpdate(ui1, ui1);
+    strategy->onUpdate(CompRendering(), ui1);
 
     auto& ui2 = createEntity(Feet(), Size());
     ui2.layer = GraphicLayer::UI;
     ui2.positionInFeet = Feet::null;
     ui2.positionInScreenUnits = Vec2(0, 50);
-    strategy->onUpdate(ui2, ui2);
+    strategy->onUpdate(CompRendering(), ui2);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -1037,14 +1041,14 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_MovingUIElements)
     ui1.layer = GraphicLayer::UI;
     ui1.positionInFeet = Feet::null;
     ui1.positionInScreenUnits = Vec2(0, 100);
-    strategy->onUpdate(ui1, ui1);
+    strategy->onUpdate(CompRendering(), ui1);
     CompRendering ui1Before = ui1;
 
     auto& ui2 = createEntity(Feet(), Size());
     ui2.layer = GraphicLayer::UI;
     ui2.positionInFeet = Feet::null;
     ui2.positionInScreenUnits = Vec2(0, 50);
-    strategy->onUpdate(ui2, ui2);
+    strategy->onUpdate(CompRendering(), ui2);
 
     // ui1 has moved up
     ui1.positionInScreenUnits = Vec2(0, 25);
@@ -1105,13 +1109,13 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_BuildingOnGroundTile)
             tile.srcRect.w = 100;
             tile.srcRect.h = 100;
 
-            strategy->onUpdate(tile, tile);
+            strategy->onUpdate(CompRendering(), tile);
         }
     }
 
     auto& building = createBuilding(Tile(2, 2), Size(2, 2));
     building.entityID = entityId++;
-    strategy->onUpdate(building, building);
+    strategy->onUpdate(CompRendering(), building);
 
     // Act
     auto order = strategy->zOrder(*coordinates);
@@ -1178,7 +1182,7 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_AllTilesButLimitedViewport)
             tile.srcRect.w = 100;
             tile.srcRect.h = 100;
 
-            strategy->onUpdate(tile, tile);
+            strategy->onUpdate(CompRendering(), tile);
         }
     }
 

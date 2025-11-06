@@ -153,6 +153,8 @@ void BuildingManager::updateInProgressConstructions()
 
             if (building.constructionProgress >= 100)
             {
+                spdlog::debug("Building constructed at {}",
+                              transform.position.toTile().toString());
                 onCompleteBuilding(entity, building, transform, player);
                 info.variation = 0;
 
@@ -165,6 +167,8 @@ void BuildingManager::updateInProgressConstructions()
 
             if (building.constructionProgress > 1 && building.isInStaticMap == false)
             {
+                spdlog::debug("Building constructing at {}",
+                              transform.position.toTile().toString());
                 auto& gameMap =
                     ServiceRegistry::getInstance().getService<StateManager>()->gameMap();
 

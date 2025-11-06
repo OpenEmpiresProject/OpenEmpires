@@ -6,6 +6,7 @@
 
 #include <unordered_map>
 #include <queue>
+#include "Flat2DArray.h"
 
 namespace core
 {
@@ -35,13 +36,13 @@ public:
     TileMap m_gameMap;
     std::vector<CompRendering*> m_objectsToRenderByLayer[g_graphicLayersOrder.size()];
     std::vector<CompRendering*> m_finalListToRender;
-    //std::multimap<int, CompRendering*> m_uiLayerGraphics;
     std::unordered_map<uint32_t, CompRendering*> m_uiGraphicsByEntity;
     std::vector<CompRendering*> m_uiZBuckets;
-    std::unordered_map<uint32_t, CompRendering*> m_renderingCompsByEntity;
+    std::vector<CompRendering*> m_renderingComponents;
     std::vector<WithinTileZBucket> m_bucketsByZ;
     int64_t m_currentBucketVersion = 0;
     Ref<Settings> m_settings;
+    Flat2DArray<uint64_t> m_alreadyProcessedTiles;
 };
 } // namespace core
 

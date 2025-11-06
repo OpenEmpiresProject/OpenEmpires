@@ -87,10 +87,10 @@ void DemoWorldCreator::loadEntities()
         auto stoneType = typeRegistry->getEntityType("stone");
         auto goldType = typeRegistry->getEntityType("gold");
 
-        generateMap(stateMan->gameMap());
-        createStoneOrGoldCluster(stoneType, stateMan->gameMap(), 30, 30, 4);
-        createStoneOrGoldCluster(goldType, stateMan->gameMap(), 20, 30, 4);
-        createVillager(player2, Tile(25, 25));
+        //generateMap(stateMan->gameMap());
+        //createStoneOrGoldCluster(stoneType, stateMan->gameMap(), 30, 30, 4);
+        //createStoneOrGoldCluster(goldType, stateMan->gameMap(), 20, 30, 4);
+        //createVillager(player2, Tile(25, 25));
         createVillager(player, Tile(20, 20));
     }
 

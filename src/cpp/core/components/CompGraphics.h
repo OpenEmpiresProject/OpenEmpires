@@ -65,7 +65,7 @@ class CompGraphics : public GraphicsID
 {
   public:
     uint32_t entityID = entt::null;
-    Feet positionInFeet;
+    Feet positionInFeet = Feet::null;
     Vec2 positionInScreenUnits;
     std::vector<DebugOverlay> debugOverlays;
     std::vector<GraphicAddon> addons;

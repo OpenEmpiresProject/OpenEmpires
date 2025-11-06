@@ -251,11 +251,6 @@ void TileMap::init(uint32_t width, uint32_t height)
     }
 }
 
-void TileMap::addStaticEntity(uint32_t entity, const Tile& pos, const Size& landSize)
-{
-    addEntity(MapLayerType::STATIC, pos, entity, landSize);
-}
-
 bool TileMap::isValidPos(const Tile& pos) const
 {
     return pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height;

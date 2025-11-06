@@ -84,7 +84,6 @@ struct TileMap
      */
     void addEntity(MapLayerType layerType, const Tile& pos, uint32_t entity);
     void addEntity(MapLayerType layerType, const Tile& pos, uint32_t entity, const Size& landSize);
-    void addStaticEntity(uint32_t entity, const Tile& pos, const Size& landSize);
 
     void removeStaticEntity(const Tile& pos, uint32_t entity);
     void removeEntity(MapLayerType layerType, const Tile& pos, uint32_t entity);

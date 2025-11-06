@@ -213,9 +213,6 @@ class RendererImpl
     Vec2 m_selectionEndPosScreenUnits;
     bool m_isSelecting = false;
 
-    std::list<CompRendering*> m_subRenderingComponents;
-    std::unordered_map<uint32_t, std::list<CompRendering*>> m_subRenderingByEntityId;
-
     StatsCounter<uint64_t> m_frameTime;
     StatsCounter<uint64_t> m_waitTime;
 
@@ -534,32 +531,35 @@ void RendererImpl::updateRenderingComponents()
     for (const auto& instruction : frameData)
     {
         auto& rc = stateMan->getComponent<CompRendering>(instruction->entityID);
-        CompRendering currentState = rc;
-        static_cast<CompGraphics&>(rc) = *instruction;
-        rc.additionalZOffset = 0;
-
-        // Graphic addons on this entity might draw below (screen's Y) the entity. So we need to
-        // consider the overall bottom most position as the Z value. Eg: Unit's selection
-        // ellipse should draw on top of the below tile
-        for (auto& addon : rc.addons)
+        
+        if (m_graphicsRegistry.hasTexture(*instruction))
         {
-            switch (addon.type)
+            CompRendering beforeUpdate = rc;
+            static_cast<CompGraphics&>(rc) = *instruction;
+
+            rc.additionalZOffset = 0;
+
+            // Graphic addons on this entity might draw below (screen's Y) the entity. So we need to
+            // consider the overall bottom most position as the Z value. Eg: Unit's selection
+            // ellipse should draw on top of the below tile
+            for (auto& addon : rc.addons)
             {
-            case GraphicAddon::Type::ISO_CIRCLE:
-                rc.additionalZOffset = Constants::FEET_PER_TILE + 1;
-                break;
+                switch (addon.type)
+                {
+                case GraphicAddon::Type::ISO_CIRCLE:
+                    rc.additionalZOffset = Constants::FEET_PER_TILE + 1;
+                    break;
+                }
             }
-        }
 
-        if (m_graphicsRegistry.hasTexture(rc))
-        {
             rc.updateTextureDetails(m_graphicsRegistry);
-            m_zOrderStrategy->onUpdate(currentState, rc);
+            m_zOrderStrategy->onUpdate(beforeUpdate, rc);
             ObjectPool<CompGraphics>::release(instruction);
         }
         else
         {
-            idsNeedToLoad.push_back(rc);
+            GraphicsID idToLoad = *instruction; //Slicing
+            idsNeedToLoad.push_back(idToLoad);
             lazyLoadedInstructions.push_back(instruction);
         }
     }
@@ -573,12 +573,26 @@ void RendererImpl::updateRenderingComponents()
         for (auto& instruction : lazyLoadedInstructions)
         {
             auto& rc = stateMan->getComponent<CompRendering>(instruction->entityID);
-            CompRendering currentState = rc;
+            CompRendering beforeUpdate = rc;
 
             static_cast<CompGraphics&>(rc) = *instruction;
+            rc.additionalZOffset = 0;
+
+            // Graphic addons on this entity might draw below (screen's Y) the entity. So we need to
+            // consider the overall bottom most position as the Z value. Eg: Unit's selection
+            // ellipse should draw on top of the below tile
+            for (auto& addon : rc.addons)
+            {
+                switch (addon.type)
+                {
+                case GraphicAddon::Type::ISO_CIRCLE:
+                    rc.additionalZOffset = Constants::FEET_PER_TILE + 1;
+                    break;
+                }
+            }
             rc.updateTextureDetails(m_graphicsRegistry);
 
-            m_zOrderStrategy->onUpdate(currentState, rc);
+            m_zOrderStrategy->onUpdate(beforeUpdate, rc);
             ObjectPool<CompGraphics>::release(instruction);
         }
     }
@@ -638,6 +652,10 @@ void RendererImpl::renderGameEntities()
 
     for (auto& rc : objectsToRender)
     {
+        if (rc->entityType == 12)
+        {
+            int ii = 0;
+        }
         Vec2 screenPos = rc->positionInScreenUnits - rc->anchor;
 
         if (rc->positionInFeet.isNull() == false)
