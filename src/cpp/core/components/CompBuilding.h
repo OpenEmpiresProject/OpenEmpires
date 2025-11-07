@@ -79,6 +79,24 @@ class CompBuilding
         Tile tile = position.toTile() + Tile(1, 1);
         return tile.toFeet() - 10;
     }
+
+    Feet getBuildingCenter(const Feet& anchor) const
+    {
+        const float halfWidth = (float) size.value().width / 2;
+        const float halfHeight = (float) size.value().height / 2;
+
+        return anchor -
+               Feet(halfWidth * Constants::FEET_PER_TILE, halfHeight * Constants::FEET_PER_TILE);
+    }
+
+    Feet getBuildingAnchor(const Feet& center) const
+    {
+        const float halfWidth = (float) size.value().width / 2;
+        const float halfHeight = (float) size.value().height / 2;
+
+        return center +
+               Feet(halfWidth * Constants::FEET_PER_TILE, halfHeight * Constants::FEET_PER_TILE);
+    }
 };
 
 } // namespace core

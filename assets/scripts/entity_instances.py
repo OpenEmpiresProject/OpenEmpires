@@ -164,7 +164,7 @@ all_buildings: List[Building] = [
         garrisonable_unit_types = [UnitType.VILLAGER],
         garrison_capacity = 10,
         graphics={"default": CompositeGraphic(
-            anchor=Point(x=187, y=290),
+            anchor=Point(x=187, y=195),
             parts=[
                 Graphic(slp_id=900), 
                 Graphic(slp_id=3601, anchor=Point(x=153,y=-20)), 

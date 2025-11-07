@@ -30,6 +30,7 @@ using Vec2 = Vec2Base<float, GenericTag>;
 
 enum class WorldSizeType
 {
+    TEST,
     DEMO,
     TINY,
     MEDIUM,
@@ -155,9 +156,18 @@ enum class RevealStatus : uint8_t
     VISIBLE
 };
 
-template <typename T> inline int toInt(const T& t)
+template <typename T> constexpr int toInt(const T& t) noexcept
 {
     return static_cast<int>(t);
+}
+
+template <typename E, E Begin, E End> constexpr auto make_enum_array()
+{
+    constexpr auto count = static_cast<size_t>(End) - static_cast<size_t>(Begin);
+    std::array<E, count> arr{};
+    for (size_t i = 0; i < count; ++i)
+        arr[i] = static_cast<E>(static_cast<size_t>(Begin) + i);
+    return arr;
 }
 
 } // namespace core

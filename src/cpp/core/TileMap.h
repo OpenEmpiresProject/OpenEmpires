@@ -2,6 +2,7 @@
 #define TILEMAP_H
 
 #include "debug.h"
+#include "utils/Size.h"
 #include "utils/Types.h"
 
 #include <algorithm>
@@ -50,6 +51,8 @@ struct TileMap
     MapCell** getStaticMap();
     MapCell** getGroundMap();
 
+    bool isValidPos(const Tile& pos) const;
+
     /**
      * @brief Checks if a cell at the specified grid position is occupied in the given map layer.
      *
@@ -80,9 +83,14 @@ struct TileMap
      * @param entity The unique identifier of the entity to add.
      */
     void addEntity(MapLayerType layerType, const Tile& pos, uint32_t entity);
+    void addEntity(MapLayerType layerType, const Tile& pos, uint32_t entity, const Size& landSize);
 
     void removeStaticEntity(const Tile& pos, uint32_t entity);
     void removeEntity(MapLayerType layerType, const Tile& pos, uint32_t entity);
+    void removeEntity(MapLayerType layerType,
+                      const Tile& pos,
+                      uint32_t entity,
+                      const Size& landSize);
     void removeAllEntities(MapLayerType layerType, const Tile& pos);
 
     /**
