@@ -1,6 +1,6 @@
-# 🧩 Z-Ordering in Renderer
+# 🧩 Slicing based Z-Ordering in Renderer [Deprecated]
 
-The `Renderer` does not handle Z-ordering on its own. Instead, it delegates this responsibility to implementations of a common interface, `ZOrderStrategyBase`. The selected strategy determines the correct rendering order of all components, and the `Renderer` renders them strictly in the order returned by the strategy. This design allows for maximum flexibility and easy improvements or substitutions to the Z-ordering algorithm in the future.
+The `Renderer` does not handle Z-ordering on its own. Instead, it delegates this responsibility to implementations of a common interface, `ZOrderStrategy`. The selected strategy determines the correct rendering order of all components, and the `Renderer` renders them strictly in the order returned by the strategy. This design allows for maximum flexibility and easy improvements or substitutions to the Z-ordering algorithm in the future.
 
 Currently, the only implementation in use is **`ZOrderStrategyWithSlicing`**.
 

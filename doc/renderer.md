@@ -27,7 +27,7 @@ The `Renderer`'s primary duties include:
 1. Game state to graphic instruction translation: Done by `GraphicInstructor`
 2. Graphics loadup: Done by `GraphicsLoader` initerface where currently implemented to use DRS files.
 3. Graphics storage and lookup: Done by `GraphicsRegistry` (which is populated by the `GraphicsLoader`)
-4. Z-Ordering: Done by `ZOrderStrategy` where currently implemented to use z=x+y sort of strategy with slicing large textures.
+4. Z-Ordering: Done by `ZOrderStrategy` where currently implemented to use a tile based sorting strategy.
 
 And it is designed to prevent leaking any specific image storage implementations (such as DRS files) to the engine/core.
 ![](images/renderer.png)
@@ -78,13 +78,12 @@ Each frame, the `Renderer` executes a series of steps to draw the world:
 
 7.  **Present**: Swaps the SDL back-buffer to the screen.
 
-## Z-Ordering and Slicing
+## Z-Ordering
 
-A critical responsibility of the `Renderer` is to draw entities in the correct order to create a convincing illusion of depth. This is delegated to a `ZOrderStrategyBase` implementation.
+A critical responsibility of the `Renderer` is to draw entities in the correct order to create a convincing illusion of depth. This is delegated to a `ZOrderStrategy` implementation.
 
-The current strategy, `ZOrderStrategyWithSlicing`, addresses the challenges of Z-ordering in an isometric view, especially with large sprites that span multiple tiles. It works by "slicing" wide textures into 1-tile-wide vertical strips. Each slice is treated as an independent renderable object with its own Z-value. This allows units to correctly appear in front of or behind different parts of a large building.
-
-> For a more detailed explanation, see [Z-Ordering](./zordering.md).
+The current strategy, `ZOrderStrategyByTiles`, addresses the challenges of Z-ordering in an isometric view, especially with large sprites that span multiple tiles.
+> For a more detailed explanation, see [Tile Based Z-Ordering](./zordering-by-tiles.md).
 
 
 ## Font Rendering
