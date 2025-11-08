@@ -83,14 +83,11 @@ struct TileMap
      * @param entity The unique identifier of the entity to add.
      */
     void addEntity(MapLayerType layerType, const Tile& pos, uint32_t entity);
-    void addEntity(MapLayerType layerType, const Tile& pos, uint32_t entity, const Size& landSize);
+    void addEntity(MapLayerType layerType, const LandArea& landArea, uint32_t entity);
 
     void removeStaticEntity(const Tile& pos, uint32_t entity);
     void removeEntity(MapLayerType layerType, const Tile& pos, uint32_t entity);
-    void removeEntity(MapLayerType layerType,
-                      const Tile& pos,
-                      uint32_t entity,
-                      const Size& landSize);
+    void removeEntity(MapLayerType layerType, const LandArea& landArea, uint32_t entity);
     void removeAllEntities(MapLayerType layerType, const Tile& pos);
 
     /**

@@ -118,12 +118,9 @@ StateManager::TileMapQueryResult StateManager::whatIsAt(const Vec2& screenPos)
     return result;
 }
 
-bool StateManager::canPlaceBuildingAt(const CompBuilding& building,
-                                      const Feet& feet,
-                                      bool& outOfMap)
+bool StateManager::canPlaceBuildingAt(const CompBuilding& building, bool& outOfMap)
 {
     auto settings = ServiceRegistry::getInstance().getService<Settings>();
-    auto tile = feet.toTile();
     auto staticMap = m_gameMap.getMap(MapLayerType::STATIC);
 
     auto isValidTile = [&](const Tile& tile)
@@ -134,19 +131,16 @@ bool StateManager::canPlaceBuildingAt(const CompBuilding& building,
 
     outOfMap = false;
 
-    for (int i = 0; i < building.size.value().width; i++)
+    for (const auto& tile : building.landArea.tiles)
     {
-        for (int j = 0; j < building.size.value().height; j++)
+        if (!isValidTile(tile))
         {
-            if (!isValidTile({tile.x - i, tile.y - j}))
-            {
-                outOfMap = true;
-                return false;
-            }
-            if (staticMap[tile.x - i][tile.y - j].isOccupied())
-            {
-                return false;
-            }
+            outOfMap = true;
+            return false;
+        }
+        if (staticMap[tile.x][tile.y].isOccupied())
+        {
+            return false;
         }
     }
     return true;

@@ -139,7 +139,7 @@ struct Event
         BUILDING_PLACEMENT_STARTED, // Use BuildingPlacementData. Sent only by active player
         BUILDING_PLACEMENT_ENDED,   // Use BuildingPlacementData. Sent only by active player
         BUILDING_REQUESTED,         // Use BuildingPlacementData
-        BUILDING_APPROVED,          // Use BuildingPlacementData
+        BUILDING_CREATED,           // Use BuildingPlacementData
         COMMAND_REQUEST,
         UNGARRISON_REQUEST,
         GARRISON_REQUEST,

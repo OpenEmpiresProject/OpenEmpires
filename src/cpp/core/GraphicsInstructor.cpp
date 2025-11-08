@@ -142,8 +142,6 @@ void GraphicsInstructor::updateGraphicComponents()
             else
                 gc.shading = Color::RED;
 
-            gc.landSize = building.size;
-
             if (building.isConstructed() and
                 building.orientation != BuildingOrientation::DEFAULT and
                 building.framesByOrientation.value().empty() == false)
@@ -152,6 +150,7 @@ void GraphicsInstructor::updateGraphicComponents()
             }
 
             gc.positionInFeet = building.getBuildingCenter(gc.positionInFeet);
+            gc.landArea = building.landArea;
         }
 
         if (state->hasComponent<CompUIElement>(entity))

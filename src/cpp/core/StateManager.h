@@ -85,7 +85,7 @@ class StateManager
 
     TileMapQueryResult whatIsAt(const Vec2& screenPos);
 
-    bool canPlaceBuildingAt(const CompBuilding& building, const Feet& feet, bool& outOfMap);
+    bool canPlaceBuildingAt(const CompBuilding& building, bool& outOfMap);
 
   private:
     TileMap m_gameMap;

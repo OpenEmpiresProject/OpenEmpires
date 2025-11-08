@@ -59,15 +59,6 @@ void pushBackGraphicToLayer(std::vector<CompRendering*>& layerObjects,
     layerObjects.emplace_back(graphic);
 }
 
-static Feet getBuildingAnchor(const Feet& center, const Size& size)
-{
-    const float halfWidth = (float) size.width / 2;
-    const float halfHeight = (float) size.height / 2;
-
-    return center +
-           Feet(halfWidth * Constants::FEET_PER_TILE, halfHeight * Constants::FEET_PER_TILE) - 10;
-}
-
 constexpr auto g_allMapLayers =
     make_enum_array<MapLayerType, MapLayerType::GROUND, MapLayerType::MAX_LAYERS>();
 
@@ -89,8 +80,8 @@ ZOrderStrategyByTiles::ZOrderStrategyByTiles()
     m_bucketsByZ.resize(Constants::FEET_PER_TILE * 3);
     m_uiZBuckets.resize(m_settings->getWindowDimensions().height);
     m_renderingComponents.resize(Constants::MAX_ENTITIES);
-    m_alreadyProcessedTiles = Flat2DArray<uint64_t>(m_settings->getWindowDimensions().width,
-                                                    m_settings->getWindowDimensions().height);
+    m_alreadyProcessedTiles = Flat2DArray<uint64_t>(m_settings->getWorldSizeInTiles().width,
+                                                    m_settings->getWorldSizeInTiles().height);
 }
 
 ZOrderStrategyByTiles::~ZOrderStrategyByTiles()
@@ -107,28 +98,23 @@ void ZOrderStrategyByTiles::onUpdate(const CompRendering& current, CompRendering
     if (not update.positionInFeet.isNull())
     {
         const auto& layer = getMapLayerType(update.layer);
-        Size size = update.isBig() ? update.landSize : Size(1, 1);
+        LandArea currentLand =
+            current.isBig() ? current.landArea : LandArea{{current.positionInFeet.toTile()}};
+        LandArea updateLand =
+            update.isBig() ? update.landArea : LandArea{{update.positionInFeet.toTile()}};
         const bool positionChanged =
             current.positionInFeet.toTile() != update.positionInFeet.toTile();
-        Feet updatePosition = update.positionInFeet;
-        Feet currentPosition = current.positionInFeet;
-
-        if (update.isBig())
-        {
-            updatePosition = getBuildingAnchor(update.positionInFeet, size);   // Bottom tile
-            currentPosition = getBuildingAnchor(current.positionInFeet, size); // Bottom tile
-        }
 
         if (update.isDestroyed or not update.isEnabled)
         {
-            m_gameMap.removeEntity(layer, currentPosition.toTile(), current.entityID, size);
+            m_gameMap.removeEntity(layer, currentLand, current.entityID);
         }
         else if (positionChanged)
         {
             if (current.entityID != entt::null)
-                m_gameMap.removeEntity(layer, currentPosition.toTile(), current.entityID, size);
+                m_gameMap.removeEntity(layer, currentLand, current.entityID);
 
-            m_gameMap.addEntity(layer, updatePosition.toTile(), update.entityID, size);
+            m_gameMap.addEntity(layer, updateLand, update.entityID);
         }
     }
     else
@@ -263,13 +249,10 @@ void ZOrderStrategyByTiles::processLayer(const MapLayerType& layer, const Coordi
                         // Taking left bottom (logically) corner as anchor and marking rest of
                         // the land size as already considered
                         //
-                        for (uint32_t i = 0; i < rc->landSize.width; i++)
+                        for (const auto& tile : rc->landArea.tiles)
                         {
-                            for (uint32_t j = 0; j < rc->landSize.height; j++)
-                            {
-                                m_alreadyProcessedTiles.at((uint64_t) x + i, (uint64_t) y - j) =
-                                    iteration;
-                            }
+                            m_alreadyProcessedTiles.at((uint64_t) tile.x, (uint64_t) tile.y) =
+                                iteration;
                         }
 
                         if (not pendingEntities.empty())

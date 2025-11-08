@@ -1,6 +1,7 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include "Tile.h"
 #include "Vec2Base.h"
 #include "utils/Constants.h"
 
@@ -9,6 +10,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #define DEVELOPMENT
 
@@ -169,6 +171,11 @@ template <typename E, E Begin, E End> constexpr auto make_enum_array()
         arr[i] = static_cast<E>(static_cast<size_t>(Begin) + i);
     return arr;
 }
+
+struct LandArea
+{
+    std::vector<Tile> tiles;
+};
 
 } // namespace core
 

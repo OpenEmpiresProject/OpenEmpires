@@ -98,17 +98,11 @@ void TileMap::addEntity(MapLayerType layerType, const Tile& pos, uint32_t entity
     }
 }
 
-void TileMap::addEntity(MapLayerType layerType,
-                        const Tile& pos,
-                        uint32_t entity,
-                        const Size& landSize)
+void TileMap::addEntity(MapLayerType layerType, const LandArea& landArea, uint32_t entity)
 {
-    for (size_t i = 0; i < landSize.width; i++)
+    for (const auto& tile : landArea.tiles)
     {
-        for (size_t j = 0; j < landSize.height; j++)
-        {
-            addEntity(layerType, pos - Tile(i, j), entity);
-        }
+        addEntity(layerType, tile, entity);
     }
 }
 
@@ -144,17 +138,11 @@ void TileMap::removeEntity(MapLayerType layerType, const Tile& pos, uint32_t ent
     }
 }
 
-void TileMap::removeEntity(MapLayerType layerType,
-                           const Tile& pos,
-                           uint32_t entity,
-                           const Size& landSize)
+void TileMap::removeEntity(MapLayerType layerType, const LandArea& landArea, uint32_t entity)
 {
-    for (size_t i = 0; i < landSize.width; i++)
+    for (const auto& tile : landArea.tiles)
     {
-        for (size_t j = 0; j < landSize.height; j++)
-        {
-            removeEntity(layerType, pos - Tile(i, j), entity);
-        }
+        removeEntity(layerType, tile, entity);
     }
 }
 

@@ -32,7 +32,7 @@ PlayerController::PlayerController()
     registerCallback(Event::Type::KEY_UP, this, &PlayerController::onKeyUp);
     registerCallback(Event::Type::MOUSE_BTN_UP, this, &PlayerController::onMouseButtonUp);
     registerCallback(Event::Type::MOUSE_MOVE, this, &PlayerController::onMouseMove);
-    registerCallback(Event::Type::BUILDING_APPROVED, this, &PlayerController::onBuildingApproved);
+    registerCallback(Event::Type::BUILDING_CREATED, this, &PlayerController::onBuildingApproved);
     registerCallback(Event::Type::MOUSE_BTN_DOWN, this, &PlayerController::onMouseButtonDown);
     registerCallback(Event::Type::ENTITY_SELECTION, this, &PlayerController::onUnitSelection);
 }
@@ -320,11 +320,12 @@ BuildingPlacementData PlayerController::createBuildingPlacement(
                 entity);
 
     bool outOfMap = false;
-    building.validPlacement = m_stateMan->canPlaceBuildingAt(building, pos, outOfMap);
+    building.validPlacement = m_stateMan->canPlaceBuildingAt(building, outOfMap);
 
     if (!outOfMap)
     {
         transform.position = building.getTileSnappedPosition(pos);
+        building.updateLandArea(transform.position.toTile());
     }
     else
     {
@@ -409,11 +410,12 @@ void PlayerController::validateAndSnapBuildingToTile(BuildingPlacementData& plac
         m_stateMan->getComponents<CompTransform, CompDirty, CompBuilding>(placement.entity);
 
     bool outOfMap = false;
-    building.validPlacement = m_stateMan->canPlaceBuildingAt(building, pos, outOfMap);
+    building.validPlacement = m_stateMan->canPlaceBuildingAt(building, outOfMap);
 
     if (!outOfMap)
     {
         transform.position = building.getTileSnappedPosition(pos);
+        building.updateLandArea(transform.position.toTile());
     }
     placement.pos = transform.position;
     dirty.markDirty(placement.entity);

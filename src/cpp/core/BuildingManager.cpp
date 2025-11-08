@@ -41,8 +41,7 @@ void BuildingManager::onCompleteBuilding(uint32_t entity,
                                          const CompTransform& transform,
                                          const CompPlayer& player)
 {
-    player.player->getFogOfWar()->markAsExplored(transform.position.toTile().centerInFeet(),
-                                                 building.size, building.lineOfSight);
+    player.player->getFogOfWar()->markAsExplored(building.landArea, building.lineOfSight);
     player.player->addEntity(entity);
 }
 
@@ -51,7 +50,7 @@ void BuildingManager::onBuildingRequest(const Event& e)
     auto data = e.getData<BuildingPlacementData>();
     data.entity = createBuilding(data);
 
-    publishEvent(Event::Type::BUILDING_APPROVED, data);
+    publishEvent(Event::Type::BUILDING_CREATED, data);
 }
 
 uint32_t BuildingManager::createBuilding(const BuildingPlacementData& request)
@@ -69,6 +68,8 @@ uint32_t BuildingManager::createBuilding(const BuildingPlacementData& request)
 
     building.constructionProgress = 0;
     building.orientation = request.orientation;
+    building.updateLandArea(transform.position.toTile());
+
     info.entitySubType = building.constructionSiteEntitySubType;
     info.variation = building.getVariationByConstructionProgress();
     dirty.markDirty(entity);

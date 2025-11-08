@@ -47,19 +47,25 @@ class ZOrderStrategyByTilesTest : public ::testing::Test
         rc->positionInFeet = pos;
         rc->layer = GraphicLayer::ENTITIES;
         rc->entityID = nextEntityId++;
-        rc->landSize = landSize;
         rc->srcRect.w = 100;
         rc->srcRect.h = 100;
+
+        auto anchor = pos.toTile();
+
+        for (int x = 0; x < landSize.width; ++x)
+        {
+            for (int y = 0; y < landSize.height; ++y)
+            {
+                rc->landArea.tiles.emplace_back(anchor.x - x, anchor.y - y);
+            }
+        }
 
         return *rc;
     }
 
     CompRendering& createBuilding(const Tile& anchor, const Size& landSize)
     {
-        float dx = (float)landSize.width / 2 * Constants::FEET_PER_TILE;
-        float dy = (float) landSize.height / 2 * Constants::FEET_PER_TILE;
-        Tile center = anchor + Tile(1, 1);
-        return createEntity(center.toFeet() - Feet(dx, dy), landSize);
+        return createEntity(anchor.toFeet(), landSize);
     }
 
     CompRendering& createUnit(const Feet& pos)
@@ -223,8 +229,6 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_SingleBuildingAtLeftTopCorner)
     // Assert
     EXPECT_EQ(order.size(), 1);
     EXPECT_EQ(order[0]->entityID, building.entityID);
-    // Renderer use building center as the position, but not the simulator side bottom corner
-    EXPECT_EQ(order[0]->positionInFeet.toTile(), Tile(1, 1));
 }
 
 /*
@@ -266,7 +270,6 @@ TEST_F(ZOrderStrategyByTilesTest, zOrder_SingleBuildingAtRightTopCorner)
     // Assert
     EXPECT_EQ(order.size(), 1);
     EXPECT_EQ(order[0]->entityID, building.entityID);
-    EXPECT_EQ(order[0]->positionInFeet.toTile(), Tile(8, 2));
 }
 
 /*

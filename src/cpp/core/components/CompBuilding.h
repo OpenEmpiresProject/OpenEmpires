@@ -34,6 +34,7 @@ class CompBuilding
     uint32_t constructionSiteEntitySubType = 0;
     bool isInStaticMap = false;
     BuildingOrientation orientation = BuildingOrientation::DEFAULT;
+    LandArea landArea;
 
     bool isConstructed() const
     {
@@ -89,13 +90,17 @@ class CompBuilding
                Feet(halfWidth * Constants::FEET_PER_TILE, halfHeight * Constants::FEET_PER_TILE);
     }
 
-    Feet getBuildingAnchor(const Feet& center) const
+    void updateLandArea(const Tile& bottomRight)
     {
-        const float halfWidth = (float) size.value().width / 2;
-        const float halfHeight = (float) size.value().height / 2;
+        landArea.tiles.clear();
 
-        return center +
-               Feet(halfWidth * Constants::FEET_PER_TILE, halfHeight * Constants::FEET_PER_TILE);
+        for (int x = 0; x < size.value().width; ++x)
+        {
+            for (int y = 0; y < size.value().height; ++y)
+            {
+                landArea.tiles.emplace_back(bottomRight - Tile(x, y));
+            }
+        }
     }
 };
 

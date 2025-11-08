@@ -2,6 +2,7 @@
 #define COMPGRAPHICS_H
 
 #include "Color.h"
+#include "CompBuilding.h"
 #include "Feet.h"
 #include "GraphicAddon.h"
 #include "GraphicsRegistry.h" // For GraphicsID
@@ -70,11 +71,11 @@ class CompGraphics : public GraphicsID
     std::vector<DebugOverlay> debugOverlays;
     std::vector<GraphicAddon> addons;
     Color shading;
-    Size landSize{0, 0};
     bool isDestroyed = false;
     bool isEnabled = true;
     bool bypass = false;
     GraphicLayer layer = GraphicLayer::NONE;
+    LandArea landArea;
 
     CompGraphics()
     {
@@ -84,7 +85,7 @@ class CompGraphics : public GraphicsID
 
     bool isBig() const
     {
-        return landSize.width > 0 && landSize.height > 0;
+        return not landArea.tiles.empty();
     }
 };
 } // namespace core
