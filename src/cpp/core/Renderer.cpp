@@ -15,7 +15,6 @@
 #include "Version.h"
 #include "ZOrderStrategy.h"
 #include "ZOrderStrategyByTiles.h"
-#include "ZOrderStrategyWithSlicing.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
 #include "components/CompEntityInfo.h"
