@@ -12,7 +12,6 @@
 #include "EventLoop.h"
 #include "GameShortcutResolver.h"
 #include "GraphicsInstructor.h"
-#include "GraphicsLoaderFromImages.h"
 #include "GraphicsRegistry.h"
 #include "HUDUpdater.h"
 #include "LogLevelController.h"
