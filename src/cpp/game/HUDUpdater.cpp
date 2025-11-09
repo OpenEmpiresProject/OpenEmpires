@@ -61,6 +61,8 @@ void HUDUpdater::onUnitSelection(const Event& e)
 
 void HUDUpdater::updateProgressBar()
 {
+    m_creationInProgressGroup->setVisible(false);
+
     // It is not possible to display statuses of multiple buildings
     //
     if (m_currentSelection.selectedEntities.size() == 1)
@@ -127,7 +129,6 @@ void HUDUpdater::updateUIElementReferences()
 
 void HUDUpdater::updateFactoryUnitCreations(uint32_t entity)
 {
-    m_creationInProgressGroup->setVisible(false);
     m_creationQueueGroup->setVisible(false);
 
     if (auto factory = m_stateMan->tryGetComponent<CompUnitFactory>(entity))

@@ -78,7 +78,7 @@ ZOrderStrategyByTiles::ZOrderStrategyByTiles()
     }
 
     m_bucketsByZ.resize(Constants::FEET_PER_TILE * 3);
-    m_uiZBuckets.resize(m_settings->getWindowDimensions().height);
+    m_uiElements.resize(m_settings->getWindowDimensions().height);
     m_renderingComponents.resize(Constants::MAX_ENTITIES);
     m_alreadyProcessedTiles = Flat2DArray<uint64_t>(m_settings->getWorldSizeInTiles().width,
                                                     m_settings->getWorldSizeInTiles().height);
@@ -340,18 +340,23 @@ void ZOrderStrategyByTiles::processLayer(const MapLayerType& layer, const Coordi
 
 void ZOrderStrategyByTiles::processUILayer()
 {
-    std::fill(m_uiZBuckets.begin(), m_uiZBuckets.end(), nullptr);
+    m_uiElements.incrementVersion();
 
     for (auto& [_, graphic] : m_uiGraphicsByEntity)
     {
-        m_uiZBuckets[graphic->positionInScreenUnits.y] = graphic;
+        if (graphic->isDestroyed or not graphic->isEnabled)
+            continue;
+
+        m_uiElements.emplaceItem(graphic->positionInScreenUnits.y, graphic);
     }
 
-    for (auto sortedUIItem : m_uiZBuckets)
+    auto& uiLayer = m_objectsToRenderByLayer[toInt(GraphicLayer::UI)];
+
+    for (size_t i = 0; i < m_uiElements.getSize(); ++i)
     {
-        if (sortedUIItem != nullptr)
+        for (auto sortedUIItem : m_uiElements.getItems(i))
         {
-            m_objectsToRenderByLayer[toInt(GraphicLayer::UI)].emplace_back(sortedUIItem);
+            uiLayer.emplace_back(sortedUIItem);
         }
     }
 }
