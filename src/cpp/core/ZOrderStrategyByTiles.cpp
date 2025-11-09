@@ -116,6 +116,10 @@ void ZOrderStrategyByTiles::onUpdate(const CompRendering& current, CompRendering
 
             m_gameMap.addEntity(layer, updateLand, update.entityID);
         }
+        else
+        {
+            m_gameMap.addEntity(layer, updateLand, update.entityID);
+        }
     }
     else
     {

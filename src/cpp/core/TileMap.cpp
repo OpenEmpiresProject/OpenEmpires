@@ -14,17 +14,17 @@ bool MapCell::isOccupied() const
 
 void MapCell::addEntity(uint32_t entity)
 {
-    entities.push_back(entity);
+    entities.insert(entity);
 }
 
 uint32_t MapCell::getEntity() const
 {
-    return entities.front();
+    return *entities.begin();
 }
 
 void MapCell::removeEntity(uint32_t entity)
 {
-    entities.remove(entity);
+    entities.erase(entity);
 }
 
 void MapCell::removeAllEntities()
@@ -180,10 +180,10 @@ uint32_t TileMap::getEntity(MapLayerType layerType, const Tile& pos) const
     }
 }
 
-const std::list<uint32_t>& TileMap::getEntities(MapLayerType layerType, const Tile& pos) const
+const std::set<uint32_t>& TileMap::getEntities(MapLayerType layerType, const Tile& pos) const
 {
     auto layerTypeInt = toInt(layerType);
-    static const std::list<uint32_t> empty;
+    static const std::set<uint32_t> empty;
 
     if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height) [[likely]]
     {

@@ -34,6 +34,7 @@ class PlayerController : public EventHandler
     bool m_seriesConstructionAllowed = false;
     bool m_seriesConstructionInitiated = false;
     Tile m_firstBuildingPos = Tile::null;
+    Tile m_lastMouseTile = Tile::null;
 
     // Garrison related
     bool m_garrisonOperationInProgress = false;

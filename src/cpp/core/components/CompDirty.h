@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <set>
 
 namespace core
 {
@@ -13,11 +14,11 @@ class CompDirty
     // otherwise entt can't handle empty classes as components.
     int dummy = 0;
     // Track all dirty entities - for a frame - by their id
-    inline static std::vector<uint32_t> g_dirtyEntities;
+    inline static std::set<uint32_t> g_dirtyEntities;
 
     void markDirty(uint32_t entityId)
     {
-        g_dirtyEntities.push_back(entityId);
+        g_dirtyEntities.insert(entityId);
     }
 };
 

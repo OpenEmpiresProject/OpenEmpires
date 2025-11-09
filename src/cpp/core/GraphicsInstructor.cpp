@@ -29,7 +29,6 @@ GraphicsInstructor::GraphicsInstructor(ThreadSynchronizer<FrameData>& synchroniz
     : m_synchronizer(synchronizer),
       m_coordinates(ServiceRegistry::getInstance().getService<Coordinates>())
 {
-    CompDirty::g_dirtyEntities.reserve(10000);
     ObjectPool<CompGraphics>::reserve(1000);
 
     registerCallback(Event::Type::TICK, this, &GraphicsInstructor::onTick);

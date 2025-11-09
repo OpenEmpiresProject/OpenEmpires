@@ -238,6 +238,12 @@ void PlayerController::onMouseMove(const Event& e)
     m_currentMouseScreenPos = e.getData<MouseMoveData>().screenPos;
     auto feet = m_coordinates->screenUnitsToFeet(m_currentMouseScreenPos);
 
+    // All the remaining tasks are tile based, therefore, if the mouse hasn't moved
+    // out of the previous tile, then no need to continue
+    if (feet.toTile() == m_lastMouseTile)
+        return;
+    m_lastMouseTile = feet.toTile();
+
     if (m_seriesConstructionInitiated && m_currentBuildingPlacements.empty() == false)
     {
         // Create more building placements to join from the start tile to current instead of moving
@@ -320,7 +326,12 @@ BuildingPlacementData PlayerController::createBuildingPlacement(
                 entity);
 
     bool outOfMap = false;
-    building.validPlacement = m_stateMan->canPlaceBuildingAt(building, outOfMap);
+    // building position (hence landarea) will be updated later based on the result of following query.
+    // but to check whether building can be placed there, we need a building with updated landarea, hence
+    // creating a temporary building.
+    CompBuilding tempBuilding = building;
+    tempBuilding.updateLandArea(pos.toTile());
+    building.validPlacement = m_stateMan->canPlaceBuildingAt(tempBuilding, outOfMap);
 
     if (!outOfMap)
     {

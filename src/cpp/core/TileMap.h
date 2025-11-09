@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <entt/entity/registry.hpp>
 #include <list>
+#include <set>
 
 namespace core
 {
@@ -16,7 +17,7 @@ class Feet;
 
 struct MapCell
 {
-    std::list<uint32_t> entities; // List of entities occupying this cell
+    std::set<uint32_t> entities; // List of entities occupying this cell
 
     bool isOccupied() const;
     void addEntity(uint32_t entity);
@@ -103,7 +104,7 @@ struct TileMap
      */
     uint32_t getEntity(MapLayerType layerType, const Tile& pos) const;
 
-    const std::list<uint32_t>& getEntities(MapLayerType layerType, const Tile& pos) const;
+    const std::set<uint32_t>& getEntities(MapLayerType layerType, const Tile& pos) const;
     bool intersectsStaticObstacle(const Feet& start, const Feet& end) const;
 
     /**

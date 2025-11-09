@@ -4,7 +4,7 @@
 #include "Flat2DArray.h"
 #include "Rect.h"
 #include "TileMap.h"
-#include "VersionedBucketSorter.h"
+#include "VersionedBucketList.h"
 #include "ZOrderStrategy.h"
 
 #include <queue>
@@ -42,7 +42,7 @@ class ZOrderStrategyByTiles : public ZOrderStrategy
     std::vector<CompRendering*> m_objectsToRenderByLayer[g_graphicLayersOrder.size()];
     std::vector<CompRendering*> m_finalListToRender;
     std::unordered_map<uint32_t, CompRendering*> m_uiGraphicsByEntity;
-    VersionedBucketSorter<CompRendering*> m_uiElements;
+    VersionedBucketList<CompRendering*> m_uiElements;
     std::vector<CompRendering*> m_renderingComponents;
     std::vector<WithinTileZBucket> m_bucketsByZ;
     int64_t m_currentBucketVersion = 0;

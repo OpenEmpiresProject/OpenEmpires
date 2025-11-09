@@ -8,11 +8,11 @@
 namespace core
 {
 template<typename T>
-class VersionedBucketSorter
+class VersionedBucketList
 {
 public:
-    VersionedBucketSorter() = default;
-    VersionedBucketSorter(const size_t bucketsCount)
+    VersionedBucketList() = default;
+    VersionedBucketList(const size_t bucketsCount)
     {
         m_buckets.resize(bucketsCount);
     }

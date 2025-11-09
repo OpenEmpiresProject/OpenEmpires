@@ -1,4 +1,4 @@
-#include "VersionedBucketSorter.h"
+#include "VersionedBucketList.h"
 
 #include <cstdint>
 #include <gtest/gtest.h>
@@ -65,7 +65,7 @@ struct Emplaceable
 
 TEST(VersionedBucketSorterTest, VersionIncrementBehavior)
 {
-    VersionedBucketSorter<int> sorter(3);
+    VersionedBucketList<int> sorter(3);
 
     uint64_t before = sorter.getVersion();
     sorter.incrementVersion();
@@ -79,7 +79,7 @@ TEST(VersionedBucketSorterTest, VersionIncrementBehavior)
 
 TEST(VersionedBucketSorterTest, InitiallyNoItems)
 {
-    VersionedBucketSorter<int> sorter(4);
+    VersionedBucketList<int> sorter(4);
 
     for (size_t i = 0; i < 4; ++i)
     {
@@ -91,7 +91,7 @@ TEST(VersionedBucketSorterTest, InitiallyNoItems)
 
 TEST(VersionedBucketSorterTest, EmplaceCopyAndHasItemsAndGetItems)
 {
-    VersionedBucketSorter<int> sorter(2);
+    VersionedBucketList<int> sorter(2);
 
     EXPECT_FALSE(sorter.hasItems(0));
     sorter.emplaceItem(0, 42); // should use emplace with Args or copy
@@ -117,7 +117,7 @@ TEST(VersionedBucketSorterTest, EmplaceCopyAndHasItemsAndGetItems)
 
 TEST(VersionedBucketSorterTest, EmplaceMoveOverload)
 {
-    VersionedBucketSorter<MoveTrack> sorter(2);
+    VersionedBucketList<MoveTrack> sorter(2);
 
     MoveTrack m(123);
     // copy via lvalue
@@ -139,7 +139,7 @@ TEST(VersionedBucketSorterTest, EmplaceMoveOverload)
 
 TEST(VersionedBucketSorterTest, EmplaceVariadicConstructor)
 {
-    VersionedBucketSorter<Emplaceable> sorter(3);
+    VersionedBucketList<Emplaceable> sorter(3);
 
     sorter.emplaceItem(1, 11, 22, std::string("hello"));
 
@@ -152,7 +152,7 @@ TEST(VersionedBucketSorterTest, EmplaceVariadicConstructor)
 TEST(VersionedBucketSorterTest, MultipleBucketsIndependenceAndBoundaries)
 {
     const size_t buckets = 5;
-    VersionedBucketSorter<std::string> sorter(buckets);
+    VersionedBucketList<std::string> sorter(buckets);
 
     sorter.emplaceItem(0, std::string("zero"));
     sorter.emplaceItem(buckets - 1, std::string("last"));
@@ -173,7 +173,7 @@ TEST(VersionedBucketSorterTest, MultipleBucketsIndependenceAndBoundaries)
 
 TEST(VersionedBucketSorterTest, RepeatedEmplaceKeepsOrderAndValues)
 {
-    VersionedBucketSorter<int> sorter(1);
+    VersionedBucketList<int> sorter(1);
 
     for (int i = 0; i < 20; ++i)
     {
@@ -189,7 +189,7 @@ TEST(VersionedBucketSorterTest, RepeatedEmplaceKeepsOrderAndValues)
 TEST(VersionedBucketSorterTest, VerionIncrementInvalidatingItems)
 {
     const size_t buckets = 5;
-    VersionedBucketSorter<std::string> sorter(buckets);
+    VersionedBucketList<std::string> sorter(buckets);
 
     sorter.emplaceItem(2, std::string("something"));
 
@@ -205,7 +205,7 @@ TEST(VersionedBucketSorterTest, VerionIncrementInvalidatingItems)
 TEST(VersionedBucketSorterTest, VerionIncrementAndAddingNewItems)
 {
     const size_t buckets = 5;
-    VersionedBucketSorter<std::string> sorter(buckets);
+    VersionedBucketList<std::string> sorter(buckets);
 
     sorter.emplaceItem(2, std::string("v1_item"));
 
@@ -227,7 +227,7 @@ TEST(VersionedBucketSorterTest, VerionIncrementAndAddingNewItems)
 TEST(VersionedBucketSorterTest, VerionIncrementAndGetItemsWithoutAdding)
 {
     const size_t buckets = 5;
-    VersionedBucketSorter<std::string> sorter(buckets);
+    VersionedBucketList<std::string> sorter(buckets);
 
     sorter.emplaceItem(2, std::string("v1_item"));
 
