@@ -28,6 +28,10 @@ class Wall(Constructible, Building):
     pass
 
 
+class Gate(Constructible, Building):
+    pass
+
+
 class MilitaryUnit(Constructible, Unit):
     pass
 
@@ -48,6 +52,7 @@ all_entity_names: List[str] = [
     "militia",
     "palisade",
     "stone_wall",
+    "stone_gate",
 ]
 
 
@@ -69,6 +74,7 @@ all_units: List[Unit] = [
                     Shortcut(name="barracks", shortcut="b"),
                     Shortcut(name="palisade", shortcut="p"),
                     Shortcut(name="stone_wall", shortcut="o"),
+                    Shortcut(name="stone_gate", shortcut="g"),
                     Shortcut(name="house", shortcut="h")],
         icon=Icon(drs_file="interfac.drs", slp_id=50730, index=16),
         animations=[
@@ -102,23 +108,27 @@ all_natural_resources: List[NaturalResource] = [
         name="gold",
         display_name="Gold Mine",
         resource_amount=1000,
-        graphics={"default":[Graphic(slp_id=4479)]},
+        graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=4479)}),
         icon=Icon(drs_file="interfac.drs", slp_id=50731, index=3),
     ),
     NaturalResource(
         name="stone",
         display_name="Stone Mine",
         resource_amount=1000,
-        graphics={"default":[Graphic(slp_id=1034)]},
+        graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=1034)}),
         icon=Icon(drs_file="interfac.drs", slp_id=50731, index=1),
     ),
     Tree(
         name="wood",
         display_name="Tree",
         resource_amount=100,
-        graphics={"oak":[Graphic(slp_id=4652)]},
-        stump=NaturalResourceAdditionalPart(name="stump", graphics={"oak":[Graphic(slp_id=1252)]}),
-        shadow=NaturalResourceAdditionalPart(name="shadow", graphics={"oak":[Graphic(slp_id=2296)]}),
+        graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=4652)}),
+        stump=NaturalResourceAdditionalPart(
+            name="stump", 
+            graphics=Graphic(by_theme={"oak":SingleGraphic(slp_id=1252)})),
+        shadow=NaturalResourceAdditionalPart(
+            name="shadow", 
+            graphics=Graphic(by_theme={"oak":SingleGraphic(slp_id=2296)})),
         icon=Icon(drs_file="interfac.drs", slp_id=50731, index=0),
     ),
 ]
@@ -130,7 +140,7 @@ all_buildings: List[Building] = [
         line_of_sight=256*5,
         size="medium",
         accepted_resources=["food"], 
-        graphics={"default":[Graphic(slp_id=3483)]},
+        graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=3483)}),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=21)
     ),
     ResourceDropOff(
@@ -139,7 +149,7 @@ all_buildings: List[Building] = [
         line_of_sight=256*5,
         size="medium",
         accepted_resources=["wood"], 
-        graphics={"default":[Graphic(slp_id=3505)]},
+        graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=3505)}),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=40)
     ),
     ResourceDropOff(
@@ -148,7 +158,7 @@ all_buildings: List[Building] = [
         line_of_sight=256*5,
         size="medium",
         accepted_resources=["gold", "stone"], 
-        graphics={"default":[Graphic(slp_id=3492)]},
+        graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=3492)}),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=39)
     ),
     TownCenter(
@@ -163,16 +173,16 @@ all_buildings: List[Building] = [
         housing_capacity=5,
         garrisonable_unit_types = [UnitType.VILLAGER],
         garrison_capacity = 10,
-        graphics={"default": CompositeGraphic(
+        graphics=Graphic(by_theme={"default":CompositeGraphic(
             anchor=Point(x=187, y=195),
             parts=[
-                Graphic(slp_id=900), 
-                Graphic(slp_id=3601, anchor=Point(x=153,y=-20)), 
-                Graphic(slp_id=3605, anchor=Point(x=187,y=0)), 
-                Graphic(slp_id=4617, anchor=Point(x=-46,y=-20)), 
-                Graphic(slp_id=4621, anchor=Point(x=-161,y=0)), 
-                Graphic(slp_id=3597, anchor=Point(x=185,y=47)), 
-                Graphic(slp_id=4613, anchor=Point(x=-46,y=48))])},
+                SingleGraphic(slp_id=900), 
+                SingleGraphic(slp_id=3601, anchor=Point(x=153,y=-20)), 
+                SingleGraphic(slp_id=3605, anchor=Point(x=187,y=0)), 
+                SingleGraphic(slp_id=4617, anchor=Point(x=-46,y=-20)), 
+                SingleGraphic(slp_id=4621, anchor=Point(x=-161,y=0)), 
+                SingleGraphic(slp_id=3597, anchor=Point(x=185,y=47)), 
+                SingleGraphic(slp_id=4613, anchor=Point(x=-46,y=48))])}),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=28)
     ),
     House(
@@ -181,7 +191,7 @@ all_buildings: List[Building] = [
         display_name="House",
         line_of_sight=256*2,
         size="medium",
-        graphics={"default":[Graphic(slp_id=2223)]},
+        graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=2223)}),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=34)
     ),
     MilitaryBuilding(
@@ -191,7 +201,7 @@ all_buildings: List[Building] = [
         size="large",
         unit_creation_speed=40,
         max_queue_size=10,
-        graphics={"default":[Graphic(slp_id=130)]},
+        graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=130)}),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=3),
         producible_units=[Shortcut(name="militia", shortcut="m")]
     ),
@@ -200,7 +210,7 @@ all_buildings: List[Building] = [
         display_name="Palisade",
         line_of_sight=256*2,
         size="small",
-        graphics={"default":[Graphic(slp_id=1828)]},
+        graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=1828)}),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=30),
         orientations={"right_angled": 0, "left_angled": 1, "corner": 2, "horizontal": 3, "vertical": 4},
         connected_constructions_allowed=True
@@ -210,7 +220,24 @@ all_buildings: List[Building] = [
         display_name="Stone Wall",
         line_of_sight=256*2,
         size="small",
-        graphics={"default":[Graphic(slp_id=2110)]},
+        graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=2110)}),
+        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=29),
+        orientations={"right_angled": 0, "left_angled": 1, "corner": 2, "horizontal": 3, "vertical": 4},
+        connected_constructions_allowed=True
+    ),
+    Gate(
+        name="stone_gate",
+        display_name="Stone Gate",
+        line_of_sight=256,
+        size="gate",
+        graphics=Graphic(by_theme={"default":OrientatedGraphic(
+            by_orientation={"right_angled": CompositeGraphic(
+            anchor=Point(x=187, y=195),
+            parts=[
+                SingleGraphic(slp_id=1926), 
+                SingleGraphic(slp_id=2391)
+            ])}
+        )}),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=29),
         orientations={"right_angled": 0, "left_angled": 1, "corner": 2, "horizontal": 3, "vertical": 4},
         connected_constructions_allowed=True
@@ -221,34 +248,46 @@ all_construction_sites: List[ConstructionSite] = [
     ConstructionSite(
         name="construction_site",
         size="small",
-        graphics={"default": [Graphic(slp_id=236)]},
+        graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=236)}),
         progress_frame_map={33:0, 66:1, 99:2}),
     ConstructionSite(
         name="construction_site",
         size="medium",
-        graphics={"default": [Graphic(slp_id=237)]},
+        graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=237)}),
         progress_frame_map={33:0, 66:1, 99:2}),
     ConstructionSite(
         name="construction_site",
         size="large",
-        graphics={"default": [Graphic(slp_id=238)]},
+        graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=238)}),
         progress_frame_map={33:0, 66:1, 99:2}),
     ConstructionSite(
         name="construction_site",
         size="huge",
-        graphics={"default": [Graphic(slp_id=239)]},
+        graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=239)}),
+        progress_frame_map={33:0, 66:1, 99:2}),
+    ConstructionSite(
+        name="construction_site",
+        size="gate",
+        graphics=Graphic(by_theme={"default":OrientatedGraphic(
+            by_orientation={"right_angled": SingleGraphic(slp_id=3706)}
+        )}),
         progress_frame_map={33:0, 66:1, 99:2})
 ]
 
 all_tilesets: List[TileSet] = [
     TileSet(
         name="default_tileset",
-        graphics={"grass":[Graphic(drs_file="terrain.drs", slp_id=15001)]})
+        graphics=Graphic(by_theme={"grass":SingleGraphic(drs_file="terrain.drs", slp_id=15001)})
+    )
 ]
 
 all_ui_elements: List[UIElement] = [
-    UIElement(name="resource_panel", graphics={"default":[Graphic(drs_file="interfac.drs", slp_id=51135, clip_rect=Rect(x=0, y=0, w=400, h=25))]}),
-    UIElement(name="control_panel", graphics={"default":[Graphic(drs_file="interfac.drs", slp_id=51135, clip_rect=Rect(x=0, y=593, w=680, h=175))]}),
-    UIElement(name="progress_bar", graphics={"default":[Graphic(drs_file="interfac.drs", slp_id=50764)]}),
-    UIElement(name="cursor", graphics={"default":[Graphic(drs_file="interfac.drs", slp_id=51000)]})
+    UIElement(name="resource_panel", 
+              graphics=Graphic(by_theme={"default":SingleGraphic(drs_file="interfac.drs", slp_id=51135, clip_rect=Rect(x=0, y=0, w=400, h=25))})),
+    UIElement(name="control_panel", 
+              graphics=Graphic(by_theme={"default":SingleGraphic(drs_file="interfac.drs", slp_id=51135, clip_rect=Rect(x=0, y=593, w=680, h=175))})),
+    UIElement(name="progress_bar", 
+              graphics=Graphic(by_theme={"default":SingleGraphic(drs_file="interfac.drs", slp_id=50764)})),
+    UIElement(name="cursor", 
+              graphics=Graphic(by_theme={"default":SingleGraphic(drs_file="interfac.drs", slp_id=51000)}))
 ]

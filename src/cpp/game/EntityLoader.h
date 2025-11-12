@@ -158,7 +158,7 @@ class EntityLoader : public core::EntityFactory, public core::PropertyInitialize
     core::GraphicsID readIconDef(uint32_t entitySubType, pybind11::handle entityDefinition);
     ConstructionSiteData getSite(const std::string& sizeStr);
     void setSite(const std::string& sizeStr, const std::map<int, int>& progressToFrames);
-    void attachedConstructionSites(uint32_t entityType, const std::string& sizeStr);
+    void attachConstructionSites(uint32_t entityType, const std::string& sizeStr);
     void setDRSData(const core::GraphicsID& id, const EntityDRSData& data);
     void setDRSLoaderFunc(std::function<core::Ref<drs::DRSFile>(const std::string&)> func);
     void setBoundingBoxReadFunc(
@@ -191,6 +191,12 @@ class EntityLoader : public core::EntityFactory, public core::PropertyInitialize
         }
         throw std::runtime_error("Component of requested type not found");
     }
+
+    void processGraphic(uint32_t entityType,
+                        uint32_t entitySubType, 
+                        pybind11::handle graphicObj,
+                        const core::Vec2& anchor,
+                        int direction = core::GraphicsID().direction);
 
   private:
     const std::string m_unitsFile = "units";

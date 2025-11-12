@@ -47,6 +47,8 @@ uint32_t getEntitySubType(uint32_t entityType, const std::string& name)
             return EntitySubTypes::EST_LARGE_SIZE;
         else if (name == "huge")
             return EntitySubTypes::EST_HUGE_SIZE;
+        else if (name == "gate")
+            return EntitySubTypes::EST_GATE_SIZE;
         else
             spdlog::warn("Unknown subtype {} for entity type {}", name, entityType);
     }
@@ -106,6 +108,8 @@ Size getBuildingSize(const std::string& name)
         return Size(3, 3);
     else if (name == "huge")
         return Size(4, 4);
+    else if (name == "gate")
+        return Size(4, 1);
     else
     {
         debug_assert(false, "unknown building size");
@@ -313,14 +317,18 @@ void EntityLoader::loadBuildings(pybind11::object module)
                 addComponentsForBuilding(entityType);
                 addCommonComponents(module, entityType, entry);
                 loadDRSForStillImage(module, entityType, EntitySubTypes::EST_DEFAULT, entry);
-                attachedConstructionSites(entityType, size);
+                attachConstructionSites(entityType, size);
 
-                GraphicsID id;
-                id.entityType = entityType;
-                auto drsData = m_DRSDataByGraphicsIdHash.at(id);
-
-                auto& sc = getComponent<CompSelectible>(entityType, EntitySubTypes::EST_DEFAULT);
-                sc.boundingBoxes[static_cast<int>(Direction::NONE)] = drsData.boundingRect;
+                for (auto& drsIt : m_DRSDataByGraphicsIdHash)
+                {
+                    if (drsIt.first.entityType == entityType)
+                    {
+                        auto& drsData = drsIt.second;
+                        auto& sc =
+                            getComponent<CompSelectible>(entityType, EntitySubTypes::EST_DEFAULT);
+                        sc.boundingBoxes[drsIt.first.direction] = drsData.boundingRect;
+                    }
+                }
             }
             else
             {
@@ -612,6 +620,67 @@ void EntityLoader::loadDRSForAnimations(uint32_t entityType,
     }
 }
 
+void EntityLoader::processGraphic(uint32_t entityType,
+                                  uint32_t entitySubType,
+                                  py::handle graphicObj,
+                                  const Vec2& anchor,
+                                  int direction /*= GraphicsID().direction*/)
+{
+    // TODO: handle theme
+    auto drsFileName = EntityLoader::readValue<std::string>(graphicObj, "drs_file");
+    auto slpId = EntityLoader::readValue<int>(graphicObj, "slp_id");
+
+    Vec2 anchorOverride = Vec2::null;
+    if (py::hasattr(graphicObj, "anchor"))
+    {
+        py::object anchor = graphicObj.attr("anchor");
+        anchorOverride.x = readValue<int>(anchor, "x");
+        anchorOverride.y = readValue<int>(anchor, "y");
+    }
+
+    Ref<DRSFile> drsFile;
+    auto it = m_drsFilesByName.find(drsFileName);
+    if (it != m_drsFilesByName.end())
+        drsFile = it->second;
+    else
+        drsFile = m_drsLoadFunc("assets/" + drsFileName);
+
+    Rect<int> clipRect;
+    if (py::hasattr(graphicObj, "clip_rect"))
+    {
+        py::object rect = graphicObj.attr("clip_rect");
+        clipRect.x = readValue<int>(rect, "x");
+        clipRect.y = readValue<int>(rect, "y");
+        clipRect.w = readValue<int>(rect, "w");
+        clipRect.h = readValue<int>(rect, "h");
+    }
+
+    GraphicsID id;
+    id.entityType = entityType;
+    id.entitySubType = entitySubType;
+    id.direction = direction;
+
+    auto boundingBox = m_boundingBoxReadFunc(drsFile, slpId);
+
+    if (m_DRSDataByGraphicsIdHash.contains(id))
+    {
+        m_DRSDataByGraphicsIdHash[id].parts.push_back(
+            EntityDRSData::Part(drsFile, slpId, anchorOverride));
+    }
+    else
+    {
+        EntityDRSData data;
+        data.parts.push_back(EntityDRSData::Part(drsFile, slpId, anchorOverride));
+        data.boundingRect = boundingBox;
+        data.clipRect = clipRect;
+        data.anchor = anchor;
+
+        m_DRSDataByGraphicsIdHash[id] = data;
+    }
+
+    spdlog::debug("Loading DRS data for id {}, slp id {}", id.toString(), slpId);
+}
+
 void EntityLoader::loadDRSForStillImage(pybind11::object module,
                                         uint32_t entityType,
                                         uint32_t entitySubType,
@@ -619,67 +688,14 @@ void EntityLoader::loadDRSForStillImage(pybind11::object module,
 {
     if (py::hasattr(entityDefinition, "graphics"))
     {
-        py::dict graphicsDict = entityDefinition.attr("graphics");
+        py::object graphics = entityDefinition.attr("graphics");
+        py::dict graphicByThemeDict = graphics.attr("by_theme");
+        py::object singleGraphicClass = module.attr("SingleGraphic");
         py::object compositeGraphicClass = module.attr("CompositeGraphic");
+        py::object orientatedGraphicClass = module.attr("OrientatedGraphic");
 
-        for (auto [theme, graphicsEntry] : graphicsDict)
+        for (auto [theme, graphicsEntry] : graphicByThemeDict)
         {
-            auto processGraphic = [&](py::handle graphicObj, const Vec2& anchor)
-            {
-                // TODO: handle theme
-                auto drsFileName = EntityLoader::readValue<std::string>(graphicObj, "drs_file");
-                auto slpId = EntityLoader::readValue<int>(graphicObj, "slp_id");
-
-                Vec2 anchorOverride = Vec2::null;
-                if (py::hasattr(graphicObj, "anchor"))
-                {
-                    py::object anchor = graphicObj.attr("anchor");
-                    anchorOverride.x = readValue<int>(anchor, "x");
-                    anchorOverride.y = readValue<int>(anchor, "y");
-                }
-
-                Ref<DRSFile> drsFile;
-                auto it = m_drsFilesByName.find(drsFileName);
-                if (it != m_drsFilesByName.end())
-                    drsFile = it->second;
-                else
-                    drsFile = m_drsLoadFunc("assets/" + drsFileName);
-
-                Rect<int> clipRect;
-                if (py::hasattr(graphicObj, "clip_rect"))
-                {
-                    py::object rect = graphicObj.attr("clip_rect");
-                    clipRect.x = readValue<int>(rect, "x");
-                    clipRect.y = readValue<int>(rect, "y");
-                    clipRect.w = readValue<int>(rect, "w");
-                    clipRect.h = readValue<int>(rect, "h");
-                }
-
-                GraphicsID id;
-                id.entityType = entityType;
-                id.entitySubType = entitySubType;
-
-                auto boundingBox = m_boundingBoxReadFunc(drsFile, slpId);
-
-                if (m_DRSDataByGraphicsIdHash.contains(id))
-                {
-                    m_DRSDataByGraphicsIdHash[id].parts.push_back(
-                        EntityDRSData::Part(drsFile, slpId, anchorOverride));
-                }
-                else
-                {
-                    EntityDRSData data;
-                    data.parts.push_back(EntityDRSData::Part(drsFile, slpId, anchorOverride));
-                    data.boundingRect = boundingBox;
-                    data.clipRect = clipRect;
-                    data.anchor = anchor;
-
-                    m_DRSDataByGraphicsIdHash[id] = data;
-                }
-
-                spdlog::debug("Loading DRS data for id {}, slp id {}", id.toString(), slpId);
-            };
-
             if (py::isinstance(graphicsEntry, compositeGraphicClass))
             {
                 py::list parts = graphicsEntry.attr("parts");
@@ -688,12 +704,41 @@ void EntityLoader::loadDRSForStillImage(pybind11::object module,
                 int anchorY = readValue<int>(anchor, "y");
 
                 for (auto part : parts)
-                    processGraphic(part, Vec2(anchorX, anchorY));
+                    processGraphic(entityType, entitySubType, part, Vec2(anchorX, anchorY));
+            }
+            else if (py::isinstance(graphicsEntry, orientatedGraphicClass))
+            {
+                py::dict graphicsByOrientationDict = graphicsEntry.attr("by_orientation");
+
+                for (auto [orientationEntry, graphic] : graphicsByOrientationDict)
+                {
+                    std::string orientationStr = py::str(orientationEntry);
+                    BuildingOrientation orientation = getBuildingOrientation(orientationStr);
+
+                    if (py::isinstance(graphic, singleGraphicClass))
+                    {
+                        processGraphic(entityType, entitySubType, graphic, Vec2::null);
+                    }
+                    else if (py::isinstance(graphic, compositeGraphicClass))
+                    {
+                        py::list parts = graphic.attr("parts");
+                        py::object anchor = graphic.attr("anchor");
+                        int anchorX = readValue<int>(anchor, "x");
+                        int anchorY = readValue<int>(anchor, "y");
+
+                        for (auto part : parts)
+                            processGraphic(entityType, entitySubType, part, Vec2(anchorX, anchorY),
+                                           (int) orientation);
+                    }
+                    else
+                    {
+                        spdlog::error("Unknown graphic entry type for entity type {}", entityType);
+                    }
+                }
             }
             else
             {
-                for (auto part : graphicsEntry)
-                    processGraphic(part, Vec2::null);
+                processGraphic(entityType, entitySubType, graphicsEntry, Vec2::null);
             }
         }
     }
@@ -747,7 +792,7 @@ void EntityLoader::setSite(const std::string& sizeStr, const std::map<int, int>&
     m_constructionSitesBySize[sizeStr] = ConstructionSiteData{.progressToFrames = progressToFrames};
 }
 
-void EntityLoader::attachedConstructionSites(uint32_t entityType, const std::string& sizeStr)
+void EntityLoader::attachConstructionSites(uint32_t entityType, const std::string& sizeStr)
 {
     // Approach: Find and attach construction site variants to the original
     // building component for the entity type.
@@ -783,7 +828,6 @@ void EntityLoader::attachedConstructionSites(uint32_t entityType, const std::str
     buildingAttachedSiteId.entityType = entityType;
     buildingAttachedSiteId.entitySubType = siteId.entitySubType;
     m_DRSDataByGraphicsIdHash[buildingAttachedSiteId] = siteDRSData;
-    ;
 }
 
 void EntityLoader::setDRSData(const GraphicsID& id, const EntityDRSData& data)

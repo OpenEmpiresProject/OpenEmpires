@@ -31,6 +31,7 @@ enum EntitySubTypes
     EST_MEDIUM_SIZE = 2,
     EST_LARGE_SIZE = 3,
     EST_HUGE_SIZE = 4,
+    EST_GATE_SIZE = 5,
 
     EST_DEFAULT = 0,
     EST_CHOPPED_TREE = 1,

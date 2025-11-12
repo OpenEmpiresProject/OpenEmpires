@@ -1,4 +1,4 @@
-﻿from typing import Dict, List, Optional
+﻿from typing import Dict, List, Optional, Union
 from enum import IntEnum
 
 # Core entity definitions. These definitions are known to the game. It is possible to compose these
@@ -21,7 +21,7 @@ class Point(_Constructible):
     y: int
 
 
-class Graphic(_Constructible):
+class SingleGraphic(_Constructible):
     drs_file: str = "graphics.drs"
     slp_id: int
     clip_rect: Optional[Rect]
@@ -29,8 +29,16 @@ class Graphic(_Constructible):
 
 
 class CompositeGraphic(_Constructible):
-    parts: List[Graphic]
+    parts: List[SingleGraphic]
     anchor: Point
+
+
+class OrientatedGraphic(_Constructible):
+    by_orientation = Dict[str, Union[CompositeGraphic, SingleGraphic]]
+
+
+class Graphic(_Constructible):
+    by_theme=Dict[str, Union[SingleGraphic, CompositeGraphic, OrientatedGraphic]]
 
 
 class Animation(_Constructible):
@@ -85,13 +93,13 @@ class NaturalResource(_Constructible):
     name: str
     display_name: str
     resource_amount: int
-    graphics: Dict[str, List[Graphic]] # Graphics by theme
+    graphics: Graphic
     icon: Icon
 
 
 class NaturalResourceAdditionalPart(_Constructible):
     name: str
-    graphics: Dict[str, List[Graphic]] # Graphics by theme
+    graphics: Graphic
 
 
 class Tree(NaturalResource, _Constructible):
@@ -104,13 +112,13 @@ class Building:
     display_name: str
     line_of_sight: int
     size: str
-    graphics: Dict[str, List[Graphic]] # Graphics by theme
+    graphics: Graphic
     icon: Icon
     orientations: Optional[Dict[str, int]] # orientation name to frame id mapping
     connected_constructions_allowed: Optional[bool] # Allows to constructing series of same building such as walls
 
 class CompoSiteGraphicBuilding(Building):
-    graphics: Dict[str, CompositeGraphic] # Graphics by theme
+    graphics: Graphic
 
 
 class ResourceDropOff(Building, _Constructible):
@@ -135,18 +143,18 @@ class Garrison:
 class ConstructionSite(_Constructible):
     name: str = "construction_site"
     size: str
-    graphics: Dict[str, List[Graphic]] # Graphics by theme
+    graphics: Graphic
     progress_frame_map: Dict[int, int]
 
 
 class TileSet(_Constructible):
     name: str
-    graphics: Dict[str, List[Graphic]] # Graphics by theme
+    graphics: Graphic
 
 
 class UIElement(_Constructible):
     name: str
-    graphics: Dict[str, List[Graphic]] # Graphics by theme
+    graphics: Graphic
 
 
 def get_all_core_defs():
@@ -154,6 +162,8 @@ def get_all_core_defs():
             Point.__name__: Point,
             Graphic.__name__: Graphic,
             CompositeGraphic.__name__: CompositeGraphic,
+            SingleGraphic.__name__: SingleGraphic,
+            OrientatedGraphic.__name__: OrientatedGraphic,
             Animation.__name__: Animation,
             Icon.__name__: Icon,
             Unit.__name__: Unit,
