@@ -729,6 +729,37 @@ void RendererImpl::renderGraphicAddons(const Vec2& screenPos, CompRendering* rc)
     }
 }
 
+void drawFilledQuad(SDL_Renderer* renderer,
+                    const Vec2& v0,
+                    const Vec2& v1,
+                    const Vec2& v2,
+                    const Vec2& v3,
+                    const Color& color)
+{
+    SDL_Vertex verts[4];
+
+    verts[0].position = {v0.x, v0.y};
+    verts[1].position = {v1.x, v1.y};
+    verts[2].position = {v2.x, v2.y};
+    verts[3].position = {v3.x, v3.y};
+
+    SDL_FColor fcolor = SDL_FColor{(float) color.r / 255.0f, (float) color.g / 255.0f,
+                                   (float) color.b / 255.0f, (float) color.a / 255.0f};
+
+    // Set the same fill color for all vertices
+    for (int i = 0; i < 4; i++)
+    {
+        verts[i].color = fcolor;
+        verts[i].tex_coord = {0.0f, 0.0f};
+    }
+
+    // Two triangles that form a quad/rhombus
+    int indices[6] = {0, 1, 2, 2, 3, 0};
+
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_RenderGeometry(renderer, nullptr, verts, 4, indices, 6);
+}
+ 
 void RendererImpl::renderDebugOverlays(const SDL_FRect& dstRect, CompRendering* rc)
 {
     if (m_showDebugInfo)
@@ -748,15 +779,35 @@ void RendererImpl::renderDebugOverlays(const SDL_FRect& dstRect, CompRendering* 
                 if (overlay.absolutePosition.isNull() == false)
                 {
                     auto screenPos = m_coordinates.feetToScreenUnits(overlay.absolutePosition);
-                    filledEllipseRGBA(m_renderer, screenPos.x, screenPos.y, 20, 10, overlay.color.r,
-                                      overlay.color.g, overlay.color.b, 100);
+                    filledEllipseRGBA(m_renderer, screenPos.x, screenPos.y,
+                                      overlay.circlePixelRadius, overlay.circlePixelRadius/2,
+                                      overlay.color.r, overlay.color.g, overlay.color.b, overlay.color.a);
                 }
                 else
                 {
-                    filledEllipseRGBA(m_renderer, pos.x, pos.y, 20, 10, 0, 0, 255,
-                                      100); // blue ellipse
+                    filledEllipseRGBA(m_renderer, pos.x, pos.y, overlay.circlePixelRadius,
+                                      overlay.circlePixelRadius / 2, overlay.color.r,
+                                      overlay.color.g, overlay.color.b,
+                                      overlay.color.a);
                 }
 
+                break;
+            }
+
+            case DebugOverlay::Type::FILLED_RHOMBUS:
+            {
+                static Vec2 cornersInScreenUnits[4];
+                cornersInScreenUnits[0] =
+                    m_coordinates.feetToScreenUnits(overlay.rhombusCorners[0]);
+                cornersInScreenUnits[1] =
+                    m_coordinates.feetToScreenUnits(overlay.rhombusCorners[1]);
+                cornersInScreenUnits[2] =
+                    m_coordinates.feetToScreenUnits(overlay.rhombusCorners[2]);
+                cornersInScreenUnits[3] =
+                    m_coordinates.feetToScreenUnits(overlay.rhombusCorners[3]);
+
+                drawFilledQuad(m_renderer, cornersInScreenUnits[0], cornersInScreenUnits[1],
+                               cornersInScreenUnits[2], cornersInScreenUnits[3], overlay.color);
                 break;
             }
 

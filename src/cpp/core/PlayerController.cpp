@@ -17,6 +17,7 @@
 #include "components/CompPlayer.h"
 #include "components/CompResource.h"
 #include "components/CompTransform.h"
+#include "components/CompGraphics.h"
 #include "components/CompUnit.h"
 #include "utils/Logger.h"
 
@@ -430,6 +431,34 @@ void PlayerController::validateAndSnapBuildingToTile(BuildingPlacementData& plac
     }
     placement.pos = transform.position;
     dirty.markDirty(placement.entity);
+
+#ifndef NDEBUG
+    auto& graphics = m_stateMan->getComponent<CompGraphics>(placement.entity);
+    graphics.debugOverlays.clear();
+
+    for (auto& tile : building.landArea.tiles)
+    {
+        DebugOverlay filled;
+        filled.type = DebugOverlay::Type::FILLED_RHOMBUS;
+        filled.color = Color::RED;
+        filled.color.a = 100;
+        const auto centerInFeet = tile.centerInFeet();
+        const int half = Constants::FEET_PER_TILE / 2;
+        filled.rhombusCorners[0] = centerInFeet + Feet(-half, half);
+        filled.rhombusCorners[1] = centerInFeet + Feet(-half, -half);
+        filled.rhombusCorners[2] = centerInFeet + Feet(half, -half);
+        filled.rhombusCorners[3] = centerInFeet + Feet(half, half);
+        graphics.debugOverlays.push_back(filled);
+    }
+
+    DebugOverlay anchor;
+    anchor.type = DebugOverlay::Type::FILLED_CIRCLE;
+    anchor.color = Color::BLACK;
+    anchor.circlePixelRadius = 10;
+    anchor.absolutePosition = transform.position;
+    graphics.debugOverlays.push_back(anchor);
+
+#endif
 }
 
 void PlayerController::confirmBuildingPlacement(const BuildingPlacementData& placement) const

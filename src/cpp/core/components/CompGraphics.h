@@ -22,6 +22,7 @@ struct DebugOverlay
         CIRCLE,
         FILLED_CIRCLE,
         RHOMBUS,
+        FILLED_RHOMBUS,
         ARROW,
     };
 
@@ -45,6 +46,8 @@ struct DebugOverlay
     FixedPosition customPos2;
     Vec2 arrowEnd;
     Feet absolutePosition = Feet::null; // Doesn't honour anchor
+    Feet rhombusCorners[4];
+    uint32_t circlePixelRadius = 20;
 };
 
 enum class GraphicLayer
