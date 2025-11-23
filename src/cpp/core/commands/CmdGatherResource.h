@@ -9,7 +9,6 @@
 #include "commands/CmdDropResource.h"
 #include "commands/CmdMove.h"
 #include "commands/Command.h"
-#include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompPlayer.h"
 #include "components/CompResource.h"
@@ -166,7 +165,7 @@ class CmdGatherResource : public Command
         auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.value().speed;
         if (currentTick % ticksPerFrame == 0)
         {
-            m_components->dirty.markDirty(m_entityID);
+            StateManager::markDirty(m_entityID);
             m_components->animation.frame++;
             m_components->animation.frame %= actionAnimation.value().frames;
         }
@@ -201,7 +200,7 @@ class CmdGatherResource : public Command
                 std::min(actualDelta, (m_gatherer->capacity - m_gatherer->gatheredAmount));
             resource.remainingAmount -= actualDelta;
             m_gatherer->gatheredAmount += actualDelta;
-            m_stateMan->getComponent<CompDirty>(target).markDirty(target);
+            StateManager::markDirty(target);
         }
     }
 

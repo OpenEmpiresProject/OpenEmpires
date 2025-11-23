@@ -73,7 +73,7 @@ struct BuildingPlacementData
     uint32_t entity = entt::null;
     uint32_t placementId = 0;
     bool seriesConstructionsAllowed = false;
-    BuildingOrientation orientation = BuildingOrientation::DEFAULT;
+    BuildingOrientation orientation = BuildingOrientation::NO_ORIENTATION;
 
     bool operator==(const BuildingPlacementData& other) const
     {

@@ -37,12 +37,14 @@ const Texture& GraphicsRegistry::getTexture(const GraphicsID& graphicID) const
     auto it = m_textureMap.find(graphicID);
     if (it == m_textureMap.end())
     {
+        spdlog::error("Graphic ID not found in registry: {}. Following are existing IDs",
+                      graphicID.toString());
+
         for (auto& e : m_textureMap)
         {
-            spdlog::debug("Existing GraphicsID: {}", e.first.toString());
+            spdlog::error("{}", e.first.toString());
         }
 
-        spdlog::error("Graphic ID not found in registry: {}", graphicID.toString());
         throw std::runtime_error("Graphic ID not found in registry:" + graphicID.toString());
     }
     return it->second;

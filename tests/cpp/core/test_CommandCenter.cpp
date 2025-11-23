@@ -8,7 +8,6 @@
 #include "commands/Command.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
-#include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
 #include "components/CompPlayer.h"
@@ -125,7 +124,6 @@ TEST_F(CommandCenterTest, CreatesSubCommands)
     ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, unit);
     ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompAction(0));
     ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompAnimation());
-    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompDirty());
     ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompEntityInfo(0));
     ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompPlayer());
     ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompTransform());

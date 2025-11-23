@@ -7,10 +7,9 @@
 
 namespace core
 {
-template<typename T>
-class VersionedBucketList
+template <typename T> class VersionedBucketList
 {
-public:
+  public:
     VersionedBucketList() = default;
     VersionedBucketList(const size_t bucketsCount)
     {
@@ -26,8 +25,8 @@ public:
     {
         return m_buckets.size();
     }
-    
-	uint64_t getVersion() const
+
+    uint64_t getVersion() const
     {
         return m_version;
     }

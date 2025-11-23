@@ -6,7 +6,6 @@
 #include "StateManager.h"
 #include "commands/CmdBuild.h"
 #include "components/CompBuilding.h"
-#include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGarrison.h"
 #include "components/CompPlayer.h"
@@ -58,31 +57,25 @@ uint32_t BuildingManager::createBuilding(const BuildingPlacementData& request)
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
     auto entity = factory->createEntity(request.entityType, 0);
 
-    auto [transform, playerComp, building, info, dirty] =
-        m_stateMan
-            ->getComponents<CompTransform, CompPlayer, CompBuilding, CompEntityInfo, CompDirty>(
-                entity);
+    auto [transform, playerComp, building, info] =
+        m_stateMan->getComponents<CompTransform, CompPlayer, CompBuilding, CompEntityInfo>(entity);
 
     transform.position = request.pos;
     playerComp.player = request.player;
 
     building.constructionProgress = 0;
     building.orientation = request.orientation;
-    building.updateLandArea(transform.position.toTile());
+    building.updateLandArea(transform.position);
 
     info.entitySubType = building.constructionSiteEntitySubType;
     info.variation = building.getVariationByConstructionProgress();
-    dirty.markDirty(entity);
+    StateManager::markDirty(entity);
 
     auto& gameMap = m_stateMan->gameMap();
 
-    for (size_t i = 0; i < building.size.value().width; i++)
+    for (auto& tile : building.landArea.tiles)
     {
-        for (size_t j = 0; j < building.size.value().height; j++)
-        {
-            gameMap.addEntity(MapLayerType::ON_GROUND, transform.position.toTile() - Tile(i, j),
-                              entity);
-        }
+        gameMap.addEntity(MapLayerType::ON_GROUND, tile, entity);
     }
     return entity;
 }
@@ -141,7 +134,7 @@ Feet BuildingManager::findVacantPositionAroundBuilding(uint32_t building)
 
 void BuildingManager::updateInProgressConstructions()
 {
-    for (auto entity : CompDirty::g_dirtyEntities)
+    for (auto entity : StateManager::getDirtyEntities())
     {
         if (ServiceRegistry::getInstance().getService<StateManager>()->hasComponent<CompBuilding>(
                 entity))
@@ -169,15 +162,10 @@ void BuildingManager::updateInProgressConstructions()
                 auto& gameMap =
                     ServiceRegistry::getInstance().getService<StateManager>()->gameMap();
 
-                for (size_t i = 0; i < building.size.value().width; i++)
+                for (auto& tile : building.landArea.tiles)
                 {
-                    for (size_t j = 0; j < building.size.value().height; j++)
-                    {
-                        gameMap.addEntity(MapLayerType::STATIC,
-                                          transform.position.toTile() - Tile(i, j), entity);
-                        gameMap.removeEntity(MapLayerType::ON_GROUND,
-                                             transform.position.toTile() - Tile(i, j), entity);
-                    }
+                    gameMap.addEntity(MapLayerType::STATIC, tile, entity);
+                    gameMap.removeEntity(MapLayerType::ON_GROUND, tile, entity);
                 }
 
                 building.isInStaticMap = true;

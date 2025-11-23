@@ -466,8 +466,6 @@ bool RendererImpl::handleEvents()
             if (event.button.button == SDL_BUTTON_LEFT)
             {
                 Vec2 mousePosScreenUnits(event.button.x, event.button.y);
-                m_lastMouseClickPosInFeet = m_coordinates.screenUnitsToFeet(mousePosScreenUnits);
-                m_lastMouseClickPosInTiles = m_lastMouseClickPosInFeet.toTile();
 
                 m_isSelecting = true;
                 m_selectionStartPosScreenUnits = mousePosScreenUnits;
@@ -498,9 +496,12 @@ bool RendererImpl::handleEvents()
         }
         else if (event.type == SDL_EVENT_MOUSE_MOTION)
         {
+            Vec2 mousePosScreenUnits(event.button.x, event.button.y);
+            m_lastMouseClickPosInFeet = m_coordinates.screenUnitsToFeet(mousePosScreenUnits);
+            m_lastMouseClickPosInTiles = m_lastMouseClickPosInFeet.toTile();
+
             if (m_isSelecting)
             {
-                Vec2 mousePosScreenUnits(event.button.x, event.button.y);
                 m_selectionEndPosScreenUnits = mousePosScreenUnits;
             }
         }
@@ -609,8 +610,8 @@ void RendererImpl::renderDebugInfo(FPSCounter& counter)
     {
         addDebugText("Viewport           : " +
                      m_coordinates.getViewportPositionInPixels().toString());
-        addDebugText("Mouse clicked feet : " + m_lastMouseClickPosInFeet.toString());
-        addDebugText("Mouse clicked tile : " + m_lastMouseClickPosInTiles.toString());
+        addDebugText("Mouse feet         : " + m_lastMouseClickPosInFeet.toString());
+        addDebugText("Mouse tile         : " + m_lastMouseClickPosInTiles.toString());
         addDebugText("Graphics loaded    : " +
                      std::to_string(m_graphicsRegistry.getTextureCount()));
     }
@@ -759,7 +760,7 @@ void drawFilledQuad(SDL_Renderer* renderer,
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     SDL_RenderGeometry(renderer, nullptr, verts, 4, indices, 6);
 }
- 
+
 void RendererImpl::renderDebugOverlays(const SDL_FRect& dstRect, CompRendering* rc)
 {
     if (m_showDebugInfo)
@@ -780,15 +781,15 @@ void RendererImpl::renderDebugOverlays(const SDL_FRect& dstRect, CompRendering* 
                 {
                     auto screenPos = m_coordinates.feetToScreenUnits(overlay.absolutePosition);
                     filledEllipseRGBA(m_renderer, screenPos.x, screenPos.y,
-                                      overlay.circlePixelRadius, overlay.circlePixelRadius/2,
-                                      overlay.color.r, overlay.color.g, overlay.color.b, overlay.color.a);
+                                      overlay.circlePixelRadius, overlay.circlePixelRadius / 2,
+                                      overlay.color.r, overlay.color.g, overlay.color.b,
+                                      overlay.color.a);
                 }
                 else
                 {
                     filledEllipseRGBA(m_renderer, pos.x, pos.y, overlay.circlePixelRadius,
                                       overlay.circlePixelRadius / 2, overlay.color.r,
-                                      overlay.color.g, overlay.color.b,
-                                      overlay.color.a);
+                                      overlay.color.g, overlay.color.b, overlay.color.a);
                 }
 
                 break;

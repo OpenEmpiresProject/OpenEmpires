@@ -15,7 +15,6 @@
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
 #include "components/CompBuilder.h"
-#include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
 #include "components/CompPlayer.h"

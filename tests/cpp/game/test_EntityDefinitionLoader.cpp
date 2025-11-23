@@ -19,10 +19,57 @@ namespace game
 class EntityDefinitionLoaderExposure : public EntityLoader
 {
   public:
-	EntityDefinitionLoaderExposure()
-	{
+    EntityDefinitionLoaderExposure()
+    {
         auto registry = CreateRef<EntityTypeRegistry>();
         ServiceRegistry::getInstance().registerService(registry);
+    }
+
+	static std::string strip_utf8_bom(std::string s)
+    {
+        static const std::string bom = "\xEF\xBB\xBF";
+        if (s.rfind(bom, 0) == 0)
+        { // starts with bom
+            s.erase(0, bom.size());
+        }
+        return s;
+    }
+
+	static std::string readCoreDefs()
+	{
+        std::string coreDefsScript;
+        // Load the `scripts/core_defs.py` file content into `coreDefsScript`.
+        // Try a few relative locations based on common test working directories.
+        try
+        {
+            namespace fs = std::filesystem;
+            std::vector<fs::path> candidates = {
+                fs::current_path() / "assets" / "scripts" / "core_defs.py",
+                fs::current_path() / ".." / "assets" / "scripts" / "core_defs.py",
+                fs::current_path() / ".." / ".." / "assets" / "scripts" / "core_defs.py",
+                fs::current_path() / ".." / ".." / ".." / "assets" / "scripts" / "core_defs.py",
+            };
+
+            for (const auto& p : candidates)
+            {
+                if (fs::exists(p) && fs::is_regular_file(p))
+                {
+                    std::ifstream ifs(p, std::ios::in | std::ios::binary);
+                    if (ifs)
+                    {
+                        coreDefsScript.assign((std::istreambuf_iterator<char>(ifs)),
+                                              std::istreambuf_iterator<char>());
+                    }
+                    break;
+                }
+            }
+        }
+        catch (...)
+        {
+            // Best-effort loading for tests; leave coreDefsScript empty on failure.
+            coreDefsScript.clear();
+        }
+        return strip_utf8_bom(coreDefsScript);
 	}
 
 	void loadEntityTypes(pybind11::object module)
@@ -316,45 +363,21 @@ TEST(EntityDefinitionLoaderTest, LoadAllBuilding)
     try
     {
         // Arrange	
-	    std::string code = R"(
+	    std::string code = EntityDefinitionLoaderExposure::readCoreDefs() + R"(
 all_entity_names = [
     "mill"
 ]
 
-class Graphic:
-	drs_file = "graphics.drs"
-	slp_id = 0
-	def __init__(self, **kwargs): self.__dict__.update(kwargs)
-	
-class CompositeGraphic:
-	pass
-	
-class Building:
-	name = ''
-	line_of_sight = 0
-	size = ''
-	graphics = []
-	
-class ResourceDropOff(Building):
-	accepted_resources = []
-	def __init__(self, **kwargs): self.__dict__.update(kwargs)
-	
 all_buildings= [
 	ResourceDropOff(
 	    name='mill', 
 	    line_of_sight=256,
 	    size='medium',
 	    accepted_resources=['food'], 
-	    graphics={'default':[Graphic(slp_id=3483)]}
+	    graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=3483)}),
 	)]
 	        )";
 
-
-  //      py::object builtins = py::module_::import("builtins");
-  //      py::object compile = builtins.attr("compile");
-
-		//// First: check syntax
-  //      compile(code, "<embedded>", "exec");
 
         py::exec(code);
 	
@@ -397,25 +420,8 @@ TEST(EntityDefinitionLoaderTest, BuildingResourceAcceptance)
     py::scoped_interpreter guard{};
     try
     {
-        py::exec(R"(
-class Graphic:
-	drs_file = "graphics.drs"
-	slp_id = 0
-	def __init__(self, **kwargs): self.__dict__.update(kwargs)
-		
-class CompositeGraphic:
-	pass
-		
-class Building:
-	name = ''
-	line_of_sight = 0
-	size = ''
-	graphics = []
-	def __init__(self, **kwargs): self.__dict__.update(kwargs)
-		
-class ResourceDropOff(Building):
-	accepted_resources = []
-		
+        std::string code = EntityDefinitionLoaderExposure::readCoreDefs() + 
+        R"(
 mill = ResourceDropOff(
 		name='mill', 
 		line_of_sight=256,
@@ -423,7 +429,9 @@ mill = ResourceDropOff(
 		accepted_resources=['food'], 
 		graphics={'default':Graphic(slp_id=3483)}
 	)
-		        )");
+		        )";
+
+        py::exec(code);
 
         py::object millDef = py::globals()["mill"];
         py::object module = py::module_::import("__main__");
@@ -445,39 +453,25 @@ TEST(EntityDefinitionLoaderTest, LoadAllConstructionSites)
    
 	try
     {
-        py::exec(R"(
+		std::string code = EntityDefinitionLoaderExposure::readCoreDefs() +
+        R"(
 all_entity_names = [
     "construction_site"
 ]
 
-class Graphic:
-	drs_file = "graphics.drs"
-	slp_id = 0
-	def __init__(self, **kwargs): self.__dict__.update(kwargs)
-	
-class CompositeGraphic:
-	pass
-	
-class ConstructionSite:
-	name = 'construction_site'
-	size = ''
-	graphics = {}
-	progress_frame_map = {}
-	def __init__(self, **kwargs): self.__dict__.update(kwargs)
-	
-	
 all_construction_sites= [
 	ConstructionSite(
 	    size='small',
 	    progress_frame_map={33:1, 66:2, 99:3}, 
-	    graphics={'default':[Graphic(slp_id=236)]}
+	    graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=236)}),
 	),
 	ConstructionSite(
 	    size='medium',
 	    progress_frame_map={33:1, 66:2, 99:3}, 
-	    graphics={'default':[Graphic(slp_id=237)]}
+	    graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=237)}),
 	)]
-	        )");
+	        )";
+        py::exec(code);
 
         py::object module = py::module_::import("__main__");
 
@@ -527,54 +521,31 @@ TEST(EntityDefinitionLoaderTest, LoadBuildingsWithConstructionSiteLinks)
   
 	try
     {
-	    py::exec(R"(
+        std::string code = EntityDefinitionLoaderExposure::readCoreDefs() +
+	    R"(
 all_entity_names = [
     "construction_site",
     "mill"
 ]
 
-class Graphic:
-	drs_file = "graphics.drs"
-	slp_id = 0
-	def __init__(self, **kwargs): self.__dict__.update(kwargs)
-	
-class CompositeGraphic:
-	pass
-	
-class Building:
-	name = ''
-	line_of_sight = 0
-	size = ''
-	graphics = []
-	
-class ResourceDropOff(Building):
-	accepted_resources = []
-	def __init__(self, **kwargs): self.__dict__.update(kwargs)
-	
 all_buildings= [
 	ResourceDropOff(
 	    name='mill', 
 	    line_of_sight=256,
 	    size='medium',
 	    accepted_resources=['food'], 
-	    graphics={'default':[Graphic(slp_id=3483)]}
+	    graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=3483)}),
 	)]
-	
-class ConstructionSite:
-	name = 'construction_site'
-	size = ''
-	graphics = {}
-	progress_frame_map = {}
-	def __init__(self, **kwargs): self.__dict__.update(kwargs)
-	
 	
 all_construction_sites= [
 	ConstructionSite(
 	    size='medium',
 	    progress_frame_map={33:1, 66:2, 99:3}, 
-	    graphics={'default':[Graphic(slp_id=237)]}
+	    graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=237)}),
 	)]
-	        )");
+	        )";
+
+        py::exec(code);
 	
 	    py::object module = py::module_::import("__main__");
 	
@@ -614,23 +585,16 @@ TEST(EntityDefinitionLoaderTest, LoadTileSets)
  
 	try
     {
-        py::exec(R"(
-class Graphic:
-	drs_file = ""
-	slp_id = 0
-	def __init__(self, **kwargs): self.__dict__.update(kwargs)
-	
-class CompositeGraphic:
-	pass
-	
-class TileSet:
-	graphics = {}
-	def __init__(self, **kwargs): self.__dict__.update(kwargs)
-	
+        std::string code = EntityDefinitionLoaderExposure::readCoreDefs() + R"(
 all_tilesets = [
-	TileSet(graphics={"grass":[Graphic(drs_file="terrain.drs", slp_id=15001)]})
+	TileSet(
+        name="default_tileset",
+        graphics=Graphic(by_theme={"grass":SingleGraphic(drs_file="terrain.drs", slp_id=15001)})
+    )
 ]
-	        )");
+	        )";
+
+        py::exec(code);
 	
 	    py::object module = py::module_::import("__main__");
 	
@@ -656,38 +620,28 @@ TEST(EntityDefinitionLoaderTest, LoadTreeWithStump)
    
 	try
 	{
-		py::exec(R"(
+	    std::string code = EntityDefinitionLoaderExposure::readCoreDefs() +	R"(
 all_entity_names = [
     "wood"
 ]
 
-class Graphic:
-	drs_file = "graphics.drs"
-	slp_id = 0
-	def __init__(self, **kwargs): self.__dict__.update(kwargs)
-	
-class CompositeGraphic:
-	pass
-	
-class NaturalResource:
-	name = ''
-	resource_amount = 100
-	graphics = {}
-	def __init__(self, **kwargs): self.__dict__.update(kwargs)
-	
-class Tree(NaturalResource):
-	shadow_graphics = {}
-	stump = None
-	def __init__(self, **kwargs): self.__dict__.update(kwargs)
-	
 all_natural_resources= [
 	Tree(
-		name="wood",
-		resource_amount=100,
-		graphics={"oak":[Graphic(slp_id=435)]},
-		stump=NaturalResource(name="stump", graphics={"oak":[Graphic(slp_id=1252)]})
-	)]
-			)");
+        name="wood",
+        display_name="Tree",
+        resource_amount=100,
+        graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=435)}),
+        stump=NaturalResourceAdditionalPart(
+            name="stump", 
+            graphics=Graphic(by_theme={"oak":SingleGraphic(slp_id=1252)})),
+        shadow=NaturalResourceAdditionalPart(
+            name="shadow", 
+            graphics=Graphic(by_theme={"oak":SingleGraphic(slp_id=2296)})),
+        icon=Icon(drs_file="interfac.drs", slp_id=50731, index=0),
+    )]
+			)";
+
+        py::exec(code);
 	
 		py::object module = py::module_::import("__main__");
 	
@@ -719,23 +673,15 @@ TEST(EntityDefinitionLoaderTest, LoadUIElements)
    
 	try
 	{
-		py::exec(R"(
-class Rect:
-	def __init__(self, **kwargs): self.__dict__.update(kwargs)
-	
-class Graphic:
-	def __init__(self, **kwargs): self.__dict__.update(kwargs)
-	
-class CompositeGraphic:
-	pass
-	
-class UIElement:
-	def __init__(self, **kwargs): self.__dict__.update(kwargs)
-	
+        std::string code = EntityDefinitionLoaderExposure::readCoreDefs() + 
+		R"(
 all_ui_elements = [
-	UIElement(name="resource_panel", graphics={"default":[Graphic(drs_file="interfac.drs", slp_id=51101, clip_rect=Rect(w=400, h=25))]})
+	 UIElement(name="resource_panel", 
+              graphics=Graphic(by_theme={"default":SingleGraphic(drs_file="interfac.drs", slp_id=51101, clip_rect=Rect(x=0, y=0, w=400, h=25))})),
 ]
-			)");
+			)";
+
+        py::exec(code);
 	
 		py::object module = py::module_::import("__main__");
 	

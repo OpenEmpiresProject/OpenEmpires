@@ -13,7 +13,6 @@ class Player;
 template <typename T> class Rect;
 class CompAction;
 class CompAnimation;
-class CompDirty;
 class CompTransform;
 class Coordinates;
 

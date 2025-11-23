@@ -10,7 +10,6 @@
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
 #include "components/CompBuilding.h"
-#include "components/CompDirty.h"
 #include "components/CompGraphics.h"
 #include "components/CompResource.h"
 #include "components/CompTransform.h"
@@ -44,18 +43,17 @@ void CmdMove::onQueue()
 {
     if (targetEntity != entt::null && m_stateMan->hasComponent<CompBuilding>(targetEntity))
     {
-        auto [building, buildingTransform] =
-            m_stateMan->getComponents<CompBuilding, CompTransform>(targetEntity);
-        auto rect = building.getLandInFeetRect(buildingTransform.position);
+        auto& building = m_stateMan->getComponent<CompBuilding>(targetEntity);
+        auto rect = building.getLandInFeetRect();
 
         targetPos =
             findClosestEdgeOfStaticEntity(targetEntity, m_components->transform.position, rect);
     }
     else if (targetEntity != entt::null && m_stateMan->hasComponent<CompResource>(targetEntity))
     {
-        auto [resource, resourceTransform] =
+        auto [resource, transform] =
             m_stateMan->getComponents<CompResource, CompTransform>(targetEntity);
-        auto rect = resource.getLandInFeetRect(resourceTransform.position);
+        auto rect = resource.getLandInFeetRect(transform.position);
 
         targetPos =
             findClosestEdgeOfStaticEntity(targetEntity, m_components->transform.position, rect);
@@ -72,7 +70,7 @@ void CmdMove::onQueue()
 
 #ifndef NDEBUG
         auto tileEntity = m_stateMan->gameMap().getEntity(MapLayerType::GROUND, targetPos.toTile());
-        auto [graphics, dirty] = m_stateMan->getComponents<CompGraphics, CompDirty>(tileEntity);
+        auto& graphics = m_stateMan->getComponent<CompGraphics>(tileEntity);
 
         graphics.debugOverlays.clear();
         DebugOverlay filledCircle;
@@ -80,7 +78,7 @@ void CmdMove::onQueue()
         filledCircle.color = Color::RED;
         filledCircle.absolutePosition = targetPos;
         graphics.debugOverlays.push_back(filledCircle);
-        dirty.markDirty(tileEntity);
+        StateManager::markDirty(tileEntity);
 #endif
     }
     m_coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
@@ -129,7 +127,7 @@ void CmdMove::animate(int deltaTimeMs, int currentTick)
     auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.value().speed;
     if (currentTick % ticksPerFrame == 0)
     {
-        m_components->dirty.markDirty(m_entityID);
+        StateManager::markDirty(m_entityID);
         m_components->animation.frame++;
         m_components->animation.frame %= actionAnimation.value().frames;
     }
@@ -691,23 +689,24 @@ bool CmdMove::isTargetCloseEnough() const
     {
         if (m_stateMan->hasComponent<CompBuilding>(targetEntity))
         {
-            auto [transform, building] =
-                m_stateMan->getComponents<CompTransform, CompBuilding>(targetEntity);
-            auto pos = m_components->transform.position;
-            auto radiusSq = m_components->transform.goalRadiusSquared;
-            auto rect = building.getLandInFeetRect(transform.position);
+            auto& building = m_stateMan->getComponent<CompBuilding>(targetEntity);
+            auto rect = building.getLandInFeetRect();
 
-            return overlaps(pos, radiusSq, rect);
+            auto unitPos = m_components->transform.position;
+            auto unitRadiusSq = m_components->transform.goalRadiusSquared;
+
+            return overlaps(unitPos, unitRadiusSq, rect);
         }
         else if (m_stateMan->hasComponent<CompResource>(targetEntity))
         {
             auto [transform, resource] =
                 m_stateMan->getComponents<CompTransform, CompResource>(targetEntity);
-            auto pos = m_components->transform.position;
-            auto radiusSq = m_components->transform.goalRadiusSquared;
             auto rect = resource.getLandInFeetRect(transform.position);
 
-            return overlaps(pos, radiusSq, rect);
+            auto unitPos = m_components->transform.position;
+            auto unitRadiusSq = m_components->transform.goalRadiusSquared;
+
+            return overlaps(unitPos, unitRadiusSq, rect);
         }
         debug_assert(false, "Unknown entity type for target {}", targetEntity);
         return true;

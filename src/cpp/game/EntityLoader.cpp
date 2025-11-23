@@ -94,6 +94,7 @@ BuildingOrientation getBuildingOrientation(const std::string& name)
         {"corner", BuildingOrientation::CORNER},
         {"horizontal", BuildingOrientation::HORIZONTAL},
         {"vertical", BuildingOrientation::VERTICAL},
+        {"no_orientation", BuildingOrientation::NO_ORIENTATION},
     };
     return orientations.at(name);
 }
@@ -290,7 +291,6 @@ void EntityLoader::loadNaturalResources(py::object module)
                         addComponentIfNotNull(entityTypeAndSubType, info);
                         addComponentIfNotNull(entityTypeAndSubType, CompRendering());
                         addComponentIfNotNull(entityTypeAndSubType, CompTransform());
-                        addComponentIfNotNull(entityTypeAndSubType, CompDirty());
                     }
                 }
             }
@@ -399,11 +399,13 @@ EntityLoader::EntityDRSData EntityLoader::getDRSData(const GraphicsID& id)
         return it->second;
     else
     {
+        spdlog::warn("Could not find DRS data for id {}. Following are existing mappings",
+                     id.toString());
         for (auto& e : m_DRSDataByGraphicsIdHash)
         {
-            spdlog::debug("getDRSData: map {}:{}", e.first.toString(), e.second.parts[0].slpId);
+            spdlog::warn("DRS data mappings {} : SLP {}", e.first.toString(),
+                         e.second.parts[0].slpId);
         }
-        spdlog::warn("Could not find DRS data for id {}", id.toString());
     }
     return {};
 }
@@ -532,7 +534,6 @@ void EntityLoader::addComponentsForUnit(uint32_t entityType)
 
     addComponentIfNotNull(entityType, CompRendering());
     addComponentIfNotNull(entityType, CompAction(UnitAction::IDLE));
-    addComponentIfNotNull(entityType, CompDirty());
     addComponentIfNotNull(entityType, CompPlayer());
     addComponentIfNotNull(entityType, graphics);
 }
@@ -543,7 +544,6 @@ void EntityLoader::addComponentsForBuilding(uint32_t entityType)
     graphics.layer = GraphicLayer::ENTITIES;
 
     addComponentIfNotNull(entityType, CompRendering());
-    addComponentIfNotNull(entityType, CompDirty());
     addComponentIfNotNull(entityType, CompPlayer());
     addComponentIfNotNull(entityType, CompTransform());
     addComponentIfNotNull(entityType, graphics);
@@ -557,7 +557,6 @@ void EntityLoader::addComponentsForNaturalResource(uint32_t entityType)
     addComponentIfNotNull(entityType, graphics);
     addComponentIfNotNull(entityType, CompRendering());
     addComponentIfNotNull(entityType, CompTransform());
-    addComponentIfNotNull(entityType, CompDirty());
 }
 
 void EntityLoader::addComponentsForTileset(uint32_t entityType)
@@ -574,7 +573,6 @@ void EntityLoader::addComponentsForTileset(uint32_t entityType)
     addComponentIfNotNull(entityType, CompRendering());
     addComponentIfNotNull(entityType, CompTransform());
     addComponentIfNotNull(entityType, CompEntityInfo(entityType));
-    addComponentIfNotNull(entityType, CompDirty());
 }
 
 void EntityLoader::addComponentIfNotNull(uint32_t entityType, const ComponentType& comp)
@@ -624,7 +622,8 @@ void EntityLoader::processGraphic(uint32_t entityType,
                                   uint32_t entitySubType,
                                   py::handle graphicObj,
                                   const Vec2& anchor,
-                                  int direction /*= GraphicsID().direction*/)
+                                  BuildingOrientation orientation,
+                                  bool flip)
 {
     // TODO: handle theme
     auto drsFileName = EntityLoader::readValue<std::string>(graphicObj, "drs_file");
@@ -658,7 +657,7 @@ void EntityLoader::processGraphic(uint32_t entityType,
     GraphicsID id;
     id.entityType = entityType;
     id.entitySubType = entitySubType;
-    id.direction = direction;
+    id.orientation = (int) orientation;
 
     auto boundingBox = m_boundingBoxReadFunc(drsFile, slpId);
 
@@ -674,6 +673,7 @@ void EntityLoader::processGraphic(uint32_t entityType,
         data.boundingRect = boundingBox;
         data.clipRect = clipRect;
         data.anchor = anchor;
+        data.flip = flip;
 
         m_DRSDataByGraphicsIdHash[id] = data;
     }
@@ -698,13 +698,15 @@ void EntityLoader::loadDRSForStillImage(pybind11::object module,
         {
             if (py::isinstance(graphicsEntry, compositeGraphicClass))
             {
+                bool flip = readValue<bool>(graphicsEntry, "flip");
                 py::list parts = graphicsEntry.attr("parts");
                 py::object anchor = graphicsEntry.attr("anchor");
                 int anchorX = readValue<int>(anchor, "x");
                 int anchorY = readValue<int>(anchor, "y");
 
                 for (auto part : parts)
-                    processGraphic(entityType, entitySubType, part, Vec2(anchorX, anchorY));
+                    processGraphic(entityType, entitySubType, part, Vec2(anchorX, anchorY),
+                                   BuildingOrientation::NO_ORIENTATION, flip);
             }
             else if (py::isinstance(graphicsEntry, orientatedGraphicClass))
             {
@@ -717,10 +719,13 @@ void EntityLoader::loadDRSForStillImage(pybind11::object module,
 
                     if (py::isinstance(graphic, singleGraphicClass))
                     {
-                        processGraphic(entityType, entitySubType, graphic, Vec2::null);
+                        bool flip = readValue<bool>(graphic, "flip");
+                        processGraphic(entityType, entitySubType, graphic, Vec2::null, orientation,
+                                       flip);
                     }
                     else if (py::isinstance(graphic, compositeGraphicClass))
                     {
+                        bool flip = readValue<bool>(graphic, "flip");
                         py::list parts = graphic.attr("parts");
                         py::object anchor = graphic.attr("anchor");
                         int anchorX = readValue<int>(anchor, "x");
@@ -728,7 +733,7 @@ void EntityLoader::loadDRSForStillImage(pybind11::object module,
 
                         for (auto part : parts)
                             processGraphic(entityType, entitySubType, part, Vec2(anchorX, anchorY),
-                                           (int) orientation);
+                                           orientation, flip);
                     }
                     else
                     {
@@ -738,7 +743,9 @@ void EntityLoader::loadDRSForStillImage(pybind11::object module,
             }
             else
             {
-                processGraphic(entityType, entitySubType, graphicsEntry, Vec2::null);
+                bool flip = readValue<bool>(graphicsEntry, "flip");
+                processGraphic(entityType, entitySubType, graphicsEntry, Vec2::null,
+                               BuildingOrientation::NO_ORIENTATION, flip);
             }
         }
     }
@@ -817,17 +824,32 @@ void EntityLoader::attachConstructionSites(uint32_t entityType, const std::strin
         }
     }
 
-    // Approach: Find the construction site DRS data and attach it to building entity
-    // as entity sub types.
-    GraphicsID siteId;
-    siteId.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
-    siteId.entitySubType = getEntitySubType(EntityTypes::ET_CONSTRUCTION_SITE, sizeStr);
-    auto siteDRSData = m_DRSDataByGraphicsIdHash.at(siteId);
+    for (const auto& [id, drs] : m_DRSDataByGraphicsIdHash)
+    {
+        if (id.entityType == entityType)
+        {
+            // Approach: Find the construction site DRS data and attach it to building entity
+            // as entity sub types.
+            GraphicsID siteId;
+            siteId.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
+            siteId.entitySubType = getEntitySubType(EntityTypes::ET_CONSTRUCTION_SITE, sizeStr);
+            siteId.orientation = id.orientation;
 
-    GraphicsID buildingAttachedSiteId;
-    buildingAttachedSiteId.entityType = entityType;
-    buildingAttachedSiteId.entitySubType = siteId.entitySubType;
-    m_DRSDataByGraphicsIdHash[buildingAttachedSiteId] = siteDRSData;
+            if (not m_DRSDataByGraphicsIdHash.contains(siteId))
+            {
+                spdlog::error("Could not find construction side graphics for entity {}",
+                              id.toString());
+                continue;
+            }
+            const auto& siteDRSData = m_DRSDataByGraphicsIdHash.at(siteId);
+
+            GraphicsID buildingAttachedSiteId;
+            buildingAttachedSiteId.entityType = entityType;
+            buildingAttachedSiteId.entitySubType = siteId.entitySubType;
+            buildingAttachedSiteId.orientation = id.orientation;
+            m_DRSDataByGraphicsIdHash[buildingAttachedSiteId] = siteDRSData;
+        }
+    }
 }
 
 void EntityLoader::setDRSData(const GraphicsID& id, const EntityDRSData& data)
@@ -1092,6 +1114,14 @@ ComponentType EntityLoader::createCompBuilding(py::object module, pybind11::hand
                     frameByOrientation[orientation] = frameIndex;
                 }
                 PropertyInitializer::set(comp.framesByOrientation, frameByOrientation);
+            }
+
+            if (py::hasattr(entityDefinition, "default_orientation"))
+            {
+                std::string orientationStr =
+                    readValue<std::string>(entityDefinition, "default_orientation");
+                BuildingOrientation orientation = getBuildingOrientation(orientationStr);
+                PropertyInitializer::set(comp.defaultOrientation, orientation);
             }
 
             if (py::hasattr(entityDefinition, "connected_constructions_allowed"))

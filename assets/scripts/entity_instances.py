@@ -74,7 +74,7 @@ all_units: List[Unit] = [
                     Shortcut(name="barracks", shortcut="b"),
                     Shortcut(name="palisade", shortcut="p"),
                     Shortcut(name="stone_wall", shortcut="o"),
-                    Shortcut(name="stone_gate", shortcut="g"),
+                    Shortcut(name="stone_gate", shortcut="i"),
                     Shortcut(name="house", shortcut="h")],
         icon=Icon(drs_file="interfac.drs", slp_id=50730, index=16),
         animations=[
@@ -213,7 +213,8 @@ all_buildings: List[Building] = [
         graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=1828)}),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=30),
         orientations={"right_angled": 0, "left_angled": 1, "corner": 2, "horizontal": 3, "vertical": 4},
-        connected_constructions_allowed=True
+        connected_constructions_allowed=True,
+        default_orientation="corner"
     ),
     Wall(
         name="stone_wall",
@@ -223,7 +224,8 @@ all_buildings: List[Building] = [
         graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=2110)}),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=29),
         orientations={"right_angled": 0, "left_angled": 1, "corner": 2, "horizontal": 3, "vertical": 4},
-        connected_constructions_allowed=True
+        connected_constructions_allowed=True,
+        default_orientation="corner"
     ),
     Gate(
         name="stone_gate",
@@ -231,16 +233,28 @@ all_buildings: List[Building] = [
         line_of_sight=256,
         size="gate",
         graphics=Graphic(by_theme={"default":OrientatedGraphic(
-            by_orientation={"right_angled": CompositeGraphic(
-            anchor=Point(x=187, y=195),
-            parts=[
-                SingleGraphic(slp_id=1926), 
-                SingleGraphic(slp_id=2391)
-            ])}
+            by_orientation={
+                "right_angled": CompositeGraphic(
+                    anchor=Point(x=125, y=190),
+                    parts=[
+                        SingleGraphic(slp_id=2391, anchor=Point(x=-15,y=175)),
+                        SingleGraphic(slp_id=1926, anchor=Point(x=60,y=130)), 
+                        SingleGraphic(slp_id=2391, anchor=Point(x=130,y=103)),
+                    ]
+                ),
+                "left_angled": CompositeGraphic(
+                    anchor=Point(x=125, y=190),
+                    parts=[
+                        SingleGraphic(slp_id=2391, anchor=Point(x=-15,y=175)),
+                        SingleGraphic(slp_id=1926, anchor=Point(x=60,y=130)), 
+                        SingleGraphic(slp_id=2391, anchor=Point(x=130,y=103)),
+                    ],
+                    flip=True
+                )
+            }
         )}),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=29),
-        orientations={"right_angled": 0, "left_angled": 1, "corner": 2, "horizontal": 3, "vertical": 4},
-        connected_constructions_allowed=True
+        default_orientation="right_angled"
     ),
 ]
 
@@ -269,7 +283,10 @@ all_construction_sites: List[ConstructionSite] = [
         name="construction_site",
         size="gate",
         graphics=Graphic(by_theme={"default":OrientatedGraphic(
-            by_orientation={"right_angled": SingleGraphic(slp_id=3706)}
+            by_orientation={
+                "right_angled": SingleGraphic(slp_id=3706),
+                "left_angled": SingleGraphic(slp_id=3706, flip=True),
+            }
         )}),
         progress_frame_map={33:0, 66:1, 99:2})
 ]

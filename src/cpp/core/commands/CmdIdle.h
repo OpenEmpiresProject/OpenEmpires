@@ -5,7 +5,6 @@
 #include "commands/Command.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
-#include "components/CompDirty.h"
 #include "utils/Logger.h"
 #include "utils/ObjectPool.h"
 
@@ -67,7 +66,7 @@ class CmdIdle : public Command
         auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.value().speed;
         if (currentTick % ticksPerFrame == 0)
         {
-            m_components->dirty.markDirty(m_entityID);
+            StateManager::markDirty(m_entityID);
             m_components->animation.frame++;
             m_components->animation.frame %=
                 actionAnimation.value().frames; // Idle is always repeatable

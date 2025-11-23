@@ -50,12 +50,13 @@ bool CmdGarrison::isCloseEnough()
 {
     debug_assert(target != entt::null, "Proposed entity to build is null");
 
-    auto [transform, building] = m_stateMan->getComponents<CompTransform, CompBuilding>(target);
-    auto pos = m_components->transform.position;
-    auto radiusSq = m_components->transform.goalRadiusSquared;
-    auto rect = building.getLandInFeetRect(transform.position);
+    auto& building = m_stateMan->getComponent<CompBuilding>(target);
+    auto rect = building.getLandInFeetRect();
 
-    return overlaps(pos, radiusSq, rect);
+    auto unitPos = m_components->transform.position;
+    auto unitRadiusSq = m_components->transform.goalRadiusSquared;
+
+    return overlaps(unitPos, unitRadiusSq, rect);
 }
 
 bool CmdGarrison::isComplete()

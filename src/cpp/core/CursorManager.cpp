@@ -1,7 +1,6 @@
 #include "CursorManager.h"
 
 #include "components/CompCursor.h"
-#include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
 #include "components/CompTransform.h"
@@ -46,7 +45,7 @@ void CursorManager::onInit(EventLoop& eventLoop)
 
     m_stateMan->addComponent<CompEntityInfo>(m_cursorEntityId, info);
     m_stateMan->addComponent<CompGraphics>(m_cursorEntityId);
-    CompDirty().markDirty(m_cursorEntityId);
+    StateManager::markDirty(m_cursorEntityId);
 }
 
 void CursorManager::onBuildingPlacementStarted(const Event& e)
@@ -134,5 +133,5 @@ void CursorManager::onGarrisonRequest(const Event& e)
 void CursorManager::setCursor(const CursorType& type)
 {
     m_cursorComp->cursor = m_registry->getCursorGraphic(type);
-    CompDirty().markDirty(m_cursorEntityId);
+    StateManager::markDirty(m_cursorEntityId);
 }

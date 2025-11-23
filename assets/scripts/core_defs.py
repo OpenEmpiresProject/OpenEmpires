@@ -1,4 +1,4 @@
-﻿from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 from enum import IntEnum
 
 # Core entity definitions. These definitions are known to the game. It is possible to compose these
@@ -26,11 +26,13 @@ class SingleGraphic(_Constructible):
     slp_id: int
     clip_rect: Optional[Rect]
     anchor: Optional[Point]
+    flip: bool = False
 
 
 class CompositeGraphic(_Constructible):
     parts: List[SingleGraphic]
     anchor: Point
+    flip: bool = False
 
 
 class OrientatedGraphic(_Constructible):
@@ -116,6 +118,7 @@ class Building:
     icon: Icon
     orientations: Optional[Dict[str, int]] # orientation name to frame id mapping
     connected_constructions_allowed: Optional[bool] # Allows to constructing series of same building such as walls
+    default_orientation: Optional[str]
 
 class CompoSiteGraphicBuilding(Building):
     graphics: Graphic

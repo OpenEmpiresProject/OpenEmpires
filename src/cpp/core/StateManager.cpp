@@ -35,6 +35,21 @@ void core::StateManager::destroyAllPendingEntities()
     m_entitiesToDestroy.clear();
 }
 
+void StateManager::clearDirtyEntities()
+{
+    g_dirtyEntities.clear();
+}
+
+void StateManager::markDirty(uint32_t entityId)
+{
+    g_dirtyEntities.insert(entityId);
+}
+
+std::set<uint32_t>& StateManager::getDirtyEntities()
+{
+    return g_dirtyEntities;
+}
+
 bool StateManager::isEntityValid(uint32_t entity) const
 {
     return m_registry.valid(entity) &&

@@ -137,13 +137,36 @@ enum class CursorType
 
 enum class BuildingOrientation
 {
-    DEFAULT,
-    RIGHT_ANGLED,
-    LEFT_ANGLED,
-    CORNER,
-    HORIZONTAL,
-    VERTICAL
+    NO_ORIENTATION = 0,
+    RIGHT_ANGLED, // Use for both gate and wall
+    LEFT_ANGLED,  // Use for both gate and wall
+    CORNER,       // Use for wall
+    HORIZONTAL,   // Use for both gate and wall
+    VERTICAL,     // Use for both gate and wall
+
+    // Max orientations can have is 8 (i.e. value 7) since this goes in the direction field of
+    // GraphicsId
 };
+
+static std::string buildingOrientationToString(const BuildingOrientation& orientation)
+{
+    switch (orientation)
+    {
+    case BuildingOrientation::NO_ORIENTATION:
+        return "no-orientation";
+    case BuildingOrientation::RIGHT_ANGLED:
+        return "right-angled";
+    case BuildingOrientation::LEFT_ANGLED:
+        return "left-angled";
+    case BuildingOrientation::CORNER:
+        return "corner";
+    case BuildingOrientation::HORIZONTAL:
+        return "horizontal";
+    case BuildingOrientation::VERTICAL:
+        return "vertical";
+    }
+    return "";
+}
 
 enum class UnitTagType
 {

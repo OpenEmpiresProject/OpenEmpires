@@ -11,13 +11,12 @@
 #include "commands/CmdMove.h"
 #include "components/CompBuilder.h"
 #include "components/CompBuilding.h"
-#include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGarrison.h"
+#include "components/CompGraphics.h"
 #include "components/CompPlayer.h"
 #include "components/CompResource.h"
 #include "components/CompTransform.h"
-#include "components/CompGraphics.h"
 #include "components/CompUnit.h"
 #include "utils/Logger.h"
 
@@ -143,6 +142,27 @@ void PlayerController::onKeyUp(const Event& e)
         {
             concludeAllBuildingPlacements();
         }
+        else if (scancode == SDL_SCANCODE_LCTRL or scancode == SDL_SCANCODE_RCTRL)
+        {
+            if (m_currentBuildingPlacements.size() == 1)
+            {
+                auto& placement = m_currentBuildingPlacements.begin()->second;
+                if (placement.orientation == BuildingOrientation::LEFT_ANGLED)
+                {
+                    placement.orientation = BuildingOrientation::RIGHT_ANGLED;
+                    auto& building = m_stateMan->getComponent<CompBuilding>(placement.entity);
+                    building.orientation = placement.orientation;
+                    StateManager::markDirty(placement.entity);
+                }
+                else if (placement.orientation == BuildingOrientation::RIGHT_ANGLED)
+                {
+                    placement.orientation = BuildingOrientation::LEFT_ANGLED;
+                    auto& building = m_stateMan->getComponent<CompBuilding>(placement.entity);
+                    building.orientation = placement.orientation;
+                    StateManager::markDirty(placement.entity);
+                }
+            }
+        }
         else
         {
             auto resolver = ServiceRegistry::getInstance().getService<ShortcutResolver>();
@@ -265,7 +285,6 @@ void PlayerController::onMouseMove(const Event& e)
         if (m_currentBuildingPlacements.size() == 1)
         {
             auto placement = m_currentBuildingPlacements.begin();
-
             validateAndSnapBuildingToTile(placement->second, feet);
         }
     }
@@ -301,7 +320,8 @@ void PlayerController::startBuildingPlacement(uint32_t buildingType)
 {
     auto worldPos = m_coordinates->screenUnitsToFeet(m_currentMouseScreenPos);
 
-    auto placement = createBuildingPlacement(buildingType, worldPos, BuildingOrientation::DEFAULT);
+    auto placement =
+        createBuildingPlacement(buildingType, worldPos, BuildingOrientation::NO_ORIENTATION);
     publishEvent(Event::Type::BUILDING_PLACEMENT_STARTED, placement);
     // Just by pressing shortcut or button in UI to start creating a building doesn't mean
     // player intend to create series of same buildings. Series starts only when player press
@@ -321,47 +341,50 @@ BuildingPlacementData PlayerController::createBuildingPlacement(
 {
     uint32_t entity = getOrCreateBuildingEntity(buildingType);
 
-    auto [transform, playerComp, building, info, dirty] =
-        m_stateMan
-            ->getComponents<CompTransform, CompPlayer, CompBuilding, CompEntityInfo, CompDirty>(
-                entity);
+    auto [transform, playerComp, building, info] =
+        m_stateMan->getComponents<CompTransform, CompPlayer, CompBuilding, CompEntityInfo>(entity);
 
-    bool outOfMap = false;
-    // building position (hence landarea) will be updated later based on the result of following query.
-    // but to check whether building can be placed there, we need a building with updated landarea, hence
-    // creating a temporary building.
+    info.isDestroyed = false;
+    playerComp.player = m_player;
+    building.orientation = orientation;
+
+    // No specific orientation was provided, have to default to the value configured
+    // in the building.
+    if (orientation == BuildingOrientation::NO_ORIENTATION)
+    {
+        building.orientation = building.defaultOrientation;
+    }
+
+    spdlog::debug("Creating building placement with orientation {}",
+                  buildingOrientationToString(building.orientation));
+
+    building.constructionProgress = 100; // Treat as a complete building
+    StateManager::markDirty(entity);
+
+    // building position (hence landarea) will be updated later based on the result of following
+    // query. but to check whether building can be placed there, we need a building with updated
+    // landarea, hence creating a temporary building.
     CompBuilding tempBuilding = building;
-    tempBuilding.updateLandArea(pos.toTile());
+    tempBuilding.updateLandArea(pos);
+    bool outOfMap = false;
     building.validPlacement = m_stateMan->canPlaceBuildingAt(tempBuilding, outOfMap);
 
     if (!outOfMap)
     {
-        transform.position = building.getTileSnappedPosition(pos);
-        building.updateLandArea(transform.position.toTile());
+        transform.position = building.getSnappedBuildingCenter(pos);
+        building.updateLandArea(transform.position);
     }
     else
     {
         // TODO: Where to display?
     }
 
-    info.isDestroyed = false;
-    playerComp.player = m_player;
-    building.orientation = orientation;
-
-    // Override default orientation with corner for connected buildings
-    if (building.connectedConstructionsAllowed and orientation == BuildingOrientation::DEFAULT)
-    {
-        building.orientation = BuildingOrientation::CORNER;
-    }
-    building.constructionProgress = 100; // Treat as a complete building
-    dirty.markDirty(entity);
-
     BuildingPlacementData data;
     data.player = m_player;
     data.entityType = buildingType;
     data.pos = pos;
     data.entity = entity;
-    data.orientation = orientation;
+    data.orientation = building.orientation;
     m_seriesConstructionAllowed = building.connectedConstructionsAllowed;
 
     m_currentBuildingPlacements[data.placementId] = data;
@@ -396,10 +419,10 @@ void PlayerController::removeAllExistingBuildingPlacements()
     for (const auto& it : m_currentBuildingPlacements)
     {
         auto entity = it.second.entity;
-        auto [info, dirty] = m_stateMan->getComponents<CompEntityInfo, CompDirty>(entity);
+        auto& info = m_stateMan->getComponent<CompEntityInfo>(entity);
 
         info.isDestroyed = true;
-        dirty.markDirty(entity);
+        StateManager::markDirty(entity);
         m_entityByTypeRecyclePool[info.entityType].push_back(entity); // Recycle the entity
     }
     m_currentBuildingPlacements.clear();
@@ -418,19 +441,19 @@ void PlayerController::createConnectedBuildingPlacements(
 void PlayerController::validateAndSnapBuildingToTile(BuildingPlacementData& placement,
                                                      const Feet& pos)
 {
-    auto [transform, dirty, building] =
-        m_stateMan->getComponents<CompTransform, CompDirty, CompBuilding>(placement.entity);
+    auto [transform, building] =
+        m_stateMan->getComponents<CompTransform, CompBuilding>(placement.entity);
 
     bool outOfMap = false;
     building.validPlacement = m_stateMan->canPlaceBuildingAt(building, outOfMap);
 
     if (!outOfMap)
     {
-        transform.position = building.getTileSnappedPosition(pos);
-        building.updateLandArea(transform.position.toTile());
+        transform.position = building.getSnappedBuildingCenter(pos); // Snap
+        building.updateLandArea(transform.position);
     }
     placement.pos = transform.position;
-    dirty.markDirty(placement.entity);
+    StateManager::markDirty(placement.entity);
 
 #ifndef NDEBUG
     auto& graphics = m_stateMan->getComponent<CompGraphics>(placement.entity);
@@ -463,10 +486,9 @@ void PlayerController::validateAndSnapBuildingToTile(BuildingPlacementData& plac
 
 void PlayerController::confirmBuildingPlacement(const BuildingPlacementData& placement) const
 {
-    auto [building, transform, player, info, dirty] =
-        m_stateMan
-            ->getComponents<CompBuilding, CompTransform, CompPlayer, CompEntityInfo, CompDirty>(
-                placement.entity);
+    auto [building, transform, player, info] =
+        m_stateMan->getComponents<CompBuilding, CompTransform, CompPlayer, CompEntityInfo>(
+            placement.entity);
 
     // Player wants to place the building, but it is BuildingManager's responsibility
     // to do it. Therefore, requesting building.
@@ -483,10 +505,10 @@ void PlayerController::concludeBuildingPlacement(uint32_t placementId)
     if (m_currentBuildingPlacements.contains(placementId))
     {
         auto& placement = m_currentBuildingPlacements[placementId];
-        auto [info, dirty] = m_stateMan->getComponents<CompEntityInfo, CompDirty>(placement.entity);
+        auto& info = m_stateMan->getComponent<CompEntityInfo>(placement.entity);
 
         info.isDestroyed = true;
-        dirty.markDirty(placement.entity);
+        StateManager::markDirty(placement.entity);
 
         publishEvent(Event::Type::BUILDING_PLACEMENT_ENDED, placement);
 
@@ -744,11 +766,11 @@ void PlayerController::selectHomogeneousEntities(const std::vector<uint32_t>& se
 
         if (isValid)
         {
-            auto [dirty, select] = m_stateMan->getComponents<CompDirty, CompSelectible>(entity);
+            auto& select = m_stateMan->getComponent<CompSelectible>(entity);
 
             selection.selectedEntities.push_back(entity);
             select.isSelected = true;
-            dirty.markDirty(entity);
+            StateManager::markDirty(entity);
         }
     }
 
@@ -799,10 +821,10 @@ void PlayerController::updateSelection(const EntitySelectionData& newSelection)
     // Clear any existing selections
     for (auto& entity : m_currentEntitySelection.selection.selectedEntities)
     {
-        auto [dirty, select] = m_stateMan->getComponents<CompDirty, CompSelectible>(entity);
+        auto& select = m_stateMan->getComponent<CompSelectible>(entity);
 
         select.isSelected = false;
-        dirty.markDirty(entity);
+        StateManager::markDirty(entity);
     }
     m_currentEntitySelection = newSelection;
 }
@@ -821,10 +843,10 @@ void PlayerController::getAllOverlappingEntities(const Vec2& startScreenPos,
     // Following consider only units since selection box cannot be used for non-unit entities
     // such as buildings and trees
     // TODO: Optimize this by using tilemap
-    m_stateMan->getEntities<CompUnit, CompTransform, CompDirty, CompPlayer>().each(
+    m_stateMan->getEntities<CompUnit, CompTransform, CompPlayer>().each(
         [this, selectionLeft, selectionRight, selectionTop, selectionBottom, &player,
          &entitiesToAddToSelection](uint32_t entity, CompUnit& unit, CompTransform& transform,
-                                    CompDirty& dirty, CompPlayer& playerComp)
+                                    CompPlayer& playerComp)
         {
             // Cannot select other players' units
             if (playerComp.player != player)

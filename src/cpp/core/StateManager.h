@@ -87,12 +87,18 @@ class StateManager
 
     bool canPlaceBuildingAt(const CompBuilding& building, bool& outOfMap);
 
+    static std::set<uint32_t>& getDirtyEntities();
+    static void markDirty(uint32_t entityId);
+    static void clearDirtyEntities();
+
   private:
     TileMap m_gameMap;
     entt::basic_registry<uint32_t> m_registry;
     Ref<PathFinderBase> m_pathFinder;
     std::vector<uint32_t> m_entitiesToDestroy;
     Ref<Coordinates> m_coordinates;
+
+    inline static std::set<uint32_t> g_dirtyEntities;
 };
 } // namespace core
 

@@ -109,15 +109,12 @@ void ZOrderStrategyByTiles::onUpdate(const CompRendering& current, CompRendering
         {
             m_gameMap.removeEntity(layer, currentLand, current.entityID);
         }
-        else if (positionChanged)
-        {
-            if (current.entityID != entt::null)
-                m_gameMap.removeEntity(layer, currentLand, current.entityID);
-
-            m_gameMap.addEntity(layer, updateLand, update.entityID);
-        }
         else
         {
+            if (current.entityID != entt::null)
+            {
+                m_gameMap.removeEntity(layer, currentLand, current.entityID);
+            }
             m_gameMap.addEntity(layer, updateLand, update.entityID);
         }
     }
@@ -187,20 +184,22 @@ void ZOrderStrategyByTiles::processLayer(const MapLayerType& layer, const Coordi
                                      viewportRect.h + (m_extendedViewportVerticalMargin * 2));
 
     bool repositioned = false;
+    int y = 0;
+    int x = 0;
 
-    for (int y = 0; y < m_gameMap.height; y++)
+    for (; y < m_gameMap.height; y++)
     {
         bool continueXAxis = true;
         repositioned = false;
 
         for (int x = 0; x < m_gameMap.width and continueXAxis; x++)
         {
-            Tile tile(x, y);
-
             if (m_alreadyProcessedTiles.at(x, y) == iteration)
             {
                 continue;
             }
+
+            Tile tile(x, y);
 
             if (not isTileInsideExtendedViewport(extendedViewport, tile, coordinates))
             {
@@ -318,6 +317,9 @@ void ZOrderStrategyByTiles::processLayer(const MapLayerType& layer, const Coordi
                 }
             }
 
+            // Looping is required to resume an older tile, hence x and y have new values.
+            // Therefore, should not continue any further with remaining x coordinates.
+            //
             if (repositioned)
                 break; // breaks x
 
@@ -339,6 +341,12 @@ void ZOrderStrategyByTiles::processLayer(const MapLayerType& layer, const Coordi
                 }
             }
         }
+
+        // If there wasn't a repositioning (i.e. resuming an old tile), then for the next
+        // y value, x should start from 0.
+        //
+        if (not repositioned)
+            x = 0;
     }
 }
 

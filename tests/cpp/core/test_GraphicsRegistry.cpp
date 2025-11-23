@@ -44,14 +44,12 @@ TEST(GraphicsIDTest, PlayerIdInToString)
     id.direction = Direction::WEST;
     id.variation = 5;
     id.playerId = 6;
-    id.reserved = 7;
 
     std::string str = id.toString();
     std::cout << "GraphicsID toString: " << str << std::endl;
 
     // Check for player ID and reserved fields in output
     EXPECT_NE(str.find("P6"), std::string::npos);
-    EXPECT_NE(str.find("R7"), std::string::npos);
 }
 TEST(GraphicsIDTest, DefaultPlayerIdIsZero)
 {

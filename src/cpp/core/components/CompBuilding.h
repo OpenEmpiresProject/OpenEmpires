@@ -24,6 +24,7 @@ class CompBuilding
     Property<uint8_t> dropOffForResourceType;
     Property<std::unordered_map<BuildingOrientation, uint32_t>> framesByOrientation;
     Property<bool> connectedConstructionsAllowed;
+    Property<BuildingOrientation> defaultOrientation = {BuildingOrientation::NO_ORIENTATION};
 
   public:
     bool validPlacement = true;
@@ -33,75 +34,16 @@ class CompBuilding
     std::map<int, int> visualVariationByProgress = {{0, 0}};
     uint32_t constructionSiteEntitySubType = 0;
     bool isInStaticMap = false;
-    BuildingOrientation orientation = BuildingOrientation::DEFAULT;
+    BuildingOrientation orientation = BuildingOrientation::NO_ORIENTATION;
     LandArea landArea;
 
-    bool isConstructed() const
-    {
-        return constructionProgress >= 100;
-    }
-
-    int getVariationByConstructionProgress() const
-    {
-        debug_assert(visualVariationByProgress.size() > 0,
-                     "Building's visual variation map is empty");
-
-        auto it = visualVariationByProgress.lower_bound(constructionProgress);
-        return it->second;
-    }
-
     // Check if the building supports drop-off for a specific resource type
-    inline bool acceptResource(uint8_t resourceType) const
-    {
-        return dropOffForResourceType & resourceType;
-    }
-
-    // Relying on externally provided own position to avoid coupling CompTransform with this class
-    Rect<float> getLandInFeetRect(const Feet& position) const
-    {
-        // Get the actual bottom corner (but not 10 feet like in snapped version)
-        Tile tile = position.toTile() + 1;
-        Feet corner = tile.toFeet();
-
-        const auto& sizeVal = size.value();
-
-        float x = corner.x - sizeVal.width * Constants::FEET_PER_TILE;
-        float y = corner.y - sizeVal.height * Constants::FEET_PER_TILE;
-        float w = sizeVal.width * Constants::FEET_PER_TILE;
-        float h = sizeVal.height * Constants::FEET_PER_TILE;
-        return Rect<float>(x, y, w, h);
-    }
-
-    // Relying on externally provided own position to avoid coupling CompTransform with this class
-    Feet getTileSnappedPosition(const Feet& position) const
-    {
-        // Building bottom corner (in isometric view, but not logical view) is almost at the
-        // bottom corner of the tile (i.e. 10 feet before next tile)
-        Tile tile = position.toTile() + Tile(1, 1);
-        return tile.toFeet() - 10;
-    }
-
-    Feet getBuildingCenter(const Feet& anchor) const
-    {
-        const float halfWidth = (float) size.value().width / 2;
-        const float halfHeight = (float) size.value().height / 2;
-
-        return anchor -
-               Feet(halfWidth * Constants::FEET_PER_TILE, halfHeight * Constants::FEET_PER_TILE);
-    }
-
-    void updateLandArea(const Tile& bottomRight)
-    {
-        landArea.tiles.clear();
-
-        for (int x = 0; x < size.value().width; ++x)
-        {
-            for (int y = 0; y < size.value().height; ++y)
-            {
-                landArea.tiles.emplace_back(bottomRight - Tile(x, y));
-            }
-        }
-    }
+    bool acceptResource(uint8_t resourceType) const;
+    bool isConstructed() const;
+    int getVariationByConstructionProgress() const;
+    Rect<float> getLandInFeetRect() const;
+    Feet getSnappedBuildingCenter(const Feet& position) const;
+    void updateLandArea(const Feet& center);
 };
 
 } // namespace core

@@ -12,7 +12,6 @@
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
 #include "components/CompBuilding.h"
-#include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompPlayer.h"
 #include "components/CompResourceGatherer.h"
@@ -90,12 +89,11 @@ class CmdDropResource : public Command
      */
     void animate()
     {
-        auto [action, animation, dirty] =
-            m_stateMan->getComponents<CompAction, CompAnimation, CompDirty>(m_entityID);
+        auto [action, animation] = m_stateMan->getComponents<CompAction, CompAnimation>(m_entityID);
 
         action.action = m_gatherer->getCarryingAction(resourceType);
         animation.frame = 0;
-        dirty.markDirty(m_entityID);
+        StateManager::markDirty(m_entityID);
     }
 
     /**
@@ -136,14 +134,13 @@ class CmdDropResource : public Command
     {
         if (m_dropOffEntity != entt::null)
         {
-            const auto& transformMy = m_stateMan->getComponent<CompTransform>(m_entityID);
-            auto [transform, building] =
-                m_stateMan->getComponents<CompTransform, CompBuilding>(m_dropOffEntity);
-            auto pos = transformMy.position;
-            auto radiusSq = transformMy.goalRadiusSquared;
-            auto rect = building.getLandInFeetRect(transform.position);
+            auto& building = m_stateMan->getComponent<CompBuilding>(m_dropOffEntity);
+            auto rect = building.getLandInFeetRect();
 
-            return overlaps(pos, radiusSq, rect);
+            auto unitPos = m_components->transform.position;
+            auto unitRadiusSq = m_components->transform.goalRadiusSquared;
+
+            return overlaps(unitPos, unitRadiusSq, rect);
         }
         return false;
     }

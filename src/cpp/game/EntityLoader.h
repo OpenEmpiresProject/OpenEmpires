@@ -10,7 +10,6 @@
 #include "components/CompAnimation.h"
 #include "components/CompBuilder.h"
 #include "components/CompBuilding.h"
-#include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGarrison.h"
 #include "components/CompGraphics.h"
@@ -41,7 +40,6 @@ using ComponentType = std::variant<std::monostate,
                                    core::CompAnimation,
                                    core::CompBuilder,
                                    core::CompBuilding,
-                                   core::CompDirty,
                                    core::CompEntityInfo,
                                    core::CompGraphics,
                                    core::CompPlayer,
@@ -74,6 +72,7 @@ class EntityLoader : public core::EntityFactory, public core::PropertyInitialize
         core::Rect<int> clipRect;
         core::Vec2 anchor;
         core::Rect<int> boundingRect;
+        bool flip = false;
     };
     EntityLoader();
     ~EntityLoader();
@@ -193,10 +192,11 @@ class EntityLoader : public core::EntityFactory, public core::PropertyInitialize
     }
 
     void processGraphic(uint32_t entityType,
-                        uint32_t entitySubType, 
+                        uint32_t entitySubType,
                         pybind11::handle graphicObj,
                         const core::Vec2& anchor,
-                        int direction = core::GraphicsID().direction);
+                        core::BuildingOrientation orientation,
+                        bool flip);
 
   private:
     const std::string m_unitsFile = "units";

@@ -3,7 +3,6 @@
 #include "Coordinates.h"
 #include "EntityFactory.h"
 #include "PlayerFactory.h"
-#include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompPlayer.h"
 #include "components/CompSelectible.h"
@@ -36,10 +35,9 @@ void UnitManager::onUnitDeletion(const Event& e)
     auto entity = e.getData<EntityDeleteData>().entity;
     if (entity != entt::null && stateMan->hasComponent<CompUnit>(entity))
     {
-        auto [info, dirty, transform] =
-            stateMan->getComponents<CompEntityInfo, CompDirty, CompTransform>(entity);
+        auto [info, transform] = stateMan->getComponents<CompEntityInfo, CompTransform>(entity);
         info.isDestroyed = true;
-        dirty.markDirty(entity);
+        StateManager::markDirty(entity);
         stateMan->gameMap().removeEntity(MapLayerType::UNITS, transform.position.toTile(), entity);
     }
 }

@@ -3,7 +3,6 @@
 #include "Feet.h"
 #include "StateManager.h"
 #include "Tile.h"
-#include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "utils/Size.h"
 

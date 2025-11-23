@@ -26,7 +26,8 @@ class GraphicsID
             uint64_t playerId : 4;       // 16 values
             uint64_t civilization : 6;   // 64 values
             uint64_t age : 3;            // 8 values
-            uint64_t reserved : 57;
+            uint64_t orientation : 4;    // 8 values
+            uint64_t reserved : 53;
         };
         struct
         {
@@ -58,6 +59,7 @@ class GraphicsID
         age = 0;
         reserved = 0;
         direction = static_cast<uint64_t>(Direction::NONE);
+        orientation = static_cast<uint64_t>(BuildingOrientation::NO_ORIENTATION);
         reserved = 0;
     }
 
@@ -70,6 +72,7 @@ class GraphicsID
         id.playerId = playerId;
         id.civilization = civilization;
         id.age = age;
+        id.orientation = orientation;
         return id;
     }
 
@@ -99,7 +102,7 @@ class GraphicsID
         return "GraphicsID(T" + std::to_string(entityType) + ", S" + std::to_string(entitySubType) +
                ", A" + std::to_string(action) + ", F" + std::to_string(frame) + ", D" +
                std::to_string(static_cast<int>(direction)) + ", V" + std::to_string(variation) +
-               ", P" + std::to_string(playerId) + ", R" + std::to_string(reserved) + ")";
+               ", P" + std::to_string(playerId) + ", O" + std::to_string(orientation) + ")";
     }
 
   private:

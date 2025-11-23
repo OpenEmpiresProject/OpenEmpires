@@ -5,7 +5,6 @@
 #include "ServiceRegistry.h"
 #include "StateManager.h"
 #include "UIManager.h"
-#include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
 #include "components/CompRendering.h"
@@ -26,7 +25,6 @@ Widget::Widget(Ref<Widget> parent)
     graphics.layer = GraphicLayer::UI;
     ServiceRegistry::getInstance().getService<StateManager>()->addComponent(id, graphics);
     ServiceRegistry::getInstance().getService<StateManager>()->addComponent(id, CompRendering());
-    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(id, CompDirty());
 
     CompEntityInfo entityInfo(s_entityType, s_entitySubType, 0);
     entityInfo.entityId = id;
@@ -60,10 +58,10 @@ void Widget::updateGraphicCommand()
     if (dirty)
     {
         auto coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
-        auto [ui, transform, info, dirty] =
+        auto [ui, transform, info] =
             ServiceRegistry::getInstance()
                 .getService<StateManager>()
-                ->getComponents<CompUIElement, CompTransform, CompEntityInfo, CompDirty>(id);
+                ->getComponents<CompUIElement, CompTransform, CompEntityInfo>(id);
         auto pixelPos = getAbsoluteRect().position();
         // HACK: We are hacking transform's position to carry UI element positions as well.
         // But it is usually meant to carry positions in Feet.
@@ -76,7 +74,7 @@ void Widget::updateGraphicCommand()
         else
             ui.type = UIRenderingType::NONE;
 
-        dirty.markDirty(id); // TODO: not optimal
+        StateManager::markDirty(id); // TODO: not optimal
         this->dirty = false;
     }
 

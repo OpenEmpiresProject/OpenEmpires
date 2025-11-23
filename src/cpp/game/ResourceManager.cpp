@@ -2,7 +2,6 @@
 
 #include "GameTypes.h"
 #include "StateManager.h"
-#include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompResource.h"
 #include "components/CompSelectible.h"
@@ -27,15 +26,15 @@ void ResourceManager::onEvent(const Event& e)
 void ResourceManager::onTick(const Event& e)
 {
     auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
-    for (auto entity : CompDirty::g_dirtyEntities)
+    for (auto entity : StateManager::getDirtyEntities())
     {
         if (stateMan->hasComponent<CompResource>(entity))
         {
-            auto [resource, dirty, info, select, transform] =
+            auto [resource, info, select, transform] =
                 ServiceRegistry::getInstance()
                     .getService<StateManager>()
-                    ->getComponents<CompResource, CompDirty, CompEntityInfo, CompSelectible,
-                                    CompTransform>(entity);
+                    ->getComponents<CompResource, CompEntityInfo, CompSelectible, CompTransform>(
+                        entity);
 
             if (resource.remainingAmount == 0)
             {
@@ -61,10 +60,9 @@ void ResourceManager::onTick(const Event& e)
 
                     if (shadow != entt::null)
                     {
-                        auto [shadowInfo, shadowDirty] =
-                            stateMan->getComponents<CompEntityInfo, CompDirty>(shadow);
+                        auto& shadowInfo = stateMan->getComponent<CompEntityInfo>(shadow);
                         shadowInfo.isDestroyed = true;
-                        shadowDirty.markDirty(shadow);
+                        StateManager::markDirty(shadow);
                         stateMan->gameMap().removeStaticEntity(tile, shadow);
                     }
                 }

@@ -10,7 +10,6 @@ namespace core
 {
 class CompAction;
 class CompAnimation;
-class CompDirty;
 class CompEntityInfo;
 class CompPlayer;
 class CompTransform;
@@ -21,7 +20,6 @@ class UnitComponentRefs
   public:
     CompAction& action;
     CompAnimation& animation;
-    CompDirty& dirty;
     CompEntityInfo& entityInfo;
     CompPlayer& player;
     CompTransform& transform;
@@ -32,7 +30,6 @@ class UnitComponentRefs
   private:
     UnitComponentRefs(std::tuple<CompAction&,
                                  CompAnimation&,
-                                 CompDirty&,
                                  CompEntityInfo&,
                                  CompPlayer&,
                                  CompTransform&,

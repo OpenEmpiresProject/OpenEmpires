@@ -8,7 +8,6 @@
 #include "components/CompAnimation.h"
 #include "components/CompBuilder.h"
 #include "components/CompBuilding.h"
-#include "components/CompDirty.h"
 #include "components/CompTransform.h"
 #include "debug.h"
 #include "utils/Logger.h"
@@ -81,7 +80,7 @@ void CmdBuild::animate(int deltaTimeMs, int currentTick)
     auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.value().speed;
     if (currentTick % ticksPerFrame == 0)
     {
-        m_components->dirty.markDirty(m_entityID);
+        StateManager::markDirty(m_entityID);
         m_components->animation.frame++;
         m_components->animation.frame %= actionAnimation.value().frames; // Building is repeatable
     }
@@ -99,12 +98,13 @@ bool CmdBuild::isCloseEnough()
 {
     debug_assert(target != entt::null, "Proposed entity to build is null");
 
-    auto [transform, building] = m_stateMan->getComponents<CompTransform, CompBuilding>(target);
-    auto pos = m_components->transform.position;
-    auto radiusSq = m_components->transform.goalRadiusSquared;
-    auto rect = building.getLandInFeetRect(transform.position);
+    auto& building = m_stateMan->getComponent<CompBuilding>(target);
+    auto rect = building.getLandInFeetRect();
 
-    return overlaps(pos, radiusSq, rect);
+    auto unitPos = m_components->transform.position;
+    auto unitRadiusSq = m_components->transform.goalRadiusSquared;
+
+    return overlaps(unitPos, unitRadiusSq, rect);
 }
 
 /**
@@ -132,7 +132,7 @@ bool CmdBuild::isComplete()
  */
 void CmdBuild::build(int deltaTimeMs)
 {
-    auto [building, dirty] = m_stateMan->getComponents<CompBuilding, CompDirty>(target);
+    auto& building = m_stateMan->getComponent<CompBuilding>(target);
     auto& builder = m_stateMan->getComponent<CompBuilder>(m_entityID);
 
     m_constructionContribution += float(builder.buildSpeed) * deltaTimeMs / 1000.0f;
@@ -145,7 +145,7 @@ void CmdBuild::build(int deltaTimeMs)
         building.constructionProgress = std::min(building.constructionProgress, 100u);
 
         if (building.constructionProgress % 10 == 0)
-            dirty.markDirty(target);
+            StateManager::markDirty(target);
     }
 }
 
@@ -163,8 +163,8 @@ void CmdBuild::moveCloser(std::list<Command*>& subCommands)
 
     const auto& targetPosition = m_stateMan->getComponent<CompTransform>(target).position;
 
-    spdlog::debug("Target {} at {} is not close enough to build, moving...", target,
-                  targetPosition.toString());
+    spdlog::debug("Target {} at {} (tile {}) is not close enough to build, moving...", target,
+                  targetPosition.toString(), targetPosition.toTile().toString());
     auto moveCmd = ObjectPool<CmdMove>::acquire();
     moveCmd->targetEntity = target;
     moveCmd->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);

@@ -2,7 +2,6 @@
 
 #include "CompAction.h"
 #include "CompAnimation.h"
-#include "CompDirty.h"
 #include "CompEntityInfo.h"
 #include "CompGraphics.h"
 #include "CompPlayer.h"
@@ -11,24 +10,18 @@
 
 using namespace core;
 
-UnitComponentRefs::UnitComponentRefs(std::tuple<CompAction&,
-                                                CompAnimation&,
-                                                CompDirty&,
-                                                CompEntityInfo&,
-                                                CompPlayer&,
-                                                CompTransform&,
-                                                CompUnit&> components)
+UnitComponentRefs::UnitComponentRefs(
+    std::tuple<CompAction&, CompAnimation&, CompEntityInfo&, CompPlayer&, CompTransform&, CompUnit&>
+        components)
     : action{std::get<0>(components)}, animation{std::get<1>(components)},
-      dirty{std::get<2>(components)}, entityInfo{std::get<3>(components)},
-      player{std::get<4>(components)}, transform{std::get<5>(components)},
-      unit{std::get<6>(components)}
+      entityInfo{std::get<2>(components)}, player{std::get<3>(components)},
+      transform{std::get<4>(components)}, unit{std::get<5>(components)}
 {
 }
 
 UnitComponentRefs::UnitComponentRefs(Ref<StateManager> stateMan, uint32_t entityID)
     : UnitComponentRefs(stateMan->getComponents<CompAction,
                                                 CompAnimation,
-                                                CompDirty,
                                                 CompEntityInfo,
                                                 CompPlayer,
                                                 CompTransform,

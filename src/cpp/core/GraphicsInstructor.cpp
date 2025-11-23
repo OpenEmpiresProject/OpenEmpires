@@ -9,7 +9,6 @@
 #include "components/CompAnimation.h"
 #include "components/CompBuilding.h"
 #include "components/CompCursor.h"
-#include "components/CompDirty.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
 #include "components/CompPlayer.h"
@@ -53,8 +52,11 @@ void GraphicsInstructor::onTickStart()
 
     if (!m_initialized)
     {
-        ServiceRegistry::getInstance().getService<StateManager>()->getEntities<CompDirty>().each(
-            [this](uint32_t entity, CompDirty& dirty) { dirty.markDirty(entity); });
+        ServiceRegistry::getInstance()
+            .getService<StateManager>()
+            ->getEntities<CompEntityInfo>()
+            .each([this](uint32_t entity, CompEntityInfo& dirty)
+                  { StateManager::markDirty(entity); });
         m_initialized = true;
     }
 }
@@ -63,14 +65,14 @@ void GraphicsInstructor::onTickEnd()
 {
     m_frameCount++;
     m_synchronizer.waitForReceiver([&]() {});
-    CompDirty::g_dirtyEntities.clear();
+    StateManager::clearDirtyEntities();
 }
 
 void GraphicsInstructor::sendGraphicsInstructions()
 {
     auto state = ServiceRegistry::getInstance().getService<StateManager>();
 
-    for (auto entity : CompDirty::g_dirtyEntities)
+    for (auto entity : StateManager::getDirtyEntities())
     {
         auto& gc = state->getComponent<CompGraphics>(entity);
 
@@ -92,7 +94,7 @@ void GraphicsInstructor::updateGraphicComponents()
     m_synchronizer.getSenderFrameData().cursor = GraphicsID();
 
     auto state = ServiceRegistry::getInstance().getService<StateManager>();
-    for (auto entity : CompDirty::g_dirtyEntities)
+    for (auto entity : StateManager::getDirtyEntities())
     {
         auto [transform, entityInfo, gc] =
             state->getComponents<CompTransform, CompEntityInfo, CompGraphics>(entity);
@@ -141,14 +143,8 @@ void GraphicsInstructor::updateGraphicComponents()
             else
                 gc.shading = Color::RED;
 
-            if (building.isConstructed() and
-                building.orientation != BuildingOrientation::DEFAULT and
-                building.framesByOrientation.value().empty() == false)
-            {
-                gc.variation = building.framesByOrientation.value().at(building.orientation);
-            }
+            gc.orientation = (int) building.orientation;
 
-            gc.positionInFeet = building.getBuildingCenter(gc.positionInFeet);
             gc.landArea = building.landArea;
         }
 
