@@ -122,9 +122,9 @@ class GraphicsLoaderFromDRSImpl
             return nullptr;
         }
 
-        // Step 1: Compute bounding box with pivot (250,250)
-        const int pivotX = 250;
-        const int pivotY = 250;
+        // Step 1: Compute bounding box with pivot (350,350)
+        const int pivotX = 350;
+        const int pivotY = 350;
 
         int minX = INT_MAX, minY = INT_MAX;
         int maxX = INT_MIN, maxY = INT_MIN;

@@ -250,6 +250,22 @@ all_buildings: List[Building] = [
                         SingleGraphic(slp_id=2391, anchor=Point(x=130,y=103)),
                     ],
                     flip=True
+                ),
+                "horizontal": CompositeGraphic(
+                    anchor=Point(x=195, y=150),
+                    parts=[
+                        SingleGraphic(slp_id=3999, anchor=Point(x=100,y=120)), 
+                        SingleGraphic(slp_id=2391, anchor=Point(x=195,y=150)),
+                        SingleGraphic(slp_id=2391, anchor=Point(x=-90,y=150)),
+                    ],
+                ),
+                "vertical": CompositeGraphic(
+                    anchor=Point(x=51, y=178+48),
+                    parts=[
+                        SingleGraphic(slp_id=2391, anchor=Point(x=51,y=178+48)),
+                        SingleGraphic(slp_id=4087, anchor=Point(x=10,y=150)), 
+                        SingleGraphic(slp_id=2391, anchor=Point(x=51,y=178-96)),
+                    ],
                 )
             }
         )}),
@@ -286,6 +302,8 @@ all_construction_sites: List[ConstructionSite] = [
             by_orientation={
                 "right_angled": SingleGraphic(slp_id=3706),
                 "left_angled": SingleGraphic(slp_id=3706, flip=True),
+                "horizontal": SingleGraphic(slp_id=4067),
+                "vertical": SingleGraphic(slp_id=4155),
             }
         )}),
         progress_frame_map={33:0, 66:1, 99:2})

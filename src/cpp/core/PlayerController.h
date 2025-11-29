@@ -77,6 +77,9 @@ class PlayerController : public EventHandler
                                          std::list<ConnectedBuildingPosition>& connectedBuildings);
     void createConnectedBuildingPlacements(
         const std::list<ConnectedBuildingPosition>& connectedBuildings, uint32_t buildingType);
+    void rotateCurrentPlacement();
+    void changePlacementOrientation(BuildingPlacementData& placement,
+                                    BuildingOrientation orientation);
 
     // Garrison related
     void initiateGarrison();

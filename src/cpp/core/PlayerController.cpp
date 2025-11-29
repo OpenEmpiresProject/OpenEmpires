@@ -144,24 +144,7 @@ void PlayerController::onKeyUp(const Event& e)
         }
         else if (scancode == SDL_SCANCODE_LCTRL or scancode == SDL_SCANCODE_RCTRL)
         {
-            if (m_currentBuildingPlacements.size() == 1)
-            {
-                auto& placement = m_currentBuildingPlacements.begin()->second;
-                if (placement.orientation == BuildingOrientation::LEFT_ANGLED)
-                {
-                    placement.orientation = BuildingOrientation::RIGHT_ANGLED;
-                    auto& building = m_stateMan->getComponent<CompBuilding>(placement.entity);
-                    building.orientation = placement.orientation;
-                    StateManager::markDirty(placement.entity);
-                }
-                else if (placement.orientation == BuildingOrientation::RIGHT_ANGLED)
-                {
-                    placement.orientation = BuildingOrientation::LEFT_ANGLED;
-                    auto& building = m_stateMan->getComponent<CompBuilding>(placement.entity);
-                    building.orientation = placement.orientation;
-                    StateManager::markDirty(placement.entity);
-                }
-            }
+            rotateCurrentPlacement();
         }
         else
         {
@@ -868,4 +851,39 @@ void PlayerController::getAllOverlappingEntities(const Vec2& startScreenPos,
                 entitiesToAddToSelection.push_back(entity);
             }
         });
+}
+
+void PlayerController::rotateCurrentPlacement()
+{
+    if (m_currentBuildingPlacements.size() == 1)
+    {
+        auto& placement = m_currentBuildingPlacements.begin()->second;
+        if (placement.orientation == BuildingOrientation::LEFT_ANGLED)
+        {
+            changePlacementOrientation(placement, BuildingOrientation::HORIZONTAL);
+        }
+        else if (placement.orientation == BuildingOrientation::HORIZONTAL)
+        {
+            changePlacementOrientation(placement, BuildingOrientation::RIGHT_ANGLED);
+        }
+        else if (placement.orientation == BuildingOrientation::RIGHT_ANGLED)
+        {
+            changePlacementOrientation(placement, BuildingOrientation::VERTICAL);
+        }
+        else if (placement.orientation == BuildingOrientation::VERTICAL)
+        {
+            changePlacementOrientation(placement, BuildingOrientation::LEFT_ANGLED);
+        }
+    }
+}
+
+void PlayerController::changePlacementOrientation(BuildingPlacementData& placement,
+                                                  BuildingOrientation orientation)
+{
+    placement.orientation = orientation;
+    auto& building = m_stateMan->getComponent<CompBuilding>(placement.entity);
+    building.orientation = placement.orientation;
+    auto feet = m_coordinates->screenUnitsToFeet(m_currentMouseScreenPos);
+    validateAndSnapBuildingToTile(placement, feet);
+    StateManager::markDirty(placement.entity);
 }

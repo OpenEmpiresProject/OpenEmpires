@@ -69,15 +69,22 @@ Feet CompBuilding::getSnappedBuildingCenter(const Feet& position) const
 {
     int width = size.value().width;
     int height = size.value().height;
+    int nearestX = 0;
+    int nearestY = 0;
 
     if (orientation == BuildingOrientation::RIGHT_ANGLED)
     {
         width = size.value().height;
         height = size.value().width;
     }
+    else if (orientation == BuildingOrientation::HORIZONTAL or
+             orientation == BuildingOrientation::VERTICAL)
+    {
+        nearestX = roundToNearestTileEdge(position.x);
+        nearestY = roundToNearestTileEdge(position.y);
 
-    int nearestX = 0;
-    int nearestY = 0;
+        return Feet(nearestX, nearestY);
+    }
 
     // center will be snapped to tile border if the the size is even, else to tile center
     //
@@ -104,6 +111,8 @@ Feet CompBuilding::getSnappedBuildingCenter(const Feet& position) const
 
 void CompBuilding::updateLandArea(const Feet& center)
 {
+    landArea.tiles.clear();
+
     int width = size.value().width;
     int height = size.value().height;
 
@@ -111,6 +120,40 @@ void CompBuilding::updateLandArea(const Feet& center)
     {
         width = size.value().height;
         height = size.value().width;
+    }
+    else if (orientation == BuildingOrientation::HORIZONTAL)
+    {
+        debug_assert(width == 1 or height == 1, "Either side should be only 1 tile size. Any other "
+                                                "non-square building size is not supported");
+        const int largestSideLength = std::max(width, height);
+        const int halfLargest = largestSideLength / 2;
+        const int diff = halfLargest * Constants::FEET_PER_TILE - 10;
+
+        const Feet leftCorner = center + Feet(-diff, diff);
+        const Tile leftCornerzTile = leftCorner.toTile();
+
+        for (int i = 0; i < largestSideLength; ++i)
+        {
+            landArea.tiles.emplace_back(leftCornerzTile + Tile(i, -i));
+        }
+        return;
+    }
+    else if (orientation == BuildingOrientation::VERTICAL)
+    {
+        debug_assert(width == 1 or height == 1, "Either side should be only 1 tile size. Any other "
+                                                "non-square building size is not supported");
+        const int largestSideLength = std::max(width, height);
+        const int halfLargest = largestSideLength / 2;
+        const int diff = halfLargest * Constants::FEET_PER_TILE - 10;
+
+        const Feet topCorner = center + Feet(-diff, -diff);
+        const Tile topCornerzTile = topCorner.toTile();
+
+        for (int i = 0; i < largestSideLength; ++i)
+        {
+            landArea.tiles.emplace_back(topCornerzTile + Tile(i, i));
+        }
+        return;
     }
 
     float halfSizeWidth = (float) width / 2;
@@ -121,8 +164,6 @@ void CompBuilding::updateLandArea(const Feet& center)
 
     Feet bottomCorner = center + Feet(dx, dy);
     Tile bottomCornerTile = bottomCorner.toTile();
-
-    landArea.tiles.clear();
 
     // Not a square building, needs specially handling to find the anchor depending on the
     // orientation
