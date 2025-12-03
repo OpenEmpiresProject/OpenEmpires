@@ -185,7 +185,7 @@ class GraphicsLoaderFromDRSImpl
             dest.w = surf->w;
             dest.h = surf->h;
 
-            if (SDL_BlitSurface(surf, nullptr, final_surface, &dest) < 0)
+            if (SDL_BlitSurface(surf, nullptr, final_surface, &dest) == false)
             {
                 spdlog::error("Blit failed for surface {}: {}", i, SDL_GetError());
             }
@@ -253,12 +253,6 @@ class GraphicsLoaderFromDRSImpl
             id.playerId = playerId;
             id.orientation = orientation;
 
-            if (playerId == 1)
-                int rerer = 0;
-
-            if (playerId == 2)
-                int rerer = 0;
-
             Vec2 anchor = anchors[i];
 
             if (entityType == EntityTypes::ET_TILE)
@@ -319,13 +313,13 @@ class GraphicsLoaderFromDRSImpl
         }
     }
 
-    static void loadSLP(const EntityLoader::EntityDRSData& drsData,
-                        const GraphicsID& baseId,
-                        SDL_Renderer& renderer,
-                        GraphicsRegistry& graphicsRegistry,
-                        AtlasGenerator& atlasGenerator,
-                        bool flip,
-                        int orientation)
+    static void loadSLPWithMergingParts(const EntityLoader::EntityDRSData& drsData,
+                                        const GraphicsID& baseId,
+                                        SDL_Renderer& renderer,
+                                        GraphicsRegistry& graphicsRegistry,
+                                        AtlasGenerator& atlasGenerator,
+                                        bool flip,
+                                        int orientation)
     {
         std::vector<SDL_Surface*> surfaces;
         std::vector<Vec2> anchors;
@@ -359,24 +353,28 @@ class GraphicsLoaderFromDRSImpl
             mergeSurfacesWithAnchors(surfaces, anchors, drsData.anchor.x, drsData.anchor.y);
         std::vector<Vec2> newAnchors = {drsData.anchor};
 
+        debug_assert(mergedSurface != nullptr, "Merging surfaces for base id {} failed",
+                     baseId.toString());
+
         std::vector<SDL_Surface*> mergedSurfaceVec = {mergedSurface};
         loadSurfaces(atlasGenerator, renderer, mergedSurfaceVec, baseId.entityType,
                      drsData.clipRect, baseId.entitySubType, baseId.action, baseId.playerId, frames,
                      newAnchors, graphicsRegistry, false, orientation, flip);
     }
 
-    static void loadSLP(shared_ptr<DRSFile> drs,
-                        uint32_t slpId,
-                        uint32_t entityType,
-                        uint32_t entitySubType,
-                        uint32_t action,
-                        uint32_t playerId,
-                        SDL_Renderer& renderer,
-                        GraphicsRegistry& graphicsRegistry,
-                        AtlasGenerator& atlasGenerator,
-                        Rect<int> clipRect,
-                        bool flip,
-                        int orientation)
+    static void loadSLPWithAllFrames(shared_ptr<DRSFile> drs,
+                                     uint32_t slpId,
+                                     uint32_t entityType,
+                                     uint32_t entitySubType,
+                                     uint32_t action,
+                                     uint32_t playerId,
+                                     SDL_Renderer& renderer,
+                                     GraphicsRegistry& graphicsRegistry,
+                                     AtlasGenerator& atlasGenerator,
+                                     Rect<int> clipRect,
+                                     bool flip,
+                                     int orientation,
+                                     std::optional<int> frameIndex)
     {
         auto slp = drs->getSLPFile(slpId);
 
@@ -384,8 +382,14 @@ class GraphicsLoaderFromDRSImpl
         std::vector<Vec2> anchors;
 
         auto frames = slp.getFrames(playerId);
+        int i = -1;
         for (auto& frame : frames)
         {
+            ++i;
+
+            if (frameIndex.has_value() and frameIndex != i)
+                continue;
+
             auto surface = frameToSurface(frame);
             surfaces.push_back(surface);
             auto anchorPair = frame.getAnchor();
@@ -480,18 +484,22 @@ void DRSGraphicsLoader::loadGraphics(SDL_Renderer& renderer,
 
         if (drsData.parts.size() == 1)
         {
+            debug_assert(drsData.parts[0].drsFile != nullptr, "DRS File not defined for {}",
+                         id.toString());
             if (drsData.parts[0].drsFile != nullptr)
             {
-                GraphicsLoaderFromDRSImpl::loadSLP(
+                GraphicsLoaderFromDRSImpl::loadSLPWithAllFrames(
                     drsData.parts[0].drsFile, drsData.parts[0].slpId, id.entityType,
                     id.entitySubType, id.action, id.playerId, renderer, graphicsRegistry,
-                    atlasGenerator, drsData.clipRect, drsData.flip, baseId.orientation);
+                    atlasGenerator, drsData.clipRect, drsData.flip, baseId.orientation,
+                    drsData.parts[0].frameIndex);
             }
         }
         else // Multi-part texture
         {
-            GraphicsLoaderFromDRSImpl::loadSLP(drsData, id, renderer, graphicsRegistry,
-                                               atlasGenerator, drsData.flip, baseId.orientation);
+            GraphicsLoaderFromDRSImpl::loadSLPWithMergingParts(drsData, id, renderer,
+                                                               graphicsRegistry, atlasGenerator,
+                                                               drsData.flip, baseId.orientation);
         }
     }
     GraphicsLoaderFromDRSImpl::adjustDirections(graphicsRegistry);

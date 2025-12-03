@@ -338,8 +338,8 @@ BuildingPlacementData PlayerController::createBuildingPlacement(
         building.orientation = building.defaultOrientation;
     }
 
-    spdlog::debug("Creating building placement with orientation {}",
-                  buildingOrientationToString(building.orientation));
+    spdlog::debug("Creating building placement with orientation {} at {}",
+                  buildingOrientationToString(building.orientation), pos.toTile().toString());
 
     building.constructionProgress = 100; // Treat as a complete building
     StateManager::markDirty(entity);
@@ -361,6 +361,34 @@ BuildingPlacementData PlayerController::createBuildingPlacement(
     {
         // TODO: Where to display?
     }
+
+#ifndef NDEBUG
+    auto& graphics = m_stateMan->getComponent<CompGraphics>(entity);
+    graphics.debugOverlays.clear();
+
+    for (auto& tile : building.landArea.tiles)
+    {
+        DebugOverlay filled;
+        filled.type = DebugOverlay::Type::FILLED_RHOMBUS;
+        filled.color = Color::RED;
+        filled.color.a = 100;
+        const auto centerInFeet = tile.centerInFeet();
+        const int half = Constants::FEET_PER_TILE / 2;
+        filled.rhombusCorners[0] = centerInFeet + Feet(-half, half);
+        filled.rhombusCorners[1] = centerInFeet + Feet(-half, -half);
+        filled.rhombusCorners[2] = centerInFeet + Feet(half, -half);
+        filled.rhombusCorners[3] = centerInFeet + Feet(half, half);
+        graphics.debugOverlays.push_back(filled);
+    }
+
+    DebugOverlay anchor;
+    anchor.type = DebugOverlay::Type::FILLED_CIRCLE;
+    anchor.color = Color::BLACK;
+    anchor.circlePixelRadius = 10;
+    anchor.absolutePosition = transform.position;
+    graphics.debugOverlays.push_back(anchor);
+
+#endif
 
     BuildingPlacementData data;
     data.player = m_player;
@@ -572,7 +600,7 @@ void PlayerController::calculateConnectedBuildingsPath(
                 ConnectedBuildingPosition{newPos, BuildingOrientation::LEFT_ANGLED});
         }
     }
-    else // dx == dy. Visual horizontal/virtical, logical diagonal
+    else // dx == dy. Visual horizontal/vertical, logical diagonal
     {
         const int xDirection = (end.x - start.x) / (dx == 0 ? 1 : dx);
         const int yDirection = (end.y - start.y) / (dy == 0 ? 1 : dy);

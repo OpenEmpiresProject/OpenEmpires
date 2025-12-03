@@ -22,7 +22,6 @@ class CompBuilding
     // Indicate what are the resource types this building accepts to drop.
     // It may support more than 1 resource type, the following act as a flag.
     Property<uint8_t> dropOffForResourceType;
-    Property<std::unordered_map<BuildingOrientation, uint32_t>> framesByOrientation;
     Property<bool> connectedConstructionsAllowed;
     Property<BuildingOrientation> defaultOrientation = {BuildingOrientation::NO_ORIENTATION};
 

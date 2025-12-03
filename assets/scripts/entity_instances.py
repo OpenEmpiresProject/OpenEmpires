@@ -210,9 +210,16 @@ all_buildings: List[Building] = [
         display_name="Palisade",
         line_of_sight=256*2,
         size="small",
-        graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=1828)}),
+        graphics=Graphic(by_theme={"default":OrientatedGraphic(
+            by_orientation={
+                "right_angled": SingleGraphic(slp_id=1828, frame_index=0),
+                "left_angled": SingleGraphic(slp_id=1828, frame_index=1),
+                "corner": SingleGraphic(slp_id=1828, frame_index=2),
+                "horizontal": SingleGraphic(slp_id=1828, frame_index=3),
+                "vertical": SingleGraphic(slp_id=1828, frame_index=4),
+            }
+        )}),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=30),
-        orientations={"right_angled": 0, "left_angled": 1, "corner": 2, "horizontal": 3, "vertical": 4},
         connected_constructions_allowed=True,
         default_orientation="corner"
     ),
@@ -221,9 +228,16 @@ all_buildings: List[Building] = [
         display_name="Stone Wall",
         line_of_sight=256*2,
         size="small",
-        graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=2110)}),
+        graphics=Graphic(by_theme={"default":OrientatedGraphic(
+            by_orientation={
+                "right_angled": SingleGraphic(slp_id=2110),
+                "left_angled": SingleGraphic(slp_id=2110),
+                "horizontal": SingleGraphic(slp_id=2110),
+                "vertical": SingleGraphic(slp_id=2110),
+                "corner": SingleGraphic(slp_id=2110),
+            }
+        )}),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=29),
-        orientations={"right_angled": 0, "left_angled": 1, "corner": 2, "horizontal": 3, "vertical": 4},
         connected_constructions_allowed=True,
         default_orientation="corner"
     ),

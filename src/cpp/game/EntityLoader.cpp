@@ -610,7 +610,7 @@ void EntityLoader::loadDRSForAnimations(uint32_t entityType,
             auto boundingBox = m_boundingBoxReadFunc(drsFile, slpId);
 
             EntityDRSData data;
-            data.parts.push_back(EntityDRSData::Part(drsFile, slpId, Vec2::null));
+            data.parts.push_back(EntityDRSData::Part(drsFile, slpId, Vec2::null, std::nullopt));
             data.boundingRect = boundingBox;
 
             m_DRSDataByGraphicsIdHash[id] = data;
@@ -623,7 +623,8 @@ void EntityLoader::processGraphic(uint32_t entityType,
                                   py::handle graphicObj,
                                   const Vec2& anchor,
                                   BuildingOrientation orientation,
-                                  bool flip)
+                                  bool flip,
+                                  std::optional<int> frameIndex)
 {
     // TODO: handle theme
     auto drsFileName = EntityLoader::readValue<std::string>(graphicObj, "drs_file");
@@ -632,9 +633,9 @@ void EntityLoader::processGraphic(uint32_t entityType,
     Vec2 anchorOverride = Vec2::null;
     if (py::hasattr(graphicObj, "anchor"))
     {
-        py::object anchor = graphicObj.attr("anchor");
-        anchorOverride.x = readValue<int>(anchor, "x");
-        anchorOverride.y = readValue<int>(anchor, "y");
+        py::object anchorObj = graphicObj.attr("anchor");
+        anchorOverride.x = readValue<int>(anchorObj, "x");
+        anchorOverride.y = readValue<int>(anchorObj, "y");
     }
 
     Ref<DRSFile> drsFile;
@@ -664,12 +665,12 @@ void EntityLoader::processGraphic(uint32_t entityType,
     if (m_DRSDataByGraphicsIdHash.contains(id))
     {
         m_DRSDataByGraphicsIdHash[id].parts.push_back(
-            EntityDRSData::Part(drsFile, slpId, anchorOverride));
+            EntityDRSData::Part(drsFile, slpId, anchorOverride, frameIndex));
     }
     else
     {
         EntityDRSData data;
-        data.parts.push_back(EntityDRSData::Part(drsFile, slpId, anchorOverride));
+        data.parts.push_back(EntityDRSData::Part(drsFile, slpId, anchorOverride, frameIndex));
         data.boundingRect = boundingBox;
         data.clipRect = clipRect;
         data.anchor = anchor;
@@ -678,7 +679,11 @@ void EntityLoader::processGraphic(uint32_t entityType,
         m_DRSDataByGraphicsIdHash[id] = data;
     }
 
-    spdlog::debug("Loading DRS data for id {}, slp id {}", id.toString(), slpId);
+    if (frameIndex.has_value())
+        spdlog::debug("Loaded DRS data for id {}, slp id {}:{}", id.toString(), slpId,
+                      frameIndex.value());
+    else
+        spdlog::debug("Loaded DRS data for id {}, slp id {}", id.toString(), slpId);
 }
 
 void EntityLoader::loadDRSForStillImage(pybind11::object module,
@@ -706,7 +711,7 @@ void EntityLoader::loadDRSForStillImage(pybind11::object module,
 
                 for (auto part : parts)
                     processGraphic(entityType, entitySubType, part, Vec2(anchorX, anchorY),
-                                   BuildingOrientation::NO_ORIENTATION, flip);
+                                   BuildingOrientation::NO_ORIENTATION, flip, std::nullopt);
             }
             else if (py::isinstance(graphicsEntry, orientatedGraphicClass))
             {
@@ -720,8 +725,15 @@ void EntityLoader::loadDRSForStillImage(pybind11::object module,
                     if (py::isinstance(graphic, singleGraphicClass))
                     {
                         bool flip = readValue<bool>(graphic, "flip");
+                        std::optional<int> frameIndex;
+
+                        if (py::hasattr(graphic, "frame_index"))
+                        {
+                            frameIndex = readValue<int>(graphic, "frame_index");
+                        }
+
                         processGraphic(entityType, entitySubType, graphic, Vec2::null, orientation,
-                                       flip);
+                                       flip, frameIndex);
                     }
                     else if (py::isinstance(graphic, compositeGraphicClass))
                     {
@@ -733,7 +745,7 @@ void EntityLoader::loadDRSForStillImage(pybind11::object module,
 
                         for (auto part : parts)
                             processGraphic(entityType, entitySubType, part, Vec2(anchorX, anchorY),
-                                           orientation, flip);
+                                           orientation, flip, std::nullopt);
                     }
                     else
                     {
@@ -745,7 +757,7 @@ void EntityLoader::loadDRSForStillImage(pybind11::object module,
             {
                 bool flip = readValue<bool>(graphicsEntry, "flip");
                 processGraphic(entityType, entitySubType, graphicsEntry, Vec2::null,
-                               BuildingOrientation::NO_ORIENTATION, flip);
+                               BuildingOrientation::NO_ORIENTATION, flip, std::nullopt);
             }
         }
     }
@@ -782,7 +794,7 @@ void EntityLoader::loadDRSForIcon(uint32_t entityType,
         id.entitySubType = entitySubType;
 
         EntityDRSData data;
-        data.parts.push_back(EntityDRSData::Part(drsFile, slpId, Vec2::null));
+        data.parts.push_back(EntityDRSData::Part(drsFile, slpId, Vec2::null, std::nullopt));
         data.clipRect = clipRect;
 
         m_DRSDataByGraphicsIdHash[id] = data;
@@ -835,11 +847,19 @@ void EntityLoader::attachConstructionSites(uint32_t entityType, const std::strin
             siteId.entitySubType = getEntitySubType(EntityTypes::ET_CONSTRUCTION_SITE, sizeStr);
             siteId.orientation = id.orientation;
 
+            // Try finding the construction site with exact orientation first, then without any
+            // specific orientation. Eg: Both walls and gates have orientations, but only gate's
+            // construction site has orientation specific graphics.
+            //
             if (not m_DRSDataByGraphicsIdHash.contains(siteId))
             {
-                spdlog::error("Could not find construction side graphics for entity {}",
-                              id.toString());
-                continue;
+                siteId.orientation = (int) BuildingOrientation::NO_ORIENTATION;
+                if (not m_DRSDataByGraphicsIdHash.contains(siteId))
+                {
+                    spdlog::error("Could not find construction site graphics for entity {}",
+                                  id.toString());
+                    continue;
+                }
             }
             const auto& siteDRSData = m_DRSDataByGraphicsIdHash.at(siteId);
 
@@ -1098,22 +1118,6 @@ ComponentType EntityLoader::createCompBuilding(py::object module, pybind11::hand
                     }
                     PropertyInitializer::set(comp.dropOffForResourceType, acceptedResourceFlag);
                 }
-            }
-
-            if (py::hasattr(entityDefinition, "orientations"))
-            {
-                std::unordered_map<BuildingOrientation, uint32_t> frameByOrientation;
-                py::dict orientationsDict = entityDefinition.attr("orientations");
-
-                for (auto item : orientationsDict)
-                {
-                    std::string orientationStr = py::cast<std::string>(item.first);
-                    int frameIndex = py::cast<int>(item.second);
-
-                    BuildingOrientation orientation = getBuildingOrientation(orientationStr);
-                    frameByOrientation[orientation] = frameIndex;
-                }
-                PropertyInitializer::set(comp.framesByOrientation, frameByOrientation);
             }
 
             if (py::hasattr(entityDefinition, "default_orientation"))

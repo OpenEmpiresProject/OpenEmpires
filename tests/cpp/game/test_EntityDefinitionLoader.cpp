@@ -391,7 +391,7 @@ all_buildings= [
 	    siteId.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
 	    siteId.entitySubType = 2;
 	    EntityLoader::EntityDRSData data;
-	    data.parts.push_back(EntityLoader::EntityDRSData::Part(nullptr, 111, Vec2::null));
+	    data.parts.push_back(EntityLoader::EntityDRSData::Part(nullptr, 111, Vec2::null, std::nullopt));
 	    loader.setDRSData(siteId, data);
 	    loader.setDRSLoaderFunc([](const std::string& drsFilename) -> Ref<DRSFile> { return nullptr; });
 	    loader.setBoundingBoxReadFunc([](core::Ref<drs::DRSFile>, uint32_t) -> core::Rect<int>

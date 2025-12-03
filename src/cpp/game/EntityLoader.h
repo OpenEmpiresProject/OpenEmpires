@@ -28,6 +28,7 @@
 #include <iostream>
 #include <list>
 #include <map>
+#include <optional>
 #include <pybind11/embed.h>
 #include <unordered_map>
 #include <variant>
@@ -63,8 +64,13 @@ class EntityLoader : public core::EntityFactory, public core::PropertyInitialize
             core::Ref<drs::DRSFile> drsFile;
             int slpId = -1;
             core::Vec2 anchor = core::Vec2::null;
-            Part(core::Ref<drs::DRSFile> drs, int slp, const core::Vec2& anchor)
-                : drsFile(drs), slpId(slp), anchor(anchor)
+            std::optional<int> frameIndex;
+
+            Part(core::Ref<drs::DRSFile> drs,
+                 int slp,
+                 const core::Vec2& anchor,
+                 std::optional<int> frameIndex)
+                : drsFile(drs), slpId(slp), anchor(anchor), frameIndex(frameIndex)
             {
             }
         };
@@ -196,7 +202,8 @@ class EntityLoader : public core::EntityFactory, public core::PropertyInitialize
                         pybind11::handle graphicObj,
                         const core::Vec2& anchor,
                         core::BuildingOrientation orientation,
-                        bool flip);
+                        bool flip,
+                        std::optional<int> frameIndex);
 
   private:
     const std::string m_unitsFile = "units";

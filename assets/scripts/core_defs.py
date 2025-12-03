@@ -27,6 +27,7 @@ class SingleGraphic(_Constructible):
     clip_rect: Optional[Rect]
     anchor: Optional[Point]
     flip: bool = False
+    frame_index: Optional[int]
 
 
 class CompositeGraphic(_Constructible):
@@ -116,7 +117,6 @@ class Building:
     size: str
     graphics: Graphic
     icon: Icon
-    orientations: Optional[Dict[str, int]] # orientation name to frame id mapping
     connected_constructions_allowed: Optional[bool] # Allows to constructing series of same building such as walls
     default_orientation: Optional[str]
 
