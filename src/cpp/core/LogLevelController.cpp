@@ -1,6 +1,6 @@
 #include "LogLevelController.h"
 
-#include "utils/Logger.h"
+#include "logging/Logger.h"
 
 #include <SDL3/SDL.h>
 

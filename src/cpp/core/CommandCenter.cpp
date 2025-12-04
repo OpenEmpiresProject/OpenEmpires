@@ -3,7 +3,7 @@
 #include "StateManager.h"
 #include "commands/Command.h"
 #include "components/CompUnit.h"
-#include "utils/Logger.h"
+#include "logging/Logger.h"
 #include "utils/Types.h"
 
 using namespace core;

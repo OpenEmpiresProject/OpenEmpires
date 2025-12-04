@@ -7,7 +7,7 @@
 #include "components/CompHousing.h"
 #include "components/CompUnitFactory.h"
 #include "debug.h"
-#include "utils/Logger.h"
+#include "logging/Logger.h"
 #include "utils/ObjectPool.h"
 
 #include <pybind11/stl.h>

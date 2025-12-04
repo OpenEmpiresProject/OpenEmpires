@@ -2,8 +2,8 @@
 
 #include "Feet.h"
 #include "Tile.h"
+#include "logging/Logger.h"
 #include "utils/Constants.h"
-#include "utils/Logger.h"
 
 using namespace core;
 

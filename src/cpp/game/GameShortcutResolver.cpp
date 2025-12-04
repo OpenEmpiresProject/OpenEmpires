@@ -4,7 +4,7 @@
 #include "GameTypes.h"
 #include "components/CompBuilder.h"
 #include "components/CompUnitFactory.h"
-#include "utils/Logger.h"
+#include "logging/Logger.h"
 
 using namespace core;
 using namespace game;

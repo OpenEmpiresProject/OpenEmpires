@@ -20,7 +20,7 @@
 #include "components/CompEntityInfo.h"
 #include "components/CompRendering.h"
 #include "components/CompTransform.h"
-#include "utils/Logger.h"
+#include "logging/Logger.h"
 #include "utils/ObjectPool.h"
 
 #include <SDL3/SDL.h>

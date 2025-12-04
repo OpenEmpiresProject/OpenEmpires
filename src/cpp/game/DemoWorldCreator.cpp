@@ -26,7 +26,7 @@
 #include "components/CompSelectible.h"
 #include "components/CompTransform.h"
 #include "components/CompUnit.h"
-#include "utils/Logger.h"
+#include "logging/Logger.h"
 #include "utils/ObjectPool.h"
 #include "utils/Types.h"
 

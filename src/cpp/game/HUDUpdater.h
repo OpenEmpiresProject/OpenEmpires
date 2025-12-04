@@ -8,7 +8,7 @@
 #include "ServiceRegistry.h"
 #include "UI.h"
 #include "UIManager.h"
-#include "utils/Logger.h"
+#include "logging/Logger.h"
 #include "utils/Types.h"
 
 namespace game

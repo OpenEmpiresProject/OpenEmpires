@@ -7,7 +7,7 @@
 #include "components/CompBuilding.h"
 #include "components/CompSelectible.h"
 #include "components/CompTransform.h"
-#include "utils/Logger.h"
+#include "logging/Logger.h"
 
 using namespace core;
 

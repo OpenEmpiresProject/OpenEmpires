@@ -18,7 +18,7 @@
 #include "components/CompResource.h"
 #include "components/CompTransform.h"
 #include "components/CompUnit.h"
-#include "utils/Logger.h"
+#include "logging/Logger.h"
 
 #include <SDL3/SDL_scancode.h>
 
@@ -117,6 +117,8 @@ void PlayerController::createUnit(uint32_t entityType, const EntitySelection& se
 
 void PlayerController::onKeyUp(const Event& e)
 {
+    ScopedDiagnosticContext scoped("P", m_player->getId());
+
     SDL_Scancode scancode = static_cast<SDL_Scancode>(e.getData<KeyboardData>().keyCode);
 
 #ifdef DEVELOPMENT
@@ -173,6 +175,8 @@ void PlayerController::onKeyUp(const Event& e)
 
 void PlayerController::onMouseButtonUp(const Event& e)
 {
+    ScopedDiagnosticContext scoped("P", m_player->getId());
+
     auto& clickData = e.getData<MouseClickData>();
     auto& mousePos = clickData.screenPosition;
 
@@ -209,6 +213,8 @@ void PlayerController::onMouseButtonUp(const Event& e)
 
 void PlayerController::onMouseButtonDown(const Event& e)
 {
+    ScopedDiagnosticContext scoped("P", m_player->getId());
+
     auto& clickData = e.getData<MouseClickData>();
 
     if (clickData.button == MouseClickData::Button::LEFT)
@@ -239,6 +245,8 @@ void PlayerController::onMouseButtonDown(const Event& e)
 
 void PlayerController::onMouseMove(const Event& e)
 {
+    ScopedDiagnosticContext scoped("P", m_player->getId());
+
     m_currentMouseScreenPos = e.getData<MouseMoveData>().screenPos;
     auto feet = m_coordinates->screenUnitsToFeet(m_currentMouseScreenPos);
 
@@ -278,6 +286,8 @@ void PlayerController::onMouseMove(const Event& e)
 //
 void PlayerController::onBuildingApproved(const Event& e)
 {
+    ScopedDiagnosticContext scoped("P", m_player->getId());
+
     auto& data = e.getData<BuildingPlacementData>();
     if (data.player == m_player)
     {
@@ -824,6 +834,8 @@ void PlayerController::completeSelectionBox(const Vec2& startScreenPos, const Ve
  */
 void PlayerController::onUnitSelection(const Event& e)
 {
+    DiagnosticContext::getInstance().put("P", m_player->getId());
+
     updateSelection(e.getData<EntitySelectionData>());
 }
 

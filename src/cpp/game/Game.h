@@ -25,7 +25,7 @@
 #include "ThreadSynchronizer.h"
 #include "UIManager.h"
 #include "UnitManager.h"
-#include "utils/Logger.h"
+#include "logging/Logger.h"
 #include "utils/Types.h"
 
 #include <iostream>

@@ -8,7 +8,7 @@
 #include "SLPFile.h"
 #include "ServiceRegistry.h"
 #include "debug.h"
-#include "utils/Logger.h"
+#include "logging/Logger.h"
 #include "utils/Types.h"
 
 #include <SDL3_image/SDL_image.h>

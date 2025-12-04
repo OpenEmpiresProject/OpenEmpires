@@ -1,6 +1,6 @@
 #include "EntityTypeRegistry.h"
 
-#include "utils/Logger.h"
+#include "logging/Logger.h"
 
 #include <algorithm>
 #include <vector>

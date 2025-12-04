@@ -2,7 +2,7 @@
 #define ATLASGENERATORBASIC_H
 
 #include "AtlasGenerator.h"
-#include "utils/Logger.h"
+#include "logging/Logger.h"
 
 #include <SDL3/SDL_rect.h>
 #include <SDL3/SDL_surface.h>

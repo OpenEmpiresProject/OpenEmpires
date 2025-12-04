@@ -10,7 +10,7 @@
 #include "components/CompBuilding.h"
 #include "components/CompTransform.h"
 #include "debug.h"
-#include "utils/Logger.h"
+#include "logging/Logger.h"
 #include "utils/ObjectPool.h"
 
 #include <algorithm>

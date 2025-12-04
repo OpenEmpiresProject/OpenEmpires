@@ -5,7 +5,7 @@
 #include "commands/Command.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
-#include "utils/Logger.h"
+#include "logging/Logger.h"
 #include "utils/ObjectPool.h"
 
 namespace core
