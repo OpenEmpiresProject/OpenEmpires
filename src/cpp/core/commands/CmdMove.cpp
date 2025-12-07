@@ -451,7 +451,7 @@ Feet CmdMove::avoidCollision()
 {
     auto dir = m_components->transform.getVelocityVector().normalized();
 
-    auto rayEnd = m_components->transform.position + (dir * (m_components->unit.lineOfSight / 2));
+    auto rayEnd = m_components->transform.position + (dir * (m_components->vision.lineOfSight / 2));
     auto unitToAvoid = intersectsUnits(m_entityID, m_components->transform,
                                        m_components->transform.position, rayEnd);
 

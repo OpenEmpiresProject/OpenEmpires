@@ -120,6 +120,19 @@ struct GarrisonData
     bool inprogress = true; // false means ended
 };
 
+struct TrackingRequestData
+{
+    uint32_t entity = entt::null;
+    Feet center = Feet::null;
+    LandArea landArea;
+};
+
+struct LineOfSightData
+{
+    uint32_t tracker = entt::null;
+    uint32_t target = entt::null;
+};
+
 struct Event
 {
     enum class Type
@@ -140,6 +153,9 @@ struct Event
         BUILDING_PLACEMENT_ENDED,   // Use BuildingPlacementData. Sent only by active player
         BUILDING_REQUESTED,         // Use BuildingPlacementData
         BUILDING_CREATED,           // Use BuildingPlacementData
+        TRACKING_REQUEST,
+        WITHIN_LINE_OF_SIGHT, // Use LineOfSightData
+        OUT_OF_LINE_OF_SIGHT, // Use LineOfSightData
         COMMAND_REQUEST,
         UNGARRISON_REQUEST,
         GARRISON_REQUEST,
@@ -159,6 +175,8 @@ struct Event
                               UnitCreationData,
                               UngarrisonData,
                               GarrisonData,
+                              TrackingRequestData,
+                              LineOfSightData,
                               BuildingPlacementData>;
 
     const Type type = Type::NONE;

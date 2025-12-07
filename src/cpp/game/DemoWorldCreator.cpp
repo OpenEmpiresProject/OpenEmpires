@@ -156,8 +156,9 @@ void DemoWorldCreator::createVillager(Ref<core::Player> player, const Tile& tile
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
     auto villager = factory->createEntity(EntityTypes::ET_VILLAGER, 0);
-    auto [transform, unit, selectible, playerComp] =
-        stateMan->getComponents<CompTransform, CompUnit, CompSelectible, CompPlayer>(villager);
+    auto [transform, unit, selectible, playerComp, vision] =
+        stateMan->getComponents<CompTransform, CompUnit, CompSelectible, CompPlayer, CompVision>(
+            villager);
 
     transform.position = Feet(tilePos.x * 256 + 128, tilePos.x * 256 + 50);
     transform.face(Direction::SOUTH);
@@ -168,7 +169,7 @@ void DemoWorldCreator::createVillager(Ref<core::Player> player, const Tile& tile
     auto newTile = transform.position.toTile();
     stateMan->gameMap().addEntity(MapLayerType::UNITS, newTile, villager);
 
-    player->getFogOfWar()->markAsExplored(transform.position, unit.lineOfSight);
+    player->getFogOfWar()->markAsExplored(transform.position, vision.lineOfSight);
 }
 
 void DemoWorldCreator::createStoneOrGoldCluster(

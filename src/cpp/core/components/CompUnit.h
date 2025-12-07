@@ -14,7 +14,6 @@ using CommandQueueType = std::priority_queue<Command*, std::vector<Command*>, Co
 class CompUnit
 {
   public:
-    Property<uint32_t> lineOfSight; // In Feet
     Property<uint32_t> housingNeed;
     Property<UnitType> type;
 

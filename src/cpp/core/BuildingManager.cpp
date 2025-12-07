@@ -37,11 +37,20 @@ void BuildingManager::onTick(const Event& e)
 
 void BuildingManager::onCompleteBuilding(uint32_t entity,
                                          const CompBuilding& building,
+                                         CompVision& vision,
                                          const CompTransform& transform,
                                          const CompPlayer& player)
 {
-    player.player->getFogOfWar()->markAsExplored(building.landArea, building.lineOfSight);
+    player.player->getFogOfWar()->markAsExplored(building.landArea, vision.lineOfSight);
     player.player->addEntity(entity);
+
+    // Enable tracking and request to track
+    vision.hasVision = true;
+    TrackingRequestData data;
+    data.entity = entity;
+    data.landArea = building.landArea;
+    data.center = transform.position;
+    publishEvent(Event::Type::TRACKING_REQUEST, data);
 }
 
 void BuildingManager::onBuildingRequest(const Event& e)
@@ -139,15 +148,15 @@ void BuildingManager::updateInProgressConstructions()
         if (ServiceRegistry::getInstance().getService<StateManager>()->hasComponent<CompBuilding>(
                 entity))
         {
-            auto [transform, building, info, player] =
-                m_stateMan->getComponents<CompTransform, CompBuilding, CompEntityInfo, CompPlayer>(
-                    entity);
+            auto [transform, building, info, player, vision] =
+                m_stateMan->getComponents<CompTransform, CompBuilding, CompEntityInfo, CompPlayer,
+                                          CompVision>(entity);
 
             info.variation = building.getVariationByConstructionProgress();
 
             if (building.constructionProgress >= 100)
             {
-                onCompleteBuilding(entity, building, transform, player);
+                onCompleteBuilding(entity, building, vision, transform, player);
                 info.variation = 0;
 
                 // Reseting entity sub type will essentially remove construction site

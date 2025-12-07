@@ -18,7 +18,6 @@ class CompBuilding
 {
   public:
     Property<Size> size;
-    Property<uint32_t> lineOfSight; // In Feet
     // Indicate what are the resource types this building accepts to drop.
     // It may support more than 1 resource type, the following act as a flag.
     Property<uint8_t> dropOffForResourceType;
@@ -41,6 +40,7 @@ class CompBuilding
     bool isConstructed() const;
     int getVariationByConstructionProgress() const;
     Rect<float> getLandInFeetRect() const;
+    static Rect<float> getLandInFeetRect(const LandArea& area);
     Feet getSnappedBuildingCenter(const Feet& position) const;
     void updateLandArea(const Feet& center);
 };

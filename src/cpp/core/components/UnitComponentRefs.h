@@ -1,6 +1,7 @@
 #ifndef UNITCOMPONENTREFS_H
 #define UNITCOMPONENTREFS_H
 
+#include "CompVision.h"
 #include "StateManager.h"
 
 #include <cstdint>
@@ -14,6 +15,7 @@ class CompEntityInfo;
 class CompPlayer;
 class CompTransform;
 class CompUnit;
+class CompVision;
 
 class UnitComponentRefs
 {
@@ -24,6 +26,7 @@ class UnitComponentRefs
     CompPlayer& player;
     CompTransform& transform;
     CompUnit& unit;
+    CompVision& vision;
 
     UnitComponentRefs(Ref<StateManager> stateMan, uint32_t entityID);
 
@@ -33,7 +36,8 @@ class UnitComponentRefs
                                  CompEntityInfo&,
                                  CompPlayer&,
                                  CompTransform&,
-                                 CompUnit&> components);
+                                 CompUnit&,
+                                 CompVision&> components);
 };
 } // namespace core
 

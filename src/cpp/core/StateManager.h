@@ -87,6 +87,11 @@ class StateManager
 
     bool canPlaceBuildingAt(const CompBuilding& building, bool& outOfMap);
 
+    auto& getRegistry()
+    {
+        return m_registry;
+    }
+
     static std::set<uint32_t>& getDirtyEntities();
     static void markDirty(uint32_t entityId);
     static void clearDirtyEntities();

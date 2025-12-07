@@ -181,6 +181,25 @@ enum class RevealStatus : uint8_t
     VISIBLE
 };
 
+enum class MapLayerType
+{
+    GROUND = 0,
+    ON_GROUND, // walkable decorators/items on the ground
+    STATIC,    // doesn't move, not walkable
+    UNITS,
+    // Add more layers here
+
+    MAX_LAYERS
+};
+
+enum class LineOfSightShape
+{
+    CIRCLE = 0,
+    ROUNDED_SQUARE,
+
+    UNKNOWN
+};
+
 template <typename T> constexpr int toInt(const T& t) noexcept
 {
     return static_cast<int>(t);

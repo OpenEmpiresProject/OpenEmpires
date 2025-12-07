@@ -3,6 +3,7 @@
 
 #include "EventHandler.h"
 #include "components/CompUnitFactory.h"
+#include "components/CompVision.h"
 
 #include <functional>
 #include <map>
@@ -41,6 +42,7 @@ class BuildingManager : public EventHandler
     uint32_t createBuilding(const BuildingPlacementData& request);
     void onCompleteBuilding(uint32_t entity,
                             const CompBuilding& building,
+                            CompVision& vision,
                             const CompTransform& transform,
                             const CompPlayer& player);
     Feet findVacantPositionAroundBuilding(uint32_t building);

@@ -13,7 +13,12 @@ int CompBuilding::getVariationByConstructionProgress() const
 // Compute bounding box from landArea tiles using tile centers to ensure full-tile coverage.
 Rect<float> CompBuilding::getLandInFeetRect() const
 {
-    debug_assert(not landArea.tiles.empty(), "Land area is empty for building");
+    return getLandInFeetRect(landArea);
+}
+
+core::Rect<float> CompBuilding::getLandInFeetRect(const LandArea& area)
+{
+    debug_assert(not area.tiles.empty(), "Land area is empty for building");
 
     float minCx = std::numeric_limits<float>::infinity();
     float maxCx = -std::numeric_limits<float>::infinity();
@@ -21,7 +26,7 @@ Rect<float> CompBuilding::getLandInFeetRect() const
     float maxCy = -std::numeric_limits<float>::infinity();
 
     // Calculate bounding centers
-    for (const auto& t : landArea.tiles)
+    for (const auto& t : area.tiles)
     {
         Feet c = t.centerInFeet();
         minCx = std::min(minCx, c.x);

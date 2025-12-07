@@ -1,6 +1,8 @@
 #ifndef FLAT2DARRAY_H
 #define FLAT2DARRAY_H
 
+#include "utils/Size.h"
+
 #include <cassert>
 #include <vector>
 
@@ -72,6 +74,11 @@ template <typename T> class Flat2DArray
     size_t size() const
     {
         return m_data.size();
+    }
+
+    Size dimensions() const
+    {
+        return Size(m_width, m_height);
     }
 
     T* data()

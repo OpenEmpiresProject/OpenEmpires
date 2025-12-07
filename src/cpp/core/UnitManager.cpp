@@ -23,9 +23,10 @@ UnitManager::UnitManager()
 void UnitManager::onUnitTileMovement(const Event& e)
 {
     auto& data = e.getData<UnitTileMovementData>();
-    auto [player, unit] = m_stateMan->getComponents<CompPlayer, CompUnit>(data.unit);
+    auto [player, unit, vision] =
+        m_stateMan->getComponents<CompPlayer, CompUnit, CompVision>(data.unit);
 
-    player.player->getFogOfWar()->markAsExplored(data.positionFeet, unit.lineOfSight);
+    player.player->getFogOfWar()->markAsExplored(data.positionFeet, vision.lineOfSight);
 }
 
 void UnitManager::onUnitDeletion(const Event& e)
@@ -50,8 +51,9 @@ void UnitManager::onCreateUnit(const Event& e)
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
     auto unit = factory->createEntity(data.entityType, 0);
-    auto [transform, unitComp, selectible, playerComp] =
-        stateMan->getComponents<CompTransform, CompUnit, CompSelectible, CompPlayer>(unit);
+    auto [transform, unitComp, selectible, playerComp, vision] =
+        stateMan->getComponents<CompTransform, CompUnit, CompSelectible, CompPlayer, CompVision>(
+            unit);
 
     transform.position = data.position;
     transform.face(Direction::SOUTH);
@@ -65,5 +67,5 @@ void UnitManager::onCreateUnit(const Event& e)
     stateMan->gameMap().addEntity(MapLayerType::UNITS, newTile, unit);
     playerComp.player->addEntity(unit);
 
-    data.player->getFogOfWar()->markAsExplored(transform.position, unitComp.lineOfSight);
+    data.player->getFogOfWar()->markAsExplored(transform.position, vision.lineOfSight);
 }

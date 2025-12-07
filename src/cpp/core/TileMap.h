@@ -1,6 +1,7 @@
 #ifndef TILEMAP_H
 #define TILEMAP_H
 
+#include "TileMapListner.h"
 #include "debug.h"
 #include "utils/Size.h"
 #include "utils/Types.h"
@@ -20,9 +21,9 @@ struct MapCell
     std::set<uint32_t> entities; // List of entities occupying this cell
 
     bool isOccupied() const;
-    void addEntity(uint32_t entity);
+    bool addEntity(uint32_t entity);
     uint32_t getEntity() const;
-    void removeEntity(uint32_t entity);
+    bool removeEntity(uint32_t entity);
     void removeAllEntities();
 };
 
@@ -31,19 +32,9 @@ struct MapLayer
     MapCell** cells = nullptr;
 };
 
-enum class MapLayerType
+class TileMap
 {
-    GROUND = 0,
-    ON_GROUND, // walkable decorators/items on the ground
-    STATIC,    // doesn't move, not walkable
-    UNITS,
-    // Add more layers here
-
-    MAX_LAYERS
-};
-
-struct TileMap
-{
+  public:
     uint32_t width = 0;
     uint32_t height = 0;
     MapLayer* layers = nullptr;
@@ -51,6 +42,13 @@ struct TileMap
     MapCell** getMap(MapLayerType layerType);
     MapCell** getStaticMap();
     MapCell** getGroundMap();
+
+    Size getDimensions() const
+    {
+        return Size(width, height);
+    }
+
+    void registerListner(Ref<TileMapListner> listner);
 
     bool isValidPos(const Tile& pos) const;
 
@@ -120,6 +118,9 @@ struct TileMap
      * @param height The height of the grid map.
      */
     void init(uint32_t width, uint32_t height);
+
+  private:
+    std::vector<Ref<TileMapListner>> m_listners;
 };
 
 } // namespace core

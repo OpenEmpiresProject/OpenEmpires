@@ -25,6 +25,7 @@
 #include "ThreadSynchronizer.h"
 #include "UIManager.h"
 #include "UnitManager.h"
+#include "VisionSystem.h"
 #include "logging/Logger.h"
 #include "utils/Types.h"
 
@@ -161,6 +162,7 @@ class Game
         core::ServiceRegistry::getInstance().registerService(cursorManager);
 
         auto logController = std::make_shared<core::LogLevelController>();
+        auto visionSystem = std::make_shared<core::VisionSystem>();
 
         if (params.eventHandler)
             eventLoop->registerListener(params.eventHandler);
@@ -175,6 +177,7 @@ class Game
         eventLoop->registerListener(std::move(unitManager));
         eventLoop->registerListener(std::move(cursorManager));
         eventLoop->registerListener(std::move(logController));
+        eventLoop->registerListener(std::move(visionSystem));
 
         auto resourceLoader =
             std::make_shared<DemoWorldCreator>(&stopToken, settings, params.populateWorld);

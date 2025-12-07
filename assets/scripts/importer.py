@@ -69,12 +69,27 @@ def build_dynamic_pydantic_schema(entity_cls: Type) -> Type[BaseModel]:
         # Resolve the type annotation completely, getting the final Pydantic type
         pydantic_type = resolve_type_recursively(type_annotation)
         
+        # Use a unique sentinel object to check if the attribute exists in the class or its bases.
+        SENTINEL = object()
+        default_value_from_chain = getattr(entity_cls, name, SENTINEL)
+        
         # Determine Field Default (based on Optional status)
-        origin = get_origin(pydantic_type)
-        if origin is Optional or (origin is Union and type(None) in get_args(pydantic_type)):
+        if default_value_from_chain is not SENTINEL:
+            # The attribute exists in the class or its inheritance chain, use its value.
+            default_value = default_value_from_chain
+
+        # Optional without explicit default
+        elif (
+            (origin := get_origin(pydantic_type)) is Union
+            and type(None) in get_args(pydantic_type)
+        ):
             default_value = None
+
+        # Required
         else:
+            # No default found, and it's not optional, so it's required by Pydantic.
             default_value = Field(default=...)
+            
         fields[name] = (pydantic_type, default_value)
 
     # Create the Pydantic model with obtained fields and following config.

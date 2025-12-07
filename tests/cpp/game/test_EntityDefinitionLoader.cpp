@@ -286,7 +286,6 @@ entity = House()
 	        loader.setSite("medium", std::map<int, int>());
 	        ComponentType result = loader.createCompBuilding(module, houseDef);
 	        ASSERT_TRUE(std::holds_alternative<CompBuilding>(result));
-	        EXPECT_EQ(std::get<CompBuilding>(result).lineOfSight, 5);
 	        EXPECT_EQ(std::get<CompBuilding>(result).size.value().width, 2);
     }
     catch (const py::error_already_set& e)
@@ -348,7 +347,6 @@ entity = Villager()
         EntityDefinitionLoaderExposure loader;
         ComponentType result = EntityLoader::createCompUnit(1, module, def);
         ASSERT_TRUE(std::holds_alternative<CompUnit>(result));
-        EXPECT_EQ(std::get<CompUnit>(result).lineOfSight, 100);
     }
     catch (const py::error_already_set& e)
     {
@@ -372,6 +370,7 @@ all_buildings= [
 	ResourceDropOff(
 	    name='mill', 
 	    line_of_sight=256,
+        line_of_sight_shape="circle",
 	    size='medium',
 	    accepted_resources=['food'], 
 	    graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=3483)}),
@@ -532,6 +531,7 @@ all_buildings= [
 	ResourceDropOff(
 	    name='mill', 
 	    line_of_sight=256,
+        line_of_sight_shape="circle",
 	    size='medium',
 	    accepted_resources=['food'], 
 	    graphics=Graphic(by_theme={"default":SingleGraphic(slp_id=3483)}),

@@ -118,6 +118,19 @@ Size getBuildingSize(const std::string& name)
     }
 }
 
+LineOfSightShape getLOSShape(const std::string& name)
+{
+    if (name == "circle")
+        return LineOfSightShape::CIRCLE;
+    else if (name == "rounded_square")
+        return LineOfSightShape::ROUNDED_SQUARE;
+    else
+    {
+        debug_assert(false, "unknown line-of-sight shape");
+        return LineOfSightShape::UNKNOWN;
+    }
+}
+
 Rect<int> getBoundingBox(shared_ptr<DRSFile> drs, uint32_t slpId)
 {
     auto frameInfos = drs->getSLPFile(slpId).getFrameInfos();
@@ -505,6 +518,7 @@ void EntityLoader::addCommonComponents(py::object module,
     addComponentIfNotNull(entityType, createCompTransform(module, entityDefinition));
     addComponentIfNotNull(entityType, createCompResource(module, entityDefinition));
     addComponentIfNotNull(entityType, createCompBuilding(module, entityDefinition));
+    addComponentIfNotNull(entityType, createCompVision(module, entityDefinition));
     addComponentIfNotNull(entityType, createCompUnitFactory(module, entityDefinition));
     addComponentIfNotNull(entityType, createCompHousing(module, entityDefinition));
     addComponentIfNotNull(entityType, createCompGarrison(module, entityDefinition));
@@ -975,8 +989,6 @@ ComponentType EntityLoader::createCompUnit(uint32_t entityType,
             auto unitType = getUnitType(unitTypeInt);
 
             CompUnit comp;
-            PropertyInitializer::set<uint32_t>(comp.lineOfSight,
-                                               entityDefinition.attr("line_of_sight").cast<int>());
             PropertyInitializer::set<uint32_t>(comp.housingNeed,
                                                entityDefinition.attr("housing_need").cast<int>());
             PropertyInitializer::set<UnitType>(comp.type, unitType);
@@ -1095,11 +1107,9 @@ ComponentType EntityLoader::createCompBuilding(py::object module, pybind11::hand
         {
             CompBuilding comp;
 
-            auto lineOfSight = readValue<int>(entityDefinition, "line_of_sight");
             auto sizeStr = readValue<std::string>(entityDefinition, "size");
             auto size = getBuildingSize(sizeStr);
 
-            PropertyInitializer::set<uint32_t>(comp.lineOfSight, lineOfSight);
             PropertyInitializer::set<Size>(comp.size, size);
 
             if (py::hasattr(module, "ResourceDropOff"))
@@ -1272,6 +1282,23 @@ game::ComponentType EntityLoader::createCompGarrison(pybind11::object module,
 
             return ComponentType(comp);
         }
+    }
+    return std::monostate{};
+}
+
+ComponentType EntityLoader::createCompVision(pybind11::object module,
+                                             pybind11::handle entityDefinition)
+{
+    if (py::hasattr(entityDefinition, "line_of_sight"))
+    {
+        int los = entityDefinition.attr("line_of_sight").cast<int>();
+        std::string losShapeStr = entityDefinition.attr("line_of_sight_shape").cast<std::string>();
+        LineOfSightShape losShape = getLOSShape(losShapeStr);
+
+        CompVision comp;
+        PropertyInitializer::set<uint32_t>(comp.lineOfSight, los);
+        PropertyInitializer::set<LineOfSightShape>(comp.lineOfSightShape, losShape);
+        return ComponentType(comp);
     }
     return std::monostate{};
 }

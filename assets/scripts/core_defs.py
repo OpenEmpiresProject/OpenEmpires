@@ -1,5 +1,5 @@
 from typing import Dict, List, Optional, Union
-from enum import IntEnum
+from enum import IntEnum, Enum
 
 # Core entity definitions. These definitions are known to the game. It is possible to compose these
 # to define new entity types. But not possible to change these.
@@ -64,12 +64,18 @@ class UnitType(IntEnum):
     CAVALRY = 4
     SHIP = 5
     SIEGE = 6
+    
+
+class LineOfSightShape(str, Enum):
+    CIRCLE = "circle"
+    ROUNDED_SQUARE = "rounded_square"
 
 
 class Unit:
     name: str
     display_name: str
     line_of_sight: int
+    line_of_sight_shape: LineOfSightShape = LineOfSightShape.CIRCLE
     moving_speed: int
     animations: List[Animation]
     icon: Icon
@@ -114,6 +120,7 @@ class Building:
     name: str
     display_name: str
     line_of_sight: int
+    line_of_sight_shape: LineOfSightShape = LineOfSightShape.ROUNDED_SQUARE
     size: str
     graphics: Graphic
     icon: Icon

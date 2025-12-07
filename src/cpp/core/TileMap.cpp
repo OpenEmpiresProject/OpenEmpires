@@ -12,9 +12,10 @@ bool MapCell::isOccupied() const
     return !entities.empty();
 }
 
-void MapCell::addEntity(uint32_t entity)
+bool MapCell::addEntity(uint32_t entity)
 {
-    entities.insert(entity);
+    auto [_, inserted] = entities.insert(entity);
+    return inserted;
 }
 
 uint32_t MapCell::getEntity() const
@@ -22,9 +23,10 @@ uint32_t MapCell::getEntity() const
     return *entities.begin();
 }
 
-void MapCell::removeEntity(uint32_t entity)
+bool MapCell::removeEntity(uint32_t entity)
 {
-    entities.erase(entity);
+    size_t deleted = entities.erase(entity);
+    return deleted == 1;
 }
 
 void MapCell::removeAllEntities()
@@ -90,7 +92,14 @@ void TileMap::addEntity(MapLayerType layerType, const Tile& pos, uint32_t entity
 
     if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height) [[likely]]
     {
-        layers[layerTypeInt].cells[pos.x][pos.y].addEntity(entity);
+        bool added = layers[layerTypeInt].cells[pos.x][pos.y].addEntity(entity);
+        if (added)
+        {
+            for (auto& listner : m_listners)
+            {
+                listner->onEntityEnter(entity, pos, layerType);
+            }
+        }
     }
     else [[unlikely]]
     {
@@ -118,7 +127,14 @@ void TileMap::removeStaticEntity(const Tile& pos, uint32_t entity)
             int ny = pos.y + dy;
             if (nx >= 0 && ny >= 0 && nx < static_cast<int>(width) && ny < static_cast<int>(height))
             {
-                layers[layerTypeInt].cells[nx][ny].removeEntity(entity);
+                bool removed = layers[layerTypeInt].cells[nx][ny].removeEntity(entity);
+                if (removed)
+                {
+                    for (auto& listner : m_listners)
+                    {
+                        listner->onEntityExit(entity, pos, MapLayerType::STATIC);
+                    }
+                }
             }
         }
     }
@@ -130,7 +146,14 @@ void TileMap::removeEntity(MapLayerType layerType, const Tile& pos, uint32_t ent
 
     if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height) [[likely]]
     {
-        layers[layerTypeInt].cells[pos.x][pos.y].removeEntity(entity);
+        bool removed = layers[layerTypeInt].cells[pos.x][pos.y].removeEntity(entity);
+        if (removed)
+        {
+            for (auto& listner : m_listners)
+            {
+                listner->onEntityExit(entity, pos, layerType);
+            }
+        }
     }
     else [[unlikely]]
     {
@@ -152,6 +175,18 @@ void TileMap::removeAllEntities(MapLayerType layerType, const Tile& pos)
 
     if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height) [[likely]]
     {
+        // Informing listeners just before deleting unlike in other cases. Should not be
+        // a problem (unless listner immediately check TileMap)
+        //
+        const auto& entities = layers[layerTypeInt].cells[pos.x][pos.y].entities;
+        for (auto entity : entities)
+        {
+            for (auto& listner : m_listners)
+            {
+                listner->onEntityExit(entity, pos, layerType);
+            }
+        }
+
         layers[layerTypeInt].cells[pos.x][pos.y].removeAllEntities();
     }
     else [[unlikely]]
@@ -242,4 +277,9 @@ void TileMap::init(uint32_t width, uint32_t height)
 bool TileMap::isValidPos(const Tile& pos) const
 {
     return pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height;
+}
+
+void TileMap::registerListner(Ref<TileMapListner> listner)
+{
+    m_listners.push_back(std::move(listner));
 }

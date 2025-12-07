@@ -126,7 +126,9 @@ TEST_F(CommandCenterTest, CreatesSubCommands)
     ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompAnimation());
     ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompEntityInfo(0));
     ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompPlayer());
-    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompTransform());
+    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity,
+                                                                            CompTransform());
+    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompVision());
 
     Event tickEvent{Event::Type::TICK, TickData{0}};
     commandCenter.onTick(tickEvent);
