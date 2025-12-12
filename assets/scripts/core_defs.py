@@ -71,11 +71,15 @@ class LineOfSightShape(str, Enum):
     ROUNDED_SQUARE = "rounded_square"
 
 
-class Unit:
-    name: str
-    display_name: str
+class Vision:
     line_of_sight: int
     line_of_sight_shape: LineOfSightShape = LineOfSightShape.CIRCLE
+    active_tracking: bool = False
+
+
+class Unit(Vision):
+    name: str
+    display_name: str
     moving_speed: int
     animations: List[Animation]
     icon: Icon
@@ -116,16 +120,16 @@ class Tree(NaturalResource, _Constructible):
     stump: NaturalResourceAdditionalPart
 
 
-class Building:
+class Building(Vision):
     name: str
     display_name: str
-    line_of_sight: int
     line_of_sight_shape: LineOfSightShape = LineOfSightShape.ROUNDED_SQUARE
     size: str
     graphics: Graphic
     icon: Icon
     connected_constructions_allowed: Optional[bool] # Allows to constructing series of same building such as walls
     default_orientation: Optional[str]
+
 
 class CompoSiteGraphicBuilding(Building):
     graphics: Graphic

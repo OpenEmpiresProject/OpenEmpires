@@ -2,6 +2,7 @@
 #define GAMESTATE_H
 
 #include "Coordinates.h"
+#include "PassabilityMap.h"
 #include "TileMap.h"
 
 #include <entt/entity/registry.hpp>
@@ -18,6 +19,8 @@ class StateManager
     StateManager();
     StateManager(const StateManager&) = delete;
     StateManager& operator=(const StateManager&) = delete;
+
+    void init();
 
     uint32_t createEntity();
 
@@ -77,6 +80,11 @@ class StateManager
         return m_gameMap;
     }
 
+    PassabilityMap& getPassabilityMap()
+    {
+        return m_passabilityMap;
+    }
+
     struct TileMapQueryResult
     {
         uint32_t entity = entt::null;
@@ -98,6 +106,7 @@ class StateManager
 
   private:
     TileMap m_gameMap;
+    PassabilityMap m_passabilityMap;
     entt::basic_registry<uint32_t> m_registry;
     Ref<PathFinderBase> m_pathFinder;
     std::vector<uint32_t> m_entitiesToDestroy;

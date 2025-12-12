@@ -677,8 +677,8 @@ void RendererImpl::renderText(const Vec2& screenPos, const std::string& text, co
     {
         SDL_Rect src = m_fontAtlas.glyphRects[c];
 
-        SDL_FRect srcRect = {(float)src.x, (float)src.y, (float)src.w, (float)src.h};
-        SDL_FRect dstRect = {(float)x, (float)screenPos.y, (float)src.w, (float)src.h};
+        SDL_FRect srcRect = {(float) src.x, (float) src.y, (float) src.w, (float) src.h};
+        SDL_FRect dstRect = {(float) x, (float) screenPos.y, (float) src.w, (float) src.h};
         x += src.w + 1;
 
         SDL_SetTextureColorMod(m_fontAtlas.texture, color.r, color.g, color.b);

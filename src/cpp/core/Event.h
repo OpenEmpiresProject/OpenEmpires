@@ -89,6 +89,14 @@ struct BuildingPlacementData
     inline static uint32_t g_currentPlacementId = 0;
 };
 
+struct BuildingConstructedData
+{
+    Ref<Player> player;
+    uint32_t entityType = 0;
+    Feet pos = Feet::null;
+    uint32_t entity = entt::null;
+};
+
 struct EntityDeleteData
 {
     uint32_t entity = entt::null;
@@ -152,7 +160,8 @@ struct Event
         BUILDING_PLACEMENT_STARTED, // Use BuildingPlacementData. Sent only by active player
         BUILDING_PLACEMENT_ENDED,   // Use BuildingPlacementData. Sent only by active player
         BUILDING_REQUESTED,         // Use BuildingPlacementData
-        BUILDING_CREATED,           // Use BuildingPlacementData
+        BUILDING_CREATED, // Use BuildingPlacementData. Not necessarily construction completed
+        BUILDING_CONSTRUCTED,
         TRACKING_REQUEST,
         WITHIN_LINE_OF_SIGHT, // Use LineOfSightData
         OUT_OF_LINE_OF_SIGHT, // Use LineOfSightData
@@ -176,6 +185,7 @@ struct Event
                               UngarrisonData,
                               GarrisonData,
                               TrackingRequestData,
+                              BuildingConstructedData,
                               LineOfSightData,
                               BuildingPlacementData>;
 

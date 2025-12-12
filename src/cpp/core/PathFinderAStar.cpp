@@ -21,17 +21,19 @@ double heuristic(const Tile& a, const Tile& b)
     return std::sqrt(std::pow(a.x - b.x, 2) + std::pow(a.y - b.y, 2));
 }
 
-bool isBlocked(const TileMap& map, const Tile& pos)
+bool isBlocked(const PassabilityMap& map, Ref<Player> player, const Tile& pos)
 {
-    if (pos.x < 0 || pos.x >= map.width || pos.y < 0 || pos.y >= map.height ||
-        map.isOccupied(MapLayerType::STATIC, pos))
+    auto size = map.getSize();
+
+    if (pos.x < 0 || pos.x >= size.width || pos.y < 0 || pos.y >= size.height ||
+        (map.isPassableFor(pos, player->getId()) == false))
         return true;
     return false;
 }
 
-bool isWalkable(const TileMap& map, const Tile& from, const Tile& to)
+bool isWalkable(const PassabilityMap& map, Ref<Player> player, const Tile& from, const Tile& to)
 {
-    if (isBlocked(map, to))
+    if (isBlocked(map, player, to))
         return false;
 
     if (from.x != to.x && from.y != to.y)
@@ -41,7 +43,7 @@ bool isWalkable(const TileMap& map, const Tile& from, const Tile& to)
         auto corner2 = Tile(from.x + diff.x, from.y);
 
         // Diagonal movement is not allowed if the adjacent tiles are not walkable
-        if (isBlocked(map, corner1) || isBlocked(map, corner2))
+        if (isBlocked(map, player, corner1) || isBlocked(map, player, corner2))
             return false;
     }
     return true;
@@ -67,7 +69,10 @@ Path reconstructPath(const std::unordered_map<Tile, Tile>& cameFrom, Tile curren
     return path;
 }
 
-Path PathFinderAStar::findPath(const TileMap& map, const Feet& start, const Feet& goal)
+Path PathFinderAStar::findPath(const PassabilityMap& map,
+                               Ref<Player> player,
+                               const Feet& start,
+                               const Feet& goal)
 {
     using PQNode = std::pair<int, Tile>; // cost, position
     std::priority_queue<PQNode, std::vector<PQNode>, std::greater<>> open;
@@ -101,7 +106,7 @@ Path PathFinderAStar::findPath(const TileMap& map, const Feet& start, const Feet
 
         for (const Tile& neighbor : getNeighbors(current))
         {
-            if (!isWalkable(map, current, neighbor))
+            if (!isWalkable(map, player, current, neighbor))
             {
                 // spdlog::error("Neighbor {} is blocked", neighbor.toString());
                 continue;

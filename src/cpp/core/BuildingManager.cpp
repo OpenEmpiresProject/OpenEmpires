@@ -37,20 +37,29 @@ void BuildingManager::onTick(const Event& e)
 
 void BuildingManager::onCompleteBuilding(uint32_t entity,
                                          const CompBuilding& building,
-                                         CompVision& vision,
+                                         const CompVision& vision,
                                          const CompTransform& transform,
-                                         const CompPlayer& player)
+                                         const CompPlayer& player,
+                                         const CompEntityInfo& info)
 {
     player.player->getFogOfWar()->markAsExplored(building.landArea, vision.lineOfSight);
     player.player->addEntity(entity);
 
-    // Enable tracking and request to track
-    vision.hasVision = true;
-    TrackingRequestData data;
-    data.entity = entity;
-    data.landArea = building.landArea;
-    data.center = transform.position;
-    publishEvent(Event::Type::TRACKING_REQUEST, data);
+    BuildingConstructedData constructedData;
+    constructedData.entity = entity;
+    constructedData.player = player.player;
+    constructedData.entityType = info.entityType;
+    constructedData.pos = transform.position;
+    publishEvent(Event::Type::BUILDING_CONSTRUCTED, constructedData);
+
+    if (vision.activeTracking)
+    {
+        TrackingRequestData data;
+        data.entity = entity;
+        data.landArea = building.landArea;
+        data.center = transform.position;
+        publishEvent(Event::Type::TRACKING_REQUEST, data);
+    }
 }
 
 void BuildingManager::onBuildingRequest(const Event& e)
@@ -156,7 +165,7 @@ void BuildingManager::updateInProgressConstructions()
 
             if (building.constructionProgress >= 100)
             {
-                onCompleteBuilding(entity, building, vision, transform, player);
+                onCompleteBuilding(entity, building, vision, transform, player, info);
                 info.variation = 0;
 
                 // Reseting entity sub type will essentially remove construction site
@@ -168,13 +177,15 @@ void BuildingManager::updateInProgressConstructions()
 
             if (building.constructionProgress > 1 && building.isInStaticMap == false)
             {
-                auto& gameMap =
-                    ServiceRegistry::getInstance().getService<StateManager>()->gameMap();
+                auto& gameMap = m_stateMan->gameMap();
+                auto& passabilityMap = m_stateMan->getPassabilityMap();
 
                 for (auto& tile : building.landArea.tiles)
                 {
                     gameMap.addEntity(MapLayerType::STATIC, tile, entity);
                     gameMap.removeEntity(MapLayerType::ON_GROUND, tile, entity);
+                    passabilityMap.setTileDynamicPassability(
+                        tile, DynamicPassability::BLOCKED_FOR_ANY, player.player->getId());
                 }
 
                 building.isInStaticMap = true;

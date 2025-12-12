@@ -20,6 +20,7 @@
 #include "Renderer.h"
 #include "ResourceManager.h"
 #include "ServiceRegistry.h"
+#include "SpecialBuildingManager.h"
 #include "StateManager.h"
 #include "SubSystemRegistry.h"
 #include "ThreadSynchronizer.h"
@@ -87,8 +88,7 @@ class Game
         game::DRSGraphicsLoader graphicsLoader;
 
         auto stateMan = std::make_shared<core::StateManager>();
-        stateMan->gameMap().init(settings->getWorldSizeInTiles().width,
-                                 settings->getWorldSizeInTiles().height);
+        stateMan->init();
         core::ServiceRegistry::getInstance().registerService(stateMan);
 
         auto coordinates = std::make_shared<core::Coordinates>(settings);
@@ -163,6 +163,7 @@ class Game
 
         auto logController = std::make_shared<core::LogLevelController>();
         auto visionSystem = std::make_shared<core::VisionSystem>();
+        auto specialBuildingManager = std::make_shared<game::SpecialBuildingManager>();
 
         if (params.eventHandler)
             eventLoop->registerListener(params.eventHandler);
@@ -178,6 +179,7 @@ class Game
         eventLoop->registerListener(std::move(cursorManager));
         eventLoop->registerListener(std::move(logController));
         eventLoop->registerListener(std::move(visionSystem));
+        eventLoop->registerListener(std::move(specialBuildingManager));
 
         auto resourceLoader =
             std::make_shared<DemoWorldCreator>(&stopToken, settings, params.populateWorld);

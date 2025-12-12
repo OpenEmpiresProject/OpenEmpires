@@ -42,9 +42,10 @@ class BuildingManager : public EventHandler
     uint32_t createBuilding(const BuildingPlacementData& request);
     void onCompleteBuilding(uint32_t entity,
                             const CompBuilding& building,
-                            CompVision& vision,
+                            const CompVision& vision,
                             const CompTransform& transform,
-                            const CompPlayer& player);
+                            const CompPlayer& player,
+                            const CompEntityInfo& info);
     Feet findVacantPositionAroundBuilding(uint32_t building);
 };
 

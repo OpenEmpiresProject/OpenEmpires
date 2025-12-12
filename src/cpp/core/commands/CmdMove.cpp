@@ -11,6 +11,7 @@
 #include "components/CompAnimation.h"
 #include "components/CompBuilding.h"
 #include "components/CompGraphics.h"
+#include "components/CompPlayer.h"
 #include "components/CompResource.h"
 #include "components/CompTransform.h"
 #include "components/CompUnit.h"
@@ -329,9 +330,10 @@ std::list<Feet> CmdMove::findPath(const Feet& endPosInFeet)
     const Tile startPos = m_components->transform.position.toTile();
     const auto endPos = endPosInFeet.toTile();
 
-    const TileMap map = m_stateMan->gameMap();
-    const std::vector<Feet> newPath =
-        m_stateMan->getPathFinder()->findPath(map, m_components->transform.position, endPosInFeet);
+    const auto& passabilityMap = m_stateMan->getPassabilityMap();
+    auto player = m_components->player.player;
+    const std::vector<Feet> newPath = m_stateMan->getPathFinder()->findPath(
+        passabilityMap, player, m_components->transform.position, endPosInFeet);
 
     if (newPath.empty())
     {

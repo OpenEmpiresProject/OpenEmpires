@@ -1292,11 +1292,13 @@ ComponentType EntityLoader::createCompVision(pybind11::object module,
     if (py::hasattr(entityDefinition, "line_of_sight"))
     {
         int los = entityDefinition.attr("line_of_sight").cast<int>();
+        bool track = entityDefinition.attr("active_tracking").cast<bool>();
         std::string losShapeStr = entityDefinition.attr("line_of_sight_shape").cast<std::string>();
         LineOfSightShape losShape = getLOSShape(losShapeStr);
 
         CompVision comp;
         PropertyInitializer::set<uint32_t>(comp.lineOfSight, los);
+        PropertyInitializer::set<bool>(comp.activeTracking, track);
         PropertyInitializer::set<LineOfSightShape>(comp.lineOfSightShape, losShape);
         return ComponentType(comp);
     }

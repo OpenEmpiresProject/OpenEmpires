@@ -13,6 +13,7 @@ class CompVision
   public:
     Property<uint32_t> lineOfSight; // In Feet
     Property<LineOfSightShape> lineOfSightShape;
+    Property<bool> activeTracking;
 
   public:
     bool hasVision = false; // Dynamically control whether LOS is in effect

@@ -244,7 +244,9 @@ all_buildings: List[Building] = [
     Gate(
         name="stone_gate",
         display_name="Stone Gate",
-        line_of_sight=256,
+        line_of_sight=256*2,
+        active_tracking = True,
+        line_of_sight_shape = LineOfSightShape.CIRCLE,
         size="gate",
         graphics=Graphic(by_theme={"default":OrientatedGraphic(
             by_orientation={

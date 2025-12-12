@@ -204,7 +204,12 @@ void VisionSystem::onTrackingRequest(const Event& e)
     const auto& data = e.getData<TrackingRequestData>();
 
     auto& vision = m_stateMan->getComponent<CompVision>(data.entity);
-    if (vision.hasVision)
+
+    debug_assert(vision.activeTracking,
+                 "Tracking request received for entity {} with disabled activeTracking",
+                 data.entity);
+
+    if (vision.activeTracking)
     {
         spdlog::debug("A tracking request for entity {}", data.entity);
 
@@ -236,6 +241,11 @@ void VisionSystem::onTrackingRequest(const Event& e)
         {
             spdlog::error("Unknown LOS shape for entity {}", data.entity);
         }
+    }
+    else
+    {
+        spdlog::error("Request to enable tracking with activeTracking disabled for entity {}",
+                      data.entity);
     }
 }
 

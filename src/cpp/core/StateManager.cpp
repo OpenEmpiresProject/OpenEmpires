@@ -26,6 +26,14 @@ void StateManager::destroyEntity(uint32_t entity)
     m_entitiesToDestroy.push_back(entity);
 }
 
+void StateManager::init()
+{
+    auto settings = ServiceRegistry::getInstance().getService<Settings>();
+    const auto& size = settings->getWorldSizeInTiles();
+    m_gameMap.init(size.width, size.height);
+    m_passabilityMap.init(size.width, size.height);
+}
+
 void core::StateManager::destroyAllPendingEntities()
 {
     for (auto entity : m_entitiesToDestroy)

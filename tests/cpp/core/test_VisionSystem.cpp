@@ -10,7 +10,6 @@
 #include "components/CompTransform.h"
 #include "components/CompEntityInfo.h"
 #include "Property.h"
-#include "Property.h" // for PropertyInitializer usage (project uses this pattern)
 #include "utils/Constants.h"
 #include "TestEventPublisher.h"
 #include "FogOfWar.h"
@@ -122,6 +121,7 @@ TEST_F(VisionSystemTest, CircleLOS_PublishesWithinAndOutEvents)
     CompVision trackerVision;
     // Set properties using project's PropertyInitializer API
     PropertyInitializer::set<uint32_t>(trackerVision.lineOfSight, 300u); // feet
+    PropertyInitializer::set<bool>(trackerVision.activeTracking, true);
     PropertyInitializer::set<LineOfSightShape>(trackerVision.lineOfSightShape,
                                                LineOfSightShape::CIRCLE);
     trackerVision.hasVision = true;
@@ -200,6 +200,7 @@ TEST_F(VisionSystemTest, RoundedSquareLOS_PublishesWithinAndOutEvents)
     // Tracker is a building-like tracker: rounded-square LOS
     CompVision trackerVision;
     PropertyInitializer::set<uint32_t>(trackerVision.lineOfSight, 256u * 1u); // 1 tile in feet
+    PropertyInitializer::set<bool>(trackerVision.activeTracking, true);
     PropertyInitializer::set<LineOfSightShape>(trackerVision.lineOfSightShape,
                                                LineOfSightShape::ROUNDED_SQUARE);
     trackerVision.hasVision = true;
