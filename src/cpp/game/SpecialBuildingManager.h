@@ -17,6 +17,9 @@ class SpecialBuildingManager : public core::EventHandler
     void onInit(core::EventLoop& eventLoop) override;
 
     void lookupEntityTypes();
+    void updatePassabilityForGate(uint32_t gateEntity, bool gateIsOpen);
+    void tryOpeningGateFor(uint32_t gate, uint32_t target, bool open);
+    bool isAGate(uint32_t entity) const;
 
     uint32_t m_gateEntityType = entt::null;
     const std::string m_gateEntityName = "stone_gate";
