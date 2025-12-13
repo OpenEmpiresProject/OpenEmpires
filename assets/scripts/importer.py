@@ -21,7 +21,7 @@ def resolve_type_recursively(type_annotation: Type) -> Type:
         return type_annotation
 
     # Handle Optional/Union[..., NoneType]
-    if origin is Union and type(None) in args:
+    if origin is Union:
         # Resolve the non-None part of the Union
         non_none_args = [arg for arg in args if arg is not type(None)]
         

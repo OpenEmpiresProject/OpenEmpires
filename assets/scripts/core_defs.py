@@ -36,12 +36,14 @@ class CompositeGraphic(_Constructible):
     flip: bool = False
 
 
-class OrientatedGraphic(_Constructible):
-    by_orientation = Dict[str, Union[CompositeGraphic, SingleGraphic]]
+
+class GraphicVariant(_Constructible):
+    graphic: Union[SingleGraphic, CompositeGraphic]
+    variation_filter: Dict[str, str]
 
 
 class Graphic(_Constructible):
-    by_theme=Dict[str, Union[SingleGraphic, CompositeGraphic, OrientatedGraphic]]
+    variants: List[GraphicVariant]
 
 
 class Animation(_Constructible):
@@ -53,7 +55,7 @@ class Animation(_Constructible):
     repeatable: bool = True
 
 
-class Icon(Graphic):
+class Icon(SingleGraphic):
     index: int
 
 
@@ -177,7 +179,7 @@ def get_all_core_defs():
             Graphic.__name__: Graphic,
             CompositeGraphic.__name__: CompositeGraphic,
             SingleGraphic.__name__: SingleGraphic,
-            OrientatedGraphic.__name__: OrientatedGraphic,
+            GraphicVariant.__name__: GraphicVariant,
             Animation.__name__: Animation,
             Icon.__name__: Icon,
             Unit.__name__: Unit,

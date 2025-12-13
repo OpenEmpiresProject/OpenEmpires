@@ -708,13 +708,30 @@ void EntityLoader::loadDRSForStillImage(pybind11::object module,
     if (py::hasattr(entityDefinition, "graphics"))
     {
         py::object graphics = entityDefinition.attr("graphics");
-        py::dict graphicByThemeDict = graphics.attr("by_theme");
+        py::list graphicVariants = graphics.attr("variants");
         py::object singleGraphicClass = module.attr("SingleGraphic");
         py::object compositeGraphicClass = module.attr("CompositeGraphic");
-        py::object orientatedGraphicClass = module.attr("OrientatedGraphic");
 
-        for (auto [theme, graphicsEntry] : graphicByThemeDict)
+        for (auto graphicsVariant : graphicVariants)
         {
+            py::object graphicsEntry = graphicsVariant.attr("graphic");
+            py::dict variationFilters = graphicsVariant.attr("variation_filter");
+
+            std::map<std::string, std::string> filters;
+            for (auto [key, value] : variationFilters)
+            {
+                auto keyStr = py::cast<std::string>(key);
+                auto valueStr = py::cast<std::string>(value);
+                filters.insert({keyStr, valueStr});
+            }
+
+            BuildingOrientation orientation = BuildingOrientation::NO_ORIENTATION;
+            if (filters.contains("orientation"))
+            {
+                std::string orientationStr = filters.find("orientation")->second;
+                orientation = getBuildingOrientation(orientationStr);
+            }
+
             if (py::isinstance(graphicsEntry, compositeGraphicClass))
             {
                 bool flip = readValue<bool>(graphicsEntry, "flip");
@@ -725,53 +742,18 @@ void EntityLoader::loadDRSForStillImage(pybind11::object module,
 
                 for (auto part : parts)
                     processGraphic(entityType, entitySubType, part, Vec2(anchorX, anchorY),
-                                   BuildingOrientation::NO_ORIENTATION, flip, std::nullopt);
-            }
-            else if (py::isinstance(graphicsEntry, orientatedGraphicClass))
-            {
-                py::dict graphicsByOrientationDict = graphicsEntry.attr("by_orientation");
-
-                for (auto [orientationEntry, graphic] : graphicsByOrientationDict)
-                {
-                    std::string orientationStr = py::str(orientationEntry);
-                    BuildingOrientation orientation = getBuildingOrientation(orientationStr);
-
-                    if (py::isinstance(graphic, singleGraphicClass))
-                    {
-                        bool flip = readValue<bool>(graphic, "flip");
-                        std::optional<int> frameIndex;
-
-                        if (py::hasattr(graphic, "frame_index"))
-                        {
-                            frameIndex = readValue<int>(graphic, "frame_index");
-                        }
-
-                        processGraphic(entityType, entitySubType, graphic, Vec2::null, orientation,
-                                       flip, frameIndex);
-                    }
-                    else if (py::isinstance(graphic, compositeGraphicClass))
-                    {
-                        bool flip = readValue<bool>(graphic, "flip");
-                        py::list parts = graphic.attr("parts");
-                        py::object anchor = graphic.attr("anchor");
-                        int anchorX = readValue<int>(anchor, "x");
-                        int anchorY = readValue<int>(anchor, "y");
-
-                        for (auto part : parts)
-                            processGraphic(entityType, entitySubType, part, Vec2(anchorX, anchorY),
-                                           orientation, flip, std::nullopt);
-                    }
-                    else
-                    {
-                        spdlog::error("Unknown graphic entry type for entity type {}", entityType);
-                    }
-                }
+                                   orientation, flip, std::nullopt);
             }
             else
             {
+                std::optional<int> frameIndex;
+                if (py::hasattr(graphicsEntry, "frame_index"))
+                {
+                    frameIndex = readValue<int>(graphicsEntry, "frame_index");
+                }
                 bool flip = readValue<bool>(graphicsEntry, "flip");
-                processGraphic(entityType, entitySubType, graphicsEntry, Vec2::null,
-                               BuildingOrientation::NO_ORIENTATION, flip, std::nullopt);
+                processGraphic(entityType, entitySubType, graphicsEntry, Vec2::null, orientation,
+                               flip, frameIndex);
             }
         }
     }
