@@ -285,6 +285,7 @@ all_buildings: List[Building] = [
         size="gate",
         graphics=Graphic(
             variants=[
+                # Closed Gates
                 GraphicVariant(
                     graphic=CompositeGraphic(
                         anchor=Point(x=125, y=190),
@@ -334,6 +335,56 @@ all_buildings: List[Building] = [
                     variation_filter={GraphicVariantType.THEME:"default", 
                                       GraphicVariantType.ORIENTATION:"vertical",
                                       GraphicVariantType.STATE:"closed"}),
+                # Opened Gates
+                GraphicVariant(
+                    graphic=CompositeGraphic(
+                        anchor=Point(x=125, y=190),
+                        parts=[
+                            SingleGraphic(slp_id=2391, anchor=Point(x=-15,y=175)),
+                            SingleGraphic(slp_id=2355, anchor=Point(x=60,y=130)), 
+                            SingleGraphic(slp_id=2391, anchor=Point(x=130,y=103)),
+                        ]
+                    ),
+                    variation_filter={GraphicVariantType.THEME:"default", 
+                                      GraphicVariantType.ORIENTATION:"right_angled",
+                                      GraphicVariantType.STATE:"opened"}),
+                GraphicVariant(
+                    graphic=CompositeGraphic(
+                        anchor=Point(x=125, y=190),
+                        parts=[
+                            SingleGraphic(slp_id=2391, anchor=Point(x=-15,y=175)),
+                            SingleGraphic(slp_id=2463, anchor=Point(x=60,y=130)), 
+                            SingleGraphic(slp_id=2391, anchor=Point(x=130,y=103)),
+                        ],
+                        flip=True
+                    ),
+                    variation_filter={GraphicVariantType.THEME:"default", 
+                                      GraphicVariantType.ORIENTATION:"left_angled",
+                                      GraphicVariantType.STATE:"opened"}),
+                GraphicVariant(
+                    graphic=CompositeGraphic(
+                        anchor=Point(x=195, y=150),
+                        parts=[
+                            SingleGraphic(slp_id=4023, anchor=Point(x=100,y=120)), 
+                            SingleGraphic(slp_id=2391, anchor=Point(x=195,y=150)),
+                            SingleGraphic(slp_id=2391, anchor=Point(x=-90,y=150)),
+                        ],
+                    ),
+                    variation_filter={GraphicVariantType.THEME:"default", 
+                                      GraphicVariantType.ORIENTATION:"horizontal",
+                                      GraphicVariantType.STATE:"opened"}),
+                GraphicVariant(
+                    graphic=CompositeGraphic(
+                        anchor=Point(x=51, y=178+48),
+                        parts=[
+                            SingleGraphic(slp_id=2391, anchor=Point(x=51,y=178+48)),
+                            SingleGraphic(slp_id=4111, anchor=Point(x=10,y=150)), 
+                            SingleGraphic(slp_id=2391, anchor=Point(x=51,y=178-96)),
+                        ],
+                    ),
+                    variation_filter={GraphicVariantType.THEME:"default", 
+                                      GraphicVariantType.ORIENTATION:"vertical",
+                                      GraphicVariantType.STATE:"opened"}),
         ]),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=29),
         default_orientation="right_angled"

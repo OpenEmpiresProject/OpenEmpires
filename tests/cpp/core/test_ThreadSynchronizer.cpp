@@ -33,18 +33,21 @@ TEST_F(ThreadSynchronizerTest, SenderReceiverSynchronization)
     std::thread receiver(
         [&]()
         {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
             for (int i = 1; i <= 5; ++i)
             {
                 FrameData& frame = synchronizer.getReceiverFrameData();
                 EXPECT_EQ(frame.frameNumber, i - 1); // Always one frame behind than the sender
-                synchronizer.waitForSender();
+                
+                if (i < 5)
+                    synchronizer.waitForSender();
             }
         });
 
     std::thread sender(
         [&]()
         {
-            for (int i = 1; i <= 5; ++i)
+            for (int i = 0; i < 5; ++i)
             {
                 FrameData& frame = synchronizer.getSenderFrameData();
                 frame.frameNumber = i;

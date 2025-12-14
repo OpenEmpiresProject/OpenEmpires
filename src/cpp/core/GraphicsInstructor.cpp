@@ -108,6 +108,7 @@ void GraphicsInstructor::updateGraphicComponents()
         gc.isEnabled = entityInfo.isEnabled;
         gc.entityID = entityInfo.entityId;
         gc.bypass = false;
+        gc.state = entityInfo.state;
 
         if (state->hasComponent<CompSelectible>(entity))
         {

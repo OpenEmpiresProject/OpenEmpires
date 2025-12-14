@@ -88,7 +88,8 @@ void SpecialBuildingManager::updatePassabilityForGate(uint32_t gateEntity, bool 
 
 void SpecialBuildingManager::tryOpeningGateFor(uint32_t gateEntity, uint32_t target, bool open)
 {
-    auto [gateComp, playerComp] = m_stateMan->getComponents<CompGate, CompPlayer>(gateEntity);
+    auto [gateComp, playerComp, gateInfo] =
+        m_stateMan->getComponents<CompGate, CompPlayer, CompEntityInfo>(gateEntity);
 
     if (not gateComp.isLocked)
     {
@@ -98,7 +99,9 @@ void SpecialBuildingManager::tryOpeningGateFor(uint32_t gateEntity, uint32_t tar
         {
             spdlog::debug("{} the gate {}", (open ? "Opening" : "Closing"), target);
             gateComp.isOpen = open;
+            gateInfo.state = open ? toInt(GateStatus::OPENED) : toInt(GateStatus::CLOSED);
             updatePassabilityForGate(gateEntity, open);
+            StateManager::markDirty(gateEntity);
         }
         else
         {

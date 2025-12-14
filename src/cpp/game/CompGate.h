@@ -3,6 +3,12 @@
 
 namespace game
 {
+enum class GateStatus
+{
+    CLOSED = 0,
+    OPENED = 1
+};
+
 class CompGate
 {
   public:

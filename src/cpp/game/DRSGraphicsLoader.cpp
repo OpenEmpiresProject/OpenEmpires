@@ -207,7 +207,8 @@ class GraphicsLoaderFromDRSImpl
                              GraphicsRegistry& graphicsRegistry,
                              bool isCursor,
                              int orientation,
-                             bool flip)
+                             bool flip,
+                             int state)
     {
         std::vector<SDL_Rect> srcRects;
         SDL_Texture* atlasTexture = nullptr;
@@ -252,6 +253,7 @@ class GraphicsLoaderFromDRSImpl
             id.action = action;
             id.playerId = playerId;
             id.orientation = orientation;
+            id.state = state;
 
             Vec2 anchor = anchors[i];
 
@@ -319,7 +321,8 @@ class GraphicsLoaderFromDRSImpl
                                         GraphicsRegistry& graphicsRegistry,
                                         AtlasGenerator& atlasGenerator,
                                         bool flip,
-                                        int orientation)
+                                        int orientation,
+                                        int state)
     {
         std::vector<SDL_Surface*> surfaces;
         std::vector<Vec2> anchors;
@@ -359,7 +362,7 @@ class GraphicsLoaderFromDRSImpl
         std::vector<SDL_Surface*> mergedSurfaceVec = {mergedSurface};
         loadSurfaces(atlasGenerator, renderer, mergedSurfaceVec, baseId.entityType,
                      drsData.clipRect, baseId.entitySubType, baseId.action, baseId.playerId, frames,
-                     newAnchors, graphicsRegistry, false, orientation, flip);
+                     newAnchors, graphicsRegistry, false, orientation, flip, state);
     }
 
     static void loadSLPWithAllFrames(shared_ptr<DRSFile> drs,
@@ -374,7 +377,8 @@ class GraphicsLoaderFromDRSImpl
                                      Rect<int> clipRect,
                                      bool flip,
                                      int orientation,
-                                     std::optional<int> frameIndex)
+                                     std::optional<int> frameIndex,
+                                     int state)
     {
         auto slp = drs->getSLPFile(slpId);
 
@@ -397,7 +401,8 @@ class GraphicsLoaderFromDRSImpl
         }
 
         loadSurfaces(atlasGenerator, renderer, surfaces, entityType, clipRect, entitySubType,
-                     action, playerId, frames, anchors, graphicsRegistry, false, orientation, flip);
+                     action, playerId, frames, anchors, graphicsRegistry, false, orientation, flip,
+                     state);
     }
 
     static bool isTextureFlippingNeededEntity(int entityType)
@@ -492,14 +497,14 @@ void DRSGraphicsLoader::loadGraphics(SDL_Renderer& renderer,
                     drsData.parts[0].drsFile, drsData.parts[0].slpId, id.entityType,
                     id.entitySubType, id.action, id.playerId, renderer, graphicsRegistry,
                     atlasGenerator, drsData.clipRect, drsData.flip, baseId.orientation,
-                    drsData.parts[0].frameIndex);
+                    drsData.parts[0].frameIndex, id.state);
             }
         }
         else // Multi-part texture
         {
-            GraphicsLoaderFromDRSImpl::loadSLPWithMergingParts(drsData, id, renderer,
-                                                               graphicsRegistry, atlasGenerator,
-                                                               drsData.flip, baseId.orientation);
+            GraphicsLoaderFromDRSImpl::loadSLPWithMergingParts(
+                drsData, id, renderer, graphicsRegistry, atlasGenerator, drsData.flip,
+                baseId.orientation, id.state);
         }
     }
     GraphicsLoaderFromDRSImpl::adjustDirections(graphicsRegistry);

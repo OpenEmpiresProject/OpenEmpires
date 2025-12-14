@@ -207,7 +207,8 @@ class EntityModelLoader : public core::EntityFactory, public core::PropertyIniti
                         const core::Vec2& anchor,
                         core::BuildingOrientation orientation,
                         bool flip,
-                        std::optional<int> frameIndex);
+                        std::optional<int> frameIndex,
+                        int state);
 
   private:
     const std::string m_unitsFile = "units";

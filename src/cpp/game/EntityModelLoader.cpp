@@ -99,6 +99,12 @@ BuildingOrientation getBuildingOrientation(const std::string& name)
     return orientations.at(name);
 }
 
+int getState(const std::string& name)
+{
+    static unordered_map<string, int> states = {{"closed", 0}, {"opened", 1}};
+    return states.at(name);
+}
+
 Size getBuildingSize(const std::string& name)
 {
     if (name == "small")
@@ -638,7 +644,8 @@ void EntityModelLoader::processGraphic(uint32_t entityType,
                                        const Vec2& anchor,
                                        BuildingOrientation orientation,
                                        bool flip,
-                                       std::optional<int> frameIndex)
+                                       std::optional<int> frameIndex,
+                                       int state)
 {
     // TODO: handle theme
     auto drsFileName = EntityModelLoader::readValue<std::string>(graphicObj, "drs_file");
@@ -673,6 +680,7 @@ void EntityModelLoader::processGraphic(uint32_t entityType,
     id.entityType = entityType;
     id.entitySubType = entitySubType;
     id.orientation = (int) orientation;
+    id.state = state;
 
     auto boundingBox = m_boundingBoxReadFunc(drsFile, slpId);
 
@@ -732,6 +740,13 @@ void EntityModelLoader::loadDRSForStillImage(pybind11::object module,
                 orientation = getBuildingOrientation(orientationStr);
             }
 
+            int state = 0;
+            if (filters.contains("state"))
+            {
+                std::string stateStr = filters.find("state")->second;
+                state = getState(stateStr);
+            }
+
             if (py::isinstance(graphicsEntry, compositeGraphicClass))
             {
                 bool flip = readValue<bool>(graphicsEntry, "flip");
@@ -742,7 +757,7 @@ void EntityModelLoader::loadDRSForStillImage(pybind11::object module,
 
                 for (auto part : parts)
                     processGraphic(entityType, entitySubType, part, Vec2(anchorX, anchorY),
-                                   orientation, flip, std::nullopt);
+                                   orientation, flip, std::nullopt, state);
             }
             else
             {
@@ -753,7 +768,7 @@ void EntityModelLoader::loadDRSForStillImage(pybind11::object module,
                 }
                 bool flip = readValue<bool>(graphicsEntry, "flip");
                 processGraphic(entityType, entitySubType, graphicsEntry, Vec2::null, orientation,
-                               flip, frameIndex);
+                               flip, frameIndex, state);
             }
         }
     }
