@@ -2,7 +2,7 @@
 
 #include "AtlasGenerator.h"
 #include "DRSFile.h"
-#include "EntityLoader.h"
+#include "EntityModelLoader.h"
 #include "EntityTypeRegistry.h"
 #include "GameTypes.h"
 #include "SLPFile.h"
@@ -313,7 +313,7 @@ class GraphicsLoaderFromDRSImpl
         }
     }
 
-    static void loadSLPWithMergingParts(const EntityLoader::EntityDRSData& drsData,
+    static void loadSLPWithMergingParts(const EntityModelLoader::EntityDRSData& drsData,
                                         const GraphicsID& baseId,
                                         SDL_Renderer& renderer,
                                         GraphicsRegistry& graphicsRegistry,
@@ -466,7 +466,7 @@ void DRSGraphicsLoader::loadGraphics(SDL_Renderer& renderer,
                                      const std::list<GraphicsID>& idsToLoad)
 {
     auto entityFactory = ServiceRegistry::getInstance().getService<EntityFactory>();
-    Ref<EntityLoader> defLoader = dynamic_pointer_cast<EntityLoader>(entityFactory);
+    Ref<EntityModelLoader> defLoader = dynamic_pointer_cast<EntityModelLoader>(entityFactory);
 
     std::set<GraphicsID> uniqueBaseIds;
     for (auto& id : idsToLoad)
@@ -510,7 +510,7 @@ void DRSGraphicsLoader::loadCursor(SDL_Renderer& renderer,
                                    const GraphicsID& cursorIdToLoad)
 {
     auto entityFactory = ServiceRegistry::getInstance().getService<EntityFactory>();
-    Ref<EntityLoader> defLoader = dynamic_pointer_cast<EntityLoader>(entityFactory);
+    Ref<EntityModelLoader> defLoader = dynamic_pointer_cast<EntityModelLoader>(entityFactory);
 
     auto baseId = cursorIdToLoad.getBaseId();
     baseId.playerId = 0;

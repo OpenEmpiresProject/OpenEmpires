@@ -7,7 +7,7 @@
 #include "CursorManager.h"
 #include "DRSGraphicsLoader.h"
 #include "DemoWorldCreator.h"
-#include "EntityLoader.h"
+#include "EntityModelLoader.h"
 #include "EntityTypeRegistry.h"
 #include "EventLoop.h"
 #include "GameShortcutResolver.h"
@@ -121,7 +121,7 @@ class Game
         auto cc = std::make_shared<core::CommandCenter>();
         core::ServiceRegistry::getInstance().registerService(cc);
 
-        auto entityDefLoader = std::make_shared<game::EntityLoader>();
+        auto entityDefLoader = std::make_shared<game::EntityModelLoader>();
         entityDefLoader->load();
         std::shared_ptr<core::EntityFactory> entityFactory = entityDefLoader;
         core::ServiceRegistry::getInstance().registerService(entityFactory);

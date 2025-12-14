@@ -1,7 +1,7 @@
 ﻿import inspect
 from typing import Type, Any, Tuple, get_origin, get_args, Union
 from pydantic import BaseModel, ValidationError, create_model, Field
-from entity_instances import *
+from models import *
 
 
 def resolve_type_recursively(type_annotation: Type) -> Type:

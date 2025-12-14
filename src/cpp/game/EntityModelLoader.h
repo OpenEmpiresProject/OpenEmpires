@@ -56,7 +56,7 @@ using ComponentType = std::variant<std::monostate,
                                    core::CompVision,
                                    core::CompHousing>;
 
-class EntityLoader : public core::EntityFactory, public core::PropertyInitializer
+class EntityModelLoader : public core::EntityFactory, public core::PropertyInitializer
 {
   public:
     struct EntityDRSData
@@ -82,8 +82,8 @@ class EntityLoader : public core::EntityFactory, public core::PropertyInitialize
         core::Rect<int> boundingRect;
         bool flip = false;
     };
-    EntityLoader();
-    ~EntityLoader();
+    EntityModelLoader();
+    ~EntityModelLoader();
 
     void load();
     EntityDRSData getDRSData(const core::GraphicsID& id);

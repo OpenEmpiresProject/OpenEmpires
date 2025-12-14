@@ -1,4 +1,4 @@
-#include "EntityLoader.h"
+#include "EntityModelLoader.h"
 
 #include "EntityTypeRegistry.h"
 #include "GameTypes.h"
@@ -171,7 +171,7 @@ except ValidationError as e:
 )");
 }
 
-EntityLoader::EntityLoader()
+EntityModelLoader::EntityModelLoader()
 {
     m_drsLoadFunc = [](const std::string& drsFilename) -> Ref<DRSFile>
     {
@@ -186,11 +186,11 @@ EntityLoader::EntityLoader()
     m_boundingBoxReadFunc = getBoundingBox;
 }
 
-EntityLoader::~EntityLoader()
+EntityModelLoader::~EntityModelLoader()
 {
 }
 
-void EntityLoader::load()
+void EntityModelLoader::load()
 {
     py::scoped_interpreter guard{};
 
@@ -199,7 +199,7 @@ void EntityLoader::load()
 
     validatePython(sys);
 
-    py::object module = py::module_::import("importer");
+    py::object module = py::module_::import("model_importer");
     validateEntities(module);
     loadEntityTypes(module);
     loadUnits(module);
@@ -210,7 +210,7 @@ void EntityLoader::load()
     loadUIElements(module);
 }
 
-void EntityLoader::loadUnits(py::object module)
+void EntityModelLoader::loadUnits(py::object module)
 {
     if (py::hasattr(module, "all_units"))
     {
@@ -249,7 +249,7 @@ void EntityLoader::loadUnits(py::object module)
     }
 }
 
-void EntityLoader::loadNaturalResources(py::object module)
+void EntityModelLoader::loadNaturalResources(py::object module)
 {
     if (py::hasattr(module, "all_natural_resources"))
     {
@@ -311,7 +311,7 @@ void EntityLoader::loadNaturalResources(py::object module)
     }
 }
 
-void EntityLoader::loadBuildings(pybind11::object module)
+void EntityModelLoader::loadBuildings(pybind11::object module)
 {
     if (py::hasattr(module, "all_buildings"))
     {
@@ -351,7 +351,7 @@ void EntityLoader::loadBuildings(pybind11::object module)
     }
 }
 
-void EntityLoader::loadConstructionSites(pybind11::object module)
+void EntityModelLoader::loadConstructionSites(pybind11::object module)
 {
     if (py::hasattr(module, "all_construction_sites"))
     {
@@ -375,7 +375,7 @@ void EntityLoader::loadConstructionSites(pybind11::object module)
     }
 }
 
-void EntityLoader::loadTileSets(pybind11::object module)
+void EntityModelLoader::loadTileSets(pybind11::object module)
 {
     if (py::hasattr(module, "all_tilesets"))
     {
@@ -389,7 +389,7 @@ void EntityLoader::loadTileSets(pybind11::object module)
     }
 }
 
-void EntityLoader::loadUIElements(pybind11::object module)
+void EntityModelLoader::loadUIElements(pybind11::object module)
 {
     if (py::hasattr(module, "all_ui_elements"))
     {
@@ -405,7 +405,7 @@ void EntityLoader::loadUIElements(pybind11::object module)
     }
 }
 
-EntityLoader::EntityDRSData EntityLoader::getDRSData(const GraphicsID& id)
+EntityModelLoader::EntityDRSData EntityModelLoader::getDRSData(const GraphicsID& id)
 {
     auto it = m_DRSDataByGraphicsIdHash.find(id);
     if (it != m_DRSDataByGraphicsIdHash.end())
@@ -423,7 +423,7 @@ EntityLoader::EntityDRSData EntityLoader::getDRSData(const GraphicsID& id)
     return {};
 }
 
-uint32_t EntityLoader::createEntity(uint32_t entityType, uint32_t entitySubType)
+uint32_t EntityModelLoader::createEntity(uint32_t entityType, uint32_t entitySubType)
 {
     auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     auto entity = stateMan->createEntity();
@@ -505,9 +505,9 @@ uint32_t EntityLoader::createEntity(uint32_t entityType, uint32_t entitySubType)
     return entity;
 }
 
-void EntityLoader::addCommonComponents(py::object module,
-                                       uint32_t entityType,
-                                       pybind11::handle entityDefinition)
+void EntityModelLoader::addCommonComponents(py::object module,
+                                            uint32_t entityType,
+                                            pybind11::handle entityDefinition)
 {
     py::dict fields = entityDefinition.attr("__dict__");
 
@@ -526,7 +526,7 @@ void EntityLoader::addCommonComponents(py::object module,
     addComponentIfNotNull(entityType, CompEntityInfo(entityType));
 }
 
-void EntityLoader::addComponentsForUnit(uint32_t entityType)
+void EntityModelLoader::addComponentsForUnit(uint32_t entityType)
 {
     CompGraphics graphics;
     graphics.layer = GraphicLayer::ENTITIES;
@@ -552,7 +552,7 @@ void EntityLoader::addComponentsForUnit(uint32_t entityType)
     addComponentIfNotNull(entityType, graphics);
 }
 
-void EntityLoader::addComponentsForBuilding(uint32_t entityType)
+void EntityModelLoader::addComponentsForBuilding(uint32_t entityType)
 {
     CompGraphics graphics;
     graphics.layer = GraphicLayer::ENTITIES;
@@ -563,7 +563,7 @@ void EntityLoader::addComponentsForBuilding(uint32_t entityType)
     addComponentIfNotNull(entityType, graphics);
 }
 
-void EntityLoader::addComponentsForNaturalResource(uint32_t entityType)
+void EntityModelLoader::addComponentsForNaturalResource(uint32_t entityType)
 {
     CompGraphics graphics;
     graphics.layer = GraphicLayer::ENTITIES;
@@ -573,7 +573,7 @@ void EntityLoader::addComponentsForNaturalResource(uint32_t entityType)
     addComponentIfNotNull(entityType, CompTransform());
 }
 
-void EntityLoader::addComponentsForTileset(uint32_t entityType)
+void EntityModelLoader::addComponentsForTileset(uint32_t entityType)
 {
     CompGraphics graphics;
     graphics.layer = GraphicLayer::GROUND;
@@ -589,22 +589,22 @@ void EntityLoader::addComponentsForTileset(uint32_t entityType)
     addComponentIfNotNull(entityType, CompEntityInfo(entityType));
 }
 
-void EntityLoader::addComponentIfNotNull(uint32_t entityType, const ComponentType& comp)
+void EntityModelLoader::addComponentIfNotNull(uint32_t entityType, const ComponentType& comp)
 {
     if (std::holds_alternative<std::monostate>(comp) == false)
         m_componentsByEntityType[entityType].push_back(comp);
 }
 
-void EntityLoader::loadDRSForAnimations(uint32_t entityType,
-                                        uint32_t entitySubType,
-                                        pybind11::handle entityDefinition)
+void EntityModelLoader::loadDRSForAnimations(uint32_t entityType,
+                                             uint32_t entitySubType,
+                                             pybind11::handle entityDefinition)
 {
     if (py::hasattr(entityDefinition, "animations"))
     {
         for (auto py_anim : entityDefinition.attr("animations"))
         {
-            auto drsFileName = EntityLoader::readValue<std::string>(py_anim, "drs_file");
-            auto slpId = EntityLoader::readValue<int>(py_anim, "slp_id");
+            auto drsFileName = EntityModelLoader::readValue<std::string>(py_anim, "drs_file");
+            auto slpId = EntityModelLoader::readValue<int>(py_anim, "slp_id");
 
             Ref<DRSFile> drsFile;
             auto it = m_drsFilesByName.find(drsFileName);
@@ -632,17 +632,17 @@ void EntityLoader::loadDRSForAnimations(uint32_t entityType,
     }
 }
 
-void EntityLoader::processGraphic(uint32_t entityType,
-                                  uint32_t entitySubType,
-                                  py::handle graphicObj,
-                                  const Vec2& anchor,
-                                  BuildingOrientation orientation,
-                                  bool flip,
-                                  std::optional<int> frameIndex)
+void EntityModelLoader::processGraphic(uint32_t entityType,
+                                       uint32_t entitySubType,
+                                       py::handle graphicObj,
+                                       const Vec2& anchor,
+                                       BuildingOrientation orientation,
+                                       bool flip,
+                                       std::optional<int> frameIndex)
 {
     // TODO: handle theme
-    auto drsFileName = EntityLoader::readValue<std::string>(graphicObj, "drs_file");
-    auto slpId = EntityLoader::readValue<int>(graphicObj, "slp_id");
+    auto drsFileName = EntityModelLoader::readValue<std::string>(graphicObj, "drs_file");
+    auto slpId = EntityModelLoader::readValue<int>(graphicObj, "slp_id");
 
     Vec2 anchorOverride = Vec2::null;
     if (py::hasattr(graphicObj, "anchor"))
@@ -700,10 +700,10 @@ void EntityLoader::processGraphic(uint32_t entityType,
         spdlog::debug("Loaded DRS data for id {}, slp id {}", id.toString(), slpId);
 }
 
-void EntityLoader::loadDRSForStillImage(pybind11::object module,
-                                        uint32_t entityType,
-                                        uint32_t entitySubType,
-                                        pybind11::handle entityDefinition)
+void EntityModelLoader::loadDRSForStillImage(pybind11::object module,
+                                             uint32_t entityType,
+                                             uint32_t entitySubType,
+                                             pybind11::handle entityDefinition)
 {
     if (py::hasattr(entityDefinition, "graphics"))
     {
@@ -759,14 +759,14 @@ void EntityLoader::loadDRSForStillImage(pybind11::object module,
     }
 }
 
-void EntityLoader::loadDRSForIcon(uint32_t entityType,
-                                  uint32_t entitySubType,
-                                  pybind11::handle entityDefinition)
+void EntityModelLoader::loadDRSForIcon(uint32_t entityType,
+                                       uint32_t entitySubType,
+                                       pybind11::handle entityDefinition)
 {
     if (py::hasattr(entityDefinition, "drs_file"))
     {
-        auto drsFileName = EntityLoader::readValue<std::string>(entityDefinition, "drs_file");
-        auto slpId = EntityLoader::readValue<int>(entityDefinition, "slp_id");
+        auto drsFileName = EntityModelLoader::readValue<std::string>(entityDefinition, "drs_file");
+        auto slpId = EntityModelLoader::readValue<int>(entityDefinition, "slp_id");
 
         Ref<DRSFile> drsFile;
         auto it = m_drsFilesByName.find(drsFileName);
@@ -797,17 +797,18 @@ void EntityLoader::loadDRSForIcon(uint32_t entityType,
     }
 }
 
-EntityLoader::ConstructionSiteData EntityLoader::getSite(const std::string& sizeStr)
+EntityModelLoader::ConstructionSiteData EntityModelLoader::getSite(const std::string& sizeStr)
 {
     return m_constructionSitesBySize.at(sizeStr);
 }
 
-void EntityLoader::setSite(const std::string& sizeStr, const std::map<int, int>& progressToFrames)
+void EntityModelLoader::setSite(const std::string& sizeStr,
+                                const std::map<int, int>& progressToFrames)
 {
     m_constructionSitesBySize[sizeStr] = ConstructionSiteData{.progressToFrames = progressToFrames};
 }
 
-void EntityLoader::attachConstructionSites(uint32_t entityType, const std::string& sizeStr)
+void EntityModelLoader::attachConstructionSites(uint32_t entityType, const std::string& sizeStr)
 {
     // Approach: Find and attach construction site variants to the original
     // building component for the entity type.
@@ -868,22 +869,22 @@ void EntityLoader::attachConstructionSites(uint32_t entityType, const std::strin
     }
 }
 
-void EntityLoader::setDRSData(const GraphicsID& id, const EntityDRSData& data)
+void EntityModelLoader::setDRSData(const GraphicsID& id, const EntityDRSData& data)
 {
     m_DRSDataByGraphicsIdHash[id] = data;
 }
 
-void EntityLoader::setDRSLoaderFunc(std::function<Ref<DRSFile>(const std::string&)> func)
+void EntityModelLoader::setDRSLoaderFunc(std::function<Ref<DRSFile>(const std::string&)> func)
 {
     m_drsLoadFunc = func;
 }
 
-GraphicsID EntityLoader::readIconDef(uint32_t entitySubType, pybind11::handle entityDefinition)
+GraphicsID EntityModelLoader::readIconDef(uint32_t entitySubType, pybind11::handle entityDefinition)
 {
     if (py::hasattr(entityDefinition, "icon"))
     {
         py::object iconDef = entityDefinition.attr("icon");
-        auto index = EntityLoader::readValue<int>(iconDef, "index");
+        auto index = EntityModelLoader::readValue<int>(iconDef, "index");
 
         GraphicsID icon;
         icon.entityType = EntityTypes::ET_UI_ELEMENT;
@@ -896,7 +897,8 @@ GraphicsID EntityLoader::readIconDef(uint32_t entitySubType, pybind11::handle en
     return {};
 }
 
-ComponentType EntityLoader::createAnimation(py::object module, pybind11::handle entityDefinition)
+ComponentType EntityModelLoader::createAnimation(py::object module,
+                                                 pybind11::handle entityDefinition)
 {
     if (py::hasattr(entityDefinition, "animations") == false)
         return std::monostate{};
@@ -905,10 +907,10 @@ ComponentType EntityLoader::createAnimation(py::object module, pybind11::handle 
     for (auto py_anim : entityDefinition.attr("animations"))
     {
         CompAnimation::ActionAnimation animation;
-        animation.frames = EntityLoader::readValue<int>(py_anim, "frame_count");
-        animation.speed = EntityLoader::readValue<int>(py_anim, "speed");
-        animation.repeatable = EntityLoader::readValue<bool>(py_anim, "repeatable");
-        auto name = EntityLoader::readValue<string>(py_anim, "name");
+        animation.frames = EntityModelLoader::readValue<int>(py_anim, "frame_count");
+        animation.speed = EntityModelLoader::readValue<int>(py_anim, "speed");
+        animation.repeatable = EntityModelLoader::readValue<bool>(py_anim, "repeatable");
+        auto name = EntityModelLoader::readValue<string>(py_anim, "name");
         auto action = getAction(name);
 
         PropertyInitializer::set(comp.animations[action], animation);
@@ -916,7 +918,7 @@ ComponentType EntityLoader::createAnimation(py::object module, pybind11::handle 
     return ComponentType(comp);
 }
 
-ComponentType EntityLoader::createBuilder(py::object module, pybind11::handle entityDefinition)
+ComponentType EntityModelLoader::createBuilder(py::object module, pybind11::handle entityDefinition)
 {
     if (py::hasattr(entityDefinition, "build_speed") == false)
         return std::monostate{};
@@ -944,8 +946,8 @@ ComponentType EntityLoader::createBuilder(py::object module, pybind11::handle en
     return ComponentType(builder);
 }
 
-ComponentType EntityLoader::createCompResourceGatherer(py::object module,
-                                                       pybind11::handle entityDefinition)
+ComponentType EntityModelLoader::createCompResourceGatherer(py::object module,
+                                                            pybind11::handle entityDefinition)
 {
     if (py::hasattr(entityDefinition, "gather_speed") == false)
         return std::monostate{};
@@ -958,9 +960,9 @@ ComponentType EntityLoader::createCompResourceGatherer(py::object module,
     return ComponentType(comp);
 }
 
-ComponentType EntityLoader::createCompUnit(uint32_t entityType,
-                                           py::object module,
-                                           pybind11::handle entityDefinition)
+ComponentType EntityModelLoader::createCompUnit(uint32_t entityType,
+                                                py::object module,
+                                                pybind11::handle entityDefinition)
 {
     if (py::hasattr(module, "Unit"))
     {
@@ -984,8 +986,8 @@ ComponentType EntityLoader::createCompUnit(uint32_t entityType,
     return std::monostate{};
 }
 
-ComponentType EntityLoader::createCompTransform(py::object module,
-                                                pybind11::handle entityDefinition)
+ComponentType EntityModelLoader::createCompTransform(py::object module,
+                                                     pybind11::handle entityDefinition)
 {
     if (py::hasattr(entityDefinition, "moving_speed") == false)
         return std::monostate{};
@@ -997,13 +999,14 @@ ComponentType EntityLoader::createCompTransform(py::object module,
     return ComponentType(comp);
 }
 
-ComponentType EntityLoader::createCompResource(py::object module, pybind11::handle entityDefinition)
+ComponentType EntityModelLoader::createCompResource(py::object module,
+                                                    pybind11::handle entityDefinition)
 {
     if (py::hasattr(entityDefinition, "resource_amount") == false)
         return std::monostate{};
 
-    auto name = EntityLoader::readValue<string>(entityDefinition, "name");
-    auto amount = EntityLoader::readValue<int>(entityDefinition, "resource_amount");
+    auto name = EntityModelLoader::readValue<string>(entityDefinition, "name");
+    auto amount = EntityModelLoader::readValue<int>(entityDefinition, "resource_amount");
     CompResource comp;
     PropertyInitializer::set<InGameResource>(comp.original,
                                              InGameResource(getResourceType(name), amount));
@@ -1027,9 +1030,9 @@ bool isInstanceOf(py::object module,
     return false;
 }
 
-ComponentType EntityLoader::createCompSelectible(uint32_t entityType,
-                                                 py::object module,
-                                                 pybind11::handle entityDefinition)
+ComponentType EntityModelLoader::createCompSelectible(uint32_t entityType,
+                                                      py::object module,
+                                                      pybind11::handle entityDefinition)
 {
     if (isInstanceOf(module, entityDefinition, "Unit"))
     {
@@ -1080,7 +1083,8 @@ ComponentType EntityLoader::createCompSelectible(uint32_t entityType,
     return std::monostate{};
 }
 
-ComponentType EntityLoader::createCompBuilding(py::object module, pybind11::handle entityDefinition)
+ComponentType EntityModelLoader::createCompBuilding(py::object module,
+                                                    pybind11::handle entityDefinition)
 {
     if (py::hasattr(module, "Building"))
     {
@@ -1133,14 +1137,14 @@ ComponentType EntityLoader::createCompBuilding(py::object module, pybind11::hand
     return std::monostate{};
 }
 
-void EntityLoader::setBoundingBoxReadFunc(
+void EntityModelLoader::setBoundingBoxReadFunc(
     std::function<core::Rect<int>(core::Ref<drs::DRSFile>, uint32_t)> func)
 {
     m_boundingBoxReadFunc = func;
 }
 
-ComponentType EntityLoader::createCompUnitFactory(pybind11::object module,
-                                                  pybind11::handle entityDefinition)
+ComponentType EntityModelLoader::createCompUnitFactory(pybind11::object module,
+                                                       pybind11::handle entityDefinition)
 {
     if (py::hasattr(module, "UnitFactory"))
     {
@@ -1180,8 +1184,8 @@ ComponentType EntityLoader::createCompUnitFactory(pybind11::object module,
     return std::monostate{};
 }
 
-ComponentType EntityLoader::createCompHousing(pybind11::object module,
-                                              pybind11::handle entityDefinition)
+ComponentType EntityModelLoader::createCompHousing(pybind11::object module,
+                                                   pybind11::handle entityDefinition)
 {
     if (py::hasattr(module, "Housing"))
     {
@@ -1198,7 +1202,7 @@ ComponentType EntityLoader::createCompHousing(pybind11::object module,
     return std::monostate{};
 }
 
-void EntityLoader::loadEntityTypes(pybind11::object module)
+void EntityModelLoader::loadEntityTypes(pybind11::object module)
 {
     auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
 
@@ -1223,7 +1227,7 @@ void EntityLoader::loadEntityTypes(pybind11::object module)
     }
 }
 
-void EntityLoader::validateEntities(pybind11::object module)
+void EntityModelLoader::validateEntities(pybind11::object module)
 {
     py::object validateAllFunc = module.attr("validate_all");
     py::object result = validateAllFunc();
@@ -1239,8 +1243,8 @@ void EntityLoader::validateEntities(pybind11::object module)
     }
 }
 
-game::ComponentType EntityLoader::createCompGarrison(pybind11::object module,
-                                                     pybind11::handle entityDefinition)
+game::ComponentType EntityModelLoader::createCompGarrison(pybind11::object module,
+                                                          pybind11::handle entityDefinition)
 {
     if (py::hasattr(module, "Garrison"))
     {
@@ -1268,8 +1272,8 @@ game::ComponentType EntityLoader::createCompGarrison(pybind11::object module,
     return std::monostate{};
 }
 
-ComponentType EntityLoader::createCompVision(pybind11::object module,
-                                             pybind11::handle entityDefinition)
+ComponentType EntityModelLoader::createCompVision(pybind11::object module,
+                                                  pybind11::handle entityDefinition)
 {
     if (py::hasattr(entityDefinition, "line_of_sight"))
     {
