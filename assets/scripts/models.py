@@ -353,7 +353,7 @@ all_buildings: List[Building] = [
                         anchor=Point(x=125, y=190),
                         parts=[
                             SingleGraphic(slp_id=2391, anchor=Point(x=-15,y=175)),
-                            SingleGraphic(slp_id=2463, anchor=Point(x=60,y=130)), 
+                            SingleGraphic(slp_id=2355, anchor=Point(x=60,y=130)), 
                             SingleGraphic(slp_id=2391, anchor=Point(x=130,y=103)),
                         ],
                         flip=True
@@ -386,7 +386,7 @@ all_buildings: List[Building] = [
                                       GraphicVariantType.ORIENTATION:"vertical",
                                       GraphicVariantType.STATE:"opened"}),
         ]),
-        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=29),
+        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=36),
         default_orientation="right_angled"
     ),
 ]
