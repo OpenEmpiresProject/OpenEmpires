@@ -1,4 +1,4 @@
-#ifndef TYPES_H
+﻿#ifndef TYPES_H
 #define TYPES_H
 
 #include "Tile.h"
@@ -135,14 +135,44 @@ enum class CursorType
     FLAG
 };
 
+/*
+*   Represent different visual representations of buildings depending on their facing
+*   direction.
+*   Note: Naming of the values are with respect to the screen, but not to logical game
+*   map. Eg: HORIZONTAL literally means horizontal in the screen, but logically diagonal.
+*/
 enum class BuildingOrientation
 {
     NO_ORIENTATION = 0,
-    RIGHT_ANGLED, // Use for both gate and wall
-    LEFT_ANGLED,  // Use for both gate and wall
-    CORNER,       // Use for wall
-    HORIZONTAL,   // Use for both gate and wall
-    VERTICAL,     // Use for both gate and wall
+
+    /*
+    *   Visual representation: ⟋
+    *   Use: For both gate and wall
+    */
+    DIAGONAL_FORWARD, 
+
+    /*
+     *   Visual representation: ⟍
+     *   Use: For both gate and wall
+     */
+    DIAGONAL_BACKWARD,
+
+    /*
+     *   Use: For wall corners and starts/ends.
+     */
+    CORNER,
+
+    /*
+     *   Visual representation: ⎯
+     *   Use: For both gate and wall
+     */
+    HORIZONTAL,
+
+    /*
+     *   Visual representation: |
+     *   Use: For both gate and wall
+     */
+    VERTICAL,
 
     // Max orientations can have is 8 (i.e. value 7) since this goes in the direction field of
     // GraphicsId
@@ -154,10 +184,10 @@ static std::string buildingOrientationToString(const BuildingOrientation& orient
     {
     case BuildingOrientation::NO_ORIENTATION:
         return "no-orientation";
-    case BuildingOrientation::RIGHT_ANGLED:
-        return "right-angled";
-    case BuildingOrientation::LEFT_ANGLED:
-        return "left-angled";
+    case BuildingOrientation::DIAGONAL_FORWARD:
+        return "diagonal-forward";
+    case BuildingOrientation::DIAGONAL_BACKWARD:
+        return "diagonal-backward";
     case BuildingOrientation::CORNER:
         return "corner";
     case BuildingOrientation::HORIZONTAL:

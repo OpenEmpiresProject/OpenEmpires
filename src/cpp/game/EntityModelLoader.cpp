@@ -89,8 +89,8 @@ ResourceType getResourceType(const std::string& name)
 BuildingOrientation getBuildingOrientation(const std::string& name)
 {
     static unordered_map<string, BuildingOrientation> orientations = {
-        {"right_angled", BuildingOrientation::RIGHT_ANGLED},
-        {"left_angled", BuildingOrientation::LEFT_ANGLED},
+        {"diagonal_forward", BuildingOrientation::DIAGONAL_FORWARD},
+        {"diagonal_backward", BuildingOrientation::DIAGONAL_BACKWARD},
         {"corner", BuildingOrientation::CORNER},
         {"horizontal", BuildingOrientation::HORIZONTAL},
         {"vertical", BuildingOrientation::VERTICAL},

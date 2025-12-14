@@ -573,7 +573,7 @@ void PlayerController::calculateConnectedBuildingsPath(
         {
             Tile newPos(x, start.y);
             connectedBuildings.push_back(
-                ConnectedBuildingPosition{newPos, BuildingOrientation::LEFT_ANGLED});
+                ConnectedBuildingPosition{newPos, BuildingOrientation::DIAGONAL_BACKWARD});
         }
 
         uint32_t y = std::min(start.y, end.y) + 1;
@@ -583,7 +583,7 @@ void PlayerController::calculateConnectedBuildingsPath(
         {
             Tile newPos(end.x, y);
             connectedBuildings.push_back(
-                ConnectedBuildingPosition{newPos, BuildingOrientation::RIGHT_ANGLED});
+                ConnectedBuildingPosition{newPos, BuildingOrientation::DIAGONAL_FORWARD});
         }
     }
     else if (dy > dx)
@@ -597,7 +597,7 @@ void PlayerController::calculateConnectedBuildingsPath(
         {
             Tile newPos(start.x, y);
             connectedBuildings.push_back(
-                ConnectedBuildingPosition{newPos, BuildingOrientation::RIGHT_ANGLED});
+                ConnectedBuildingPosition{newPos, BuildingOrientation::DIAGONAL_FORWARD});
         }
 
         uint32_t x = std::min(start.x, end.x) + 1;
@@ -607,7 +607,7 @@ void PlayerController::calculateConnectedBuildingsPath(
         {
             Tile newPos(x, end.y);
             connectedBuildings.push_back(
-                ConnectedBuildingPosition{newPos, BuildingOrientation::LEFT_ANGLED});
+                ConnectedBuildingPosition{newPos, BuildingOrientation::DIAGONAL_BACKWARD});
         }
     }
     else // dx == dy. Visual horizontal/vertical, logical diagonal
@@ -898,21 +898,21 @@ void PlayerController::rotateCurrentPlacement()
     if (m_currentBuildingPlacements.size() == 1)
     {
         auto& placement = m_currentBuildingPlacements.begin()->second;
-        if (placement.orientation == BuildingOrientation::LEFT_ANGLED)
+        if (placement.orientation == BuildingOrientation::DIAGONAL_BACKWARD)
         {
             changePlacementOrientation(placement, BuildingOrientation::HORIZONTAL);
         }
         else if (placement.orientation == BuildingOrientation::HORIZONTAL)
         {
-            changePlacementOrientation(placement, BuildingOrientation::RIGHT_ANGLED);
+            changePlacementOrientation(placement, BuildingOrientation::DIAGONAL_FORWARD);
         }
-        else if (placement.orientation == BuildingOrientation::RIGHT_ANGLED)
+        else if (placement.orientation == BuildingOrientation::DIAGONAL_FORWARD)
         {
             changePlacementOrientation(placement, BuildingOrientation::VERTICAL);
         }
         else if (placement.orientation == BuildingOrientation::VERTICAL)
         {
-            changePlacementOrientation(placement, BuildingOrientation::LEFT_ANGLED);
+            changePlacementOrientation(placement, BuildingOrientation::DIAGONAL_BACKWARD);
         }
     }
 }

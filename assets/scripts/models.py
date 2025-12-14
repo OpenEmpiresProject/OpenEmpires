@@ -222,11 +222,11 @@ all_buildings: List[Building] = [
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=1828, frame_index=0),
                     variation_filter={GraphicVariantType.THEME:"default", 
-                                      GraphicVariantType.ORIENTATION:"right_angled"}),
+                                      GraphicVariantType.ORIENTATION:"diagonal_forward"}),
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=1828, frame_index=1),
                     variation_filter={GraphicVariantType.THEME:"default", 
-                                      GraphicVariantType.ORIENTATION:"left_angled"}),
+                                      GraphicVariantType.ORIENTATION:"diagonal_backward"}),
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=1828, frame_index=2),
                     variation_filter={GraphicVariantType.THEME:"default", 
@@ -254,11 +254,11 @@ all_buildings: List[Building] = [
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=2110),
                     variation_filter={GraphicVariantType.THEME:"default", 
-                                      GraphicVariantType.ORIENTATION:"right_angled"}),
+                                      GraphicVariantType.ORIENTATION:"diagonal_forward"}),
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=2110),
                     variation_filter={GraphicVariantType.THEME:"default", 
-                                      GraphicVariantType.ORIENTATION:"left_angled"}),
+                                      GraphicVariantType.ORIENTATION:"diagonal_backward"}),
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=2110),
                     variation_filter={GraphicVariantType.THEME:"default", 
@@ -296,7 +296,7 @@ all_buildings: List[Building] = [
                         ]
                     ),
                     variation_filter={GraphicVariantType.THEME:"default", 
-                                      GraphicVariantType.ORIENTATION:"right_angled",
+                                      GraphicVariantType.ORIENTATION:"diagonal_forward",
                                       GraphicVariantType.STATE:"closed"}),
                 GraphicVariant(
                     graphic=CompositeGraphic(
@@ -309,7 +309,7 @@ all_buildings: List[Building] = [
                         flip=True
                     ),
                     variation_filter={GraphicVariantType.THEME:"default", 
-                                      GraphicVariantType.ORIENTATION:"left_angled",
+                                      GraphicVariantType.ORIENTATION:"diagonal_backward",
                                       GraphicVariantType.STATE:"closed"}),
                 GraphicVariant(
                     graphic=CompositeGraphic(
@@ -346,7 +346,7 @@ all_buildings: List[Building] = [
                         ]
                     ),
                     variation_filter={GraphicVariantType.THEME:"default", 
-                                      GraphicVariantType.ORIENTATION:"right_angled",
+                                      GraphicVariantType.ORIENTATION:"diagonal_forward",
                                       GraphicVariantType.STATE:"opened"}),
                 GraphicVariant(
                     graphic=CompositeGraphic(
@@ -359,7 +359,7 @@ all_buildings: List[Building] = [
                         flip=True
                     ),
                     variation_filter={GraphicVariantType.THEME:"default", 
-                                      GraphicVariantType.ORIENTATION:"left_angled",
+                                      GraphicVariantType.ORIENTATION:"diagonal_backward",
                                       GraphicVariantType.STATE:"opened"}),
                 GraphicVariant(
                     graphic=CompositeGraphic(
@@ -387,7 +387,7 @@ all_buildings: List[Building] = [
                                       GraphicVariantType.STATE:"opened"}),
         ]),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=36),
-        default_orientation="right_angled"
+        default_orientation="diagonal_forward"
     ),
 ]
 
@@ -436,12 +436,12 @@ all_construction_sites: List[ConstructionSite] = [
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=3706),
                     variation_filter={GraphicVariantType.THEME:"default", 
-                                      GraphicVariantType.ORIENTATION:"right_angled",
+                                      GraphicVariantType.ORIENTATION:"diagonal_forward",
                                       GraphicVariantType.STATE:"closed"}),
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=3706, flip=True),
                     variation_filter={GraphicVariantType.THEME:"default", 
-                                      GraphicVariantType.ORIENTATION:"left_angled",
+                                      GraphicVariantType.ORIENTATION:"diagonal_backward",
                                       GraphicVariantType.STATE:"closed"}),
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=4067),

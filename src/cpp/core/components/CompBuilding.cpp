@@ -77,7 +77,7 @@ Feet CompBuilding::getSnappedBuildingCenter(const Feet& position) const
     int nearestX = 0;
     int nearestY = 0;
 
-    if (orientation == BuildingOrientation::RIGHT_ANGLED)
+    if (orientation == BuildingOrientation::DIAGONAL_FORWARD)
     {
         // Building sizes are independent of orientations and doesn't cause any issues
         // if the building is a square. But when it is not, the largest value
@@ -133,7 +133,7 @@ void CompBuilding::updateLandArea(const Feet& center)
     int width = size.value().width;
     int height = size.value().height;
 
-    if (orientation == BuildingOrientation::RIGHT_ANGLED)
+    if (orientation == BuildingOrientation::DIAGONAL_FORWARD)
     {
         width = size.value().height;
         height = size.value().width;
