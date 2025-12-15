@@ -108,7 +108,10 @@ TEST_F(CommandCenterTest, CreatesSubCommands)
     CompUnit unit;
     auto mockCommand = new MockCommand();
     auto subCommand = new MockCommand();
-    auto entity = ServiceRegistry::getInstance().getService<StateManager>()->createEntity();
+
+    auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
+
+    auto entity = stateMan->createEntity();
     std::list<Command*> subCommands;
 
     EXPECT_CALL(*mockCommand, onExecute(0, 0, subCommands))
@@ -121,21 +124,77 @@ TEST_F(CommandCenterTest, CreatesSubCommands)
 
     unit.commandQueue.push(mockCommand);
 
-    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, unit);
-    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompAction(0));
-    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompAnimation());
-    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompEntityInfo(0));
-    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompPlayer());
-    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity,
-                                                                            CompTransform());
-    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(entity, CompVision());
+    stateMan->addComponent(entity, unit);
+    stateMan->addComponent(entity, CompAction(0));
+    stateMan->addComponent(entity, CompAnimation());
+    stateMan->addComponent(entity, CompEntityInfo(0));
+    stateMan->addComponent(entity, CompPlayer());
+    stateMan->addComponent(entity, CompTransform());
+    stateMan->addComponent(entity, CompVision());
 
     Event tickEvent{Event::Type::TICK, TickData{0}};
     commandCenter.onTick(tickEvent);
 
-    auto unitActual =
-        ServiceRegistry::getInstance().getService<StateManager>()->getComponent<CompUnit>(entity);
+    auto unitActual = stateMan->getComponent<CompUnit>(entity);
 
     ASSERT_EQ(unitActual.commandQueue.size(), 2);
+
+    std::vector<Command*> vec;
+    vec.reserve(unitActual.commandQueue.size());
+
+    while (!unitActual.commandQueue.empty())
+    {
+        vec.push_back(unitActual.commandQueue.top());
+        unitActual.commandQueue.pop();
+    }
+    ASSERT_EQ(vec[1], subCommand);
+}
+
+TEST_F(CommandCenterTest, CreatesSubCommands_WithMainCommandComplete)
+{
+    CompUnit unit;
+    auto mockCommand = new MockCommand();
+    auto subCommand = new MockCommand();
+
+    auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
+
+    auto entity = stateMan->createEntity();
+    std::list<Command*> subCommands;
+
+    EXPECT_CALL(*mockCommand, onExecute(0, 0, subCommands))
+        .WillOnce(::testing::Invoke(
+            [&](int deltaTimeMs, int, std::list<Command*>& newCommands)
+            {
+                newCommands.push_back(subCommand);
+                // This is different from previous test case.
+                return true;
+            }));
+
+    unit.commandQueue.push(mockCommand);
+
+    stateMan->addComponent(entity, unit);
+    stateMan->addComponent(entity, CompAction(0));
+    stateMan->addComponent(entity, CompAnimation());
+    stateMan->addComponent(entity, CompEntityInfo(0));
+    stateMan->addComponent(entity, CompPlayer());
+    stateMan->addComponent(entity, CompTransform());
+    stateMan->addComponent(entity, CompVision());
+
+    Event tickEvent{Event::Type::TICK, TickData{0}};
+    commandCenter.onTick(tickEvent);
+
+    auto unitActual = stateMan->getComponent<CompUnit>(entity);
+
+    ASSERT_EQ(unitActual.commandQueue.size(), 1);
+
+    std::vector<Command*> vec;
+    vec.reserve(unitActual.commandQueue.size());
+
+    while (!unitActual.commandQueue.empty())
+    {
+        vec.push_back(unitActual.commandQueue.top());
+        unitActual.commandQueue.pop();
+    }
+    ASSERT_EQ(vec[0], subCommand);
 }
 } // namespace core

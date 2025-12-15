@@ -43,7 +43,7 @@ void BuildingManager::onCompleteBuilding(uint32_t entity,
                                          const CompEntityInfo& info)
 {
     player.player->getFogOfWar()->markAsExplored(building.landArea, vision.lineOfSight);
-    player.player->addEntity(entity);
+    player.player->ownEntity(entity);
 
     BuildingConstructedData constructedData;
     constructedData.entity = entity;
@@ -90,11 +90,10 @@ uint32_t BuildingManager::createBuilding(const BuildingPlacementData& request)
     StateManager::markDirty(entity);
 
     auto& gameMap = m_stateMan->gameMap();
+    gameMap.addEntity(MapLayerType::ON_GROUND, building.landArea, entity);
 
-    for (auto& tile : building.landArea.tiles)
-    {
-        gameMap.addEntity(MapLayerType::ON_GROUND, tile, entity);
-    }
+    playerComp.player->ownEntity(entity);
+
     return entity;
 }
 

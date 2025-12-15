@@ -71,8 +71,35 @@ void CommandCenter::onTick(const Event& e)
                 if (completed)
                 {
                     spdlog::debug("Entity {}'s command {} completed.", entity, cmd->toString());
-                    unit.commandQueue.pop();
-                    cmd->destroy();
+
+                    /*
+                     *   Time to remove the current command from unit's queue. However,
+                     *   since ordering is not guaranteed for same priority value in
+                     *   std::priority_queue, we need to ensure we remove the correct
+                     *   command. This can be done only by checking each and putting back
+                     *   any commands we popped mistakenly.
+                     *   There can be a better way to do this. But this isn't a common
+                     *   occurrence.
+                     */
+                    std::list<Command*> commandsToPutBack;
+                    while (not unit.commandQueue.empty())
+                    {
+                        auto top = unit.commandQueue.top();
+                        unit.commandQueue.pop();
+
+                        if (top == cmd)
+                        {
+                            cmd->destroy();
+                            break;
+                        }
+                        // We removed the wrong command, take a note to put it back later.
+                        commandsToPutBack.push_back(top);
+                    }
+
+                    for (auto remainingCmd : commandsToPutBack)
+                    {
+                        unit.commandQueue.push(remainingCmd);
+                    }
                 }
             }
         });

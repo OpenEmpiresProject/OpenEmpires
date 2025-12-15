@@ -8,6 +8,7 @@
 #include "components/CompAnimation.h"
 #include "components/CompBuilder.h"
 #include "components/CompBuilding.h"
+#include "components/CompPlayer.h"
 #include "components/CompTransform.h"
 #include "debug.h"
 #include "logging/Logger.h"
@@ -49,7 +50,11 @@ bool CmdBuild::onExecute(int deltaTimeMs, int currentTick, std::list<Command*>& 
     {
         moveCloser(subCommands);
     }
-    return isComplete();
+
+    bool isCompleted = isComplete();
+    if (isCompleted)
+        lookForAnotherSiteToBuild(subCommands);
+    return isCompleted;
 }
 
 std::string CmdBuild::toString() const
@@ -199,4 +204,36 @@ bool CmdBuild::overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& 
     float dy = unitPos.y - closestY;
 
     return (dx * dx + dy * dy) <= radiusSq;
+}
+
+void CmdBuild::lookForAnotherSiteToBuild(std::list<Command*>& newCommands)
+{
+    spdlog::debug("Build is completed. Looking for nearby construction sites");
+
+    const auto& sites = m_components->player.player->getMyConstructionSites();
+    float currentDistanceToSite = std::numeric_limits<float>::max();
+    uint32_t currentClosestSite = entt::null;
+    uint32_t losSquared = m_components->vision.lineOfSight * m_components->vision.lineOfSight;
+
+    for (const auto& site : sites)
+    {
+        auto& siteTransform = m_stateMan->getComponent<CompTransform>(site);
+        float distance = m_components->transform.position.distanceSquared(siteTransform.position);
+
+        if (distance < currentDistanceToSite and distance <= losSquared)
+        {
+            currentDistanceToSite = distance;
+            currentClosestSite = site;
+        }
+    }
+
+    if (currentClosestSite != entt::null)
+    {
+        spdlog::debug("Found another site {}", currentClosestSite);
+
+        auto nextBuildCmd = ObjectPool<CmdBuild>::acquire();
+        nextBuildCmd->target = currentClosestSite;
+        nextBuildCmd->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
+        newCommands.push_back(nextBuildCmd);
+    }
 }

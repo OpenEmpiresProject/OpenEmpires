@@ -136,20 +136,20 @@ enum class CursorType
 };
 
 /*
-*   Represent different visual representations of buildings depending on their facing
-*   direction.
-*   Note: Naming of the values are with respect to the screen, but not to logical game
-*   map. Eg: HORIZONTAL literally means horizontal in the screen, but logically diagonal.
-*/
+ *   Represent different visual representations of buildings depending on their facing
+ *   direction.
+ *   Note: Naming of the values are with respect to the screen, but not to logical game
+ *   map. Eg: HORIZONTAL literally means horizontal in the screen, but logically diagonal.
+ */
 enum class BuildingOrientation
 {
     NO_ORIENTATION = 0,
 
     /*
-    *   Visual representation: ⟋
-    *   Use: For both gate and wall
-    */
-    DIAGONAL_FORWARD, 
+     *   Visual representation: ⟋
+     *   Use: For both gate and wall
+     */
+    DIAGONAL_FORWARD,
 
     /*
      *   Visual representation: ⟍

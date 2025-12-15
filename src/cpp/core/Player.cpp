@@ -61,17 +61,26 @@ bool Player::hasResource(uint8_t resourceType, uint32_t amount) const
     return m_resources[resourceType].amount >= amount;
 }
 
-void Player::addEntity(uint32_t entityId)
+void Player::ownEntity(uint32_t entityId)
 {
     m_ownedEntities.insert(entityId);
 
-    if (m_stateMan->hasComponent<CompBuilding>(entityId))
+    if (auto building = m_stateMan->tryGetComponent<CompBuilding>(entityId))
     {
-        m_myBuildings.insert(entityId);
-        if (m_stateMan->hasComponent<CompHousing>(entityId))
+        if (building->isConstructed())
         {
-            auto& housing = m_stateMan->getComponent<CompHousing>(entityId);
-            m_housingCapacity += housing.housingCapacity;
+            // It is no longer a construction site, but a proper building.
+            m_myConstructionSites.erase(entityId);
+            m_myBuildings.insert(entityId);
+            if (m_stateMan->hasComponent<CompHousing>(entityId))
+            {
+                auto& housing = m_stateMan->getComponent<CompHousing>(entityId);
+                m_housingCapacity += housing.housingCapacity;
+            }
+        }
+        else
+        {
+            m_myConstructionSites.insert(entityId);
         }
     }
 
@@ -82,7 +91,7 @@ void Player::addEntity(uint32_t entityId)
     }
 }
 
-void Player::removeEntity(uint32_t entityId)
+void Player::removeOwnership(uint32_t entityId)
 {
     if (isOwned(entityId))
     {

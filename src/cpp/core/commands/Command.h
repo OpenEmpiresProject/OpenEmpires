@@ -48,11 +48,12 @@ class Command
      * elapsed time since the last execution and a list to which sub-commands can be added.
      *
      * @param deltaTimeMs The time elapsed since the last execution, in milliseconds.
-     * @param subCommands A reference to a list where sub-commands generated during execution can be
-     * added.
+     * @param newCommands A reference to a list where new commands generated during execution can be
+     * added. These can be sub-commands (while this parent command still incomplete) or new
+     * follow-up commands (to execute after this parent command's completion).
      * @return true if the command completed, false otherwise.
      */
-    virtual bool onExecute(int deltaTimeMs, int currentTick, std::list<Command*>& subCommands) = 0;
+    virtual bool onExecute(int deltaTimeMs, int currentTick, std::list<Command*>& newCommands) = 0;
     virtual std::string toString() const = 0;
     virtual void destroy() = 0;
 

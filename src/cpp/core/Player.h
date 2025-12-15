@@ -30,8 +30,8 @@ class Player
     uint32_t getResourceAmount(uint8_t resourceType) const;
     bool hasResource(uint8_t resourceType, uint32_t amount) const;
 
-    void addEntity(uint32_t entityId);
-    void removeEntity(uint32_t entityId);
+    void ownEntity(uint32_t entityId);
+    void removeOwnership(uint32_t entityId);
     bool isOwned(uint32_t entityId) const;
 
     uint32_t getVacantHousingCapacity() const
@@ -59,6 +59,11 @@ class Player
         return m_myBuildings;
     }
 
+    const std::unordered_set<uint32_t>& getMyConstructionSites() const
+    {
+        return m_myConstructionSites;
+    }
+
     bool isBuildingOwned(uint32_t buildingId) const
     {
         return m_myBuildings.contains(buildingId);
@@ -72,6 +77,7 @@ class Player
     std::unordered_set<uint8_t> m_ownedEntities;
     Ref<FogOfWar> m_fow;
     std::unordered_set<uint32_t> m_myBuildings;
+    std::unordered_set<uint32_t> m_myConstructionSites;
     Ref<StateManager> m_stateMan;
     uint32_t m_housingCapacity = 0;
     uint32_t m_currentPopulation = 0;
