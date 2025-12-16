@@ -252,23 +252,23 @@ all_buildings: List[Building] = [
         graphics=Graphic(
             variants=[
                 GraphicVariant(
-                    graphic=SingleGraphic(slp_id=2110),
+                    graphic=SingleGraphic(slp_id=2110, frame_index=0),
                     variation_filter={GraphicVariantType.THEME:"default", 
                                       GraphicVariantType.ORIENTATION:"diagonal_forward"}),
                 GraphicVariant(
-                    graphic=SingleGraphic(slp_id=2110),
+                    graphic=SingleGraphic(slp_id=2110, frame_index=1),
                     variation_filter={GraphicVariantType.THEME:"default", 
                                       GraphicVariantType.ORIENTATION:"diagonal_backward"}),
                 GraphicVariant(
-                    graphic=SingleGraphic(slp_id=2110),
+                    graphic=SingleGraphic(slp_id=2110, frame_index=2),
                     variation_filter={GraphicVariantType.THEME:"default", 
                                       GraphicVariantType.ORIENTATION:"corner"}),
                 GraphicVariant(
-                    graphic=SingleGraphic(slp_id=2110),
+                    graphic=SingleGraphic(slp_id=2110, frame_index=3),
                     variation_filter={GraphicVariantType.THEME:"default", 
                                       GraphicVariantType.ORIENTATION:"horizontal"}),
                 GraphicVariant(
-                    graphic=SingleGraphic(slp_id=2110),
+                    graphic=SingleGraphic(slp_id=2110, frame_index=4),
                     variation_filter={GraphicVariantType.THEME:"default", 
                                       GraphicVariantType.ORIENTATION:"vertical"}),
         ]),
