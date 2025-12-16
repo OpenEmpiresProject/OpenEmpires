@@ -53,7 +53,7 @@ We use milestone versions for planning. Early versions are experimental. Feature
 - [x] Scripting for entity definition
 - [x] Unit abilities modeling
 - [x] Garrison
-- [ ] Walls and gates
+- [x] Walls and gates
 
 ---
 
