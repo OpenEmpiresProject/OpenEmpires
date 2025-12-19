@@ -4,6 +4,7 @@
 #include "FogOfWar.h"
 #include "InGameResource.h"
 #include "StateManager.h"
+#include "utils/LazyServiceRef.h"
 
 #include <limits>
 #include <unordered_set>
@@ -78,7 +79,7 @@ class Player
     Ref<FogOfWar> m_fow;
     std::unordered_set<uint32_t> m_myBuildings;
     std::unordered_set<uint32_t> m_myConstructionSites;
-    Ref<StateManager> m_stateMan;
+    LazyServiceRef<StateManager> m_stateMan;
     uint32_t m_housingCapacity = 0;
     uint32_t m_currentPopulation = 0;
 };

@@ -51,7 +51,7 @@ class VisionSystem : public TileMapListner,
     std::unordered_map<uint32_t, TrackingRequestData> m_trackingRequests;
     std::unordered_map<uint32_t, Tracking> m_possibleTargetsByTracker;
     std::unordered_set<uint32_t> m_activelyTrackedTargets;
-    Ref<StateManager> m_stateMan;
+    LazyServiceRef<StateManager> m_stateMan;
     TileMap m_trackersTileMap;
 };
 } // namespace core

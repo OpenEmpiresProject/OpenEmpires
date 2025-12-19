@@ -42,7 +42,6 @@ void SpecialBuildingManager::onExitLOS(const core::Event& e)
 
 void SpecialBuildingManager::onInit(core::EventLoop& eventLoop)
 {
-    m_stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     lookupEntityTypes();
 }
 

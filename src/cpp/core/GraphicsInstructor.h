@@ -1,13 +1,15 @@
 #ifndef GRAPHICS_INSTRUCTOR_H
 #define GRAPHICS_INSTRUCTOR_H
 
+#include "Coordinates.h"
 #include "EventHandler.h"
 #include "FrameData.h"
+#include "PlayerController.h"
 #include "ThreadSynchronizer.h"
+#include "utils/LazyServiceRef.h"
 
 namespace core
 {
-class Coordinates;
 class CompGraphics;
 
 class GraphicsInstructor : public EventHandler
@@ -26,7 +28,9 @@ class GraphicsInstructor : public EventHandler
     void updateGraphicComponents();
 
   private:
-    std::shared_ptr<Coordinates> m_coordinates;
+    LazyServiceRef<Coordinates> m_coordinates;
+    LazyServiceRef<PlayerController> m_playerController;
+    LazyServiceRef<StateManager> m_stateManager;
     ThreadSynchronizer<FrameData>& m_synchronizer;
     uint32_t m_frameCount = 0;
     bool m_initialized = false;

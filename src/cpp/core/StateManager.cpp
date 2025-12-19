@@ -72,12 +72,6 @@ void StateManager::clearAll()
 
 StateManager::TileMapQueryResult StateManager::whatIsAt(const Vec2& screenPos)
 {
-    // Lazy loading coordinates service
-    if (m_coordinates == nullptr)
-    {
-        m_coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
-    }
-
     auto clickedCellPos = m_coordinates->screenUnitsToTiles(screenPos);
     spam("Checking what is at grid pos {}", clickedCellPos.toString());
 

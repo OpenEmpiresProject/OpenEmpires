@@ -19,10 +19,6 @@ using namespace core;
 
 BuildingManager::BuildingManager()
 {
-    m_stateMan = ServiceRegistry::getInstance().getService<StateManager>();
-    m_typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
-    m_settings = ServiceRegistry::getInstance().getService<Settings>();
-
     registerCallback(Event::Type::TICK, this, &BuildingManager::onTick);
     registerCallback(Event::Type::BUILDING_REQUESTED, this, &BuildingManager::onBuildingRequest);
     registerCallback(Event::Type::UNIT_QUEUE_REQUEST, this, &BuildingManager::onQueueUnit);
@@ -153,8 +149,7 @@ void BuildingManager::updateInProgressConstructions()
 {
     for (auto entity : StateManager::getDirtyEntities())
     {
-        if (ServiceRegistry::getInstance().getService<StateManager>()->hasComponent<CompBuilding>(
-                entity))
+        if (m_stateMan->hasComponent<CompBuilding>(entity))
         {
             auto [transform, building, info, player, vision] =
                 m_stateMan->getComponents<CompTransform, CompBuilding, CompEntityInfo, CompPlayer,

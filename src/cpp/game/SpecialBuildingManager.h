@@ -23,7 +23,7 @@ class SpecialBuildingManager : public core::EventHandler
 
     uint32_t m_gateEntityType = entt::null;
     const std::string m_gateEntityName = "stone_gate";
-    core::Ref<core::StateManager> m_stateMan;
+    core::LazyServiceRef<core::StateManager> m_stateMan;
 };
 } // namespace game
 

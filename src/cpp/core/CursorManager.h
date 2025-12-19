@@ -7,6 +7,7 @@
 #include "GraphicsRegistry.h"
 #include "Property.h"
 #include "components/CompCursor.h"
+#include "utils/LazyServiceRef.h"
 
 #include <unordered_map>
 
@@ -18,9 +19,9 @@ class CursorManager : public EventHandler, public PropertyInitializer
     CursorManager();
 
   private:
-    Ref<StateManager> m_stateMan;
-    Ref<Coordinates> m_coordinates;
-    Ref<EntityTypeRegistry> m_registry;
+    LazyServiceRef<StateManager> m_stateMan;
+    LazyServiceRef<Coordinates> m_coordinates;
+    LazyServiceRef<EntityTypeRegistry> m_registry;
     uint32_t m_cursorEntityId = entt::null;
     CompCursor* m_cursorComp = nullptr;
     bool m_buildingPlacementInProgress = false;

@@ -3,6 +3,7 @@
 
 #include "Feet.h"
 #include "commands/Command.h"
+#include "utils/LazyServiceRef.h"
 
 #include <entt/entity/registry.hpp>
 #include <list>
@@ -25,7 +26,7 @@ class CmdMove : public Command
 
   private:
     std::list<Feet> m_path;
-    Ref<Coordinates> m_coordinates;
+    LazyServiceRef<Coordinates> m_coordinates;
     Feet m_nextIntermediateGoal = Feet::null;
 
   private:

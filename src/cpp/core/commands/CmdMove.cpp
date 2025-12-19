@@ -82,7 +82,6 @@ void CmdMove::onQueue()
         StateManager::markDirty(tileEntity);
 #endif
     }
-    m_coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
 }
 
 /**

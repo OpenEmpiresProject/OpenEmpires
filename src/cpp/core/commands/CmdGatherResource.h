@@ -16,6 +16,7 @@
 #include "components/CompSelectible.h"
 #include "components/CompTransform.h"
 #include "debug.h"
+#include "utils/LazyServiceRef.h"
 #include "utils/ObjectPool.h"
 
 #include <algorithm>
@@ -35,7 +36,7 @@ class CmdGatherResource : public Command
     // Cached values
     Feet m_targetPosition; // Use when target is absent by the time this command execute
     float m_collectedResourceAmount = 0;
-    std::shared_ptr<Coordinates> m_coordinateSystem;
+    LazyServiceRef<Coordinates> m_coordinateSystem;
     uint8_t m_targetResourceType = 0;
     CompResourceGatherer* m_gatherer = nullptr;
 
@@ -50,7 +51,6 @@ class CmdGatherResource : public Command
         // TODO: Reset frame to zero (since this is a new command)
         setTarget(target);
 
-        m_coordinateSystem = ServiceRegistry::getInstance().getService<Coordinates>();
         m_collectedResourceAmount = 0;
         m_gatherer = &(m_stateMan->getComponent<CompResourceGatherer>(m_entityID));
     }

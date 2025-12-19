@@ -26,9 +26,6 @@ using namespace core;
 
 PlayerController::PlayerController()
 {
-    m_coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
-    m_stateMan = ServiceRegistry::getInstance().getService<StateManager>();
-
     registerCallback(Event::Type::KEY_UP, this, &PlayerController::onKeyUp);
     registerCallback(Event::Type::MOUSE_BTN_UP, this, &PlayerController::onMouseButtonUp);
     registerCallback(Event::Type::MOUSE_MOVE, this, &PlayerController::onMouseMove);
@@ -52,7 +49,6 @@ void PlayerController::resolveAction(const Vec2& screenPos)
     auto result = m_stateMan->whatIsAt(screenPos);
     auto target = result.entity;
     auto layer = result.layer;
-    auto m_stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     bool gatherable = m_stateMan->hasComponent<CompResource>(target);
     bool construction = m_stateMan->hasComponent<CompBuilding>(target);
     bool isGarrisonInProgress = m_garrisonOperationInProgress;

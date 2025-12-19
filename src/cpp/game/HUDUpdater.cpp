@@ -17,10 +17,6 @@ HUDUpdater::HUDUpdater()
 {
     registerCallback(Event::Type::ENTITY_SELECTION, this, &HUDUpdater::onUnitSelection);
     registerCallback(Event::Type::TICK, this, &HUDUpdater::onTick);
-
-    m_stateMan = ServiceRegistry::getInstance().getService<StateManager>();
-    m_typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
-    m_playerController = ServiceRegistry::getInstance().getService<PlayerController>();
 }
 
 void HUDUpdater::onTick(const Event& e)

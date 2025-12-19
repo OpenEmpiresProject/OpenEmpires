@@ -188,7 +188,7 @@ class RendererImpl
 
     std::thread m_renderThread;
     std::atomic<bool> m_running = false;
-    std::shared_ptr<Settings> m_settings;
+    LazyServiceRef<Settings> m_settings;
     GraphicsRegistry& m_graphicsRegistry;
 
     std::condition_variable m_sdlInitCV;
@@ -237,10 +237,9 @@ RendererImpl::RendererImpl(std::stop_source* stopSource,
                            GraphicsRegistry& graphicsRegistry,
                            ThreadSynchronizer<FrameData>& synchronizer,
                            GraphicsLoader& graphicsLoader)
-    : m_stopSource(stopSource), m_settings(ServiceRegistry::getInstance().getService<Settings>()),
-      m_graphicsRegistry(graphicsRegistry),
-      m_coordinates(ServiceRegistry::getInstance().getService<Settings>()),
-      m_synchronizer(synchronizer), m_graphicsLoader(graphicsLoader),
+    : m_stopSource(stopSource), m_graphicsRegistry(graphicsRegistry),
+      m_coordinates(m_settings.getRef()), m_synchronizer(synchronizer),
+      m_graphicsLoader(graphicsLoader),
       m_zOrderStrategy(std::move(std::make_unique<ZOrderStrategyByTiles>()))
 {
     m_running = false;

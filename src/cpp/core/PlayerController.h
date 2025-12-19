@@ -24,8 +24,8 @@ class PlayerController : public EventHandler
     // Common
     Ref<Player> m_player;
     bool m_fowEnabled = true;
-    Ref<StateManager> m_stateMan;
-    Ref<Coordinates> m_coordinates;
+    LazyServiceRef<StateManager> m_stateMan;
+    LazyServiceRef<Coordinates> m_coordinates;
     Vec2 m_currentMouseScreenPos;
 
     // Building placement related

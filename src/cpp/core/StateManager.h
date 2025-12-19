@@ -4,6 +4,7 @@
 #include "Coordinates.h"
 #include "PassabilityMap.h"
 #include "TileMap.h"
+#include "utils/LazyServiceRef.h"
 
 #include <entt/entity/registry.hpp>
 #include <vector>
@@ -110,7 +111,7 @@ class StateManager
     entt::basic_registry<uint32_t> m_registry;
     Ref<PathFinderBase> m_pathFinder;
     std::vector<uint32_t> m_entitiesToDestroy;
-    Ref<Coordinates> m_coordinates;
+    LazyServiceRef<Coordinates> m_coordinates;
 
     inline static std::set<uint32_t> g_dirtyEntities;
 };

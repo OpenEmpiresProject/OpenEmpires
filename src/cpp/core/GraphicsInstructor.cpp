@@ -25,8 +25,7 @@
 using namespace core;
 
 GraphicsInstructor::GraphicsInstructor(ThreadSynchronizer<FrameData>& synchronizer)
-    : m_synchronizer(synchronizer),
-      m_coordinates(ServiceRegistry::getInstance().getService<Coordinates>())
+    : m_synchronizer(synchronizer)
 {
     ObjectPool<CompGraphics>::reserve(1000);
 
@@ -44,7 +43,7 @@ void GraphicsInstructor::onTick(const Event& e)
 void GraphicsInstructor::onTickStart()
 {
     // Read and send data
-    auto player = ServiceRegistry::getInstance().getService<PlayerController>()->getPlayer();
+    auto player = m_playerController->getPlayer();
     m_synchronizer.getSenderFrameData().fogOfWar = *(player->getFogOfWar().get());
     m_synchronizer.getSenderFrameData().frameNumber = m_frameCount;
     m_coordinates->setViewportPositionInPixels(
@@ -70,11 +69,9 @@ void GraphicsInstructor::onTickEnd()
 
 void GraphicsInstructor::sendGraphicsInstructions()
 {
-    auto state = ServiceRegistry::getInstance().getService<StateManager>();
-
     for (auto entity : StateManager::getDirtyEntities())
     {
-        auto& gc = state->getComponent<CompGraphics>(entity);
+        auto& gc = m_stateManager->getComponent<CompGraphics>(entity);
 
         if (gc.bypass == false)
         {
@@ -93,11 +90,10 @@ void GraphicsInstructor::updateGraphicComponents()
 {
     m_synchronizer.getSenderFrameData().cursor = GraphicsID();
 
-    auto state = ServiceRegistry::getInstance().getService<StateManager>();
     for (auto entity : StateManager::getDirtyEntities())
     {
         auto [transform, entityInfo, gc] =
-            state->getComponents<CompTransform, CompEntityInfo, CompGraphics>(entity);
+            m_stateManager->getComponents<CompTransform, CompEntityInfo, CompGraphics>(entity);
 
         gc.positionInFeet = transform.position;
         gc.direction = static_cast<uint64_t>(transform.getIsometricDirection());
@@ -110,9 +106,9 @@ void GraphicsInstructor::updateGraphicComponents()
         gc.bypass = false;
         gc.state = entityInfo.state;
 
-        if (state->hasComponent<CompSelectible>(entity))
+        if (m_stateManager->hasComponent<CompSelectible>(entity))
         {
-            auto& select = state->getComponent<CompSelectible>(entity);
+            auto& select = m_stateManager->getComponent<CompSelectible>(entity);
             if (select.isSelected)
             {
                 // TODO: Respect other addons
@@ -124,21 +120,21 @@ void GraphicsInstructor::updateGraphicComponents()
             }
         }
 
-        if (state->hasComponent<CompAnimation>(entity))
+        if (m_stateManager->hasComponent<CompAnimation>(entity))
         {
-            auto& animation = state->getComponent<CompAnimation>(entity);
+            auto& animation = m_stateManager->getComponent<CompAnimation>(entity);
             gc.frame = animation.frame;
         }
 
-        if (state->hasComponent<CompAction>(entity))
+        if (m_stateManager->hasComponent<CompAction>(entity))
         {
-            auto& action = state->getComponent<CompAction>(entity);
+            auto& action = m_stateManager->getComponent<CompAction>(entity);
             gc.action = action.action;
         }
 
-        if (state->hasComponent<CompBuilding>(entity))
+        if (m_stateManager->hasComponent<CompBuilding>(entity))
         {
-            auto& building = state->getComponent<CompBuilding>(entity);
+            auto& building = m_stateManager->getComponent<CompBuilding>(entity);
             if (building.validPlacement)
                 gc.shading = Color::NONE;
             else
@@ -149,12 +145,12 @@ void GraphicsInstructor::updateGraphicComponents()
             gc.landArea = building.landArea;
         }
 
-        if (state->hasComponent<CompUIElement>(entity))
+        if (m_stateManager->hasComponent<CompUIElement>(entity))
         {
             gc.positionInFeet = Feet::null;
             gc.positionInScreenUnits = {transform.position.x, transform.position.y};
 
-            auto& ui = state->getComponent<CompUIElement>(entity);
+            auto& ui = m_stateManager->getComponent<CompUIElement>(entity);
             gc.isEnabled = ui.isVisible;
 
             if (ui.type == UIRenderingType::TEXT)
@@ -175,18 +171,18 @@ void GraphicsInstructor::updateGraphicComponents()
             }
         }
 
-        if (state->hasComponent<CompPlayer>(entity))
+        if (m_stateManager->hasComponent<CompPlayer>(entity))
         {
-            auto& comp = state->getComponent<CompPlayer>(entity);
+            auto& comp = m_stateManager->getComponent<CompPlayer>(entity);
             gc.playerId = comp.player->getId();
         }
 
-        if (auto unit = state->tryGetComponent<CompUnit>(entity))
+        if (auto unit = m_stateManager->tryGetComponent<CompUnit>(entity))
         {
             gc.isEnabled = unit->isGarrisoned == false;
         }
 
-        if (auto cursorComp = state->tryGetComponent<CompCursor>(entity))
+        if (auto cursorComp = m_stateManager->tryGetComponent<CompCursor>(entity))
         {
             // Avoid sending cursor as a regular graphics instruction, but set to
             // frame data directly.

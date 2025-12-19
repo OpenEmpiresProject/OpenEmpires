@@ -4,6 +4,7 @@
 #include "EventHandler.h"
 #include "components/CompUnitFactory.h"
 #include "components/CompVision.h"
+#include "utils/LazyServiceRef.h"
 
 #include <functional>
 #include <map>
@@ -27,9 +28,9 @@ class BuildingManager : public EventHandler
         Ref<Player> player;
     };
 
-    Ref<StateManager> m_stateMan;
-    Ref<Settings> m_settings;
-    Ref<EntityTypeRegistry> m_typeRegistry;
+    LazyServiceRef<StateManager> m_stateMan;
+    LazyServiceRef<Settings> m_settings;
+    LazyServiceRef<EntityTypeRegistry> m_typeRegistry;
     std::map<uint32_t /*building id*/, ActiveFactoryInfo> m_activeFactories;
 
   private:

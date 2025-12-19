@@ -18,12 +18,7 @@ class Command
     static inline constexpr int DEFAULT_PRIORITY = 0;
     static inline constexpr int CHILD_PRIORITY_OFFSET = 1000;
 
-    Command()
-    {
-        m_settings = ServiceRegistry::getInstance().getService<Settings>();
-        m_stateMan = ServiceRegistry::getInstance().getService<StateManager>();
-    }
-
+    Command() = default;
     virtual ~Command() = default;
 
     /**
@@ -70,7 +65,7 @@ class Command
     void setEntityID(uint32_t entityID)
     {
         m_entityID = entityID;
-        m_components = std::make_shared<UnitComponentRefs>(m_stateMan, entityID);
+        m_components = std::make_shared<UnitComponentRefs>(m_stateMan.getRef(), entityID);
     }
 
     uint32_t getEntityID() const
@@ -89,8 +84,8 @@ class Command
     }
 
   protected:
-    std::shared_ptr<Settings> m_settings;
-    std::shared_ptr<StateManager> m_stateMan;
+    LazyServiceRef<Settings> m_settings;
+    LazyServiceRef<StateManager> m_stateMan;
     int m_priority = -1;
     uint32_t m_entityID = entt::null;
     Ref<UnitComponentRefs> m_components;

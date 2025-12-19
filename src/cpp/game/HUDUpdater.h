@@ -68,12 +68,12 @@ class HUDUpdater : public core::EventHandler
     core::Ref<core::ui::Label>
         m_garrisonedUnitIcons[core::Constants::ABSOLUTE_MAX_UNIT_GARRISON_SIZE];
     core::EntitySelection m_currentSelection;
-    core::Ref<core::PlayerController> m_playerController;
+    core::LazyServiceRef<core::PlayerController> m_playerController;
     core::Ref<core::ui::Widget> m_creationInProgressGroup;
     core::Ref<core::ui::Widget> m_creationQueueGroup;
     core::Ref<core::ui::Widget> m_garrisonedUnitsGroup;
-    core::Ref<core::StateManager> m_stateMan;
-    core::Ref<core::EntityTypeRegistry> m_typeRegistry;
+    core::LazyServiceRef<core::StateManager> m_stateMan;
+    core::LazyServiceRef<core::EntityTypeRegistry> m_typeRegistry;
 };
 
 } // namespace game

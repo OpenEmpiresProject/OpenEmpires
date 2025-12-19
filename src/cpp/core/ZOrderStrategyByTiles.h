@@ -6,6 +6,7 @@
 #include "TileMap.h"
 #include "VersionedBucketList.h"
 #include "ZOrderStrategy.h"
+#include "utils/LazyServiceRef.h"
 
 #include <queue>
 #include <unordered_map>
@@ -46,7 +47,7 @@ class ZOrderStrategyByTiles : public ZOrderStrategy
     std::vector<CompRendering*> m_renderingComponents;
     std::vector<WithinTileZBucket> m_bucketsByZ;
     int64_t m_currentBucketVersion = 0;
-    Ref<Settings> m_settings;
+    LazyServiceRef<Settings> m_settings;
     Flat2DArray<uint64_t> m_alreadyProcessedTiles;
     uint32_t m_numberOfTilesProcessed = 0;
 

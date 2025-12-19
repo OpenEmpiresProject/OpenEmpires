@@ -20,8 +20,6 @@ void Player::init(uint8_t id)
     auto settings = ServiceRegistry::getInstance().getService<Settings>();
     m_fow->init(settings->getWorldSizeInTiles().width, settings->getWorldSizeInTiles().height,
                 settings->getFOWRevealStatus());
-
-    m_stateMan = ServiceRegistry::getInstance().getService<StateManager>();
 }
 
 void Player::grantResource(uint8_t resourceType, uint32_t amount)

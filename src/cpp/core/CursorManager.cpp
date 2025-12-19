@@ -28,10 +28,6 @@ void CursorManager::onMouseMove(const Event& e)
 
 void CursorManager::onInit(EventLoop& eventLoop)
 {
-    m_stateMan = ServiceRegistry::getInstance().getService<StateManager>();
-    m_coordinates = ServiceRegistry::getInstance().getService<Coordinates>();
-    m_registry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
-
     m_cursorEntityId = m_stateMan->createEntity();
     m_cursorComp = &(m_stateMan->addComponent<CompCursor>(m_cursorEntityId));
 

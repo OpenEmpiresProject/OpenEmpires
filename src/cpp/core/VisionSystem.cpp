@@ -114,13 +114,13 @@ void VisionSystem::onEntityEnter(uint32_t entity, const Tile& tile, MapLayerType
             auto& trackingRequest = m_trackingRequests[tracker];
             auto& trackerVision = m_stateMan->getComponent<CompVision>(tracker);
             Tracking tracking(trackerVision, trackingRequest);
-            tracking.targets.emplace(target, Target(target, m_stateMan));
+            tracking.targets.emplace(target, Target(target, m_stateMan.getRef()));
             m_possibleTargetsByTracker.emplace(tracker, tracking);
         }
         else
         {
             auto& tracking = it->second;
-            tracking.targets.try_emplace(target, Target(target, m_stateMan));
+            tracking.targets.try_emplace(target, Target(target, m_stateMan.getRef()));
         }
     }
 }
@@ -153,7 +153,6 @@ void VisionSystem::onEntityExit(uint32_t entity, const Tile& tile, MapLayerType 
 
 void VisionSystem::onInit(EventLoop& eventLoop)
 {
-    m_stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     auto& tileMap = m_stateMan->gameMap();
     tileMap.registerListner(shared_from_this());
 

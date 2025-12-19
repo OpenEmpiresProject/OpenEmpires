@@ -13,8 +13,6 @@ using namespace core;
 
 UnitManager::UnitManager()
 {
-    m_stateMan = ServiceRegistry::getInstance().getService<StateManager>();
-
     registerCallback(Event::Type::ENTITY_DELETE, this, &UnitManager::onUnitDeletion);
     registerCallback(Event::Type::UNIT_CREATION_FINISHED, this, &UnitManager::onCreateUnit);
     registerCallback(Event::Type::UNIT_TILE_MOVEMENT, this, &UnitManager::onUnitTileMovement);

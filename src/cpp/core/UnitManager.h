@@ -19,7 +19,7 @@ class UnitManager : public EventHandler
     void onUnitTileMovement(const Event& e);
 
   private:
-    Ref<StateManager> m_stateMan;
+    LazyServiceRef<StateManager> m_stateMan;
 };
 
 } // namespace core

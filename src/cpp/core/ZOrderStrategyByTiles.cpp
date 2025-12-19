@@ -66,8 +66,6 @@ ZOrderStrategyByTiles::ZOrderStrategyByTiles()
     : m_extendedViewportVerticalMargin(Constants::TILE_PIXEL_HEIGHT * 5),
       m_extendedViewportHorizontalMargin(Constants::TILE_PIXEL_WIDTH * 2)
 {
-    m_settings = ServiceRegistry::getInstance().getService<Settings>();
-
     m_gameMap.init(m_settings->getWorldSizeInTiles().width,
                    m_settings->getWorldSizeInTiles().height);
 

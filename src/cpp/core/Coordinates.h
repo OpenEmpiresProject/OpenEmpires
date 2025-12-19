@@ -13,7 +13,7 @@ class Settings;
 class Coordinates
 {
   public:
-    Coordinates(std::shared_ptr<Settings> settings);
+    Coordinates(Ref<Settings> settings);
 
     Vec2 feetToPixels(const Feet& feet) const;
     Feet pixelsToFeet(const Vec2& pixels) const;
