@@ -1,24 +1,21 @@
-#ifndef TEST_EVENT_H
-#define TEST_EVENT_H
+#ifndef TEST_MOVEMENT
+#define TEST_MOVEMENT
 
 #include "IntegTestBase.h"
 
 using namespace core;
 using namespace game;
 
-class MovementsTest : public IntegTestBase
+class MovementsTest : public IntegTestBase, public ::testing::Test
 {
 public:
     void SetUp() override 
     {
-        IntegTestBase::SetUp();
         auto player = m_api->getPrimaryPlayer();
         villager = m_api->createVillager(player, Feet(5000, 5000));
     }
     void TearDown() override 
     {
-        IntegTestBase::TearDown();
-
         if (villager != entt::null)
             m_api->deleteEntity(villager);
     }

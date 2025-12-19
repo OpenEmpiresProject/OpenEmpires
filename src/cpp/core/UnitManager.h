@@ -14,7 +14,7 @@ class UnitManager : public EventHandler
     UnitManager();
 
   private:
-    void onUnitDeletion(const Event& e);
+    void onEntityDeletion(const Event& e);
     void onCreateUnit(const Event& e);
     void onUnitTileMovement(const Event& e);
 

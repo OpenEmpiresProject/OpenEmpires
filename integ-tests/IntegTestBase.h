@@ -12,11 +12,11 @@
 #define STRINGIFY_IMPL(x) #x
 #define ASSERT_WAIT_FOR(condition, timeout) IntegTestBase::waitFor([&](){return condition;}, timeout, "Condition: " STRINGIFY_IMPL(condition))
 
-class IntegTestBase : public ::testing::Test 
+class IntegTestBase 
 {
 public:
-    static void SetUpTestSuite();
-    static void TearDownTestSuite();
+    static void setup();
+    static void tearDown();
 
     static void sleep(int ms);
     static void waitFor(std::function<bool()> condition, int timeoutMs, const std::string& msg);

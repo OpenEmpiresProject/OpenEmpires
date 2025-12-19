@@ -8,6 +8,7 @@
 #include <functional>
 #include <list>
 #include <memory>
+#include <unordered_set>
 
 namespace core
 {
@@ -39,9 +40,17 @@ class GameAPI
     uint32_t createVillager(core::Ref<core::Player>, const core::Feet& pos);
     std::list<uint32_t> getVillagers();
     void commandToMove(uint32_t unit, const core::Feet& target);
+    void placeBuilding(
+        uint32_t playerId,
+        int buildingType,
+        const core::Feet& pos,
+        core::BuildingOrientation orientation = core::BuildingOrientation::NO_ORIENTATION);
+    void build(uint32_t unit, uint32_t target);
     int getCurrentAction(uint32_t unit);
     core::Feet getUnitPosition(uint32_t unit);
     void deleteEntity(uint32_t entity);
+    const std::unordered_set<uint32_t>& getBuildings(uint32_t playerId);
+    const std::unordered_set<uint32_t>& getConstructionSites(uint32_t playerId);
 
   private:
     std::shared_ptr<Synchronizer> m_sync;

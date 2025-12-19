@@ -10,6 +10,7 @@
 #include "Renderer.h"
 #include "ServiceRegistry.h"
 #include "SubSystemRegistry.h"
+#include "commands/CmdBuild.h"
 #include "commands/CmdIdle.h"
 #include "commands/CmdMove.h"
 #include "components/CompAction.h"
@@ -124,6 +125,29 @@ void GameAPI::commandToMove(uint32_t unit, const Feet& target)
     eventPublisher->publish(event);
 }
 
+void GameAPI::placeBuilding(uint32_t playerId,
+                            int buildingType,
+                            const core::Feet& pos,
+                            BuildingOrientation orientation)
+{
+    ScopedSynchronizer sync(m_sync);
+
+    auto subSys = SubSystemRegistry::getInstance().getSubSystem("EventLoop");
+    auto eventLoop = static_pointer_cast<EventLoop>(subSys);
+    auto eventPublisher = static_pointer_cast<EventPublisher>(eventLoop);
+
+    auto players = ServiceRegistry::getInstance().getService<PlayerFactory>();
+    auto player = players->getPlayer(playerId);
+
+    BuildingPlacementData data;
+    data.entityType = buildingType;
+    data.orientation = orientation;
+    data.pos = pos;
+    data.player = player;
+    Event event(Event::Type::BUILDING_REQUESTED, data);
+    eventPublisher->publish(event);
+}
+
 int GameAPI::getCurrentAction(uint32_t unit)
 {
     ScopedSynchronizer sync(m_sync);
@@ -153,4 +177,36 @@ void GameAPI::deleteEntity(uint32_t entity)
     Event event(Event::Type::ENTITY_DELETE, EntityDeleteData{entity});
 
     eventPublisher->publish(event);
+}
+
+void GameAPI::build(uint32_t unit, uint32_t target)
+{
+    ScopedSynchronizer sync(m_sync);
+
+    auto subSys = SubSystemRegistry::getInstance().getSubSystem("EventLoop");
+    auto eventLoop = static_pointer_cast<EventLoop>(subSys);
+    auto eventPublisher = static_pointer_cast<EventPublisher>(eventLoop);
+
+    auto cmd = ObjectPool<CmdBuild>::acquire();
+    cmd->target = target;
+    Event event(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, unit});
+    eventPublisher->publish(event);
+}
+
+const std::unordered_set<uint32_t>& GameAPI::getBuildings(uint32_t playerId)
+{
+    ScopedSynchronizer sync(m_sync);
+
+    auto players = ServiceRegistry::getInstance().getService<PlayerFactory>();
+    auto player = players->getPlayer(playerId);
+    return player->getMyBuildings();
+}
+
+const std::unordered_set<uint32_t>& GameAPI::getConstructionSites(uint32_t playerId)
+{
+    ScopedSynchronizer sync(m_sync);
+
+    auto players = ServiceRegistry::getInstance().getService<PlayerFactory>();
+    auto player = players->getPlayer(playerId);
+    return player->getMyConstructionSites();
 }

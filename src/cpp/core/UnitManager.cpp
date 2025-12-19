@@ -13,7 +13,7 @@ using namespace core;
 
 UnitManager::UnitManager()
 {
-    registerCallback(Event::Type::ENTITY_DELETE, this, &UnitManager::onUnitDeletion);
+    registerCallback(Event::Type::ENTITY_DELETE, this, &UnitManager::onEntityDeletion);
     registerCallback(Event::Type::UNIT_CREATION_FINISHED, this, &UnitManager::onCreateUnit);
     registerCallback(Event::Type::UNIT_TILE_MOVEMENT, this, &UnitManager::onUnitTileMovement);
 }
@@ -27,17 +27,18 @@ void UnitManager::onUnitTileMovement(const Event& e)
     player.player->getFogOfWar()->markAsExplored(data.positionFeet, vision.lineOfSight);
 }
 
-void UnitManager::onUnitDeletion(const Event& e)
+void UnitManager::onEntityDeletion(const Event& e)
 {
-    auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
-
     auto entity = e.getData<EntityDeleteData>().entity;
-    if (entity != entt::null && stateMan->hasComponent<CompUnit>(entity))
+    if (entity != entt::null && m_stateMan->hasComponent<CompUnit>(entity))
     {
-        auto [info, transform] = stateMan->getComponents<CompEntityInfo, CompTransform>(entity);
+        auto [info, transform, playerComp] =
+            m_stateMan->getComponents<CompEntityInfo, CompTransform, CompPlayer>(entity);
         info.isDestroyed = true;
         StateManager::markDirty(entity);
-        stateMan->gameMap().removeEntity(MapLayerType::UNITS, transform.position.toTile(), entity);
+        m_stateMan->gameMap().removeEntity(MapLayerType::UNITS, transform.position.toTile(),
+                                           entity);
+        playerComp.player->removeOwnership(entity);
     }
 }
 

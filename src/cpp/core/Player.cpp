@@ -97,6 +97,7 @@ void Player::removeOwnership(uint32_t entityId)
 
         if (m_stateMan->hasComponent<CompBuilding>(entityId))
         {
+            m_myConstructionSites.erase(entityId);
             m_myBuildings.erase(entityId);
             if (m_stateMan->hasComponent<CompHousing>(entityId))
             {

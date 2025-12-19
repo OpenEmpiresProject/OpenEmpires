@@ -23,6 +23,7 @@ BuildingManager::BuildingManager()
     registerCallback(Event::Type::BUILDING_REQUESTED, this, &BuildingManager::onBuildingRequest);
     registerCallback(Event::Type::UNIT_QUEUE_REQUEST, this, &BuildingManager::onQueueUnit);
     registerCallback(Event::Type::UNGARRISON_REQUEST, this, &BuildingManager::onUngarrison);
+    registerCallback(Event::Type::ENTITY_DELETE, this, &BuildingManager::onEntityDeletion);
 }
 
 void BuildingManager::onTick(const Event& e)
@@ -74,7 +75,8 @@ uint32_t BuildingManager::createBuilding(const BuildingPlacementData& request)
     auto [transform, playerComp, building, info] =
         m_stateMan->getComponents<CompTransform, CompPlayer, CompBuilding, CompEntityInfo>(entity);
 
-    transform.position = request.pos;
+    // Don't trust the arbitrary feet position, snap it.
+    transform.position = building.getSnappedBuildingCenter(request.pos); // Snap
     playerComp.player = request.player;
 
     building.constructionProgress = 0;
@@ -279,5 +281,20 @@ void BuildingManager::onUngarrison(const Event& e)
                                             unit.unitId);
         }
         garrisonBuilding->garrisonedUnits.clear();
+    }
+}
+
+void BuildingManager::onEntityDeletion(const Event& e)
+{
+    auto entity = e.getData<EntityDeleteData>().entity;
+    if (entity != entt::null && m_stateMan->hasComponent<CompBuilding>(entity))
+    {
+        auto [info, transform, building, playerComp] =
+            m_stateMan->getComponents<CompEntityInfo, CompTransform, CompBuilding, CompPlayer>(
+                entity);
+        info.isDestroyed = true;
+        StateManager::markDirty(entity);
+        m_stateMan->gameMap().removeEntity(MapLayerType::STATIC, building.landArea, entity);
+        playerComp.player->removeOwnership(entity);
     }
 }

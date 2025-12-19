@@ -36,6 +36,7 @@ class BuildingManager : public EventHandler
   private:
     void onBuildingRequest(const Event& e);
     void onTick(const Event& e);
+    void onEntityDeletion(const Event& e);
     void updateInProgressUnitCreations(auto& tick);
     void updateInProgressConstructions();
     void onQueueUnit(const Event& e);

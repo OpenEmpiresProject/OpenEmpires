@@ -10,9 +10,9 @@ namespace core
  * @file LazyServiceRef.h
  * @brief Lightweight lazy-resolving service reference wrapper.
  *
- * `LazyServiceRef<T>` provides a dependency-injection type small convenience 
+ * `LazyServiceRef<T>` provides a dependency-injection type small convenience
  * wrapper that lazily queries the `ServiceRegistry` for a service of type `T`
- * the first time the wrapper is used. This allows users not to worry about 
+ * the first time the wrapper is used. This allows users not to worry about
  * service availability and prevent maintaining a dependency tree.
  *
  * Important notes:

@@ -7,7 +7,7 @@ game::GameAPI* IntegTestBase::m_api = nullptr;
 std::thread* IntegTestBase::m_testThread = nullptr;
 core::Ref<game::IntegTestTickAssist> IntegTestBase::m_tickAssist;
 
-void IntegTestBase::SetUpTestSuite() 
+void IntegTestBase::setup()
 {
     m_tickAssist = core::CreateRef<game::IntegTestTickAssist>();
     auto sync = core::CreateRef<game::GameAPI::Synchronizer>();
@@ -22,12 +22,15 @@ void IntegTestBase::SetUpTestSuite()
     while (m_api->isReady() == false) {}
 }
 
-void IntegTestBase::TearDownTestSuite() 
+void IntegTestBase::tearDown()
 {
     m_api->quit();
     m_testThread->join();
     delete m_testThread;
     delete m_api;
+
+    m_api = nullptr;
+    m_testThread = nullptr;
 }
 
 void IntegTestBase::sleep(int ms)
