@@ -16,6 +16,7 @@ class CompAction;
 class CompAnimation;
 class CompTransform;
 class Coordinates;
+class Settings;
 
 class CmdMove : public Command
 {
@@ -27,6 +28,7 @@ class CmdMove : public Command
   private:
     std::list<Feet> m_path;
     LazyServiceRef<Coordinates> m_coordinates;
+    LazyServiceRef<Settings> m_settings;
     Feet m_nextIntermediateGoal = Feet::null;
 
   private:

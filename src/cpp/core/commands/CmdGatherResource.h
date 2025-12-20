@@ -5,6 +5,7 @@
 #include "Feet.h"
 #include "Player.h"
 #include "ServiceRegistry.h"
+#include "Settings.h"
 #include "StateManager.h"
 #include "commands/CmdDropResource.h"
 #include "commands/CmdMove.h"
@@ -37,6 +38,7 @@ class CmdGatherResource : public Command
     Feet m_targetPosition; // Use when target is absent by the time this command execute
     float m_collectedResourceAmount = 0;
     LazyServiceRef<Coordinates> m_coordinateSystem;
+    LazyServiceRef<Settings> m_settings;
     uint8_t m_targetResourceType = 0;
     CompResourceGatherer* m_gatherer = nullptr;
 
@@ -162,7 +164,8 @@ class CmdGatherResource : public Command
         m_components->action.action = m_gatherer->getGatheringAction(m_targetResourceType);
         auto& actionAnimation = m_components->animation.animations[m_components->action.action];
 
-        auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.value().speed;
+        auto ticksPerFrame = int(m_settings->getTicksPerSecond() /
+                                 (actionAnimation.value().speed * m_settings->getGameSpeed()));
         if (currentTick % ticksPerFrame == 0)
         {
             StateManager::markDirty(m_entityID);
@@ -189,7 +192,8 @@ class CmdGatherResource : public Command
     {
         auto& resource = m_stateMan->getComponent<CompResource>(target);
 
-        m_collectedResourceAmount += float(m_choppingSpeed) * deltaTimeMs / 1000.0f;
+        m_collectedResourceAmount +=
+            float(m_choppingSpeed) * m_settings->getGameSpeed() * deltaTimeMs / 1000.0f;
         uint32_t rounded = m_collectedResourceAmount;
         m_collectedResourceAmount -= rounded;
 

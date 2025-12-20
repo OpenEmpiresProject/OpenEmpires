@@ -6,16 +6,16 @@
 using namespace core;
 using namespace game;
 
-class ConstructionTestBase : public IntegTestBase
+class ConstructionTest : public IntegTestBase, public ::testing::Test
 {
 public:
-    void CommonSetUp() 
+    void SetUp() override
     {
         auto player = m_api->getPrimaryPlayer();
         playerId = player->getId();
         villager = m_api->createVillager(player, Feet(5000, 5000));
     }
-    void CommonTearDown() 
+    void TearDown() override
     {
         if (villager != entt::null)
             m_api->deleteEntity(villager);
@@ -26,11 +26,9 @@ public:
         for (auto entity : m_api->getBuildings(playerId))
             m_api->deleteEntity(entity);
 
-        while (not m_api->getConstructionSites(playerId).empty())
-        {
-            sleep(500);
-        }
-        while (not m_api->getBuildings(playerId).empty())
+        int attempts = 0;
+        while (attempts++ < 10 && (!m_api->getConstructionSites(playerId).empty() ||
+                                   !m_api->getBuildings(playerId).empty()))
         {
             sleep(500);
         }
@@ -42,31 +40,10 @@ public:
     const uint32_t gateEntityType = 17;
 };
 
-class ConstructionTest : public ::testing::Test, protected ConstructionTestBase
+class ConstructionTestOrientationParams : public ConstructionTest,
+                                          public ::testing::WithParamInterface<BuildingOrientation>
+                                          
 {
-  protected:
-    void SetUp() override
-    {
-        CommonSetUp();
-    }
-    void TearDown() override
-    {
-        CommonTearDown();
-    }
-};
-
-class ConstructionTestOrientationParams : public ::testing::TestWithParam<BuildingOrientation>,
-                               protected ConstructionTestBase
-{
-  protected:
-    void SetUp() override
-    {
-        CommonSetUp();
-    }
-    void TearDown() override
-    {
-        CommonTearDown();
-    }
 };
 
 TEST_F(ConstructionTest, Placement) 

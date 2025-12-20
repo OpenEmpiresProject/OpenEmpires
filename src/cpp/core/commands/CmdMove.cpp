@@ -6,6 +6,7 @@
 #include "Player.h"
 #include "Rect.h"
 #include "ServiceRegistry.h"
+#include "Settings.h"
 #include "StateManager.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
@@ -124,7 +125,8 @@ void CmdMove::animate(int deltaTimeMs, int currentTick)
     m_components->action.action = actionOverride;
     const auto& actionAnimation = m_components->animation.animations[m_components->action.action];
 
-    auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.value().speed;
+    auto ticksPerFrame = int(m_settings->getTicksPerSecond() /
+                             (actionAnimation.value().speed * m_settings->getGameSpeed()));
     if (currentTick % ticksPerFrame == 0)
     {
         StateManager::markDirty(m_entityID);
@@ -206,8 +208,9 @@ bool CmdMove::move(int deltaTimeMs)
 
             auto timeS = (double) deltaTimeMs / 1000.0;
 
-            const auto newPos = m_components->transform.position +
-                                (finalDir * (m_components->transform.speed * timeS));
+            const auto newPos =
+                m_components->transform.position +
+                (finalDir * (m_components->transform.speed * timeS * m_settings->getGameSpeed()));
             m_components->transform.face(newPos);
 
             setPosition(newPos);

@@ -210,3 +210,9 @@ const std::unordered_set<uint32_t>& GameAPI::getConstructionSites(uint32_t playe
     auto player = players->getPlayer(playerId);
     return player->getMyConstructionSites();
 }
+
+void GameAPI::executeCustomSynchronizedAction(std::function<void()> func)
+{
+    ScopedSynchronizer sync(m_sync);
+    func();
+}

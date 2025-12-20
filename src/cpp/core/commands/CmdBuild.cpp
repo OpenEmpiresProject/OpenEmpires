@@ -2,6 +2,7 @@
 
 #include "Feet.h"
 #include "Rect.h"
+#include "Settings.h"
 #include "StateManager.h"
 #include "commands/CmdMove.h"
 #include "components/CompAction.h"
@@ -82,7 +83,8 @@ void CmdBuild::animate(int deltaTimeMs, int currentTick)
     m_components->action.action = UnitAction::BUILDING;
     auto& actionAnimation = m_components->animation.animations[m_components->action.action];
 
-    auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.value().speed;
+    auto ticksPerFrame = int(m_settings->getTicksPerSecond() /
+                             (actionAnimation.value().speed * m_settings->getGameSpeed()));
     if (currentTick % ticksPerFrame == 0)
     {
         StateManager::markDirty(m_entityID);
@@ -140,7 +142,8 @@ void CmdBuild::build(int deltaTimeMs)
     auto& building = m_stateMan->getComponent<CompBuilding>(target);
     auto& builder = m_stateMan->getComponent<CompBuilder>(m_entityID);
 
-    m_constructionContribution += float(builder.buildSpeed) * deltaTimeMs / 1000.0f;
+    m_constructionContribution +=
+        float(builder.buildSpeed) * m_settings->getGameSpeed() * deltaTimeMs / 1000.0f;
     uint32_t roundedContribution = m_constructionContribution;
     m_constructionContribution -= roundedContribution;
 

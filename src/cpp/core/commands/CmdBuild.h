@@ -5,6 +5,7 @@
 
 namespace core
 {
+class Settings;
 class Feet;
 template <typename T> class Rect;
 
@@ -15,6 +16,7 @@ class CmdBuild : public Command
 
   private:
     float m_constructionContribution = 0;
+    LazyServiceRef<Settings> m_settings;
 
   private:
     void onStart() override;

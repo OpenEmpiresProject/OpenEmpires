@@ -1,6 +1,10 @@
 #include "IntegTestBase.h"
 
 #include <future>
+#include "ServiceRegistry.h"
+
+using namespace core;
+using namespace game;
 
 game::Game IntegTestBase::m_game;
 game::GameAPI* IntegTestBase::m_api = nullptr;
@@ -20,6 +24,12 @@ void IntegTestBase::setup()
     });
     while (core::SubSystemRegistry::getInstance().isAllInitialized() == false) {}
     while (m_api->isReady() == false) {}
+
+    m_api->executeCustomSynchronizedAction(
+        []() { 
+            auto settings = ServiceRegistry::getInstance().getService<Settings>();
+            settings->setGameSpeed(2.0);
+        });
 }
 
 void IntegTestBase::tearDown()

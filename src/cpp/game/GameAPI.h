@@ -52,6 +52,8 @@ class GameAPI
     const std::unordered_set<uint32_t>& getBuildings(uint32_t playerId);
     const std::unordered_set<uint32_t>& getConstructionSites(uint32_t playerId);
 
+    void executeCustomSynchronizedAction(std::function<void()> func);
+
   private:
     std::shared_ptr<Synchronizer> m_sync;
 };
