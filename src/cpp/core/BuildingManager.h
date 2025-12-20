@@ -8,6 +8,7 @@
 
 #include <functional>
 #include <map>
+#include <tuple>
 
 namespace core
 {
@@ -41,7 +42,8 @@ class BuildingManager : public EventHandler
     void updateInProgressConstructions();
     void onQueueUnit(const Event& e);
     void onUngarrison(const Event& e);
-    uint32_t createBuilding(const BuildingPlacementData& request);
+    std::tuple<CompEntityInfo&, CompBuilding&> createBuilding(const BuildingPlacementData& request);
+    void makeBuildingPermanent(uint32_t entity);
     void onCompleteBuilding(uint32_t entity,
                             const CompBuilding& building,
                             const CompVision& vision,
@@ -49,6 +51,7 @@ class BuildingManager : public EventHandler
                             const CompPlayer& player,
                             const CompEntityInfo& info);
     Feet findVacantPositionAroundBuilding(uint32_t building);
+    bool isBuildingRequestValid(const CompBuilding& building) const;
 };
 
 } // namespace core

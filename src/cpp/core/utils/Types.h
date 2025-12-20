@@ -198,6 +198,12 @@ static std::string buildingOrientationToString(const BuildingOrientation& orient
     return "";
 }
 
+struct TilePosWithOrientation
+{
+    Tile pos;
+    BuildingOrientation orientation;
+};
+
 enum class UnitTagType
 {
     GARRISONED

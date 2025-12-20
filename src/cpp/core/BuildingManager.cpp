@@ -62,12 +62,23 @@ void BuildingManager::onCompleteBuilding(uint32_t entity,
 void BuildingManager::onBuildingRequest(const Event& e)
 {
     auto data = e.getData<BuildingPlacementData>();
-    data.entity = createBuilding(data);
+    auto [info, building] = createBuilding(data);
 
-    publishEvent(Event::Type::BUILDING_CREATED, data);
+    if (isBuildingRequestValid(building))
+    {
+        makeBuildingPermanent(info.entityId);
+
+        data.entity = info.entityId;
+        publishEvent(Event::Type::BUILDING_CREATED, data);
+    }
+    else
+    {
+        spdlog::debug("Cannot place the building. Ignoring the request {}", data.toString());
+    }
 }
 
-uint32_t BuildingManager::createBuilding(const BuildingPlacementData& request)
+std::tuple<CompEntityInfo&, CompBuilding&> BuildingManager::createBuilding(
+    const BuildingPlacementData& request)
 {
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
     auto entity = factory->createEntity(request.entityType, 0);
@@ -85,14 +96,9 @@ uint32_t BuildingManager::createBuilding(const BuildingPlacementData& request)
 
     info.entitySubType = building.constructionSiteEntitySubType;
     info.variation = building.getVariationByConstructionProgress();
-    StateManager::markDirty(entity);
+    info.isDestroyed = true; // This building will be abandoned if placement test comes false
 
-    auto& gameMap = m_stateMan->gameMap();
-    gameMap.addEntity(MapLayerType::ON_GROUND, building.landArea, entity);
-
-    playerComp.player->ownEntity(entity);
-
-    return entity;
+    return {info, building};
 }
 
 void BuildingManager::onQueueUnit(const Event& e)
@@ -294,7 +300,32 @@ void BuildingManager::onEntityDeletion(const Event& e)
                 entity);
         info.isDestroyed = true;
         StateManager::markDirty(entity);
-        m_stateMan->gameMap().removeEntity(MapLayerType::STATIC, building.landArea, entity);
+
+        const auto layer =
+            building.constructionProgress > 0 ? MapLayerType::STATIC : MapLayerType::ON_GROUND;
+       
+        m_stateMan->gameMap().removeEntity(layer, building.landArea, entity);
         playerComp.player->removeOwnership(entity);
     }
+}
+
+bool BuildingManager::isBuildingRequestValid(const CompBuilding& building) const
+{
+    bool outOfMap = false;
+    bool canPlace = m_stateMan->canPlaceBuildingAt(building.landArea, outOfMap);
+    return canPlace and not outOfMap;
+}
+
+void BuildingManager::makeBuildingPermanent(uint32_t entity)
+{
+    auto [playerComp, building, info] =
+        m_stateMan->getComponents<CompPlayer, CompBuilding, CompEntityInfo>(entity);
+
+    info.isDestroyed = false;
+    StateManager::markDirty(entity);
+
+    auto& gameMap = m_stateMan->gameMap();
+    gameMap.addEntity(MapLayerType::ON_GROUND, building.landArea, entity);
+
+    playerComp.player->ownEntity(entity);
 }

@@ -27,9 +27,7 @@ class GameAPI
         std::function<void()> onEnd;
     };
 
-    GameAPI()
-    {
-    }
+    GameAPI() = default;
     GameAPI(std::shared_ptr<Synchronizer> synchronizer) : m_sync(std::move(synchronizer))
     {
     }
@@ -51,6 +49,10 @@ class GameAPI
     void deleteEntity(uint32_t entity);
     const std::unordered_set<uint32_t>& getBuildings(uint32_t playerId);
     const std::unordered_set<uint32_t>& getConstructionSites(uint32_t playerId);
+    void placeWall(uint32_t playerId,
+                   int wallEntityType,
+                   const core::Feet& from,
+                   const core::Feet& to);
 
     void executeCustomSynchronizedAction(std::function<void()> func);
 

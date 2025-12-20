@@ -137,8 +137,14 @@ StateManager::TileMapQueryResult StateManager::whatIsAt(const Vec2& screenPos)
 
 bool StateManager::canPlaceBuildingAt(const CompBuilding& building, bool& outOfMap)
 {
+    return canPlaceBuildingAt(building.landArea, outOfMap);
+}
+
+bool StateManager::canPlaceBuildingAt(const LandArea& land, bool& outOfMap)
+{
     auto settings = ServiceRegistry::getInstance().getService<Settings>();
     auto staticMap = m_gameMap.getMap(MapLayerType::STATIC);
+    auto onGroundMap = m_gameMap.getMap(MapLayerType::ON_GROUND);
 
     auto isValidTile = [&](const Tile& tile)
     {
@@ -148,14 +154,18 @@ bool StateManager::canPlaceBuildingAt(const CompBuilding& building, bool& outOfM
 
     outOfMap = false;
 
-    for (const auto& tile : building.landArea.tiles)
+    for (const auto& tile : land.tiles)
     {
         if (!isValidTile(tile))
         {
             outOfMap = true;
             return false;
         }
-        if (staticMap[tile.x][tile.y].isOccupied())
+
+        // TODO: Onground layer might even contain other aesthetic items like dead bodies,
+        // destroyed building which do not necessarily prevent placing another building.
+        // Need to fix this.
+        if (staticMap[tile.x][tile.y].isOccupied() or onGroundMap[tile.x][tile.y].isOccupied())
         {
             return false;
         }

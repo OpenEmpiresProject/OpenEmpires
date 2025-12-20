@@ -45,12 +45,6 @@ class PlayerController : public EventHandler
     EntitySelectionData m_currentEntitySelection;
 
   private:
-    struct ConnectedBuildingPosition
-    {
-        Tile pos;
-        BuildingOrientation orientation;
-    };
-
     // Event callbacks
     void onKeyUp(const Event& e);
     void onMouseButtonUp(const Event& e);
@@ -72,11 +66,8 @@ class PlayerController : public EventHandler
     void confirmBuildingPlacement(const BuildingPlacementData& placement) const;
     void validateAndSnapBuildingToTile(BuildingPlacementData& placement, const Feet& pos);
     void removeAllExistingBuildingPlacements();
-    void calculateConnectedBuildingsPath(const Tile& start,
-                                         const Tile& end,
-                                         std::list<ConnectedBuildingPosition>& connectedBuildings);
     void createConnectedBuildingPlacements(
-        const std::list<ConnectedBuildingPosition>& connectedBuildings, uint32_t buildingType);
+        const std::list<TilePosWithOrientation>& connectedBuildings, uint32_t buildingType);
     void rotateCurrentPlacement();
     void changePlacementOrientation(BuildingPlacementData& placement,
                                     BuildingOrientation orientation);

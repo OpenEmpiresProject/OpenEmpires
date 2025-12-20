@@ -85,6 +85,12 @@ struct BuildingPlacementData
         placementId = g_currentPlacementId++;
     }
 
+    std::string toString() const
+    {
+        return "BuildingPlacement(Entity type:" + std::to_string(entityType) +
+               ", Tile:" + pos.toString() + ")";
+    }
+
   private:
     inline static uint32_t g_currentPlacementId = 0;
 };
