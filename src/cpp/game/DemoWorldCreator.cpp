@@ -46,10 +46,7 @@ using namespace core;
 using namespace drs;
 using namespace std;
 
-DemoWorldCreator::DemoWorldCreator(std::stop_token* stopToken,
-                                   std::shared_ptr<Settings> settings,
-                                   bool populateWorld)
-    : SubSystem(stopToken), m_settings(std::move(settings)), m_populateWorld(populateWorld)
+DemoWorldCreator::DemoWorldCreator(const Params& params) : WorldCreator(params)
 {
 }
 
@@ -58,54 +55,35 @@ bool DemoWorldCreator::isReady() const
     return m_isReady;
 }
 
-void DemoWorldCreator::loadEntities()
+void DemoWorldCreator::onInit(EventLoop& eventLoop)
 {
-    spdlog::info("Loading entities...");
-
-    auto playerManager = ServiceRegistry::getInstance().getService<PlayerFactory>();
-    auto player = playerManager->createPlayer();
-    auto player2 = playerManager->createPlayer();
-    auto playercontroller = ServiceRegistry::getInstance().getService<PlayerController>();
-    playercontroller->setPlayer(player);
-
-    auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
-
-    auto size = m_settings->getWorldSizeInTiles();
-
-    for (size_t i = 0; i < size.width; i++)
-    {
-        for (size_t j = 0; j < size.height; j++)
-        {
-            createTile(i, j, stateMan, EntityTypes::ET_TILE);
-        }
-    }
-
-    if (m_populateWorld)
-    {
-        auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
-        auto stoneType = typeRegistry->getEntityType("stone");
-        auto goldType = typeRegistry->getEntityType("gold");
-
-        generateMap(stateMan->gameMap());
-        createStoneOrGoldCluster(stoneType, stateMan->gameMap(), 30, 30, 4);
-        createStoneOrGoldCluster(goldType, stateMan->gameMap(), 20, 30, 4);
-        createVillager(player2, Tile(25, 25));
-        createVillager(player, Tile(20, 20));
-    }
-
-    CompResourceGatherer::gatheringActions = {{ResourceType::WOOD, UnitAction::CHOPPING},
-                                              {ResourceType::STONE, UnitAction::MINING},
-                                              {ResourceType::GOLD, UnitAction::MINING}};
-    CompResourceGatherer::carryingActions = {{ResourceType::WOOD, UnitAction::CARRYING_LUMBER},
-                                             {ResourceType::STONE, UnitAction::CARRYING_STONE},
-                                             {ResourceType::GOLD, UnitAction::CARRYING_GOLD}};
-
-    createHUD();
-
-    spdlog::info("Entity loading successfully.");
+    create();
 }
 
-void DemoWorldCreator::createTree(TileMap& map, uint32_t x, uint32_t y)
+void DemoWorldCreator::create()
+{
+    spdlog::info("Creating the demo world");
+
+    InGameResource::registerResourceType(ResourceType::WOOD);
+    InGameResource::registerResourceType(ResourceType::STONE);
+    InGameResource::registerResourceType(ResourceType::GOLD);
+
+    createTerrain();
+    generateRandomForest();
+    createMiningCluster(getResourceType("stone"), 30, 30, 4);
+    createMiningCluster(getResourceType("gold"), 20, 30, 4);
+    auto players = createPlayers();
+    createVillager(players[0], Tile(20, 20));
+    createVillager(players[1], Tile(25, 25));
+    registerVillagerActions();
+    createHUD();
+
+    m_isReady = true;
+
+    spdlog::info("Demo world created");
+}
+
+void DemoWorldCreator::createTree(uint32_t x, uint32_t y)
 {
     auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
@@ -118,6 +96,8 @@ void DemoWorldCreator::createTree(TileMap& map, uint32_t x, uint32_t y)
 
     transform.position = Feet(x * 256 + 128, y * 256 + 128);
     info.variation = variation;
+
+    auto& map = m_stateMan->gameMap();
 
     map.addEntity(MapLayerType::STATIC, Tile(x, y), tree);
 
@@ -132,10 +112,7 @@ void DemoWorldCreator::createTree(TileMap& map, uint32_t x, uint32_t y)
     map.addEntity(MapLayerType::ON_GROUND, Tile(x, y), shadow);
 }
 
-void DemoWorldCreator::createStoneOrGold(uint32_t entityType,
-                                         core::TileMap& gameMap,
-                                         uint32_t x,
-                                         uint32_t y)
+void DemoWorldCreator::createStoneOrGold(uint32_t entityType, uint32_t x, uint32_t y)
 {
     auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
@@ -147,7 +124,7 @@ void DemoWorldCreator::createStoneOrGold(uint32_t entityType,
     transform.position = Feet(x * 256 + 128, y * 256 + 128);
     info.variation = rand() % 7;
 
-    gameMap.addEntity(MapLayerType::STATIC, Tile(x, y), entity);
+    m_stateMan->gameMap().addEntity(MapLayerType::STATIC, Tile(x, y), entity);
 }
 
 void DemoWorldCreator::createVillager(Ref<core::Player> player, const Tile& tilePos)
@@ -172,11 +149,15 @@ void DemoWorldCreator::createVillager(Ref<core::Player> player, const Tile& tile
     player->getFogOfWar()->markAsExplored(transform.position, vision.lineOfSight);
 }
 
-void DemoWorldCreator::createStoneOrGoldCluster(
-    uint32_t entityType, core::TileMap& gameMap, uint32_t xHint, uint32_t yHint, uint8_t amount)
+void DemoWorldCreator::createMiningCluster(uint32_t entityType,
+                                           uint32_t xHint,
+                                           uint32_t yHint,
+                                           uint8_t amount)
 {
     if (amount == 0)
         return;
+
+    auto& gameMap = m_stateMan->gameMap();
 
     const auto width = gameMap.width;
     const auto height = gameMap.height;
@@ -228,7 +209,7 @@ void DemoWorldCreator::createStoneOrGoldCluster(
             continue;
 
         // Place a stone here
-        createStoneOrGold(entityType, gameMap, cx, cy);
+        createStoneOrGold(entityType, cx, cy);
         ++placed;
 
         cluster.emplace_back(cx, cy);
@@ -247,8 +228,10 @@ void DemoWorldCreator::createStoneOrGoldCluster(
     }
 }
 
-void DemoWorldCreator::generateMap(TileMap& gameMap)
+void DemoWorldCreator::generateRandomForest()
 {
+    auto& gameMap = m_stateMan->gameMap();
+
     std::random_device rd;
     std::mt19937 rng(rd());
     std::uniform_int_distribution<int> posX(0, gameMap.width - 1);
@@ -287,7 +270,7 @@ void DemoWorldCreator::generateMap(TileMap& gameMap)
 
                 if (gameMap.isOccupied(MapLayerType::STATIC, {x, y}) == false)
                 {
-                    createTree(gameMap, x, y);
+                    createTree(x, y);
                     ++treesPlaced;
                 }
             }
@@ -306,23 +289,20 @@ void DemoWorldCreator::generateMap(TileMap& gameMap)
 
         if (gameMap.isOccupied(MapLayerType::STATIC, {x, y}) == false)
         {
-            createTree(gameMap, x, y);
+            createTree(x, y);
             ++treesPlaced;
         }
     }
 }
 
-void DemoWorldCreator::createTile(uint32_t x,
-                                  uint32_t y,
-                                  core::Ref<core::StateManager> stateMan,
-                                  EntityTypes entityType)
+void DemoWorldCreator::createTile(uint32_t x, uint32_t y, EntityTypes entityType)
 {
     auto size = m_settings->getWorldSizeInTiles();
 
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
     auto entity = factory->createEntity(entityType, 0);
-    auto [transform, info] = stateMan->getComponents<CompTransform, CompEntityInfo>(entity);
+    auto [transform, info] = m_stateMan->getComponents<CompTransform, CompEntityInfo>(entity);
 
     int tc = 10;
     // Convet our top corner based coordinate to left corner based coordinate
@@ -334,21 +314,7 @@ void DemoWorldCreator::createTile(uint32_t x,
     transform.position = Feet(x * 256, y * 256);
     info.variation = tileVariation;
 
-    stateMan->gameMap().addEntity(MapLayerType::GROUND, Tile(x, y), entity);
-}
-
-void DemoWorldCreator::init()
-{
-    InGameResource::registerResourceType(ResourceType::WOOD);
-    InGameResource::registerResourceType(ResourceType::STONE);
-    InGameResource::registerResourceType(ResourceType::GOLD);
-    loadEntities();
-    m_isReady = true;
-}
-
-void DemoWorldCreator::shutdown()
-{
-    // Cleanup code for resource loading
+    m_stateMan->gameMap().addEntity(MapLayerType::GROUND, Tile(x, y), entity);
 }
 
 void DemoWorldCreator::createHUD()
@@ -521,4 +487,46 @@ void DemoWorldCreator::createHUD()
             }
         }
     }
+}
+
+std::vector<Ref<Player>> DemoWorldCreator::createPlayers()
+{
+    auto playerManager = ServiceRegistry::getInstance().getService<PlayerFactory>();
+    auto player = playerManager->createPlayer();
+    auto player2 = playerManager->createPlayer();
+    auto playercontroller = ServiceRegistry::getInstance().getService<PlayerController>();
+    playercontroller->setPlayer(player);
+
+    return {player, player2};
+}
+
+void DemoWorldCreator::createTerrain()
+{
+    auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
+
+    auto size = m_settings->getWorldSizeInTiles();
+
+    for (size_t i = 0; i < size.width; i++)
+    {
+        for (size_t j = 0; j < size.height; j++)
+        {
+            createTile(i, j, EntityTypes::ET_TILE);
+        }
+    }
+}
+
+void DemoWorldCreator::registerVillagerActions()
+{
+    CompResourceGatherer::gatheringActions = {{ResourceType::WOOD, UnitAction::CHOPPING},
+                                              {ResourceType::STONE, UnitAction::MINING},
+                                              {ResourceType::GOLD, UnitAction::MINING}};
+    CompResourceGatherer::carryingActions = {{ResourceType::WOOD, UnitAction::CARRYING_LUMBER},
+                                             {ResourceType::STONE, UnitAction::CARRYING_STONE},
+                                             {ResourceType::GOLD, UnitAction::CARRYING_GOLD}};
+}
+
+uint32_t DemoWorldCreator::getResourceType(const std::string& resourceName)
+{
+    auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+    return typeRegistry->getEntityType(resourceName);
 }

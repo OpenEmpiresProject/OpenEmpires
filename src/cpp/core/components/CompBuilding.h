@@ -37,6 +37,7 @@ class CompBuilding
 
     // Check if the building supports drop-off for a specific resource type
     bool acceptResource(uint8_t resourceType) const;
+    std::vector<uint8_t> getAcceptedResources() const;
     bool isConstructed() const;
     int getVariationByConstructionProgress() const;
     Rect<float> getLandInFeetRect() const;

@@ -29,7 +29,8 @@ class CmdBuild : public Command
     bool isComplete();
     void build(int deltaTimeMs);
     void moveCloser(std::list<Command*>& newCommands);
-    void lookForAnotherSiteToBuild(std::list<Command*>& newCommands);
+    bool lookForAnotherSiteToBuild(std::list<Command*>& newCommands);
+    bool lookForResourceToGather(std::list<Command*>& newCommands);
     static bool overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& buildingRect);
 };
 } // namespace core

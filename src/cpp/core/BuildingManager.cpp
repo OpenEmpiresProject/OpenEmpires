@@ -303,7 +303,7 @@ void BuildingManager::onEntityDeletion(const Event& e)
 
         const auto layer =
             building.constructionProgress > 0 ? MapLayerType::STATIC : MapLayerType::ON_GROUND;
-       
+
         m_stateMan->gameMap().removeEntity(layer, building.landArea, entity);
         playerComp.player->removeOwnership(entity);
     }

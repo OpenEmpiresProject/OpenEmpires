@@ -52,11 +52,11 @@ bool GameAPI::isReady()
 {
     auto redndererSubSystem = SubSystemRegistry::getInstance().getSubSystem("Renderer");
     auto renderer = static_pointer_cast<Renderer>(redndererSubSystem);
-    auto creatorSubSystem = SubSystemRegistry::getInstance().getSubSystem("DemoWorldCreator");
-    auto creator = static_pointer_cast<DemoWorldCreator>(creatorSubSystem);
     auto eventLoopSubSystem = SubSystemRegistry::getInstance().getSubSystem("EventLoop");
     auto eventLoop = static_pointer_cast<EventLoop>(eventLoopSubSystem);
-    return renderer->isReady() && creator->isReady() && eventLoop->isReady();
+
+    auto worldCreator = ServiceRegistry::getInstance().getService<WorldCreator>();
+    return renderer->isReady() && worldCreator->isReady() && eventLoop->isReady();
 }
 
 void GameAPI::quit()
@@ -245,4 +245,13 @@ void GameAPI::placeWall(uint32_t playerId,
         Event event(Event::Type::BUILDING_REQUESTED, data);
         eventPublisher->publish(event);
     }
+}
+
+uint32_t GameAPI::getPlayerResourceAmount(uint32_t playerId, uint8_t resourceType)
+{
+    ScopedSynchronizer sync(m_sync);
+
+    auto players = ServiceRegistry::getInstance().getService<PlayerFactory>();
+    auto player = players->getPlayer(playerId);
+    return player->getResourceAmount(resourceType);
 }

@@ -1,5 +1,6 @@
 #include "CmdBuild.h"
 
+#include "CmdGatherResource.h"
 #include "Feet.h"
 #include "Rect.h"
 #include "Settings.h"
@@ -54,7 +55,13 @@ bool CmdBuild::onExecute(int deltaTimeMs, int currentTick, std::list<Command*>& 
 
     bool isCompleted = isComplete();
     if (isCompleted)
-        lookForAnotherSiteToBuild(subCommands);
+    {
+        if (not lookForAnotherSiteToBuild(subCommands))
+        {
+            lookForResourceToGather(subCommands);
+        }
+    }
+
     return isCompleted;
 }
 
@@ -209,7 +216,7 @@ bool CmdBuild::overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& 
     return (dx * dx + dy * dy) <= radiusSq;
 }
 
-void CmdBuild::lookForAnotherSiteToBuild(std::list<Command*>& newCommands)
+bool CmdBuild::lookForAnotherSiteToBuild(std::list<Command*>& newCommands)
 {
     spdlog::debug("Build is completed. Looking for nearby construction sites");
 
@@ -238,5 +245,32 @@ void CmdBuild::lookForAnotherSiteToBuild(std::list<Command*>& newCommands)
         nextBuildCmd->target = currentClosestSite;
         nextBuildCmd->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
         newCommands.push_back(nextBuildCmd);
+
+        return true;
     }
+    return false;
+}
+
+bool CmdBuild::lookForResourceToGather(std::list<Command*>& newCommands)
+{
+    auto& building = m_stateMan->getComponent<CompBuilding>(target);
+    auto acceptedResources = building.getAcceptedResources();
+
+    for (auto resouceType : acceptedResources)
+    {
+        // TODO : use LOS
+        auto resource = CmdGatherResource::findClosestResource(
+            resouceType, m_components->transform.position.toTile(),
+            Constants::MAX_RESOURCE_LOOKUP_RADIUS, m_stateMan.getRef());
+
+        if (resource != entt::null)
+        {
+            auto cmd = ObjectPool<CmdGatherResource>::acquire();
+            cmd->target = resource;
+            cmd->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
+            newCommands.push_back(cmd);
+            return true;
+        }
+    }
+    return false;
 }

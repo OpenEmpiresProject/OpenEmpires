@@ -2,6 +2,7 @@
 
 #include <future>
 #include "ServiceRegistry.h"
+#include "TestWorldCreator.h"
 
 using namespace core;
 using namespace game;
@@ -20,8 +21,19 @@ void IntegTestBase::setup()
 
     m_api = new game::GameAPI(sync);
     m_testThread = new std::thread([]() {
-        m_game.runIntegTestEnv(m_tickAssist);
+            Game::Params params;
+            params.populateWorld = false;
+            params.revealAll = true;
+            params.eventHandler = m_tickAssist;
+            params.worldCreator = CreateRef<TestWorldCreator>();
+            m_game.run(params);
     });
+
+    // TODO: To undiscovered error, without this delay entt registry corrupts or 
+    // goes into race condition in integ test setup. This is to prevent moving
+    // ahead with tests before things settle down.
+    sleep(2000);
+ 
     while (core::SubSystemRegistry::getInstance().isAllInitialized() == false) {}
     while (m_api->isReady() == false) {}
 
@@ -30,6 +42,7 @@ void IntegTestBase::setup()
             auto settings = ServiceRegistry::getInstance().getService<Settings>();
             settings->setGameSpeed(2.0);
         });
+
 }
 
 void IntegTestBase::tearDown()

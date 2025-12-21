@@ -5,7 +5,7 @@
 int main()
 {
     game::Game game;
-    return game.run();
+    return game.run(game::Game::Params());
 
     // drs::DRSTester tester;
     // tester.load();

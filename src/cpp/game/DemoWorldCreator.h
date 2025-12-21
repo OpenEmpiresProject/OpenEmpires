@@ -2,6 +2,7 @@
 #define DEMOWORLDCREATOR_H
 
 #include "DRSFile.h"
+#include "EventHandler.h"
 #include "GameTypes.h"
 #include "GraphicsRegistry.h"
 #include "Player.h"
@@ -12,45 +13,48 @@
 #include "SubSystem.h"
 #include "Tile.h"
 #include "TileMap.h"
+#include "WorldCreator.h"
 
 #include <memory>
+
 namespace game
 {
-class DemoWorldCreator : public core::SubSystem, public core::PropertyInitializer
+class DemoWorldCreator : public WorldCreator, public core::PropertyInitializer
 {
   public:
-    DemoWorldCreator(std::stop_token* stopToken,
-                     std::shared_ptr<core::Settings> settings,
-                     bool populateWorld);
+    struct Params : public WorldCreator::Params
+    {
+    };
+
+    DemoWorldCreator(const Params& params);
     ~DemoWorldCreator() = default;
 
-    bool isReady() const;
+  protected:
+    // EventHandler methods
+    void onInit(core::EventLoop& eventLoop) override;
+    bool isReady() const override;
 
-  private:
-    // SubSystem methods
-    void init() override;
-    void shutdown() override;
+    // WorldCreator methods
+    void create() override;
 
-    void loadEntities();
+    uint32_t getResourceType(const std::string& resourceName);
+    void registerVillagerActions();
+    void createTerrain();
+    std::vector<core::Ref<core::Player>> createPlayers();
+
     void createHUD();
-    void generateMap(core::TileMap& gameMap);
-    void createTile(uint32_t x,
-                    uint32_t y,
-                    core::Ref<core::StateManager> stateMan,
-                    EntityTypes entityType);
-    void createTree(core::TileMap& gameMap, uint32_t x, uint32_t y);
-    void createStoneOrGoldCluster(uint32_t entityType,
-                                  core::TileMap& gameMap,
-                                  uint32_t xHint,
-                                  uint32_t yHint,
-                                  uint8_t amount);
-    void createStoneOrGold(uint32_t entityType, core::TileMap& gameMap, uint32_t x, uint32_t y);
+    void generateRandomForest();
+    void createTile(uint32_t x, uint32_t y, EntityTypes entityType);
+    void createTree(uint32_t x, uint32_t y);
+    void createMiningCluster(uint32_t entityType, uint32_t xHint, uint32_t yHint, uint8_t amount);
+    void createStoneOrGold(uint32_t entityType, uint32_t x, uint32_t y);
     void createVillager(core::Ref<core::Player> player, const core::Tile& pos);
 
-  private:
-    std::shared_ptr<core::Settings> m_settings;
-    bool m_populateWorld = false;
+    core::LazyServiceRef<core::StateManager> m_stateMan;
     bool m_isReady = false;
+
+  private:
+    core::LazyServiceRef<core::Settings> m_settings;
     const int m_iconSize = 36;
 };
 } // namespace game

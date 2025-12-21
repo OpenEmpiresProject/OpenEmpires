@@ -200,3 +200,16 @@ bool CompBuilding::acceptResource(uint8_t resourceType) const
 {
     return dropOffForResourceType & resourceType;
 }
+
+std::vector<uint8_t> CompBuilding::getAcceptedResources() const
+{
+    std::vector<uint8_t> resources;
+    for (uint8_t i = 1; i < 8; ++i)
+    {
+        if (acceptResource(i))
+        {
+            resources.push_back(i);
+        }
+    }
+    return resources;
+}

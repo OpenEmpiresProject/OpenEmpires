@@ -44,26 +44,17 @@ class Game
     {
         bool populateWorld = true;
         bool revealAll = false;
-        std::shared_ptr<core::EventHandler> eventHandler;
+        core::Ref<core::EventHandler> eventHandler;
+        core::Ref<game::WorldCreator> worldCreator;
+
+        Params()
+        {
+            DemoWorldCreator::Params params;
+            worldCreator = core::CreateRef<DemoWorldCreator>(params);
+        }
     };
 
-    int run()
-    {
-        Params params{
-            .populateWorld = true,
-            .revealAll = false,
-        };
-        return runInternal(params);
-    }
-
-    int runIntegTestEnv(std::shared_ptr<core::EventHandler> eventHandler)
-    {
-        Params params{.populateWorld = false, .revealAll = true, .eventHandler = eventHandler};
-        return runInternal(params);
-    }
-
-  private:
-    int runInternal(const Params& params)
+    int run(const Params& params)
     {
         core::initLogger("logs/game.log");
 
@@ -168,6 +159,8 @@ class Game
         if (params.eventHandler)
             eventLoop->registerListener(params.eventHandler);
 
+        core::ServiceRegistry::getInstance().registerService(params.worldCreator);
+
         eventLoop->registerListener(std::move(simulator));
         eventLoop->registerListener(std::move(cc));
         eventLoop->registerListener(std::move(uiManager));
@@ -180,13 +173,9 @@ class Game
         eventLoop->registerListener(std::move(logController));
         eventLoop->registerListener(std::move(visionSystem));
         eventLoop->registerListener(std::move(specialBuildingManager));
-
-        auto resourceLoader =
-            std::make_shared<DemoWorldCreator>(&stopToken, settings, params.populateWorld);
+        eventLoop->registerListener(params.worldCreator);
 
         core::SubSystemRegistry::getInstance().registerSubSystem("Renderer", std::move(renderer));
-        core::SubSystemRegistry::getInstance().registerSubSystem("DemoWorldCreator",
-                                                                 std::move(resourceLoader));
         core::SubSystemRegistry::getInstance().registerSubSystem("EventLoop", std::move(eventLoop));
 
         core::SubSystemRegistry::getInstance().initAll();

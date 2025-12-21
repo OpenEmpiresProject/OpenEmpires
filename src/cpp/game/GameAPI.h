@@ -53,6 +53,7 @@ class GameAPI
                    int wallEntityType,
                    const core::Feet& from,
                    const core::Feet& to);
+    uint32_t getPlayerResourceAmount(uint32_t playerId, uint8_t resourceType);
 
     void executeCustomSynchronizedAction(std::function<void()> func);
 
