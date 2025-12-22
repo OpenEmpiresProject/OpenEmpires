@@ -61,6 +61,7 @@ void TestWorldCreator::create()
     registerVillagerActions();
     createHUD();
     createMiningCluster(getResourceType("gold"), 25, 25, 2);
+    createTree(20, 25);
 
     m_isReady = true;
 

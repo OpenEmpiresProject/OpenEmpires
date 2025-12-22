@@ -35,7 +35,7 @@ public:
     uint32_t villager = entt::null;
     int playerId = -1;
     const uint32_t miningCampEntityType = 10;
-    uint32_t goldEntity = -1;
+    const uint32_t lumberCampEntityType = 9;
 };
 
 class ResourceGatheringOrientationParams : public ResourceGathering,
@@ -52,7 +52,14 @@ class ResourceGatheringOrientationParams : public ResourceGathering,
     ASSERT_WAIT_FOR(m_api->getConstructionSites(playerId).size() == 0, 10000);
 
     ASSERT_WAIT_FOR(m_api->getPlayerResourceAmount(playerId, ResourceType::GOLD) >= 100, 20000);
+ }
 
-    sleep(10000); // Visual confirmation
+ TEST_F(ResourceGathering, GatherWood)
+ {
+     m_api->placeBuilding(playerId, lumberCampEntityType, Tile(20, 24).toFeet());
+     ASSERT_WAIT_FOR(m_api->getConstructionSites(playerId).size() == 1, 1000);
+     m_api->build(villager, *(m_api->getConstructionSites(playerId).begin()));
+     ASSERT_WAIT_FOR(m_api->getConstructionSites(playerId).size() == 0, 10000);
 
+     ASSERT_WAIT_FOR(m_api->getPlayerResourceAmount(playerId, ResourceType::WOOD) >= 100, 20000);
  }
