@@ -9,7 +9,6 @@
 #include "SDL3_gfxPrimitives.h"
 #include "ServiceRegistry.h"
 #include "Settings.h"
-#include "StateManager.h"
 #include "StatsCounter.h"
 #include "Tile.h"
 #include "Version.h"
@@ -230,6 +229,9 @@ class RendererImpl
     volatile bool m_isReady = false;
 
     GraphicsID m_currentCursor;
+
+    std::unordered_map<uint32_t, uint32_t> m_simulationToRendererEntityIDMapping;
+    entt::basic_registry<uint32_t> m_registry;
 };
 } // namespace core
 
@@ -523,13 +525,25 @@ void RendererImpl::updateRenderingComponents()
 {
     // spdlog::debug("Handling graphic instructions...");
     auto& frameData = m_synchronizer.getReceiverFrameData().graphicUpdates;
-    auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     std::list<GraphicsID> idsNeedToLoad;
     std::list<CompGraphics*> lazyLoadedInstructions;
 
     for (const auto& instruction : frameData)
     {
-        auto& rc = stateMan->getComponent<CompRendering>(instruction->entityID);
+        uint32_t entity = entt::null;
+        auto it = m_simulationToRendererEntityIDMapping.find(instruction->entityID);
+        if (it == m_simulationToRendererEntityIDMapping.end())
+        {
+            entity = m_registry.create();
+            m_registry.emplace_or_replace<CompRendering>(entity, CompRendering());
+            m_simulationToRendererEntityIDMapping.emplace(instruction->entityID, entity);
+        }
+        else
+        {
+            entity = it->second;
+        }
+
+        auto& rc = m_registry.get<CompRendering>(entity);
 
         if (m_graphicsRegistry.hasTexture(*instruction))
         {
@@ -571,7 +585,9 @@ void RendererImpl::updateRenderingComponents()
                                       idsNeedToLoad);
         for (auto& instruction : lazyLoadedInstructions)
         {
-            auto& rc = stateMan->getComponent<CompRendering>(instruction->entityID);
+            auto it = m_simulationToRendererEntityIDMapping.find(instruction->entityID);
+
+            auto& rc = m_registry.get<CompRendering>(it->second);
             CompRendering beforeUpdate = rc;
 
             static_cast<CompGraphics&>(rc) = *instruction;
