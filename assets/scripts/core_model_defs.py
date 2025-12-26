@@ -75,6 +75,11 @@ class UnitType(IntEnum):
 class LineOfSightShape(str, Enum):
     CIRCLE = "circle"
     ROUNDED_SQUARE = "rounded_square"
+    
+
+class Selectable:
+    icon: Icon
+    display_name: str
 
 
 class Vision:
@@ -83,11 +88,9 @@ class Vision:
     active_tracking: bool = False
 
 
-class Unit(Vision, Model):
-    display_name: str
+class Unit(Vision, Model, Selectable):
     moving_speed: int
     animations: List[Animation]
-    icon: Icon
     housing_need: int
     unit_type: UnitType
 
@@ -107,11 +110,9 @@ class Gatherer:
     resource_capacity: int
 
 
-class NaturalResource(_Constructible, Model):
-    display_name: str
+class NaturalResource(_Constructible, Model, Selectable):
     resource_amount: int
     graphics: Graphic
-    icon: Icon
 
 
 class NaturalResourceAdditionalPart(_Constructible):
@@ -124,12 +125,10 @@ class Tree(NaturalResource, _Constructible):
     stump: NaturalResourceAdditionalPart
 
 
-class Building(Vision, Model):
-    display_name: str
+class Building(Vision, Model, Selectable):
     line_of_sight_shape: LineOfSightShape = LineOfSightShape.ROUNDED_SQUARE
     size: str
     graphics: Graphic
-    icon: Icon
     connected_constructions_allowed: Optional[bool] # Allows to constructing series of same building such as walls
     default_orientation: Optional[str]
 

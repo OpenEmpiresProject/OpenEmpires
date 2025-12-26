@@ -13,7 +13,7 @@ using namespace std;
 using namespace drs;
 namespace py = pybind11;
 
-extern void validatePython(py::module_ sysModule);
+
 extern UnitAction getAction(const std::string actionname);
 extern uint32_t getEntitySubType(uint32_t entityType, const std::string& name);
 extern ResourceType getResourceType(const std::string& name);
@@ -26,6 +26,41 @@ extern void validateEntities(pybind11::object module);
 extern bool isInstanceOf(py::object module,
                   py::handle entityDefinition,
                   const std::string& baseClass);
+
+
+void validatePython()
+{
+    py::module_ sys = py::module_::import("sys");
+
+    auto paths = sys.attr("path");
+    std::vector<std::string> pathVec;
+    spdlog::info("Python sys.path:");
+
+    for (auto item : paths)
+    {
+        spdlog::info("  {}", item.cast<std::string>());
+    }
+
+    // Try importing pydantic
+    py::module_ pydantic = py::module_::import("pydantic");
+    spdlog::info("Pydantic is found");
+
+    // Simple pydantic BaseModel test
+    py::exec(R"(
+from pydantic import BaseModel, ValidationError
+
+class MyModel(BaseModel):
+    x: int
+
+# valid instance
+m = MyModel(x=10)
+# invalid instance to see validation
+try:
+    m2 = MyModel(x="not an int")
+except ValidationError as e:
+    print("Validated pybind setup")
+)");
+}
 
 template <typename T> static T readValue(pybind11::handle object, const std::string& key)
 {
@@ -123,31 +158,10 @@ core::GraphicsLoadupDataProvider::Data EntityModelLoaderV2::getData(const core::
 
 void EntityModelLoaderV2::init()
 {
-    buildComponentModelMapping();
-    
-
-    if (!Py_IsInitialized())
-    {
-        py::initialize_interpreter();
-    }
-
-    /*py::scoped_interpreter guard{};*/
-
-    py::module_ sys = py::module_::import("sys");
-    //sys.attr("path").attr("insert")(0, "./assets/scripts");
-    //sys.attr("path").attr("insert")(0, m_scriptDir.c_str());
-
-
-    //sys.attr("path").attr("insert")(0,
-    //                                py::str(std::filesystem::absolute("./assets/scripts").string()));
-    //sys.attr("path").attr("insert")(0, py::str(std::filesystem::absolute(m_scriptDir).string()));
-
-    py::print("CWD:", py::module_::import("os").attr("getcwd")());
-    py::print("sys.path:", py::module_::import("sys").attr("path"));
-
-    validatePython(sys);
-
-    py::object module = py::module_::import((m_scriptDir + ".model_importer").c_str());
+    preprocessComponents();
+    initPython();
+    validatePython();
+    auto module = loadModelImporterModule();
     validateEntities(module);
     loadEntityTypes(module);
     loadAll(module);
@@ -171,6 +185,10 @@ void EntityModelLoaderV2::loadEntityTypes(const py::object& module)
         typeRegistry->registerEntityType(name, typeRegistry->getNextAvailableEntityType());
 }
 
+/*
+ *  Approach: Pass each model through all components types to see which component is interested
+ *  in the model. And populate the component accordingly.
+ */
 void EntityModelLoaderV2::loadAll(const py::object& module)
 {
     for (auto pyModel : module.attr("all_models"))
@@ -240,15 +258,24 @@ void EntityModelLoaderV2::postProcessing()
                 for (auto building : buildablesObj)
                 {
                     auto name = readValue<std::string>(building, "name");
-                    auto shortcut = readValue<std::string>(building, "shortcut");
-                    char key = 0;
-                    if (shortcut.empty() == false)
-                    {
-                        key = shortcut.c_str()[0];
-                    }
 
-                    entityNameByShortcut[key] = name;
-                    entityTypeByShortcut[key] = typeRegistry->getEntityType(name);
+                    if (typeRegistry->isValid(name))
+                    {
+                        auto shortcut = readValue<std::string>(building, "shortcut");
+                        char key = 0;
+                        if (shortcut.empty() == false)
+                        {
+                            key = shortcut.c_str()[0];
+                        }
+
+                        entityNameByShortcut[key] = name;
+                        entityTypeByShortcut[key] = typeRegistry->getEntityType(name);
+                    }
+                    else
+                    {
+                        spdlog::warn("Builder component of entity {} has invalid buildable {}",
+                                     entityName, name);
+                    }
                 }
                 PropertyInitializer::set<std::unordered_map<char, std::string>>(
                     builder->buildableNameByShortcut, entityNameByShortcut);
@@ -303,7 +330,7 @@ pybind11::object EntityModelLoaderV2::getUnprocessedField(const std::string& ent
     py::none();
 }
 
-void EntityModelLoaderV2::buildComponentModelMapping()
+void EntityModelLoaderV2::preprocessComponents()
 {
     for_each_variant_type<ComponentType>(
         [&]<typename Comp>()
@@ -332,4 +359,15 @@ EntityModelLoaderV2::EmplaceFn EntityModelLoaderV2::getEmplaceFunc(
         return it->second;
 
     return nullptr;
+}
+
+py::object EntityModelLoaderV2::loadModelImporterModule()
+{
+    return py::module_::import((m_scriptDir + ".model_importer").c_str());
+}
+
+void EntityModelLoaderV2::initPython()
+{
+    if (!Py_IsInitialized())
+        py::initialize_interpreter();
 }

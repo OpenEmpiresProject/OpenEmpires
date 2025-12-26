@@ -9,6 +9,13 @@ class CompHousing
 {
   public:
     Property<uint32_t> housingCapacity;
+
+  public:
+    static constexpr auto properties()
+    {
+        return std::tuple{
+            PropertyDesc<&CompHousing::housingCapacity>{"Housing", "housing_capacity"}};
+    }
 };
 } // namespace core
 

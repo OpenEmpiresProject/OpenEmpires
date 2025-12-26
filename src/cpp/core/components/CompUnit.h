@@ -18,6 +18,15 @@ class CompUnit
     Property<UnitType> type;
 
   public:
+    Property<uint32_t> typeInt;
+
+    static constexpr auto properties()
+    {
+        return std::tuple{PropertyDesc<&CompUnit::housingNeed>{"Unit", "housing_need"},
+                          PropertyDesc<&CompUnit::typeInt>{"Unit", "unit_type"}};
+    }
+
+  public:
     CommandQueueType commandQueue;
     bool isGarrisoned = false;
 };

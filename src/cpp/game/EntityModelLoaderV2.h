@@ -62,7 +62,10 @@ public:
     void init();
 
   private:
-    void buildComponentModelMapping();
+    void initPython();
+
+  private:
+    void preprocessComponents();
 
   private:
     uint32_t createEntity(uint32_t entityType, uint32_t entitySubType) override;
@@ -71,30 +74,29 @@ public:
     void loadAll(const pybind11::object& module);
     void loadEntityTypes(const pybind11::object& module);
     void postProcessing();
+    pybind11::object loadModelImporterModule();
 
 private:
     using ComponentType = std::variant<std::monostate,
+                                       core::CompAction,
                                        core::CompBuilder,
                                        core::CompBuilding,
-                                       core::CompEntityInfo>;
-  /*using ComponentType = std::variant<std::monostate,
-                                     core::CompAction,
-                                     core::CompAnimation,
-                                     core::CompBuilder,
-                                     core::CompBuilding,
-                                     core::CompEntityInfo,
-                                     core::CompGraphics,
-                                     core::CompPlayer,
-                                     core::CompRendering,
-                                     core::CompResource,
+                                       core::CompEntityInfo,
+                                       core::CompRendering,
+                                       core::CompPlayer,
                                      core::CompResourceGatherer,
+                                     core::CompResource,
                                      core::CompSelectible,
                                      core::CompTransform,
-                                     core::CompUnit,
                                      core::CompUnitFactory,
                                      core::CompGarrison,
                                      core::CompVision,
-                                     core::CompHousing>;*/
+                                     core::CompHousing,
+                                     core::CompGraphics,
+                                     core::CompUnit>;
+  /*
+                                     core::CompAnimation,
+ */
 
     struct ComponentHolder
     {

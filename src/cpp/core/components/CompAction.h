@@ -8,8 +8,9 @@ class CompAction
   public:
     int action = 0;
 
-    CompAction(int action) : action(action)
+    static constexpr auto properties()
     {
+        return std::tuple{/* No properties for now */};
     }
 };
 } // namespace core

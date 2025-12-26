@@ -9,6 +9,11 @@ class CompPlayer
 {
   public:
     Ref<Player> player;
+
+    static constexpr auto properties()
+    {
+        return std::tuple{/* No properties for now */};
+    }
 };
 
 } // namespace core

@@ -85,7 +85,6 @@ TEST_F(EntityModelLoaderTest, CreateBuilder)
     }
 }
 
-
 TEST_F(EntityModelLoaderTest, CreateBuilding)
 {
     try
@@ -112,4 +111,235 @@ TEST_F(EntityModelLoaderTest, CreateBuilding)
     }
 }
 
+TEST_F(EntityModelLoaderTest, CreateResource)
+{
+    try
+    {
+        // Arrange
+        EntityModelLoaderV2 loader("resource");
+        loader.init();
+
+        // Act
+        auto factory = dynamic_cast<EntityFactory*>(&loader);
+        auto entity = factory->createEntity(m_typeReg->getEntityType("gold"), 0);
+
+        // Assert
+        auto& resource = m_stateMan->getComponent<CompResource>(entity);
+        EXPECT_EQ(resource.resourceName.value(), "gold");
+        EXPECT_EQ(resource.resourceAmount.value(), 1000);
+    }
+    catch (const py::error_already_set& e)
+    {
+        FAIL() << e.what();
+    }
+}
+
+TEST_F(EntityModelLoaderTest, CreateGatherer)
+{
+    try
+    {
+        // Arrange
+        EntityModelLoaderV2 loader("gatherer");
+        loader.init();
+
+        // Act
+        auto factory = dynamic_cast<EntityFactory*>(&loader);
+        auto entity = factory->createEntity(m_typeReg->getEntityType("villager"), 0);
+
+        // Assert
+        auto& gatherer = m_stateMan->getComponent<CompResourceGatherer>(entity);
+        EXPECT_EQ(gatherer.capacity.value(), 100);
+        EXPECT_EQ(gatherer.gatherSpeed.value(), 10);
+    }
+    catch (const py::error_already_set& e)
+    {
+        FAIL() << e.what();
+    }
+}
+
+TEST_F(EntityModelLoaderTest, CreateSelectables)
+{
+    try
+    {
+        // Arrange
+        EntityModelLoaderV2 loader("selectable");
+        loader.init();
+
+        // Act
+        auto factory = dynamic_cast<EntityFactory*>(&loader);
+        auto villager = factory->createEntity(m_typeReg->getEntityType("villager"), 0);
+        auto mill = factory->createEntity(m_typeReg->getEntityType("mill"), 0);
+        auto gold = factory->createEntity(m_typeReg->getEntityType("gold"), 0);
+
+        // Assert
+        auto& villagerSelectible = m_stateMan->getComponent<CompSelectible>(villager);
+        auto& millSelectible = m_stateMan->getComponent<CompSelectible>(mill);
+        auto& goldSelectible = m_stateMan->getComponent<CompSelectible>(gold);
+
+        EXPECT_EQ(villagerSelectible.displayName.value(), "Villager");
+        EXPECT_EQ(millSelectible.displayName.value(), "Mill");
+        EXPECT_EQ(goldSelectible.displayName.value(), "Gold Mine");
+    }
+    catch (const py::error_already_set& e)
+    {
+        FAIL() << e.what();
+    }
+}
+
+TEST_F(EntityModelLoaderTest, CreateTransform)
+{
+    try
+    {
+        // Arrange
+        EntityModelLoaderV2 loader("selectable");
+        loader.init();
+
+        // Act
+        auto factory = dynamic_cast<EntityFactory*>(&loader);
+        auto villager = factory->createEntity(m_typeReg->getEntityType("villager"), 0);
+        auto mill = factory->createEntity(m_typeReg->getEntityType("mill"), 0);
+        auto gold = factory->createEntity(m_typeReg->getEntityType("gold"), 0);
+
+        // Assert
+        auto& villagerTransform = m_stateMan->getComponent<CompTransform>(villager);
+        auto& millTransform = m_stateMan->getComponent<CompTransform>(mill);
+        auto& goldTransform = m_stateMan->getComponent<CompTransform>(gold);
+
+        EXPECT_EQ(villagerTransform.speed.value(), 256);
+        EXPECT_TRUE(m_stateMan->hasComponent<CompTransform>(mill));
+        EXPECT_TRUE(m_stateMan->hasComponent<CompTransform>(gold));
+    }
+    catch (const py::error_already_set& e)
+    {
+        FAIL() << e.what();
+    }
+}
+
+TEST_F(EntityModelLoaderTest, CreateUnit)
+{
+    try
+    {
+        // Arrange
+        EntityModelLoaderV2 loader("unit");
+        loader.init();
+
+        // Act
+        auto factory = dynamic_cast<EntityFactory*>(&loader);
+        auto militia = factory->createEntity(m_typeReg->getEntityType("militia"), 0);
+
+        // Assert
+        auto& unitComp = m_stateMan->getComponent<CompUnit>(militia);
+
+        EXPECT_EQ(unitComp.housingNeed.value(), 1);
+        EXPECT_EQ(unitComp.typeInt.value(), 2);
+    }
+    catch (const py::error_already_set& e)
+    {
+        FAIL() << e.what();
+    }
+}
+
+TEST_F(EntityModelLoaderTest, CreateUnitFactory)
+{
+    try
+    {
+        // Arrange
+        EntityModelLoaderV2 loader("unit_factory");
+        loader.init();
+
+        // Act
+        auto factory = dynamic_cast<EntityFactory*>(&loader);
+        auto barracks = factory->createEntity(m_typeReg->getEntityType("barracks"), 0);
+
+        // Assert
+        auto& factoryComp = m_stateMan->getComponent<CompUnitFactory>(barracks);
+
+        EXPECT_EQ(factoryComp.maxQueueSize.value(), 10);
+        EXPECT_EQ(factoryComp.unitCreationSpeed.value(), 40);
+    }
+    catch (const py::error_already_set& e)
+    {
+        FAIL() << e.what();
+    }
+}
+
+TEST_F(EntityModelLoaderTest, CreateGarrison)
+{
+    try
+    {
+        // Arrange
+        EntityModelLoaderV2 loader("garrison");
+        loader.init();
+
+        // Act
+        auto factory = dynamic_cast<EntityFactory*>(&loader);
+        auto tc = factory->createEntity(m_typeReg->getEntityType("town_center"), 0);
+
+        // Assert
+        auto& garrison = m_stateMan->getComponent<CompGarrison>(tc);
+
+        EXPECT_EQ(garrison.capacity.value(), 10);
+        EXPECT_EQ(garrison.unitTypesInt.value().size(), 1);
+        EXPECT_EQ(garrison.unitTypesInt.value()[0], 1);
+    }
+    catch (const py::error_already_set& e)
+    {
+        FAIL() << e.what();
+    }
+}
+
+TEST_F(EntityModelLoaderTest, CreateVision)
+{
+    try
+    {
+        // Arrange
+        EntityModelLoaderV2 loader("vision");
+        loader.init();
+
+        // Act
+        auto factory = dynamic_cast<EntityFactory*>(&loader);
+        auto villager = factory->createEntity(m_typeReg->getEntityType("villager"), 0);
+        auto mill = factory->createEntity(m_typeReg->getEntityType("mill"), 0);
+
+        // Assert
+        auto& villagerVision = m_stateMan->getComponent<CompVision>(villager);
+        auto& millVision = m_stateMan->getComponent<CompVision>(mill);
+
+        EXPECT_EQ(villagerVision.lineOfSight.value(), 256 * 5);
+        EXPECT_EQ(villagerVision.lineOfSightShapeStr.value(), "circle");
+        EXPECT_EQ(villagerVision.activeTracking.value(), false);
+
+        EXPECT_EQ(millVision.lineOfSight.value(), 256 * 6);
+        EXPECT_EQ(millVision.lineOfSightShapeStr.value(), "rounded_square");
+        EXPECT_EQ(millVision.activeTracking.value(), true);
+
+    }
+    catch (const py::error_already_set& e)
+    {
+        FAIL() << e.what();
+    }
+}
+
+TEST_F(EntityModelLoaderTest, CreateHousing)
+{
+    try
+    {
+        // Arrange
+        EntityModelLoaderV2 loader("housing");
+        loader.init();
+
+        // Act
+        auto factory = dynamic_cast<EntityFactory*>(&loader);
+        auto house = factory->createEntity(m_typeReg->getEntityType("house"), 0);
+
+        // Assert
+        auto& housingComp = m_stateMan->getComponent<CompHousing>(house);
+
+        EXPECT_EQ(housingComp.housingCapacity.value(), 5);
+    }
+    catch (const py::error_already_set& e)
+    {
+        FAIL() << e.what();
+    }
+}
 } // namespace game
