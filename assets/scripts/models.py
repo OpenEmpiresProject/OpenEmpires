@@ -494,3 +494,6 @@ all_ui_elements: List[UIElement] = [
                         graphic=SingleGraphic(drs_file="interfac.drs", slp_id=51000),
                         variation_filter={GraphicVariantType.THEME:"default"})]),)
 ]
+
+lists = [all_units, all_natural_resources, all_buildings, all_construction_sites, all_tilesets, all_ui_elements]
+all_models = [x for lst in lists for x in lst]

@@ -19,6 +19,23 @@ using namespace std;
 using namespace drs;
 namespace py = pybind11;
 
+
+void validateEntities(pybind11::object module)
+{
+    py::object validateAllFunc = module.attr("validate_all");
+    py::object result = validateAllFunc();
+    bool success = result.cast<bool>();
+
+    if (success == false)
+    {
+        throw std::runtime_error("Entity validation failed");
+    }
+    else
+    {
+        spdlog::debug("Entity validation passed");
+    }
+}
+
 UnitAction getAction(const std::string actionname)
 {
     static unordered_map<string, UnitAction> actions = {
@@ -1242,21 +1259,6 @@ void EntityModelLoader::loadEntityTypes(pybind11::object module)
     }
 }
 
-void EntityModelLoader::validateEntities(pybind11::object module)
-{
-    py::object validateAllFunc = module.attr("validate_all");
-    py::object result = validateAllFunc();
-    bool success = result.cast<bool>();
-
-    if (success == false)
-    {
-        throw std::runtime_error("Entity validation failed");
-    }
-    else
-    {
-        spdlog::debug("Entity validation passed");
-    }
-}
 
 game::ComponentType EntityModelLoader::createCompGarrison(pybind11::object module,
                                                           pybind11::handle entityDefinition)

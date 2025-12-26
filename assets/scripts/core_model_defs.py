@@ -9,6 +9,10 @@ class _Constructible:
         self.__dict__.update(kwargs)
 
 
+class Model:
+    name: str
+
+
 class Rect(_Constructible):
     x: int
     y: int
@@ -79,8 +83,7 @@ class Vision:
     active_tracking: bool = False
 
 
-class Unit(Vision):
-    name: str
+class Unit(Vision, Model):
     display_name: str
     moving_speed: int
     animations: List[Animation]
@@ -104,8 +107,7 @@ class Gatherer:
     resource_capacity: int
 
 
-class NaturalResource(_Constructible):
-    name: str
+class NaturalResource(_Constructible, Model):
     display_name: str
     resource_amount: int
     graphics: Graphic
@@ -122,8 +124,7 @@ class Tree(NaturalResource, _Constructible):
     stump: NaturalResourceAdditionalPart
 
 
-class Building(Vision):
-    name: str
+class Building(Vision, Model):
     display_name: str
     line_of_sight_shape: LineOfSightShape = LineOfSightShape.ROUNDED_SQUARE
     size: str
@@ -156,20 +157,18 @@ class Garrison:
     garrison_capacity: int
 
 
-class ConstructionSite(_Constructible):
+class ConstructionSite(_Constructible, Model):
     name: str = "construction_site"
     size: str
     graphics: Graphic
     progress_frame_map: Dict[int, int]
 
 
-class TileSet(_Constructible):
-    name: str
+class TileSet(_Constructible, Model):
     graphics: Graphic
 
 
-class UIElement(_Constructible):
-    name: str
+class UIElement(_Constructible, Model):
     graphics: Graphic
 
 

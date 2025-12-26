@@ -16,6 +16,11 @@ class CompBuilder
     Property<std::unordered_map<char, std::string>> buildableNameByShortcut;
 
   public:
+    static constexpr auto properties()
+    {
+        return std::tuple{PropertyDesc<&CompBuilder::buildSpeed>{"Builder", "build_speed"}};
+    }
+  public:
     uint32_t target = entt::null;
 };
 } // namespace core

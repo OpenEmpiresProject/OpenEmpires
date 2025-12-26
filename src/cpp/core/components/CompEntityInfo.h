@@ -12,7 +12,14 @@ class CompEntityInfo
 {
   public:
     Property<uint32_t> entityId{(uint32_t) entt::null};
-    Property<int> entityType;
+    Property<uint32_t> entityType = 0;
+    Property<std::string> entityName;
+
+  public:
+    static constexpr auto properties()
+    {
+        return std::tuple{PropertyDesc<&CompEntityInfo::entityName>{"Model", "name"}};
+    }
 
   public:
     // TODO: entitySubType cannot be convert to a Property yet it is forcefully
@@ -23,6 +30,8 @@ class CompEntityInfo
     bool isDestroyed = false;
     bool isEnabled = true;
     int state = 0;
+
+    CompEntityInfo() = default;
 
     CompEntityInfo(int entityType) : entityType(entityType)
     {

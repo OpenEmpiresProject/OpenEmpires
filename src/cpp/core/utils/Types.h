@@ -255,6 +255,19 @@ struct LandArea
     std::vector<Tile> tiles;
 };
 
+template <size_t N> struct FixedString
+{
+    char value[N]{};
+
+    constexpr FixedString(const char (&str)[N])
+    {
+        std::copy_n(str, N, value);
+    }
+
+    // Needed for comparisons in constexpr contexts
+    constexpr auto operator<=>(const FixedString&) const = default;
+};
+
 } // namespace core
 
 #endif

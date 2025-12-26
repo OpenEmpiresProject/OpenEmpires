@@ -15,6 +15,12 @@ set_target_properties(openEmpiresTests PROPERTIES
 
 target_link_libraries(openEmpiresTests PRIVATE game core GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
 
+target_compile_definitions(openEmpiresTests PRIVATE
+    TEST_PYTHON_MODEL_DIR="${CMAKE_SOURCE_DIR}/tests/python"
+)
+target_compile_definitions(openEmpiresTests PRIVATE
+    PYTHON_MODEL_DIR="${CMAKE_SOURCE_DIR}/assets/scripts"
+)
 # Include directories for the C++ source files
 include_directories(${CMAKE_SOURCE_DIR}/src/cpp)
 enable_testing()
