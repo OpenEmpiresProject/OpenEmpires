@@ -1,5 +1,6 @@
 #include "EntityTypeRegistry.h"
 
+#include "debug.h"
 #include "logging/Logger.h"
 
 #include <algorithm>
@@ -19,6 +20,8 @@ bool EntityTypeRegistry::isValid(const std::string& name) const
 
 uint32_t EntityTypeRegistry::getEntityType(const std::string& name) const
 {
+    debug_assert(isValid(name), "Entity name {} is not registered", name);
+
     return m_entityTypesByNames.at(name);
 }
 

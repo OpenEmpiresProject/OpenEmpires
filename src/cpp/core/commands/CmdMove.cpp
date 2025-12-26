@@ -74,13 +74,16 @@ void CmdMove::onQueue()
         auto tileEntity = m_stateMan->gameMap().getEntity(MapLayerType::GROUND, targetPos.toTile());
         auto& graphics = m_stateMan->getComponent<CompGraphics>(tileEntity);
 
-        graphics.debugOverlays.clear();
-        DebugOverlay filledCircle;
-        filledCircle.type = DebugOverlay::Type::FILLED_CIRCLE;
-        filledCircle.color = Color::RED;
-        filledCircle.absolutePosition = targetPos;
-        graphics.debugOverlays.push_back(filledCircle);
-        StateManager::markDirty(tileEntity);
+        if (not graphics.debugOverlays.empty())
+        {
+            graphics.debugOverlays.clear();
+            DebugOverlay filledCircle;
+            filledCircle.type = DebugOverlay::Type::FILLED_CIRCLE;
+            filledCircle.color = Color::RED;
+            filledCircle.absolutePosition = targetPos;
+            graphics.debugOverlays.push_back(filledCircle);
+            StateManager::markDirty(tileEntity);
+        }
 #endif
     }
 }
@@ -188,20 +191,24 @@ bool CmdMove::move(int deltaTimeMs)
 #ifndef NDEBUG
             auto& debugOverlays = m_stateMan->getComponent<CompGraphics>(m_entityID).debugOverlays;
 
-            if (separationForce != Feet(0, 0))
-                debugOverlays[1].arrowEnd = m_coordinates->feetToScreenUnits(
-                    (m_components->transform.position + (separationForce)));
-            else
-                debugOverlays[1].arrowEnd = Vec2::zero;
+            if (not debugOverlays.empty())
+            {
+                if (separationForce != Feet(0, 0))
+                    debugOverlays[1].arrowEnd = m_coordinates->feetToScreenUnits(
+                        (m_components->transform.position + (separationForce)));
+                else
+                    debugOverlays[1].arrowEnd = Vec2::zero;
 
-            if (avoidanceForce != Feet(0, 0))
-                debugOverlays[2].arrowEnd = m_coordinates->feetToScreenUnits(
-                    (m_components->transform.position + (avoidanceForce)));
-            else
-                debugOverlays[2].arrowEnd = Vec2::zero;
+                if (avoidanceForce != Feet(0, 0))
+                    debugOverlays[2].arrowEnd = m_coordinates->feetToScreenUnits(
+                        (m_components->transform.position + (avoidanceForce)));
+                else
+                    debugOverlays[2].arrowEnd = Vec2::zero;
 
-            debugOverlays[4].arrowEnd =
-                m_coordinates->feetToScreenUnits((m_components->transform.position + (finalDir)));
+                debugOverlays[4].arrowEnd = m_coordinates->feetToScreenUnits(
+                    (m_components->transform.position + (finalDir)));
+            }
+
 #endif
 
             finalDir = finalDir.normalized();
@@ -238,9 +245,14 @@ void CmdMove::setPosition(const Feet& newPosFeet)
     const auto newTile = newPosFeet.toTile();
 
 #ifndef NDEBUG
-    m_stateMan->getComponent<CompGraphics>(m_entityID).debugOverlays[0].arrowEnd =
-        m_coordinates->feetToScreenUnits(
-            (newPosFeet + (m_components->transform.getVelocityVector() * 2)));
+    auto& debugOverlays = m_stateMan->getComponent<CompGraphics>(m_entityID).debugOverlays;
+    if (not debugOverlays.empty())
+    {
+        m_stateMan->getComponent<CompGraphics>(m_entityID).debugOverlays[0].arrowEnd =
+            m_coordinates->feetToScreenUnits(
+                (newPosFeet + (m_components->transform.getVelocityVector() * 2)));
+    }
+
 #endif
 
     if (oldTile != newTile)
@@ -460,8 +472,13 @@ Feet CmdMove::avoidCollision()
                                        m_components->transform.position, rayEnd);
 
 #ifndef NDEBUG
-    m_stateMan->getComponent<CompGraphics>(m_entityID).debugOverlays[3].arrowEnd =
-        m_coordinates->feetToScreenUnits(rayEnd);
+    auto& debugOverlays = m_stateMan->getComponent<CompGraphics>(m_entityID).debugOverlays;
+    if (not debugOverlays.empty())
+    {
+        m_stateMan->getComponent<CompGraphics>(m_entityID).debugOverlays[3].arrowEnd =
+            m_coordinates->feetToScreenUnits(rayEnd);
+    }
+
 #endif
 
     if (unitToAvoid != entt::null)
@@ -720,4 +737,9 @@ bool CmdMove::isTargetCloseEnough() const
         return m_components->transform.position.distanceSquared(targetPos) <
                m_components->transform.goalRadiusSquared;
     }
+}
+
+core::Command* CmdMove::clone()
+{
+    return ObjectPool<CmdMove>::acquire(*this);
 }

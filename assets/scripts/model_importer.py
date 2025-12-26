@@ -142,7 +142,6 @@ def validate_all() -> bool:
     errors_count += validate_entity_list(all_units)
     errors_count += validate_entity_list(all_natural_resources)
     errors_count += validate_entity_list(all_buildings)
-    errors_count += validate_entity_list(all_construction_sites)
     errors_count += validate_entity_list(all_tilesets)
     errors_count += validate_entity_list(all_ui_elements)
 

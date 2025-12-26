@@ -1,62 +1,16 @@
 from typing import Dict, List, Optional, Union
 from enum import IntEnum, Enum
+from graphic_defs import *
 
 # Core entity definitions. These definitions are known to the game. It is possible to compose these
 # to define new entity types. But not possible to change these.
-
 class _Constructible:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 
 
-class Rect(_Constructible):
-    x: int
-    y: int
-    w: int
-    h: int
-
-
-class Point(_Constructible):
-    x: int
-    y: int
-
-
-class SingleGraphic(_Constructible):
-    drs_file: str = "graphics.drs"
-    slp_id: int
-    clip_rect: Optional[Rect]
-    anchor: Optional[Point]
-    flip: bool = False
-    frame_index: Optional[int]
-
-
-class CompositeGraphic(_Constructible):
-    parts: List[SingleGraphic]
-    anchor: Point
-    flip: bool = False
-
-
-
-class GraphicVariant(_Constructible):
-    graphic: Union[SingleGraphic, CompositeGraphic]
-    variation_filter: Dict[str, str]
-
-
-class Graphic(_Constructible):
-    variants: List[GraphicVariant]
-
-
-class Animation(_Constructible):
+class Model:
     name: str
-    frame_count: int = 15
-    speed: int = 10
-    drs_file: str = "graphics.drs"
-    slp_id: int
-    repeatable: bool = True
-
-
-class Icon(SingleGraphic):
-    index: int
 
 
 class UnitType(IntEnum):
@@ -71,6 +25,11 @@ class UnitType(IntEnum):
 class LineOfSightShape(str, Enum):
     CIRCLE = "circle"
     ROUNDED_SQUARE = "rounded_square"
+    
+
+class Selectable:
+    display_name: str
+    graphics: Graphic # Use for Icon at the moment
 
 
 class Vision:
@@ -79,19 +38,14 @@ class Vision:
     active_tracking: bool = False
 
 
-class Unit(Vision):
-    name: str
-    display_name: str
-    moving_speed: int
+class Animated:
     animations: List[Animation]
-    icon: Icon
+
+
+class Unit(Vision, Model, Selectable, Animated):
+    moving_speed: int
     housing_need: int
     unit_type: UnitType
-
-
-class Shortcut(_Constructible):
-    name: str
-    shortcut: str # A single character shortcut. Relative to the selection.
 
 
 class Builder:
@@ -104,12 +58,9 @@ class Gatherer:
     resource_capacity: int
 
 
-class NaturalResource(_Constructible):
-    name: str
-    display_name: str
+class NaturalResource(_Constructible, Model, Selectable):
     resource_amount: int
     graphics: Graphic
-    icon: Icon
 
 
 class NaturalResourceAdditionalPart(_Constructible):
@@ -119,18 +70,17 @@ class NaturalResourceAdditionalPart(_Constructible):
 
 class Tree(NaturalResource, _Constructible):
     shadow: NaturalResourceAdditionalPart
-    stump: NaturalResourceAdditionalPart
 
 
-class Building(Vision):
-    name: str
-    display_name: str
+class Building(Vision, Model, Selectable):
     line_of_sight_shape: LineOfSightShape = LineOfSightShape.ROUNDED_SQUARE
     size: str
+    construction_site: str  # Construction site name
     graphics: Graphic
-    icon: Icon
     connected_constructions_allowed: Optional[bool] # Allows to constructing series of same building such as walls
     default_orientation: Optional[str]
+    progress_frame_map: Dict[int, int] = {33:0, 66:1, 99:2, 100:0}
+
 
 
 class CompoSiteGraphicBuilding(Building):
@@ -156,20 +106,11 @@ class Garrison:
     garrison_capacity: int
 
 
-class ConstructionSite(_Constructible):
-    name: str = "construction_site"
-    size: str
-    graphics: Graphic
-    progress_frame_map: Dict[int, int]
-
-
-class TileSet(_Constructible):
-    name: str
+class TileSet(_Constructible, Model):
     graphics: Graphic
 
 
-class UIElement(_Constructible):
-    name: str
+class UIElement(_Constructible, Model):
     graphics: Graphic
 
 
@@ -181,7 +122,6 @@ def get_all_core_defs():
             SingleGraphic.__name__: SingleGraphic,
             GraphicVariant.__name__: GraphicVariant,
             Animation.__name__: Animation,
-            Icon.__name__: Icon,
             Unit.__name__: Unit,
             Shortcut.__name__: Shortcut,
             Builder.__name__: Builder,
@@ -193,6 +133,5 @@ def get_all_core_defs():
             ResourceDropOff.__name__: ResourceDropOff,
             UnitFactory.__name__: UnitFactory,
             Housing.__name__: Housing,
-            ConstructionSite.__name__: ConstructionSite,
             TileSet.__name__: TileSet,
             UIElement.__name__: UIElement}

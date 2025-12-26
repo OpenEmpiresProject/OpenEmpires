@@ -28,6 +28,7 @@ class MockCommand : public Command
 
     void onStart() {};
     void onQueue() {};
+    Command* clone() { return nullptr; };
 };
 
 class CommandCenterTest : public ::testing::Test

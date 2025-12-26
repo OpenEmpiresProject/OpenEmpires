@@ -81,7 +81,7 @@ std::tuple<CompEntityInfo&, CompBuilding&> BuildingManager::createBuilding(
     const BuildingPlacementData& request)
 {
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
-    auto entity = factory->createEntity(request.entityType, 0);
+    auto entity = factory->createEntity(request.entityType);
 
     auto [transform, playerComp, building, info] =
         m_stateMan->getComponents<CompTransform, CompPlayer, CompBuilding, CompEntityInfo>(entity);
@@ -94,7 +94,6 @@ std::tuple<CompEntityInfo&, CompBuilding&> BuildingManager::createBuilding(
     building.orientation = request.orientation;
     building.updateLandArea(transform.position);
 
-    info.entitySubType = building.constructionSiteEntitySubType;
     info.variation = building.getVariationByConstructionProgress();
     info.isDestroyed = true; // This building will be abandoned if placement test comes false
 
@@ -169,13 +168,9 @@ void BuildingManager::updateInProgressConstructions()
             {
                 onCompleteBuilding(entity, building, vision, transform, player, info);
                 info.variation = 0;
-
-                // Reseting entity sub type will essentially remove construction site
-                info.entitySubType = 0;
             }
 
-            spam("Progress {}, Building subtype: {}, variation {}", building.constructionProgress,
-                 info.entitySubType, info.variation);
+            spam("Progress {}, variation {}", building.constructionProgress, info.variation);
 
             if (building.constructionProgress > 1 && building.isInStaticMap == false)
             {

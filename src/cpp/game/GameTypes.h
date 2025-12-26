@@ -12,30 +12,37 @@ enum EntityTypes
     ET_TILE = 2,
     ET_VILLAGER = 3,
     ET_TREE = 4,
-    ET_CONSTRUCTION_SITE = 5,
+    // ET_CONSTRUCTION_SITE = 5,
 
     ET_UI_ELEMENT = 10000
 };
 
-enum EntitySubTypes
+enum class BuildingSizeTypes
 {
-    EST_UI_RESOURCE_PANEL = 1,
-    EST_UI_CONTROL_PANEL = 2,
-    UI_UNIT_ICON = 3,
-    UI_NATURAL_RESOURCE_ICON = 4,
-    UI_BUILDING_ICON = 5,
-    UI_PROGRESS_BAR = 6,
-    UI_CURSOR = 7,
+    UNKNOWN = 0,
+    SMALL_SIZE = 1,
+    MEDIUM_SIZE = 2,
+    LARGE_SIZE = 3,
+    HUGE_SIZE = 4,
+    GATE_SIZE = 5
+};
 
-    EST_SMALL_SIZE = 1,
-    EST_MEDIUM_SIZE = 2,
-    EST_LARGE_SIZE = 3,
-    EST_HUGE_SIZE = 4,
-    EST_GATE_SIZE = 5,
+enum class UIElementTypes
+{
+    UNKNOWN = 0,
+    RESOURCE_PANEL = 1,
+    CONTROL_PANEL = 2,
+    UNIT_ICON = 3,
+    NATURAL_RESOURCE_ICON = 4,
+    BUILDING_ICON = 5,
+    PROGRESS_BAR = 6,
+    CURSOR = 7,
+};
 
-    EST_DEFAULT = 0,
-    EST_CHOPPED_TREE = 1,
-    EST_TREE_SHADOW = 2
+enum class TreeState
+{
+    DEFAULT = 0,
+    STUMP = 1
 };
 
 enum ResourceType : uint8_t

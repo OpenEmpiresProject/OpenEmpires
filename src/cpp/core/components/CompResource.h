@@ -16,6 +16,10 @@ class CompResource
     Property<InGameResource> original;
 
   public:
+    Property<std::string> resourceName;
+    Property<uint32_t> resourceAmount; // TODO: Isn't this a duplicate of original.amount?
+
+  public:
     uint32_t remainingAmount = 0;
 
     // Relying on externally provided own position to avoid coupling CompTransform with this class

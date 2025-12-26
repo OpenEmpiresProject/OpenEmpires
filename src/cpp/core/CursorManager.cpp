@@ -35,8 +35,7 @@ void CursorManager::onInit(EventLoop& eventLoop)
 
     m_stateMan->addComponent<CompTransform>(m_cursorEntityId);
 
-    CompEntityInfo info(m_cursorComp->cursor.entityType, m_cursorComp->cursor.entitySubType,
-                        m_cursorComp->cursor.variation);
+    CompEntityInfo info(m_cursorComp->cursor.entityType, m_cursorComp->cursor.variation);
     PropertyInitializer::set(info.entityId, m_cursorEntityId);
 
     m_stateMan->addComponent<CompEntityInfo>(m_cursorEntityId, info);

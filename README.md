@@ -20,20 +20,20 @@ openEmpires is a cross-platform clone of Age of Empires 2, designed to provide a
 
 ## Getting Started
 
-### Prerequisites
-
+### Step 1: Install Prerequisites
+Have following installed on your system;
 - CMake (version 3.10 or higher)
 - A C++ compiler (GCC, Clang, or MSVC) - Tested against MSVC 19
-- Python 3.x
+- Python (version 3.9 or higher)
 - Make
 - vcpkg (for C++ package management)
-- [optional] clang-forma
+- [optional] clang-format
 - [optional] cppcheck
 
 #### Installation Options (Windows)
 - CMake - can be installed with visual studio on Windows
 - A C++ compiler - can be installed with visual studio on Windows
-- Python 3.x - can be installed with visual studio on Windows
+- Python >3.9 - can be installed with visual studio on Windows
 - Make - can be installed with msys2 on Windows. nmake would not work.
 - vcpkg - can be installed with visual studio on Windows
 - clang-format - can be installed using pip
@@ -41,7 +41,7 @@ openEmpires is a cross-platform clone of Age of Empires 2, designed to provide a
 
 > Note: If required clone and setup vcpkg manually to get the latest package list.
 
-#### Dependencies
+#### C++ Dependencies
 - SDL3
 - SDL3-image
 - GTest
@@ -52,10 +52,11 @@ openEmpires is a cross-platform clone of Age of Empires 2, designed to provide a
 
 > Note: Above dependencies will be automatically installed with `make configure` (later step)
 
-#### Setting env variables
+### Step 2: Setup env variables
 - Add path to CMake to the PATH variable
 - Add path to C++ compiler to the PATH variable
 - Add path to vcpkg to the PATH variable
+- Add path to Make to the PATH variable
 - Define VCPKG_ROOT env variable which points to the vcpkg path
 
 An example env setup in Windows might look like this;
@@ -71,14 +72,15 @@ $pathsToAdd = @(
 $currentPath = [System.Environment]::GetEnvironmentVariable("PATH", "User")
 $newPath = $currentPath + ";" + ($pathsToAdd -join ";")
 
-setx PATH $newPath
+[System.Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
 setx VCPKG_ROOT "D:\Projects\openEmpires\vcpkg\vcpkg"
 ```
 
-> Note: Using setx will not update current session, a shell/IDE restart will be required after above.
+> Note: Mindful of character limitation in PATH variable and setx command. A better alternative is shown above.
+> Note: Above will not update current session, a shell/IDE restart will be required.
 > Note: Above example assumes pip installations were done globally (from a shell with admin rights)
 
-### Building the Project
+### Step 3: Building the Project
 
 1. Clone the repository:
 
@@ -101,9 +103,9 @@ setx VCPKG_ROOT "D:\Projects\openEmpires\vcpkg\vcpkg"
 
 > NOTE: If you get an error similar to `Cannot open include file: 'Version.h': No such file or directory`, just configure it again using `make configure` and build using `make` (this is a oneoff error)
 
-### Running the Game
+### Step 4: Running the Game
 
-> ⚠️ **Note:** You must have the original `graphics.drs` and `terrain.drs` files from the *Age of Conquerors* (AoC) data folder.  
+> ⚠️ **Note:** You must have the original `graphics.drs`, `terrain.drs`, and `interfac.drs` files from the *Age of Conquerors* (AoC) data folder.  
 Place these files inside a folder named **assets** in the same directory as the `openEmpires` executable.
 
 

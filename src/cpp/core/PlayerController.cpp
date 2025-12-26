@@ -427,7 +427,7 @@ uint32_t PlayerController::getOrCreateBuildingEntity(uint32_t buildingType)
     else
     {
         auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
-        entity = factory->createEntity(buildingType, 0);
+        entity = factory->createEntity(buildingType);
     }
     return entity;
 }

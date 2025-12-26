@@ -16,7 +16,6 @@ TEST(GraphicsIDTest, DefaultConstructor)
     EXPECT_EQ(defaultID.action, 0);
     EXPECT_EQ(defaultID.frame, 0);
     EXPECT_EQ(defaultID.direction, Direction::NONE);
-    EXPECT_EQ(defaultID.entitySubType, 0);
     EXPECT_EQ(defaultID.variation, 0);
     EXPECT_EQ(defaultID.reserved, 0);
 }
@@ -27,7 +26,6 @@ TEST(GraphicsIDTest, ToString)
 
     GraphicsID id3;
     id3.entityType = 6;
-    id3.entitySubType = 7;
     std::string idStr = id3.toString();
     std::cout << "GraphicsID toString: " << idStr << std::endl;
 }
@@ -38,7 +36,6 @@ TEST(GraphicsIDTest, PlayerIdInToString)
 
     GraphicsID id;
     id.entityType = 1;
-    id.entitySubType = 2;
     id.action = 3;
     id.frame = 4;
     id.direction = Direction::WEST;

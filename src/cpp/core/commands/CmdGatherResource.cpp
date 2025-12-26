@@ -134,6 +134,11 @@ std::string core::CmdGatherResource::toString() const
     return "gather-resource";
 }
 
+core::Command* core::CmdGatherResource::clone()
+{
+    return ObjectPool<CmdGatherResource>::acquire(*this);
+}
+
 void core::CmdGatherResource::destroy()
 {
     ObjectPool<CmdGatherResource>::release(this);

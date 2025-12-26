@@ -98,13 +98,17 @@ void GraphicsInstructor::updateGraphicComponents()
         gc.positionInFeet = transform.position;
         gc.direction = static_cast<uint64_t>(transform.getIsometricDirection());
         gc.variation = entityInfo.variation;
-        gc.entitySubType = entityInfo.entitySubType;
         gc.entityType = entityInfo.entityType;
         gc.isDestroyed = entityInfo.isDestroyed;
         gc.isEnabled = entityInfo.isEnabled;
         gc.entityID = entityInfo.entityId;
         gc.bypass = false;
         gc.state = entityInfo.state;
+
+        if (gc.entityType == 0)
+        {
+            int iii = 0;
+        }
 
         if (m_stateManager->hasComponent<CompSelectible>(entity))
         {
@@ -143,6 +147,7 @@ void GraphicsInstructor::updateGraphicComponents()
             gc.orientation = (int) building.orientation;
 
             gc.landArea = building.landArea;
+            gc.isConstructing = int(not building.isConstructed());
         }
 
         if (m_stateManager->hasComponent<CompUIElement>(entity))
@@ -165,8 +170,9 @@ void GraphicsInstructor::updateGraphicComponents()
                 if (ui.backgroundImage.isValid())
                 {
                     gc.entityType = ui.backgroundImage.entityType;
-                    gc.entitySubType = ui.backgroundImage.entitySubType;
+                    // gc.uiElementType = ui.backgroundImage.uiElementType;
                     gc.variation = ui.backgroundImage.variation;
+                    gc.isIcon = ui.backgroundImage.isIcon;
                 }
             }
         }

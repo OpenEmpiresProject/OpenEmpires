@@ -14,21 +14,8 @@
 using namespace core;
 using namespace core::ui;
 
-Widget::Widget(Ref<Widget> parent)
-    : id(ServiceRegistry::getInstance().getService<StateManager>()->createEntity()), parent(parent)
+Widget::Widget(Ref<Widget> parent, uint32_t id) : id(id), parent(parent)
 {
-    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(id, CompUIElement());
-    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(id, CompTransform());
-
-    CompGraphics graphics;
-    graphics.entityID = id;
-    graphics.layer = GraphicLayer::UI;
-    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(id, graphics);
-    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(id, CompRendering());
-
-    CompEntityInfo entityInfo(s_entityType, s_entitySubType, 0);
-    entityInfo.entityId = id;
-    ServiceRegistry::getInstance().getService<StateManager>()->addComponent(id, entityInfo);
 }
 
 void Widget::feedInput(const Event& e)
@@ -176,7 +163,7 @@ void Widget::setSize(int width, int height)
     rect.h = height;
 }
 
-Label::Label(Ref<Widget> parent) : Widget(parent)
+Label::Label(Ref<Widget> parent, uint32_t id) : Widget(parent, id)
 {
 }
 
@@ -206,7 +193,7 @@ void Label::updateGraphicCommand()
         ui.type = UIRenderingType::TEXT;
 }
 
-Button::Button(Ref<Widget> parent) : Widget(parent)
+Button::Button(Ref<Widget> parent, uint32_t id) : Widget(parent, id)
 {
 }
 
@@ -226,11 +213,11 @@ void Button::feedInput(const Event& e)
     }
 }
 
-Window::Window() : Widget(nullptr)
+Window::Window(uint32_t id) : Widget(nullptr, id)
 {
 }
 
-Layout::Layout(Ref<Widget> parent) : Widget(parent)
+Layout::Layout(Ref<Widget> parent, uint32_t id) : Widget(parent, id)
 {
 }
 

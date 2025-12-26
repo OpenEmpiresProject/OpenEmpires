@@ -20,6 +20,7 @@ void CommandCenter::onCommandRequest(const Event& e)
     if (data.command->getPriority() == -1)
         data.command->setPriority(Command::DEFAULT_PRIORITY + Command::CHILD_PRIORITY_OFFSET);
     data.command->setEntityID(data.entity);
+    data.command->init();
 
     CompUnit& unit =
         ServiceRegistry::getInstance().getService<StateManager>()->getComponent<CompUnit>(
@@ -63,6 +64,7 @@ void CommandCenter::onTick(const Event& e)
                 for (auto subCmd : newCommands)
                 {
                     subCmd->setEntityID(entity);
+                    subCmd->init();
                     unit.commandQueue.push(subCmd);
                     subCmd->onQueue();
                 }

@@ -36,9 +36,6 @@ public:
 
     uint32_t villager = entt::null;
     int playerId = -1;
-    const uint32_t houseEntityType = 12;
-    const uint32_t palisadeEntityType = 15;
-    const uint32_t gateEntityType = 17;
 };
 
 class ConstructionTestOrientationParams : public ConstructionTest,
@@ -49,6 +46,7 @@ class ConstructionTestOrientationParams : public ConstructionTest,
 
 TEST_F(ConstructionTest, Placement) 
 {
+    int houseEntityType = m_api->getEntityType("house");
     m_api->placeBuilding(playerId, houseEntityType, Feet(6000, 6000));
 
     ASSERT_WAIT_FOR(m_api->getConstructionSites(playerId).size() == 1, 1000);
@@ -56,6 +54,7 @@ TEST_F(ConstructionTest, Placement)
 
 TEST_F(ConstructionTest, PlaceAndBuildHouse)
 {
+    int houseEntityType = m_api->getEntityType("house");
     m_api->placeBuilding(playerId, houseEntityType, Feet(5500, 5500));
 
     ASSERT_WAIT_FOR(m_api->getConstructionSites(playerId).size() == 1, 1000);
@@ -70,6 +69,7 @@ TEST_F(ConstructionTest, PlaceAndBuildHouse)
 
 TEST_F(ConstructionTest, WallBuilding)
 {
+    int palisadeEntityType = m_api->getEntityType("palisade");
     m_api->placeWall(playerId, palisadeEntityType, Feet(4800, 4800), Feet(5200, 4800));
     m_api->placeWall(playerId, palisadeEntityType, Feet(5200, 4800), Feet(5200, 5200));
     m_api->placeWall(playerId, palisadeEntityType, Feet(5200, 5200), Feet(4800, 5200));
@@ -92,6 +92,7 @@ TEST_F(ConstructionTest, WallBuilding_DiagonalSquare)
     const Feet bottom(5000, 5500);
     const Feet left(4500, 5000);
 
+    int palisadeEntityType = m_api->getEntityType("palisade");
     m_api->placeWall(playerId, palisadeEntityType, top, right);
     m_api->placeWall(playerId, palisadeEntityType, right, bottom);
     m_api->placeWall(playerId, palisadeEntityType, bottom, left);
@@ -110,6 +111,7 @@ TEST_F(ConstructionTest, WallBuilding_DiagonalSquare)
 TEST_P(ConstructionTestOrientationParams, PlaceAndBuildGate)
 {
     const auto& ori = GetParam();
+    int gateEntityType = m_api->getEntityType("stone_gate");
 
     m_api->placeBuilding(playerId, gateEntityType, Feet(5500, 5500), ori);
 

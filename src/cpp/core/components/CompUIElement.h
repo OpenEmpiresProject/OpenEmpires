@@ -18,6 +18,9 @@ enum class UIRenderingType
 class CompUIElement
 {
   public:
+    Property<int> uiElementType;
+
+  public:
     UIRenderingType type;
     std::string text;
     Rect<int> rect;

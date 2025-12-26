@@ -55,11 +55,11 @@ class Widget : public std::enable_shared_from_this<Widget>, public core::Propert
     bool parentVisible = true;
 
   public:
-    Widget(Ref<Widget> parent);
+    Widget(Ref<Widget> parent, uint32_t id);
 
-    template <typename T> Ref<T> createChild()
+    template <typename T> Ref<T> createChild(uint32_t id)
     {
-        auto child = CreateRef<T>(shared_from_this());
+        auto child = CreateRef<T>(shared_from_this(), id);
         children.push_back(child);
         return child;
     }
@@ -93,8 +93,7 @@ class Widget : public std::enable_shared_from_this<Widget>, public core::Propert
     DEFINE_GETTER_SETTER(visible, Visible);
     DEFINE_GETTER_SETTER(backgroundImage, BackgroundImage);
 
-    static inline int s_entityType = 0;
-    static inline int s_entitySubType = 0;
+    // static inline int s_entityType = 0;
 
   private:
     bool inside(const Vec2& pos) const;
@@ -110,7 +109,7 @@ class Label : public Widget
     DEFINE_GETTER_SETTER(text, Text);
     DEFINE_GETTER_SETTER(textColor, TextColor);
 
-    Label(Ref<Widget> parent);
+    Label(Ref<Widget> parent, uint32_t id);
     void updateGraphicCommand() override;
 };
 
@@ -126,14 +125,14 @@ class Button : public Widget
     DEFINE_GETTER_SETTER(label, Label);
     DEFINE_GETTER_SETTER(active, Active);
 
-    Button(Ref<Widget> parent);
+    Button(Ref<Widget> parent, uint32_t id);
     void feedInput(const Event& e) override;
 };
 
 class Window : public Widget
 {
   public:
-    Window();
+    Window(uint32_t id);
 };
 
 enum class LayoutDirection
@@ -158,7 +157,7 @@ class Layout : public Widget
     DEFINE_GETTER_SETTER(spacing, Spacing);
     DEFINE_GETTER_SETTER(direction, Direction);
 
-    Layout(Ref<Widget> parent);
+    Layout(Ref<Widget> parent, uint32_t id);
     void updateGraphicCommand() override;
 };
 

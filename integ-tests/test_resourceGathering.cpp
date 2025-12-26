@@ -34,8 +34,6 @@ public:
 
     uint32_t villager = entt::null;
     int playerId = -1;
-    const uint32_t miningCampEntityType = 10;
-    const uint32_t lumberCampEntityType = 9;
 };
 
 class ResourceGatheringOrientationParams : public ResourceGathering,
@@ -46,7 +44,8 @@ class ResourceGatheringOrientationParams : public ResourceGathering,
  
  TEST_F(ResourceGathering, GatherGold) 
  {
-    m_api->placeBuilding(playerId, miningCampEntityType, Tile(23, 23).toFeet());
+     int miningCampEntityType = m_api->getEntityType("mine_camp");
+     m_api->placeBuilding(playerId, miningCampEntityType, Tile(23, 23).toFeet());
     ASSERT_WAIT_FOR(m_api->getConstructionSites(playerId).size() == 1, 1000);
     m_api->build(villager, *(m_api->getConstructionSites(playerId).begin()));
     ASSERT_WAIT_FOR(m_api->getConstructionSites(playerId).size() == 0, 10000);
@@ -56,6 +55,7 @@ class ResourceGatheringOrientationParams : public ResourceGathering,
 
  TEST_F(ResourceGathering, GatherWood)
  {
+     int lumberCampEntityType = m_api->getEntityType("wood_camp");
      m_api->placeBuilding(playerId, lumberCampEntityType, Tile(20, 24).toFeet());
      ASSERT_WAIT_FOR(m_api->getConstructionSites(playerId).size() == 1, 1000);
      m_api->build(villager, *(m_api->getConstructionSites(playerId).begin()));

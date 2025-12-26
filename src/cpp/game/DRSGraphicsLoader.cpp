@@ -3,8 +3,10 @@
 #include "AtlasGenerator.h"
 #include "DRSFile.h"
 #include "EntityModelLoader.h"
+#include "EntityModelLoaderV2.h"
 #include "EntityTypeRegistry.h"
 #include "GameTypes.h"
+#include "GraphicsLoadupDataProvider.h"
 #include "SLPFile.h"
 #include "ServiceRegistry.h"
 #include "debug.h"
@@ -26,13 +28,10 @@ using namespace drs;
 class GraphicsLoaderFromDRSImpl
 {
   public:
-    static void registerDummyTexture(int entityType,
-                                     int entitySubType,
-                                     GraphicsRegistry& graphicsRegistry)
+    static void registerDummyTexture(int entityType, GraphicsRegistry& graphicsRegistry)
     {
         GraphicsID id;
         id.entityType = entityType;
-        id.entitySubType = entitySubType;
         SDL_FRect* srcRectF = new SDL_FRect{0, 0, 0, 0};
         Texture entry{nullptr, srcRectF, {0, 0}, Size(), false};
         graphicsRegistry.registerTexture(id, entry);
@@ -197,9 +196,24 @@ class GraphicsLoaderFromDRSImpl
     static void loadSurfaces(AtlasGenerator& atlasGenerator,
                              SDL_Renderer& renderer,
                              std::vector<SDL_Surface*>& surfaces,
+                             std::optional<Rect<int>> clipRect,
+                             const std::vector<Frame>& frames,
+                             const std::vector<Vec2>& anchors,
+                             GraphicsRegistry& graphicsRegistry,
+                             bool isCursor,
+                             bool flip,
+                             const GraphicsID& id)
+    {
+        loadSurfaces(atlasGenerator, renderer, surfaces, id.entityType, clipRect, id.action,
+                     id.playerId, frames, anchors, graphicsRegistry, isCursor, id.orientation, flip,
+                     id.state, id.isConstructing, id.uiElementType, id.isShadow, id.isIcon);
+    }
+
+    static void loadSurfaces(AtlasGenerator& atlasGenerator,
+                             SDL_Renderer& renderer,
+                             std::vector<SDL_Surface*>& surfaces,
                              uint32_t entityType,
-                             Rect<int> clipRect,
-                             uint32_t entitySubType,
+                             std::optional<Rect<int>> clipRect,
                              uint32_t action,
                              uint32_t playerId,
                              const std::vector<Frame>& frames,
@@ -208,7 +222,11 @@ class GraphicsLoaderFromDRSImpl
                              bool isCursor,
                              int orientation,
                              bool flip,
-                             int state)
+                             int state,
+                             int isConstruction,
+                             int uiElementType,
+                             int isShadow,
+                             int isIcon)
     {
         std::vector<SDL_Rect> srcRects;
         SDL_Texture* atlasTexture = nullptr;
@@ -236,73 +254,82 @@ class GraphicsLoaderFromDRSImpl
         {
             auto& srcRect = srcRects[i];
 
-            if (clipRect.w != 0 && clipRect.h != 0)
+            if (clipRect)
             {
-                srcRect.w = min(clipRect.w, srcRect.w);
-                srcRect.h = min(clipRect.h, srcRect.h);
+                srcRect.w = min(clipRect->w, srcRect.w);
+                srcRect.h = min(clipRect->h, srcRect.h);
 
-                srcRect.x = clipRect.x;
-                srcRect.y = clipRect.y;
+                srcRect.x = clipRect->x;
+                srcRect.y = clipRect->y;
             }
 
             Size imageSize = {srcRect.w, srcRect.h};
 
             GraphicsID id;
             id.entityType = entityType;
-            id.entitySubType = entitySubType;
             id.action = action;
             id.playerId = playerId;
             id.orientation = orientation;
             id.state = state;
+            id.isConstructing = isConstruction;
+            id.uiElementType = uiElementType;
+            id.isShadow = isShadow;
+            id.isIcon = isIcon;
 
             Vec2 anchor = anchors[i];
 
-            if (entityType == EntityTypes::ET_TILE)
+            // Icons are stored under the same entity type but flag isIcon is set. Therefore,
+            // we don't need to set variation/frame/direction for icons.
+            if (not isIcon)
             {
-                id.variation = frames[i].getId();
-                anchor =
-                    Vec2(imageSize.width / 2 + 1,
-                         0); // Must override tile anchoring since their anchors don't work here
-            }
-            else if (typeRegistry->isAUnit(entityType))
-            {
-                /* if the file name is 1388_01.bmp pattern last two digit represents the frame. each
-                    direction animation can contains 15 (max) frames. 1-15 for south, 16-30 for
-                   southwest, 31-45 for west, 46-60 for northwest, and so on. implement this logic
-                   to manipulate frame number and direction of id (type of GraphicsID) */
-                auto index = frames[i].getId() - 1;
-                auto framesPerDirection = frames.size() / 5;
-                id.frame = index % framesPerDirection;               // 0-14 (max)
-                auto direction = (int) (index / framesPerDirection); // 0-4
-                if (direction == 0)
+                if (entityType == EntityTypes::ET_TILE)
                 {
-                    id.direction = static_cast<uint64_t>(Direction::SOUTH);
+                    id.variation = frames[i].getId();
+                    anchor =
+                        Vec2(imageSize.width / 2 + 1,
+                             0); // Must override tile anchoring since their anchors don't work here
                 }
-                else if (direction == 1)
+                else if (typeRegistry->isAUnit(entityType))
                 {
-                    id.direction = static_cast<uint64_t>(Direction::SOUTHWEST);
-                }
-                else if (direction == 2)
-                {
-                    id.direction = static_cast<uint64_t>(Direction::WEST);
-                }
-                else if (direction == 3)
-                {
-                    id.direction = static_cast<uint64_t>(Direction::NORTHWEST);
-                }
-                else if (direction == 4)
-                {
-                    id.direction = static_cast<uint64_t>(Direction::NORTH);
-                }
-            }
-            else
-            {
-                for (size_t i = 0; i < 1024; i++)
-                {
-                    id.variation = i;
-                    if (!graphicsRegistry.hasTexture(id))
+                    /* if the file name is 1388_01.bmp pattern last two digit represents the frame.
+                       each direction animation can contains 15 (max) frames. 1-15 for south, 16-30
+                       for southwest, 31-45 for west, 46-60 for northwest, and so on. implement this
+                       logic to manipulate frame number and direction of id (type of GraphicsID) */
+                    auto index = frames[i].getId() - 1;
+                    auto framesPerDirection = frames.size() / 5;
+                    id.frame = index % framesPerDirection;               // 0-14 (max)
+                    auto direction = (int) (index / framesPerDirection); // 0-4
+                    if (direction == 0)
                     {
-                        break;
+                        id.direction = static_cast<uint64_t>(Direction::SOUTH);
+                    }
+                    else if (direction == 1)
+                    {
+                        id.direction = static_cast<uint64_t>(Direction::SOUTHWEST);
+                    }
+                    else if (direction == 2)
+                    {
+                        id.direction = static_cast<uint64_t>(Direction::WEST);
+                    }
+                    else if (direction == 3)
+                    {
+                        id.direction = static_cast<uint64_t>(Direction::NORTHWEST);
+                    }
+                    else if (direction == 4)
+                    {
+                        id.direction = static_cast<uint64_t>(Direction::NORTH);
+                    }
+                    int iii = 0;
+                }
+                else
+                {
+                    for (size_t i = 0; i < 1024; i++)
+                    {
+                        id.variation = i;
+                        if (!graphicsRegistry.hasTexture(id))
+                        {
+                            break;
+                        }
                     }
                 }
             }
@@ -315,14 +342,18 @@ class GraphicsLoaderFromDRSImpl
         }
     }
 
-    static void loadSLPWithMergingParts(const EntityModelLoader::EntityDRSData& drsData,
+    static void loadSLPWithMergingParts(const DRSData& drsData,
                                         const GraphicsID& baseId,
                                         SDL_Renderer& renderer,
                                         GraphicsRegistry& graphicsRegistry,
                                         AtlasGenerator& atlasGenerator,
                                         bool flip,
                                         int orientation,
-                                        int state)
+                                        int state,
+                                        int isConstructing,
+                                        int uiElementType,
+                                        int isShadow,
+                                        int isIcon)
     {
         std::vector<SDL_Surface*> surfaces;
         std::vector<Vec2> anchors;
@@ -361,24 +392,28 @@ class GraphicsLoaderFromDRSImpl
 
         std::vector<SDL_Surface*> mergedSurfaceVec = {mergedSurface};
         loadSurfaces(atlasGenerator, renderer, mergedSurfaceVec, baseId.entityType,
-                     drsData.clipRect, baseId.entitySubType, baseId.action, baseId.playerId, frames,
-                     newAnchors, graphicsRegistry, false, orientation, flip, state);
+                     drsData.clipRect, baseId.action, baseId.playerId, frames, newAnchors,
+                     graphicsRegistry, false, orientation, flip, state, isConstructing,
+                     uiElementType, isShadow, isIcon);
     }
 
     static void loadSLPWithAllFrames(shared_ptr<DRSFile> drs,
                                      uint32_t slpId,
                                      uint32_t entityType,
-                                     uint32_t entitySubType,
                                      uint32_t action,
                                      uint32_t playerId,
                                      SDL_Renderer& renderer,
                                      GraphicsRegistry& graphicsRegistry,
                                      AtlasGenerator& atlasGenerator,
-                                     Rect<int> clipRect,
+                                     std::optional<Rect<int>> clipRect,
                                      bool flip,
                                      int orientation,
                                      std::optional<int> frameIndex,
-                                     int state)
+                                     int state,
+                                     int isConstructing,
+                                     int uiElementType,
+                                     int isShadow,
+                                     int isIcon)
     {
         auto slp = drs->getSLPFile(slpId);
 
@@ -400,9 +435,9 @@ class GraphicsLoaderFromDRSImpl
             anchors.push_back(Vec2(anchorPair.first, anchorPair.second));
         }
 
-        loadSurfaces(atlasGenerator, renderer, surfaces, entityType, clipRect, entitySubType,
-                     action, playerId, frames, anchors, graphicsRegistry, false, orientation, flip,
-                     state);
+        loadSurfaces(atlasGenerator, renderer, surfaces, entityType, clipRect, action, playerId,
+                     frames, anchors, graphicsRegistry, false, orientation, flip, state,
+                     isConstructing, uiElementType, isShadow, isIcon);
     }
 
     static bool isTextureFlippingNeededEntity(int entityType)
@@ -461,8 +496,7 @@ void DRSGraphicsLoader::initGraphicsLoadup(SDL_Renderer& renderer,
                                            GraphicsRegistry& graphicsRegistry,
                                            AtlasGenerator& atlasGenerator)
 {
-    GraphicsLoaderFromDRSImpl::registerDummyTexture(EntityTypes::ET_UI_ELEMENT,
-                                                    EntitySubTypes::EST_DEFAULT, graphicsRegistry);
+    GraphicsLoaderFromDRSImpl::registerDummyTexture(EntityTypes::ET_UI_ELEMENT, graphicsRegistry);
 }
 
 void DRSGraphicsLoader::loadGraphics(SDL_Renderer& renderer,
@@ -471,7 +505,8 @@ void DRSGraphicsLoader::loadGraphics(SDL_Renderer& renderer,
                                      const std::list<GraphicsID>& idsToLoad)
 {
     auto entityFactory = ServiceRegistry::getInstance().getService<EntityFactory>();
-    Ref<EntityModelLoader> defLoader = dynamic_pointer_cast<EntityModelLoader>(entityFactory);
+    Ref<GraphicsLoadupDataProvider> dataProvider =
+        dynamic_pointer_cast<GraphicsLoadupDataProvider>(entityFactory);
 
     std::set<GraphicsID> uniqueBaseIds;
     for (auto& id : idsToLoad)
@@ -485,7 +520,7 @@ void DRSGraphicsLoader::loadGraphics(SDL_Renderer& renderer,
         auto baseId = id;
         baseId.playerId = 0;
 
-        auto drsData = defLoader->getDRSData(baseId);
+        auto& drsData = (DRSData&) dataProvider->getData(baseId);
 
         if (drsData.parts.size() == 1)
         {
@@ -494,17 +529,18 @@ void DRSGraphicsLoader::loadGraphics(SDL_Renderer& renderer,
             if (drsData.parts[0].drsFile != nullptr)
             {
                 GraphicsLoaderFromDRSImpl::loadSLPWithAllFrames(
-                    drsData.parts[0].drsFile, drsData.parts[0].slpId, id.entityType,
-                    id.entitySubType, id.action, id.playerId, renderer, graphicsRegistry,
-                    atlasGenerator, drsData.clipRect, drsData.flip, baseId.orientation,
-                    drsData.parts[0].frameIndex, id.state);
+                    drsData.parts[0].drsFile, drsData.parts[0].slpId, id.entityType, id.action,
+                    id.playerId, renderer, graphicsRegistry, atlasGenerator, drsData.clipRect,
+                    drsData.flip, baseId.orientation, drsData.parts[0].frameIndex, id.state,
+                    id.isConstructing, id.uiElementType, id.isShadow, id.isIcon);
             }
         }
         else // Multi-part texture
         {
             GraphicsLoaderFromDRSImpl::loadSLPWithMergingParts(
                 drsData, id, renderer, graphicsRegistry, atlasGenerator, drsData.flip,
-                baseId.orientation, id.state);
+                baseId.orientation, id.state, id.isConstructing, id.uiElementType, id.isShadow,
+                id.isIcon);
         }
     }
     GraphicsLoaderFromDRSImpl::adjustDirections(graphicsRegistry);
@@ -515,12 +551,13 @@ void DRSGraphicsLoader::loadCursor(SDL_Renderer& renderer,
                                    const GraphicsID& cursorIdToLoad)
 {
     auto entityFactory = ServiceRegistry::getInstance().getService<EntityFactory>();
-    Ref<EntityModelLoader> defLoader = dynamic_pointer_cast<EntityModelLoader>(entityFactory);
+    Ref<GraphicsLoadupDataProvider> dataProvider =
+        dynamic_pointer_cast<GraphicsLoadupDataProvider>(entityFactory);
 
     auto baseId = cursorIdToLoad.getBaseId();
     baseId.playerId = 0;
 
-    auto drsData = defLoader->getDRSData(baseId);
+    auto drsData = (DRSData&) dataProvider->getData(baseId);
 
     if (drsData.parts.size() == 1 && drsData.parts[0].drsFile != nullptr)
     {

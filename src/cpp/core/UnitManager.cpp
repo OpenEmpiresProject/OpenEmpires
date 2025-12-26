@@ -49,7 +49,7 @@ void UnitManager::onCreateUnit(const Event& e)
     auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
-    auto unit = factory->createEntity(data.entityType, 0);
+    auto unit = factory->createEntity(data.entityType);
     auto [transform, unitComp, selectible, playerComp, vision] =
         stateMan->getComponents<CompTransform, CompUnit, CompSelectible, CompPlayer, CompVision>(
             unit);

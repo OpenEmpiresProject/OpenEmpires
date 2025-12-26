@@ -23,14 +23,17 @@ class CompBuilding
     Property<uint8_t> dropOffForResourceType;
     Property<bool> connectedConstructionsAllowed;
     Property<BuildingOrientation> defaultOrientation = {BuildingOrientation::NO_ORIENTATION};
+    Property<std::map<int, int>> visualVariationByProgress;
+
+  public:
+    Property<std::vector<std::string>> acceptedResourceNames;
+    // Property<std::string> constructionSiteName;
 
   public:
     bool validPlacement = true;
     uint32_t constructionProgress = 0; // out of 100
     // Lower bound represents the entity variation to be used based on the progress of the
     // construction.
-    std::map<int, int> visualVariationByProgress = {{0, 0}};
-    uint32_t constructionSiteEntitySubType = 0;
     bool isInStaticMap = false;
     BuildingOrientation orientation = BuildingOrientation::NO_ORIENTATION;
     LandArea landArea;
@@ -39,6 +42,7 @@ class CompBuilding
     bool acceptResource(uint8_t resourceType) const;
     std::vector<uint8_t> getAcceptedResources() const;
     bool isConstructed() const;
+    bool isConstructing() const;
     int getVariationByConstructionProgress() const;
     Rect<float> getLandInFeetRect() const;
     static Rect<float> getLandInFeetRect(const LandArea& area);

@@ -13,9 +13,15 @@ namespace core
 class CmdIdle : public Command
 {
   public:
+    CmdIdle() = default;
     CmdIdle(uint32_t entityId)
     {
         m_entityID = entityId;
+    }
+
+    CmdIdle(const CmdIdle& other)
+    {
+        *this = other;
     }
 
   private:
@@ -51,6 +57,11 @@ class CmdIdle : public Command
     std::string toString() const override
     {
         return "idle";
+    }
+
+    Command* clone() override
+    {
+        return ObjectPool<CmdIdle>::acquire(*this);
     }
 
     void destroy() override

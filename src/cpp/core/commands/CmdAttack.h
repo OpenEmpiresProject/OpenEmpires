@@ -28,6 +28,11 @@ class CmdAttack : public Command
         return "attack";
     }
 
+    Command* clone() override
+    {
+        return ObjectPool<CmdAttack>::acquire(*this);
+    }
+
     void destroy() override
     {
         ObjectPool<CmdAttack>::release(this);
