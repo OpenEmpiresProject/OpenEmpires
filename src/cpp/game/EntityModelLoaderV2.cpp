@@ -317,6 +317,9 @@ void EntityModelLoaderV2::buildComponentModelMapping()
                                { 
                                     m_modelsByComponentType[typeid(Comp)].push_back(prop.modelName);
                                });
+
+                m_componentFactories[typeid(Comp)] = &EntityModelLoaderV2::emplace<Comp>;
+                
             }
         });
 }
@@ -324,24 +327,9 @@ void EntityModelLoaderV2::buildComponentModelMapping()
 EntityModelLoaderV2::EmplaceFn EntityModelLoaderV2::getEmplaceFunc(
     std::type_index componentTypeIndex) const
 {
-    std::unordered_map<std::type_index, EmplaceFn> factories;
-    // factories[""] = &emplace<CompAction>;
-    // factories[""] = &emplace<CompAnimation>;
-    factories[typeid(CompBuilder)] = &EntityModelLoaderV2::emplace<CompBuilder>;
-    factories[typeid(CompBuilding)] = &EntityModelLoaderV2::emplace<CompBuilding>;
-    factories[typeid(CompEntityInfo)] = &EntityModelLoaderV2::emplace<CompEntityInfo>;
-    // factories[""] = &emplace<CompGraphics>;
-    // factories[""] = &emplace<CompPlayer>;
-    // factories[""] = &emplace<CompRendering>;
-    // factories[""] = &emplace<CompResource>;
-    // factories[""] = &emplace<CompResourceGatherer>;
-    // factories[""] = &emplace<CompSelectible>;
-    // factories[""] = &emplace<CompTransform>;
-    // factories[""] = &emplace<CompUnit>;
-    // factories[""] = &emplace<CompUnitFactory>;
-    // factories[""] = &emplace<CompGarrison>;
-    // factories[""] = &emplace<CompVision>;
-    // factories[""] = &emplace<CompHousing>;
+    auto it = m_componentFactories.find(componentTypeIndex);
+    if (it != m_componentFactories.end())
+        return it->second;
 
-    return factories[componentTypeIndex];
+    return nullptr;
 }

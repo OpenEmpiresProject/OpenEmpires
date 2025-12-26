@@ -162,6 +162,7 @@ private:
                                          const std::string& fieldName);
 
     std::map<std::type_index, std::list<std::string_view>> m_modelsByComponentType;
+    std::unordered_map<std::type_index, EmplaceFn> m_componentFactories;
 };
 } // namespace game
 
