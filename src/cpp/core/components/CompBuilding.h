@@ -25,16 +25,6 @@ class CompBuilding
     Property<BuildingOrientation> defaultOrientation = {BuildingOrientation::NO_ORIENTATION};
 
   public:
-    static constexpr auto properties()
-    {
-        return std::tuple{
-            PropertyDesc<&CompBuilding::connectedConstructionsAllowed>{
-                "Building", "connected_constructions_allowed"},
-            PropertyDesc<&CompBuilding::defaultOrientationName>{"Building", "default_orientation"},
-            PropertyDesc<&CompBuilding::sizeName>{"Building", "size"},
-            PropertyDesc<&CompBuilding::acceptedResourceNames>{"ResourceDropOff", "accepted_resources"}};
-    }
-
     Property<std::vector<std::string>> acceptedResourceNames;
     Property<std::string> sizeName;
     Property<std::string> defaultOrientationName;

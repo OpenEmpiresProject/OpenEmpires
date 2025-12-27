@@ -88,9 +88,12 @@ class Vision:
     active_tracking: bool = False
 
 
-class Unit(Vision, Model, Selectable):
-    moving_speed: int
+class Animated:
     animations: List[Animation]
+
+
+class Unit(Vision, Model, Selectable, Animated):
+    moving_speed: int
     housing_need: int
     unit_type: UnitType
 

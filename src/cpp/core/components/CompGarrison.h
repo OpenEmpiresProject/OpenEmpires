@@ -19,14 +19,6 @@ class CompGarrison
   public:
     Property<std::vector<uint32_t>> unitTypesInt;
 
-    static constexpr auto properties()
-    {
-        return std::tuple{
-            PropertyDesc<&CompGarrison::capacity>{"Garrison", "garrison_capacity"},
-            PropertyDesc<&CompGarrison::unitTypesInt>{"Garrison",
-                                                              "garrisonable_unit_types"}};
-    }
-
   public:
     struct GarrisonedUnit
     {

@@ -191,7 +191,7 @@ TEST_F(EntityModelLoaderTest, CreateTransform)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("selectable");
+        EntityModelLoaderV2 loader("transform");
         loader.init();
 
         // Act
@@ -199,15 +199,12 @@ TEST_F(EntityModelLoaderTest, CreateTransform)
         auto villager = factory->createEntity(m_typeReg->getEntityType("villager"), 0);
         auto mill = factory->createEntity(m_typeReg->getEntityType("mill"), 0);
         auto gold = factory->createEntity(m_typeReg->getEntityType("gold"), 0);
+        auto tiles = factory->createEntity(m_typeReg->getEntityType("default_tileset"), 0);
 
         // Assert
         auto& villagerTransform = m_stateMan->getComponent<CompTransform>(villager);
-        auto& millTransform = m_stateMan->getComponent<CompTransform>(mill);
-        auto& goldTransform = m_stateMan->getComponent<CompTransform>(gold);
 
         EXPECT_EQ(villagerTransform.speed.value(), 256);
-        EXPECT_TRUE(m_stateMan->hasComponent<CompTransform>(mill));
-        EXPECT_TRUE(m_stateMan->hasComponent<CompTransform>(gold));
     }
     catch (const py::error_already_set& e)
     {
@@ -336,6 +333,49 @@ TEST_F(EntityModelLoaderTest, CreateHousing)
         auto& housingComp = m_stateMan->getComponent<CompHousing>(house);
 
         EXPECT_EQ(housingComp.housingCapacity.value(), 5);
+    }
+    catch (const py::error_already_set& e)
+    {
+        FAIL() << e.what();
+    }
+}
+
+TEST_F(EntityModelLoaderTest, DefaultEmptyComponents)
+{
+    try
+    {
+        // Arrange
+        EntityModelLoaderV2 loader("transform");
+        loader.init();
+
+        // Act
+        auto factory = dynamic_cast<EntityFactory*>(&loader);
+        auto villager = factory->createEntity(m_typeReg->getEntityType("villager"), 0);
+        auto mill = factory->createEntity(m_typeReg->getEntityType("mill"), 0);
+        auto gold = factory->createEntity(m_typeReg->getEntityType("gold"), 0);
+        auto tiles = factory->createEntity(m_typeReg->getEntityType("default_tileset"), 0);
+
+        // Assert
+        EXPECT_TRUE(m_stateMan->hasComponent<CompAnimation>(villager));
+
+        EXPECT_TRUE(m_stateMan->hasComponent<CompAction>(villager));
+
+        EXPECT_TRUE(m_stateMan->hasComponent<CompRendering>(villager));
+        EXPECT_TRUE(m_stateMan->hasComponent<CompRendering>(mill));
+        EXPECT_TRUE(m_stateMan->hasComponent<CompRendering>(gold));
+        EXPECT_TRUE(m_stateMan->hasComponent<CompRendering>(tiles));
+
+        EXPECT_TRUE(m_stateMan->hasComponent<CompPlayer>(villager));
+        EXPECT_TRUE(m_stateMan->hasComponent<CompPlayer>(mill));
+
+        EXPECT_TRUE(m_stateMan->hasComponent<CompGraphics>(villager));
+        EXPECT_TRUE(m_stateMan->hasComponent<CompGraphics>(mill));
+        EXPECT_TRUE(m_stateMan->hasComponent<CompGraphics>(gold));
+        EXPECT_TRUE(m_stateMan->hasComponent<CompGraphics>(tiles));
+
+        EXPECT_TRUE(m_stateMan->hasComponent<CompTransform>(mill));
+        EXPECT_TRUE(m_stateMan->hasComponent<CompTransform>(gold));
+        EXPECT_TRUE(m_stateMan->hasComponent<CompTransform>(tiles));
     }
     catch (const py::error_already_set& e)
     {

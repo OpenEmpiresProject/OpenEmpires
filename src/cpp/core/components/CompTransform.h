@@ -25,16 +25,6 @@ class CompTransform
     Property<bool> hasRotation;
 
   public:
-    // Dummy property to use to create this component for non moving entities
-    Property<std::string> _;
-
-    static constexpr auto properties()
-    {
-        return std::tuple{PropertyDesc<&CompTransform::speed>{"Unit", "moving_speed"},
-                          PropertyDesc<&CompTransform::_>{"Selectable", "_"}};
-    }
-
-  public:
     Feet position{0, 0}; // Position in feet
     int rotation = 0;    // Rotation in degrees from feet North (0 degrees is up)
     int goalRadiusSquared = 150 ^ 2;

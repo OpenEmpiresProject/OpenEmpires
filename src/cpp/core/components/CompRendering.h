@@ -35,11 +35,6 @@ class CompRendering : public CompGraphics
             flip = SDL_FLIP_NONE;
         }
     }
-
-    static constexpr auto properties()
-    {
-        return std::tuple{/* No properties for now */};
-    }
 };
 } // namespace core
 

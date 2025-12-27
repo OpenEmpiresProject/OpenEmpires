@@ -6,6 +6,7 @@
 #include <variant>
 #include <pybind11/stl.h>
 #include <filesystem>
+#include "ComponentModelMapper.h"
 
 using namespace game;
 using namespace core;
@@ -335,14 +336,18 @@ void EntityModelLoaderV2::preprocessComponents()
     for_each_variant_type<ComponentType>(
         [&]<typename Comp>()
         {
-            if constexpr (HasProperties<Comp>)
             {
-                constexpr auto props = Comp::properties();
+                constexpr auto mappings = ComponentModelMapper::mappings();
+
                 m_modelsByComponentType[typeid(Comp)] = {};
 
-                for_each_tuple(props, [&]<typename P>(const P& prop)
-                               { 
-                                    m_modelsByComponentType[typeid(Comp)].push_back(prop.modelName);
+                for_each_tuple(mappings, [&]<typename M>(const M& mapping)
+                               {
+                                   if constexpr (std::is_same_v<typename M::component_type, Comp>)
+                                   {
+                                       m_modelsByComponentType[typeid(Comp)].push_back(
+                                           mapping.modelName);
+                                   }
                                });
 
                 m_componentFactories[typeid(Comp)] = &EntityModelLoaderV2::emplace<Comp>;

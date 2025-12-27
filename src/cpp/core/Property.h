@@ -70,30 +70,12 @@ class PropertyInitializer
 //
 //    static constexpr auto member = Member;
 //};
-
-template <auto Member> struct PropertyDesc;
-
-template <typename C, typename T, Property<T> C::* Member> struct PropertyDesc<Member>
-{
-    std::string_view propertyName;
-    std::string_view modelName;
-
-    using component_type = C;
-    using value_type = T;
-    using property_type = Property<T>;
-
-    static constexpr auto member = Member;
-
-    constexpr explicit PropertyDesc(std::string_view model, std::string_view property)
-        : propertyName(property), modelName(model)
-    {
-    }
-};
-
-template <typename T>
-concept HasProperties = requires {
-    { T::properties() };
-};
+// 
+// 
+// template <typename T>
+// concept HasProperties = requires {
+//     { T::properties() };
+// };
 
 
 

@@ -16,12 +16,6 @@ class CompEntityInfo
     Property<std::string> entityName;
 
   public:
-    static constexpr auto properties()
-    {
-        return std::tuple{PropertyDesc<&CompEntityInfo::entityName>{"Model", "name"}};
-    }
-
-  public:
     // TODO: entitySubType cannot be convert to a Property yet it is forcefully
     // changed to show chopped trees in ResourceManager. Once it is handled
     // properly this to be converted into a Property.

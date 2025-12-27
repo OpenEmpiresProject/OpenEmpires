@@ -90,11 +90,6 @@ class CompGraphics : public GraphicsID
     {
         return not landArea.tiles.empty();
     }
-
-    static constexpr auto properties()
-    {
-        return std::tuple{/* No properties for now */};
-    }
 };
 } // namespace core
 

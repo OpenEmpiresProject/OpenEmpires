@@ -20,13 +20,6 @@ class CompUnitFactory
     Property<uint32_t> unitCreationSpeed;
 
   public:
-    static constexpr auto properties()
-    {
-        return std::tuple{PropertyDesc<&CompUnitFactory::maxQueueSize>{"UnitFactory", "max_queue_size"},
-                          PropertyDesc<&CompUnitFactory::unitCreationSpeed>{"UnitFactory", "unit_creation_speed"}};
-    }
-
-  public:
     std::vector<uint32_t> productionQueue; // Entity types
     float currentUnitProgress = 0;
     bool pausedDueToInsufficientHousing = false;

@@ -22,14 +22,6 @@ class CompResourceGatherer
     Property<uint32_t> gatherSpeed;
 
   public:
-    static constexpr auto properties()
-    {
-        return std::tuple{
-            PropertyDesc<&CompResourceGatherer::capacity>{"Gatherer", "resource_capacity"},
-            PropertyDesc<&CompResourceGatherer::gatherSpeed>{"Gatherer", "gather_speed"}};
-    }
-
-  public:
     uint32_t gatheredAmount = 0;
 
     static bool canGather(uint8_t resourceType)

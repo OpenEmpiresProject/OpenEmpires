@@ -18,14 +18,6 @@ class CompVision
   public:
     Property<std::string> lineOfSightShapeStr;
 
-    static constexpr auto properties()
-    {
-        return std::tuple{
-            PropertyDesc<&CompVision::lineOfSight>{"Vision", "line_of_sight"},
-            PropertyDesc<&CompVision::lineOfSightShapeStr>{"Vision", "line_of_sight_shape"},
-            PropertyDesc<&CompVision::activeTracking>{"Vision", "active_tracking"}};
-    }
-
   public:
     bool hasVision = false; // Dynamically control whether LOS is in effect
     std::unordered_set<uint32_t> nearbyEntities;

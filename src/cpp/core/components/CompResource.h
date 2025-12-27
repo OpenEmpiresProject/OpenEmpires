@@ -19,14 +19,6 @@ class CompResource
     Property<std::string> resourceName;
     Property<uint32_t> resourceAmount;
 
-    static constexpr auto properties()
-    {
-        // TODO: Relying on model name as the resource name is not ideal, should be replaced
-        return std::tuple{
-            PropertyDesc<&CompResource::resourceName>{"Model", "name"},
-            PropertyDesc<&CompResource::resourceAmount>{"NaturalResource", "resource_amount"}};
-    }
-
   public:
     uint32_t remainingAmount = 0;
 

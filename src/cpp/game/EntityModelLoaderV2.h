@@ -27,6 +27,7 @@
 #include "components/CompHousing.h"
 
 #include <pybind11/embed.h>
+#include "ComponentModelMapper.h"
 
 namespace game
 {
@@ -77,61 +78,53 @@ public:
     pybind11::object loadModelImporterModule();
 
 private:
-    using ComponentType = std::variant<std::monostate,
-                                       core::CompAction,
-                                       core::CompBuilder,
-                                       core::CompBuilding,
-                                       core::CompEntityInfo,
-                                       core::CompRendering,
-                                       core::CompPlayer,
-                                     core::CompResourceGatherer,
-                                     core::CompResource,
-                                     core::CompSelectible,
-                                     core::CompTransform,
-                                     core::CompUnitFactory,
-                                     core::CompGarrison,
-                                     core::CompVision,
-                                     core::CompHousing,
-                                     core::CompGraphics,
-                                     core::CompUnit>;
-  /*
-                                     core::CompAnimation,
- */
-
+    using ComponentType = ComponentModelMapper::ComponentType;
     struct ComponentHolder
     {
         std::list<ComponentType> components;
     };
-
-    
 
     template <typename T> std::list<std::string> enrich(T& comp, const pybind11::object& obj)
     {
         std::list<std::string> processedFields;
 
         std::apply(
-            [&](auto&&... props)
+            [&](auto&&... mappings)
             {
                 (
                     [&]
                     {
-                        using Prop = std::decay_t<decltype(props)>;
-                        using Value = typename Prop::value_type;
-                        auto name = props.propertyName.data();
+                        using M = std::decay_t<decltype(mappings)>;
 
-                        if (pybind11::hasattr(obj, name))
+                        // Handle only mappings that belong to this component T
+                        if constexpr (std::is_same_v<typename M::component_type, T>)
                         {
-                            pybind11::object value = obj.attr(name);
+                            // Only property mappings do enrichment. Component-Model mappings
+                            // don't have any property to set. So those will be skipped here and
+                            // created as an empty component in preprocessComponents().
+                            //
+                            if constexpr (is_property_mapping_v<M>)
+                            {
+                                const std::string_view name_sv = mappings.propertyName;
+                                const std::string name{name_sv}; // ensure null-terminated
 
-                            PropertyInitializer::set<Value>(comp.*(Prop::member),
-                                                            value.cast<Value>());
+                                if (pybind11::hasattr(obj, name.c_str()))
+                                {
+                                    using Value = typename M::value_type;
 
-                            processedFields.push_back(std::string(name));
+                                    pybind11::object value = obj.attr(name.c_str());
+
+                                    PropertyInitializer::set<Value>(comp.*(M::member),
+                                                                    value.cast<Value>());
+
+                                    processedFields.push_back(name);
+                                }
+                            }
                         }
                     }(),
                     ...);
             },
-            T::properties());
+            ComponentModelMapper::mappings());
 
         return processedFields;
     }

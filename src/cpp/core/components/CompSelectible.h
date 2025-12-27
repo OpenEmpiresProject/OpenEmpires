@@ -18,13 +18,6 @@ class CompSelectible
     Property<std::string> displayName;
 
   public:
-    static constexpr auto properties()
-    {
-        return std::tuple{
-            PropertyDesc<&CompSelectible::displayName>{"Selectable", "display_name"}};
-    }
-
-  public:
     // NOTE: Rect's x, y doesn't represent the position of the rect, but only the local
     // anchor. Bounding box alone doesn't have a location concept anyhow, location comes
     // from the tranform component
