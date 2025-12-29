@@ -44,7 +44,7 @@ TEST_F(EntityModelLoaderTest, CreateEntitySimple)
         
         // Act
         EntityFactory* factory = dynamic_cast<EntityFactory*>(&loader);
-        auto entity = factory->createEntity(3, 0);
+        auto entity = factory->createEntity(3);
 
         // Assert
         auto& info = m_stateMan->getComponent<CompEntityInfo>(entity);
@@ -71,7 +71,7 @@ TEST_F(EntityModelLoaderTest, CreateBuilder)
 
         // Act
         EntityFactory* factory = dynamic_cast<EntityFactory*>(&loader);
-        auto entity = factory->createEntity(3, 0);
+        auto entity = factory->createEntity(3);
 
         // Assert
         auto& builder = m_stateMan->getComponent<CompBuilder>(entity);
@@ -95,14 +95,14 @@ TEST_F(EntityModelLoaderTest, CreateBuilding)
 
         // Act
         EntityFactory* factory = dynamic_cast<EntityFactory*>(&loader);
-        auto entity = factory->createEntity(m_typeReg->getEntityType("mill"), 0);
+        auto entity = factory->createEntity(m_typeReg->getEntityType("mill"));
 
         // Assert
         auto& building = m_stateMan->getComponent<CompBuilding>(entity);
-        EXPECT_EQ(building.sizeName.value(), "medium");
+        EXPECT_EQ(building.size.value(), Size(2, 2));
         EXPECT_EQ(building.acceptedResourceNames.value().size(), 1);
         EXPECT_EQ(building.acceptedResourceNames.value()[0], "food");
-        EXPECT_EQ(building.defaultOrientationName.value(), "corner");
+        EXPECT_EQ(building.defaultOrientation.value(), BuildingOrientation::CORNER);
         EXPECT_EQ(building.connectedConstructionsAllowed.value(), false);
     }
     catch (const py::error_already_set& e)
@@ -121,7 +121,7 @@ TEST_F(EntityModelLoaderTest, CreateResource)
 
         // Act
         auto factory = dynamic_cast<EntityFactory*>(&loader);
-        auto entity = factory->createEntity(m_typeReg->getEntityType("gold"), 0);
+        auto entity = factory->createEntity(m_typeReg->getEntityType("gold"));
 
         // Assert
         auto& resource = m_stateMan->getComponent<CompResource>(entity);
@@ -144,7 +144,7 @@ TEST_F(EntityModelLoaderTest, CreateGatherer)
 
         // Act
         auto factory = dynamic_cast<EntityFactory*>(&loader);
-        auto entity = factory->createEntity(m_typeReg->getEntityType("villager"), 0);
+        auto entity = factory->createEntity(m_typeReg->getEntityType("villager"));
 
         // Assert
         auto& gatherer = m_stateMan->getComponent<CompResourceGatherer>(entity);
@@ -167,9 +167,9 @@ TEST_F(EntityModelLoaderTest, CreateSelectables)
 
         // Act
         auto factory = dynamic_cast<EntityFactory*>(&loader);
-        auto villager = factory->createEntity(m_typeReg->getEntityType("villager"), 0);
-        auto mill = factory->createEntity(m_typeReg->getEntityType("mill"), 0);
-        auto gold = factory->createEntity(m_typeReg->getEntityType("gold"), 0);
+        auto villager = factory->createEntity(m_typeReg->getEntityType("villager"));
+        auto mill = factory->createEntity(m_typeReg->getEntityType("mill"));
+        auto gold = factory->createEntity(m_typeReg->getEntityType("gold"));
 
         // Assert
         auto& villagerSelectible = m_stateMan->getComponent<CompSelectible>(villager);
@@ -196,10 +196,10 @@ TEST_F(EntityModelLoaderTest, CreateTransform)
 
         // Act
         auto factory = dynamic_cast<EntityFactory*>(&loader);
-        auto villager = factory->createEntity(m_typeReg->getEntityType("villager"), 0);
-        auto mill = factory->createEntity(m_typeReg->getEntityType("mill"), 0);
-        auto gold = factory->createEntity(m_typeReg->getEntityType("gold"), 0);
-        auto tiles = factory->createEntity(m_typeReg->getEntityType("default_tileset"), 0);
+        auto villager = factory->createEntity(m_typeReg->getEntityType("villager"));
+        auto mill = factory->createEntity(m_typeReg->getEntityType("mill"));
+        auto gold = factory->createEntity(m_typeReg->getEntityType("gold"));
+        auto tiles = factory->createEntity(m_typeReg->getEntityType("default_tileset"));
 
         // Assert
         auto& villagerTransform = m_stateMan->getComponent<CompTransform>(villager);
@@ -222,13 +222,13 @@ TEST_F(EntityModelLoaderTest, CreateUnit)
 
         // Act
         auto factory = dynamic_cast<EntityFactory*>(&loader);
-        auto militia = factory->createEntity(m_typeReg->getEntityType("militia"), 0);
+        auto militia = factory->createEntity(m_typeReg->getEntityType("militia"));
 
         // Assert
         auto& unitComp = m_stateMan->getComponent<CompUnit>(militia);
 
         EXPECT_EQ(unitComp.housingNeed.value(), 1);
-        EXPECT_EQ(unitComp.typeInt.value(), 2);
+        EXPECT_EQ(unitComp.type.value(), UnitType::INFANTRY);
     }
     catch (const py::error_already_set& e)
     {
@@ -246,7 +246,7 @@ TEST_F(EntityModelLoaderTest, CreateUnitFactory)
 
         // Act
         auto factory = dynamic_cast<EntityFactory*>(&loader);
-        auto barracks = factory->createEntity(m_typeReg->getEntityType("barracks"), 0);
+        auto barracks = factory->createEntity(m_typeReg->getEntityType("barracks"));
 
         // Assert
         auto& factoryComp = m_stateMan->getComponent<CompUnitFactory>(barracks);
@@ -270,7 +270,7 @@ TEST_F(EntityModelLoaderTest, CreateGarrison)
 
         // Act
         auto factory = dynamic_cast<EntityFactory*>(&loader);
-        auto tc = factory->createEntity(m_typeReg->getEntityType("town_center"), 0);
+        auto tc = factory->createEntity(m_typeReg->getEntityType("town_center"));
 
         // Assert
         auto& garrison = m_stateMan->getComponent<CompGarrison>(tc);
@@ -295,19 +295,19 @@ TEST_F(EntityModelLoaderTest, CreateVision)
 
         // Act
         auto factory = dynamic_cast<EntityFactory*>(&loader);
-        auto villager = factory->createEntity(m_typeReg->getEntityType("villager"), 0);
-        auto mill = factory->createEntity(m_typeReg->getEntityType("mill"), 0);
+        auto villager = factory->createEntity(m_typeReg->getEntityType("villager"));
+        auto mill = factory->createEntity(m_typeReg->getEntityType("mill"));
 
         // Assert
         auto& villagerVision = m_stateMan->getComponent<CompVision>(villager);
         auto& millVision = m_stateMan->getComponent<CompVision>(mill);
 
         EXPECT_EQ(villagerVision.lineOfSight.value(), 256 * 5);
-        EXPECT_EQ(villagerVision.lineOfSightShapeStr.value(), "circle");
+        EXPECT_EQ(villagerVision.lineOfSightShape.value(), LineOfSightShape::CIRCLE);
         EXPECT_EQ(villagerVision.activeTracking.value(), false);
 
         EXPECT_EQ(millVision.lineOfSight.value(), 256 * 6);
-        EXPECT_EQ(millVision.lineOfSightShapeStr.value(), "rounded_square");
+        EXPECT_EQ(millVision.lineOfSightShape.value(), LineOfSightShape::ROUNDED_SQUARE);
         EXPECT_EQ(millVision.activeTracking.value(), true);
 
     }
@@ -327,7 +327,7 @@ TEST_F(EntityModelLoaderTest, CreateHousing)
 
         // Act
         auto factory = dynamic_cast<EntityFactory*>(&loader);
-        auto house = factory->createEntity(m_typeReg->getEntityType("house"), 0);
+        auto house = factory->createEntity(m_typeReg->getEntityType("house"));
 
         // Assert
         auto& housingComp = m_stateMan->getComponent<CompHousing>(house);
@@ -350,10 +350,10 @@ TEST_F(EntityModelLoaderTest, DefaultEmptyComponents)
 
         // Act
         auto factory = dynamic_cast<EntityFactory*>(&loader);
-        auto villager = factory->createEntity(m_typeReg->getEntityType("villager"), 0);
-        auto mill = factory->createEntity(m_typeReg->getEntityType("mill"), 0);
-        auto gold = factory->createEntity(m_typeReg->getEntityType("gold"), 0);
-        auto tiles = factory->createEntity(m_typeReg->getEntityType("default_tileset"), 0);
+        auto villager = factory->createEntity(m_typeReg->getEntityType("villager"));
+        auto mill = factory->createEntity(m_typeReg->getEntityType("mill"));
+        auto gold = factory->createEntity(m_typeReg->getEntityType("gold"));
+        auto tiles = factory->createEntity(m_typeReg->getEntityType("default_tileset"));
 
         // Assert
         EXPECT_TRUE(m_stateMan->hasComponent<CompAnimation>(villager));

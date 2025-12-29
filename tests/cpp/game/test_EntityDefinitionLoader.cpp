@@ -112,9 +112,9 @@ class EntityDefinitionLoaderExposure : public EntityModelLoader
         EntityModelLoader::setSite(sizeStr, progressToFrame);
     }
 
-    uint32_t createEntity(uint32_t entityType, uint32_t entitySubType) override
+    uint32_t createEntity(uint32_t entityType) override
     {
-        return EntityModelLoader::createEntity(entityType, entitySubType);
+        return EntityModelLoader::createEntity(entityType);
     }
 
     void setDRSData(const GraphicsID& id, const EntityDRSData& data)
@@ -147,7 +147,7 @@ py::dict createAnimationEntry(std::string name, int frameCount, int speed, bool 
 // Test createAnimation returns monostate if no animations
 TEST(EntityDefinitionLoaderTest, CreateAnimationReturnsMonostateIfNoAnimations)
 {
-    py::scoped_interpreter guard{};
+    //py::scoped_interpreter guard{};
     py::dict d;
     py::object module;
     auto comp = EntityModelLoader::createAnimation(module, d);
@@ -157,7 +157,7 @@ TEST(EntityDefinitionLoaderTest, CreateAnimationReturnsMonostateIfNoAnimations)
 // Test createBuilder returns monostate if no build_speed
 TEST(EntityDefinitionLoaderTest, CreateBuilderReturnsMonostateIfNoBuildSpeed)
 {
-    py::scoped_interpreter guard{};
+    //py::scoped_interpreter guard{};
     py::dict d;
     py::object module;
 
@@ -168,7 +168,7 @@ TEST(EntityDefinitionLoaderTest, CreateBuilderReturnsMonostateIfNoBuildSpeed)
 // Test createCompResourceGatherer returns monostate if no gather_speed
 TEST(EntityDefinitionLoaderTest, CreateCompResourceGathererReturnsMonostateIfNoGatherSpeed)
 {
-    py::scoped_interpreter guard{};
+    //py::scoped_interpreter guard{};
     py::dict d;
     py::object module;
 
@@ -179,7 +179,7 @@ TEST(EntityDefinitionLoaderTest, CreateCompResourceGathererReturnsMonostateIfNoG
 // Test createCompUnit returns monostate if no line_of_sight
 TEST(EntityDefinitionLoaderTest, CreateCompUnitReturnsMonostateIfNotAUnit)
 {
-    py::scoped_interpreter guard{};
+    //py::scoped_interpreter guard{};
     py::dict d;
 
     py::exec(R"()");
@@ -192,7 +192,7 @@ TEST(EntityDefinitionLoaderTest, CreateCompUnitReturnsMonostateIfNotAUnit)
 // Test createCompTransform returns monostate if no moving_speed
 TEST(EntityDefinitionLoaderTest, CreateCompTransformReturnsMonostateIfNoMovingSpeed)
 {
-    py::scoped_interpreter guard{};
+    //py::scoped_interpreter guard{};
     py::dict d;
     py::object module;
 
@@ -203,7 +203,7 @@ TEST(EntityDefinitionLoaderTest, CreateCompTransformReturnsMonostateIfNoMovingSp
 // Test createCompResource returns monostate if no resource_amount
 TEST(EntityDefinitionLoaderTest, CreateCompResourceReturnsMonostateIfNoResourceAmount)
 {
-    py::scoped_interpreter guard{};
+    //py::scoped_interpreter guard{};
     py::dict d;
     py::object module;
 
@@ -215,7 +215,7 @@ TEST(EntityDefinitionLoaderTest, ParsesAnimationsCorrectly)
 {
 	// Lock has to be acquired before the try block to allow catch block to 
 	// read the error (since that also requires a lock)
-    py::scoped_interpreter guard{};
+    //py::scoped_interpreter guard{};
   
 	try
     {
@@ -263,7 +263,7 @@ entity = DummyEntity()
 
 TEST(EntityDefinitionLoaderTest, ReturnsComponentForBuildingSubclass)
 {
-    py::scoped_interpreter guard{};
+    //py::scoped_interpreter guard{};
     try
     {
 	        py::exec(R"(
@@ -296,7 +296,7 @@ entity = House()
 
 TEST(EntityDefinitionLoaderTest, SkipsBuildingComponentForUnrelatedClass)
 {
-    py::scoped_interpreter guard{};
+    //py::scoped_interpreter guard{};
    
 	try
     {
@@ -321,7 +321,7 @@ class NotABuilding:
 
 TEST(EntityDefinitionLoaderTest, ReturnsComponentForUnitSubclass)
 {
-    py::scoped_interpreter guard{};
+    //py::scoped_interpreter guard{};
     try
     {
         py::exec(R"(
@@ -356,7 +356,7 @@ entity = Villager()
 
 TEST(EntityDefinitionLoaderTest, LoadAllBuilding)
 {
-    py::scoped_interpreter guard{};
+    //py::scoped_interpreter guard{};
 
     try
     {
@@ -393,7 +393,7 @@ all_buildings= [
 	    loader.setSite("medium", std::map<int, int>());
 	    GraphicsID siteId;
 	    siteId.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
-	    siteId.entitySubType = 2;
+        siteId.buildingSizeType = (int)BuildingSizeTypes::MEDIUM_SIZE;
 	    EntityModelLoader::EntityDRSData data;
 	    data.parts.push_back(EntityModelLoader::EntityDRSData::Part(nullptr, 111, Vec2::null, std::nullopt));
 	    loader.setDRSData(siteId, data);
@@ -409,9 +409,12 @@ all_buildings= [
         auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
         auto millType = typeRegistry->getEntityType("mill");
 	    // Main building
-        EXPECT_EQ(loader.getDRSData(GraphicsID(millType)).parts[0].slpId, 3483);
+        GraphicsID millId(millType);
+        EXPECT_EQ(loader.getDRSData(millId).parts[0].slpId, 3483);
 	    // One of construction sites
-        EXPECT_EQ(loader.getDRSData(GraphicsID(millType, 2)).parts[0].slpId, 111);
+        GraphicsID siteIdLookup(millType);
+        siteIdLookup.isConstructing = (int) true;
+        EXPECT_EQ(loader.getDRSData(siteIdLookup).parts[0].slpId, 111);
     }
     catch (const py::error_already_set& e)
     {
@@ -421,7 +424,7 @@ all_buildings= [
 
 TEST(EntityDefinitionLoaderTest, BuildingResourceAcceptance)
 {
-    py::scoped_interpreter guard{};
+    //py::scoped_interpreter guard{};
     try
     {
         std::string code = EntityDefinitionLoaderExposure::readCoreDefs() + 
@@ -453,7 +456,7 @@ mill = ResourceDropOff(
  
 TEST(EntityDefinitionLoaderTest, LoadAllConstructionSites)
 {
-    py::scoped_interpreter guard{};
+    //py::scoped_interpreter guard{};
    
 	try
     {
@@ -498,7 +501,7 @@ all_construction_sites= [
         {
             GraphicsID id;
             id.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
-            id.entitySubType = EntitySubTypes::EST_SMALL_SIZE;
+            id.buildingSizeType = (int)BuildingSizeTypes::SMALL_SIZE;
             auto drsData = loader.getDRSData(id);
             EXPECT_EQ(drsData.parts[0].slpId, 236);
 
@@ -511,7 +514,7 @@ all_construction_sites= [
         {
             GraphicsID id;
             id.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
-            id.entitySubType = EntitySubTypes::EST_MEDIUM_SIZE;
+            id.buildingSizeType = (int) BuildingSizeTypes::MEDIUM_SIZE;
             auto drsData = loader.getDRSData(id);
             EXPECT_EQ(drsData.parts[0].slpId, 237);
 
@@ -529,7 +532,7 @@ all_construction_sites= [
 
 TEST(EntityDefinitionLoaderTest, LoadBuildingsWithConstructionSiteLinks)
 {
-    py::scoped_interpreter guard{};
+    //py::scoped_interpreter guard{};
   
 	try
     {
@@ -590,7 +593,7 @@ all_construction_sites= [
 	    auto stateMan = std::make_shared<core::StateManager>();
 	    core::ServiceRegistry::getInstance().registerService(stateMan);
 	
-	    auto mill = loader.createEntity(millType, 0);
+	    auto mill = loader.createEntity(millType);
 	
 	    auto building = stateMan->getComponent<CompBuilding>(mill);
 	    EXPECT_EQ(building.visualVariationByProgress.at(66), 1);
@@ -603,7 +606,7 @@ all_construction_sites= [
 
 TEST(EntityDefinitionLoaderTest, LoadTileSets)
 {
-    py::scoped_interpreter guard{};
+    //py::scoped_interpreter guard{};
  
 	try
     {
@@ -642,7 +645,7 @@ all_tilesets = [
 }
 TEST(EntityDefinitionLoaderTest, LoadTreeWithStump)
 {
-    py::scoped_interpreter guard{};
+    //py::scoped_interpreter guard{};
    
 	try
 	{
@@ -660,14 +663,11 @@ all_natural_resources= [
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=4652),
-                    variation_filter={"them":"default"})]),
-        stump=NaturalResourceAdditionalPart(
-            name="stump", 
-            graphics=Graphic(
-                variants=[
-                    GraphicVariant(
-                        graphic=SingleGraphic(slp_id=1252),
-                        variation_filter={"them":"oak"})])),
+                    variation_filter={"theme":"oak"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(slp_id=1252),
+                    variation_filter={"theme":"oak", "state":"stump"})
+                ]),
         shadow=NaturalResourceAdditionalPart(
             name="shadow", 
             graphics=Graphic(
@@ -693,11 +693,10 @@ all_natural_resources= [
 	
 		// Assert
         EXPECT_EQ(loader.getDRSData(GraphicsID(EntityTypes::ET_TREE)).parts[0].slpId, 4652);
-		EXPECT_EQ(loader
-						.getDRSData(GraphicsID(EntityTypes::ET_TREE, EntitySubTypes::EST_CHOPPED_TREE))
-						.parts[0]
-						.slpId,
-					1252);
+
+        GraphicsID stumpId(EntityTypes::ET_TREE);
+        stumpId.state = (int) TreeState::STUMP;
+        EXPECT_EQ(loader.getDRSData(stumpId).parts[0].slpId, 1252);
 	}
 	catch (const py::error_already_set& e)
 	{
@@ -707,7 +706,7 @@ all_natural_resources= [
 
 TEST(EntityDefinitionLoaderTest, LoadUIElements)
 {
-    py::scoped_interpreter guard{};
+    //py::scoped_interpreter guard{};
    
 	try
 	{
@@ -735,7 +734,7 @@ all_ui_elements = [
 		// Assert
 		GraphicsID id;
 		id.entityType = EntityTypes::ET_UI_ELEMENT;
-		id.entitySubType = EntitySubTypes::EST_UI_RESOURCE_PANEL;
+        id.uiElementType = (int) UIElementTypes::RESOURCE_PANEL;
         EXPECT_EQ(loader.getDRSData(id).parts[0].slpId, 51135);
 		EXPECT_EQ(loader.getDRSData(id).clipRect.w,
 					400);

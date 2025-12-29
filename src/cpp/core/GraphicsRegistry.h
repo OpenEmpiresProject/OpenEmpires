@@ -17,18 +17,21 @@ class GraphicsID
     {
         struct
         {
-            uint64_t entityType : 15;    // 32,768 values
-            uint64_t entitySubType : 10; // 1,024 values
-            uint64_t action : 10;        // 1,024 values
-            uint64_t frame : 5;          // 32 values
-            uint64_t direction : 4;      // 16 values
-            uint64_t variation : 10;     // 1,024 values
-            uint64_t playerId : 4;       // 16 values
-            uint64_t civilization : 6;   // 64 values
-            uint64_t age : 3;            // 8 values
-            uint64_t orientation : 4;    // 8 values
-            uint64_t state : 4;          // 8 values
-            uint64_t reserved : 49;
+            uint64_t entityType : 15;      // 32,768 values
+            uint64_t action : 10;          // 1,024 values
+            uint64_t frame : 5;            // 32 values
+            uint64_t direction : 4;        // 16 values
+            uint64_t variation : 10;       // 1,024 values
+            uint64_t playerId : 4;         // 16 values
+            uint64_t civilization : 6;     // 64 values
+            uint64_t age : 3;              // 8 values
+            uint64_t orientation : 4;      // 8 values
+            uint64_t state : 4;            // 8 values
+            uint64_t isConstructing : 1;   // 2 values (a bool)
+            uint64_t buildingSizeType : 3; // 8 values
+            uint64_t uiElementType : 9;    // 512 values
+            uint64_t isShadow : 1;         // 2 values (a bool)
+            uint64_t reserved : 45;
         };
         struct
         {
@@ -42,16 +45,9 @@ class GraphicsID
         entityType = type;
     }
 
-    GraphicsID(uint64_t type, uint64_t subType) : GraphicsID()
-    {
-        entityType = type;
-        entitySubType = subType;
-    }
-
     GraphicsID()
     {
         entityType = 0;
-        entitySubType = 0;
         action = 0;
         frame = 0;
         variation = 0;
@@ -59,6 +55,10 @@ class GraphicsID
         civilization = 0;
         age = 0;
         state = 0;
+        isConstructing = int(false);
+        buildingSizeType = 0;
+        uiElementType = 0;
+        isShadow = 0;
         direction = static_cast<uint64_t>(Direction::NONE);
         orientation = static_cast<uint64_t>(BuildingOrientation::NO_ORIENTATION);
         reserved = 0;
@@ -68,13 +68,16 @@ class GraphicsID
     {
         GraphicsID id;
         id.entityType = entityType;
-        id.entitySubType = entitySubType;
         id.action = action;
         id.playerId = playerId;
         id.civilization = civilization;
         id.age = age;
         id.orientation = orientation;
         id.state = state;
+        id.isConstructing = isConstructing;
+        id.buildingSizeType = buildingSizeType;
+        id.uiElementType = uiElementType;
+        id.isShadow = isShadow;
         return id;
     }
 
@@ -101,11 +104,12 @@ class GraphicsID
 
     std::string toString() const
     {
-        return "GraphicsID(T" + std::to_string(entityType) + ", ST" +
-               std::to_string(entitySubType) + ", A" + std::to_string(action) + ", F" +
-               std::to_string(frame) + ", D" + std::to_string(static_cast<int>(direction)) + ", V" +
-               std::to_string(variation) + ", P" + std::to_string(playerId) + ", O" +
-               std::to_string(orientation) + ", S" + std::to_string(state) + ")";
+        return "GraphicsID(T" + std::to_string(entityType) + ", A" + std::to_string(action) +
+               ", F" + std::to_string(frame) + ", D" + std::to_string(static_cast<int>(direction)) +
+               ", V" + std::to_string(variation) + ", P" + std::to_string(playerId) + ", O" +
+               std::to_string(orientation) + ", S" + std::to_string(state) + ", BS" +
+               std::to_string(buildingSizeType) + ", C" + std::to_string(isConstructing) + ", Sh" +
+               std::to_string(isShadow) + ")";
     }
 
   private:

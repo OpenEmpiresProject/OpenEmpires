@@ -16,9 +16,6 @@ class CompVision
     Property<bool> activeTracking;
 
   public:
-    Property<std::string> lineOfSightShapeStr;
-
-  public:
     bool hasVision = false; // Dynamically control whether LOS is in effect
     std::unordered_set<uint32_t> nearbyEntities;
 };

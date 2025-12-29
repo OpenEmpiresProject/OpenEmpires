@@ -35,7 +35,6 @@ class CompResource
         float h = 1 * Constants::FEET_PER_TILE;
         return Rect<float>(x, y, w, h);
     }
-
 };
 } // namespace core
 

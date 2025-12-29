@@ -13,6 +13,11 @@ struct Size
     Size(int w, int h) : width(w), height(h)
     {
     }
+
+    bool operator==(const Size& other) const
+    {
+        return width == other.width and height == other.height;
+    }
 };
 } // namespace core
 

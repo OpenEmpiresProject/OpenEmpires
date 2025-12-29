@@ -88,7 +88,7 @@ void DemoWorldCreator::createTree(uint32_t x, uint32_t y)
     auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
-    auto tree = factory->createEntity(EntityTypes::ET_TREE, 0);
+    auto tree = factory->createEntity(EntityTypes::ET_TREE);
     auto [transform, selectible, info] =
         stateMan->getComponents<CompTransform, CompSelectible, CompEntityInfo>(tree);
 
@@ -102,14 +102,14 @@ void DemoWorldCreator::createTree(uint32_t x, uint32_t y)
     map.addEntity(MapLayerType::STATIC, Tile(x, y), tree);
 
     // Add shadow
-    auto shadow = factory->createEntity(EntityTypes::ET_TREE, EntitySubTypes::EST_TREE_SHADOW);
-    auto [transformShadow, infoShadow] =
-        stateMan->getComponents<CompTransform, CompEntityInfo>(shadow);
-
-    infoShadow.variation = variation;
-    transformShadow.position = Feet(x * 256 + 128, y * 256 + 128);
-
-    map.addEntity(MapLayerType::ON_GROUND, Tile(x, y), shadow);
+    //     auto shadow = factory->createEntity(EntityTypes::ET_TREE,
+    //     EntitySubTypes::EST_TREE_SHADOW); auto [transformShadow, infoShadow] =
+    //         stateMan->getComponents<CompTransform, CompEntityInfo>(shadow);
+    //
+    //     infoShadow.variation = variation;
+    //     transformShadow.position = Feet(x * 256 + 128, y * 256 + 128);
+    //
+    //     map.addEntity(MapLayerType::ON_GROUND, Tile(x, y), shadow);
 }
 
 void DemoWorldCreator::createStoneOrGold(uint32_t entityType, uint32_t x, uint32_t y)
@@ -117,7 +117,7 @@ void DemoWorldCreator::createStoneOrGold(uint32_t entityType, uint32_t x, uint32
     auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
-    auto entity = factory->createEntity(entityType, 0);
+    auto entity = factory->createEntity(entityType);
     auto [transform, selectible, info] =
         stateMan->getComponents<CompTransform, CompSelectible, CompEntityInfo>(entity);
 
@@ -132,7 +132,7 @@ void DemoWorldCreator::createVillager(Ref<core::Player> player, const Tile& tile
     auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
-    auto villager = factory->createEntity(EntityTypes::ET_VILLAGER, 0);
+    auto villager = factory->createEntity(EntityTypes::ET_VILLAGER);
     auto [transform, unit, selectible, playerComp, vision] =
         stateMan->getComponents<CompTransform, CompUnit, CompSelectible, CompPlayer, CompVision>(
             villager);
@@ -301,7 +301,7 @@ void DemoWorldCreator::createTile(uint32_t x, uint32_t y, EntityTypes entityType
 
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
-    auto entity = factory->createEntity(entityType, 0);
+    auto entity = factory->createEntity(entityType);
     auto [transform, info] = m_stateMan->getComponents<CompTransform, CompEntityInfo>(entity);
 
     int tc = 10;
@@ -320,10 +320,9 @@ void DemoWorldCreator::createTile(uint32_t x, uint32_t y, EntityTypes entityType
 void DemoWorldCreator::createHUD()
 {
     ui::Widget::s_entityType = EntityTypes::ET_UI_ELEMENT;
-    ui::Widget::s_entitySubType = EntitySubTypes::EST_DEFAULT;
     GraphicsID resourcePanelBackground;
     resourcePanelBackground.entityType = EntityTypes::ET_UI_ELEMENT;
-    resourcePanelBackground.entitySubType = EntitySubTypes::EST_UI_RESOURCE_PANEL;
+    resourcePanelBackground.uiElementType = (int) UIElementTypes::RESOURCE_PANEL;
 
     auto window = CreateRef<ui::Window>();
     WITH(window->withName("resourcePanel")->withBackgroundImage(resourcePanelBackground))
@@ -360,7 +359,7 @@ void DemoWorldCreator::createHUD()
     {
         GraphicsID controlPanelBackground;
         controlPanelBackground.entityType = EntityTypes::ET_UI_ELEMENT;
-        controlPanelBackground.entitySubType = EntitySubTypes::EST_UI_CONTROL_PANEL;
+        controlPanelBackground.uiElementType = (int) UIElementTypes::CONTROL_PANEL;
 
         controlPanel->withName("controlPanel")
             ->withBackgroundImage(controlPanelBackground)
@@ -452,7 +451,8 @@ void DemoWorldCreator::createHUD()
 
                             GraphicsID progressBarBackground;
                             progressBarBackground.entityType = EntityTypes::ET_UI_ELEMENT;
-                            progressBarBackground.entitySubType = EntitySubTypes::UI_PROGRESS_BAR;
+                            progressBarBackground.uiElementType =
+                                (int) UIElementTypes::PROGRESS_BAR;
                             progressBarLayout->createChild<ui::Label>()
                                 ->withBackgroundImage(progressBarBackground)
                                 ->withName("progress_bar_label")

@@ -46,7 +46,7 @@ void ResourceManager::onTick(const Event& e)
             {
                 if (info.entityType == EntityTypes::ET_TREE)
                 {
-                    info.entitySubType = 1;
+                    info.state = (int) TreeState::STUMP;
                     info.variation = 0; //  regardless of the tree type, this is the chopped version
                     // TODO: Might not be the most optimal way to bring down the bounding box a
                     // chopped tree

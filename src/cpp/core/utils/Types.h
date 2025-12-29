@@ -100,21 +100,39 @@ enum class UnitType
     SIEGE = 6
 };
 
-static UnitType getUnitType(uint32_t unitTypeInt)
+// static UnitType getUnitType(const std::string& value)
+//{
+//     if (value == "1")
+//         return UnitType::VILLAGER;
+//     else if (value == "2")
+//         return UnitType::INFANTRY;
+//     else if (value == "3")
+//         return UnitType::ARCHER;
+//     else if (value == "4")
+//         return UnitType::CAVALRY;
+//     else if (value == "5")
+//         return UnitType::SHIP;
+//     else if (value == "6")
+//         return UnitType::SIEGE;
+//     else
+//         return UnitType::UNKNOWN;
+// }
+
+static UnitType getUnitType(int unitTypeInt)
 {
     switch (unitTypeInt)
     {
-    case (uint32_t) UnitType::VILLAGER:
+    case (int) UnitType::VILLAGER:
         return UnitType::VILLAGER;
-    case (uint32_t) UnitType::INFANTRY:
+    case (int) UnitType::INFANTRY:
         return UnitType::INFANTRY;
-    case (uint32_t) UnitType::ARCHER:
+    case (int) UnitType::ARCHER:
         return UnitType::ARCHER;
-    case (uint32_t) UnitType::CAVALRY:
+    case (int) UnitType::CAVALRY:
         return UnitType::CAVALRY;
-    case (uint32_t) UnitType::SHIP:
+    case (int) UnitType::SHIP:
         return UnitType::SHIP;
-    case (uint32_t) UnitType::SIEGE:
+    case (int) UnitType::SIEGE:
         return UnitType::SIEGE;
     default:
         break;

@@ -82,7 +82,7 @@ uint32_t GameAPI::createVillager(Ref<core::Player> player, const Feet& pos)
     auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
-    auto villager = factory->createEntity(EntityTypes::ET_VILLAGER, 0);
+    auto villager = factory->createEntity(EntityTypes::ET_VILLAGER);
     auto [transform, unit, selectible, playerComp, vision] =
         stateMan->getComponents<CompTransform, CompUnit, CompSelectible, CompPlayer, CompVision>(
             villager);

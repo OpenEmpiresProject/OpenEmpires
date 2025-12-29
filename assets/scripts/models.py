@@ -97,14 +97,11 @@ all_natural_resources: List[NaturalResource] = [
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=4652),
-                    variation_filter={GraphicVariantType.THEME:"default"})]),
-        stump=NaturalResourceAdditionalPart(
-            name="stump", 
-            graphics=Graphic(
-                variants=[
-                    GraphicVariant(
-                        graphic=SingleGraphic(slp_id=1252),
-                        variation_filter={GraphicVariantType.THEME:"oak"})])),
+                    variation_filter={GraphicVariantType.THEME:"oak"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(slp_id=1252),
+                    variation_filter={GraphicVariantType.THEME:"oak", GraphicVariantType.STATE:"stump"})
+                ]),
         shadow=NaturalResourceAdditionalPart(
             name="shadow", 
             graphics=Graphic(

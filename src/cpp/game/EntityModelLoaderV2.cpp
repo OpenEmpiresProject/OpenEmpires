@@ -1,19 +1,20 @@
 #include "EntityModelLoaderV2.h"
-#include "GameTypes.h"
-#include "utils/Size.h"
-#include "ServiceRegistry.h"
-#include "EntityTypeRegistry.h"
-#include <variant>
-#include <pybind11/stl.h>
-#include <filesystem>
+
 #include "ComponentModelMapper.h"
+#include "EntityTypeRegistry.h"
+#include "GameTypes.h"
+#include "ServiceRegistry.h"
+#include "utils/Size.h"
+
+#include <filesystem>
+#include <pybind11/stl.h>
+#include <variant>
 
 using namespace game;
 using namespace core;
 using namespace std;
 using namespace drs;
 namespace py = pybind11;
-
 
 extern UnitAction getAction(const std::string actionname);
 extern uint32_t getEntitySubType(uint32_t entityType, const std::string& name);
@@ -25,9 +26,8 @@ extern LineOfSightShape getLOSShape(const std::string& name);
 extern Rect<int> getBoundingBox(shared_ptr<DRSFile> drs, uint32_t slpId);
 extern void validateEntities(pybind11::object module);
 extern bool isInstanceOf(py::object module,
-                  py::handle entityDefinition,
-                  const std::string& baseClass);
-
+                         py::handle entityDefinition,
+                         const std::string& baseClass);
 
 void validatePython()
 {
@@ -119,12 +119,12 @@ EntityModelLoaderV2::~EntityModelLoaderV2()
     // destructor
 }
 
-uint32_t EntityModelLoaderV2::createEntity(uint32_t entityType, uint32_t entitySubType)
+uint32_t EntityModelLoaderV2::createEntity(uint32_t entityType)
 {
     auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     auto entity = stateMan->createEntity();
 
-    auto mapKey = entityType + entitySubType * g_entitySubTypeMapKeyOffset;
+    auto mapKey = entityType;
 
     auto it = m_componentsByEntityType.find(mapKey);
     if (it != m_componentsByEntityType.end())
@@ -138,8 +138,8 @@ uint32_t EntityModelLoaderV2::createEntity(uint32_t entityType, uint32_t entityS
                     using T = std::decay_t<decltype(comp)>;
                     if constexpr (!std::is_same_v<T, std::monostate>)
                     {
-                        spam("Adding component {} to entity {} of type {} subtype {}",
-                             typeid(comp).name(), entity, entityType, entitySubType);
+                        spam("Adding component {} to entity {} of type {}", typeid(comp).name(),
+                             entity, entityType);
                         stateMan->addComponent(entity, comp);
                     }
                 },
@@ -237,8 +237,8 @@ void EntityModelLoaderV2::postProcessing()
             if (auto info = std::get_if<CompEntityInfo>(&componentVar))
             {
                 uint32_t entityType = 0;
-                //if (typeRegistry->isValid(entityName))
-                    entityType = typeRegistry->getEntityType(entityName);
+                // if (typeRegistry->isValid(entityName))
+                entityType = typeRegistry->getEntityType(entityName);
                 /*else
                 {
                     entityType = typeRegistry->getNextAvailableEntityType();
@@ -285,8 +285,6 @@ void EntityModelLoaderV2::postProcessing()
 
             // Add component specific post processing (eg: lazy loading/enriching) here
         }
-
-        
     }
 }
 
@@ -300,7 +298,7 @@ void EntityModelLoaderV2::storeUnprocessedFields(const std::string& entityName,
     for (auto item : dict)
     {
         std::string key = py::cast<std::string>(item.first);
-        
+
         auto it = std::find(processedFields.begin(), processedFields.end(), key);
 
         if (it == processedFields.end())
@@ -315,7 +313,7 @@ void EntityModelLoaderV2::storeUnprocessedFields(const std::string& entityName,
 }
 
 pybind11::object EntityModelLoaderV2::getUnprocessedField(const std::string& entityName,
-                                                  const std::string& fieldName)
+                                                          const std::string& fieldName)
 {
     auto it = m_unprocessedFieldsByEntityName.find(entityName);
 
@@ -341,7 +339,8 @@ void EntityModelLoaderV2::preprocessComponents()
 
                 m_modelsByComponentType[typeid(Comp)] = {};
 
-                for_each_tuple(mappings, [&]<typename M>(const M& mapping)
+                for_each_tuple(mappings,
+                               [&]<typename M>(const M& mapping)
                                {
                                    if constexpr (std::is_same_v<typename M::component_type, Comp>)
                                    {
@@ -351,7 +350,6 @@ void EntityModelLoaderV2::preprocessComponents()
                                });
 
                 m_componentFactories[typeid(Comp)] = &EntityModelLoaderV2::emplace<Comp>;
-                
             }
         });
 }

@@ -125,7 +125,6 @@ class NaturalResourceAdditionalPart(_Constructible):
 
 class Tree(NaturalResource, _Constructible):
     shadow: NaturalResourceAdditionalPart
-    stump: NaturalResourceAdditionalPart
 
 
 class Building(Vision, Model, Selectable):

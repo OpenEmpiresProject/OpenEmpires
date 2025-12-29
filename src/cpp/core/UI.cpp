@@ -26,7 +26,7 @@ Widget::Widget(Ref<Widget> parent)
     ServiceRegistry::getInstance().getService<StateManager>()->addComponent(id, graphics);
     ServiceRegistry::getInstance().getService<StateManager>()->addComponent(id, CompRendering());
 
-    CompEntityInfo entityInfo(s_entityType, s_entitySubType, 0);
+    CompEntityInfo entityInfo(s_entityType, 0);
     entityInfo.entityId = id;
     ServiceRegistry::getInstance().getService<StateManager>()->addComponent(id, entityInfo);
 }

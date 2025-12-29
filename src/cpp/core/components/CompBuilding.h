@@ -26,9 +26,6 @@ class CompBuilding
 
   public:
     Property<std::vector<std::string>> acceptedResourceNames;
-    Property<std::string> sizeName;
-    Property<std::string> defaultOrientationName;
-
 
   public:
     bool validPlacement = true;
@@ -36,7 +33,6 @@ class CompBuilding
     // Lower bound represents the entity variation to be used based on the progress of the
     // construction.
     std::map<int, int> visualVariationByProgress = {{0, 0}};
-    uint32_t constructionSiteEntitySubType = 0;
     bool isInStaticMap = false;
     BuildingOrientation orientation = BuildingOrientation::NO_ORIENTATION;
     LandArea landArea;

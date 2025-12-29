@@ -1,20 +1,20 @@
 #ifndef GAME_ENTITYMODELLOADERV2_H
 #define GAME_ENTITYMODELLOADERV2_H
 
-#include "EntityFactory.h"
-#include "Property.h"
-#include "GraphicsLoadupDataProvider.h"
-#include "utils/Types.h"
+#include "ComponentModelMapper.h"
 #include "DRSFile.h"
-#include <optional>
+#include "EntityFactory.h"
+#include "GraphicsLoadupDataProvider.h"
+#include "Property.h"
 #include "Rect.h"
-#include <variant>
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
 #include "components/CompBuilder.h"
 #include "components/CompBuilding.h"
 #include "components/CompEntityInfo.h"
+#include "components/CompGarrison.h"
 #include "components/CompGraphics.h"
+#include "components/CompHousing.h"
 #include "components/CompPlayer.h"
 #include "components/CompRendering.h"
 #include "components/CompResource.h"
@@ -23,11 +23,11 @@
 #include "components/CompTransform.h"
 #include "components/CompUnit.h"
 #include "components/CompUnitFactory.h"
-#include "components/CompGarrison.h"
-#include "components/CompHousing.h"
+#include "utils/Types.h"
 
+#include <optional>
 #include <pybind11/embed.h>
-#include "ComponentModelMapper.h"
+#include <variant>
 
 namespace game
 {
@@ -52,10 +52,11 @@ struct DRSData : public core::GraphicsLoadupDataProvider::Data
     bool flip = false;
 };
 
-
-class EntityModelLoaderV2 : public core::EntityFactory, public core::PropertyInitializer, core::GraphicsLoadupDataProvider
+class EntityModelLoaderV2 : public core::EntityFactory,
+                            public core::PropertyInitializer,
+                            core::GraphicsLoadupDataProvider
 {
-public:
+  public:
     EntityModelLoaderV2(const std::string& scriptDir);
     ~EntityModelLoaderV2();
 
@@ -69,7 +70,7 @@ public:
     void preprocessComponents();
 
   private:
-    uint32_t createEntity(uint32_t entityType, uint32_t entitySubType) override;
+    uint32_t createEntity(uint32_t entityType) override;
     Data getData(const core::GraphicsID& id) override;
 
     void loadAll(const pybind11::object& module);
@@ -77,7 +78,7 @@ public:
     void postProcessing();
     pybind11::object loadModelImporterModule();
 
-private:
+  private:
     using ComponentType = ComponentModelMapper::ComponentType;
     struct ComponentHolder
     {
@@ -114,8 +115,25 @@ private:
 
                                     pybind11::object value = obj.attr(name.c_str());
 
-                                    PropertyInitializer::set<Value>(comp.*(M::member),
-                                                                    value.cast<Value>());
+                                    if (mappings.converterFuncStr != nullptr)
+                                    {
+                                        auto convertedValue =
+                                            (*mappings.converterFuncStr)(value.cast<std::string>());
+                                        PropertyInitializer::set<Value>(comp.*(M::member),
+                                                                        convertedValue);
+                                    }
+                                    else if (mappings.converterFuncInt != nullptr)
+                                    {
+                                        auto convertedValue =
+                                            (*mappings.converterFuncInt)(value.cast<int>());
+                                        PropertyInitializer::set<Value>(comp.*(M::member),
+                                                                        convertedValue);
+                                    }
+                                    else
+                                    {
+                                        PropertyInitializer::set<Value>(comp.*(M::member),
+                                                                        value.cast<Value>());
+                                    }
 
                                     processedFields.push_back(name);
                                 }
@@ -136,7 +154,8 @@ private:
         return enrich(comp, obj);
     }
 
-    using EmplaceFn = std::list<std::string> (EntityModelLoaderV2::*)(ComponentType&, const pybind11::object&);
+    using EmplaceFn = std::list<std::string> (EntityModelLoaderV2::*)(ComponentType&,
+                                                                      const pybind11::object&);
 
     EmplaceFn getEmplaceFunc(std::type_index componentTypeIndex) const;
 

@@ -26,13 +26,10 @@ using namespace drs;
 class GraphicsLoaderFromDRSImpl
 {
   public:
-    static void registerDummyTexture(int entityType,
-                                     int entitySubType,
-                                     GraphicsRegistry& graphicsRegistry)
+    static void registerDummyTexture(int entityType, GraphicsRegistry& graphicsRegistry)
     {
         GraphicsID id;
         id.entityType = entityType;
-        id.entitySubType = entitySubType;
         SDL_FRect* srcRectF = new SDL_FRect{0, 0, 0, 0};
         Texture entry{nullptr, srcRectF, {0, 0}, Size(), false};
         graphicsRegistry.registerTexture(id, entry);
@@ -197,9 +194,25 @@ class GraphicsLoaderFromDRSImpl
     static void loadSurfaces(AtlasGenerator& atlasGenerator,
                              SDL_Renderer& renderer,
                              std::vector<SDL_Surface*>& surfaces,
+                             Rect<int> clipRect,
+                             const std::vector<Frame>& frames,
+                             const std::vector<Vec2>& anchors,
+                             GraphicsRegistry& graphicsRegistry,
+                             bool isCursor,
+                             bool flip,
+                             const GraphicsID& id)
+    {
+        loadSurfaces(atlasGenerator, renderer, surfaces, id.entityType, clipRect, id.action,
+                     id.playerId, frames, anchors, graphicsRegistry, isCursor, id.orientation, flip,
+                     id.state, id.isConstructing, id.buildingSizeType, id.uiElementType,
+                     id.isShadow);
+    }
+
+    static void loadSurfaces(AtlasGenerator& atlasGenerator,
+                             SDL_Renderer& renderer,
+                             std::vector<SDL_Surface*>& surfaces,
                              uint32_t entityType,
                              Rect<int> clipRect,
-                             uint32_t entitySubType,
                              uint32_t action,
                              uint32_t playerId,
                              const std::vector<Frame>& frames,
@@ -208,7 +221,11 @@ class GraphicsLoaderFromDRSImpl
                              bool isCursor,
                              int orientation,
                              bool flip,
-                             int state)
+                             int state,
+                             int isConstruction,
+                             int buildingSizeType,
+                             int uiElementType,
+                             int isShadow)
     {
         std::vector<SDL_Rect> srcRects;
         SDL_Texture* atlasTexture = nullptr;
@@ -249,11 +266,14 @@ class GraphicsLoaderFromDRSImpl
 
             GraphicsID id;
             id.entityType = entityType;
-            id.entitySubType = entitySubType;
             id.action = action;
             id.playerId = playerId;
             id.orientation = orientation;
             id.state = state;
+            id.isConstructing = isConstruction;
+            id.buildingSizeType = buildingSizeType;
+            id.uiElementType = uiElementType;
+            id.isShadow = isShadow;
 
             Vec2 anchor = anchors[i];
 
@@ -322,7 +342,11 @@ class GraphicsLoaderFromDRSImpl
                                         AtlasGenerator& atlasGenerator,
                                         bool flip,
                                         int orientation,
-                                        int state)
+                                        int state,
+                                        int isConstructing,
+                                        int buildingSizeType,
+                                        int uiElementType,
+                                        int isShadow)
     {
         std::vector<SDL_Surface*> surfaces;
         std::vector<Vec2> anchors;
@@ -361,14 +385,14 @@ class GraphicsLoaderFromDRSImpl
 
         std::vector<SDL_Surface*> mergedSurfaceVec = {mergedSurface};
         loadSurfaces(atlasGenerator, renderer, mergedSurfaceVec, baseId.entityType,
-                     drsData.clipRect, baseId.entitySubType, baseId.action, baseId.playerId, frames,
-                     newAnchors, graphicsRegistry, false, orientation, flip, state);
+                     drsData.clipRect, baseId.action, baseId.playerId, frames, newAnchors,
+                     graphicsRegistry, false, orientation, flip, state, isConstructing,
+                     buildingSizeType, uiElementType, isShadow);
     }
 
     static void loadSLPWithAllFrames(shared_ptr<DRSFile> drs,
                                      uint32_t slpId,
                                      uint32_t entityType,
-                                     uint32_t entitySubType,
                                      uint32_t action,
                                      uint32_t playerId,
                                      SDL_Renderer& renderer,
@@ -378,7 +402,11 @@ class GraphicsLoaderFromDRSImpl
                                      bool flip,
                                      int orientation,
                                      std::optional<int> frameIndex,
-                                     int state)
+                                     int state,
+                                     int isConstructing,
+                                     int buildingSizeType,
+                                     int uiElementType,
+                                     int isShadow)
     {
         auto slp = drs->getSLPFile(slpId);
 
@@ -400,9 +428,9 @@ class GraphicsLoaderFromDRSImpl
             anchors.push_back(Vec2(anchorPair.first, anchorPair.second));
         }
 
-        loadSurfaces(atlasGenerator, renderer, surfaces, entityType, clipRect, entitySubType,
-                     action, playerId, frames, anchors, graphicsRegistry, false, orientation, flip,
-                     state);
+        loadSurfaces(atlasGenerator, renderer, surfaces, entityType, clipRect, action, playerId,
+                     frames, anchors, graphicsRegistry, false, orientation, flip, state,
+                     isConstructing, buildingSizeType, uiElementType, isShadow);
     }
 
     static bool isTextureFlippingNeededEntity(int entityType)
@@ -461,8 +489,7 @@ void DRSGraphicsLoader::initGraphicsLoadup(SDL_Renderer& renderer,
                                            GraphicsRegistry& graphicsRegistry,
                                            AtlasGenerator& atlasGenerator)
 {
-    GraphicsLoaderFromDRSImpl::registerDummyTexture(EntityTypes::ET_UI_ELEMENT,
-                                                    EntitySubTypes::EST_DEFAULT, graphicsRegistry);
+    GraphicsLoaderFromDRSImpl::registerDummyTexture(EntityTypes::ET_UI_ELEMENT, graphicsRegistry);
 }
 
 void DRSGraphicsLoader::loadGraphics(SDL_Renderer& renderer,
@@ -494,17 +521,18 @@ void DRSGraphicsLoader::loadGraphics(SDL_Renderer& renderer,
             if (drsData.parts[0].drsFile != nullptr)
             {
                 GraphicsLoaderFromDRSImpl::loadSLPWithAllFrames(
-                    drsData.parts[0].drsFile, drsData.parts[0].slpId, id.entityType,
-                    id.entitySubType, id.action, id.playerId, renderer, graphicsRegistry,
-                    atlasGenerator, drsData.clipRect, drsData.flip, baseId.orientation,
-                    drsData.parts[0].frameIndex, id.state);
+                    drsData.parts[0].drsFile, drsData.parts[0].slpId, id.entityType, id.action,
+                    id.playerId, renderer, graphicsRegistry, atlasGenerator, drsData.clipRect,
+                    drsData.flip, baseId.orientation, drsData.parts[0].frameIndex, id.state,
+                    id.isConstructing, id.buildingSizeType, id.uiElementType, id.isShadow);
             }
         }
         else // Multi-part texture
         {
             GraphicsLoaderFromDRSImpl::loadSLPWithMergingParts(
                 drsData, id, renderer, graphicsRegistry, atlasGenerator, drsData.flip,
-                baseId.orientation, id.state);
+                baseId.orientation, id.state, id.isConstructing, id.buildingSizeType,
+                id.uiElementType, id.isShadow);
         }
     }
     GraphicsLoaderFromDRSImpl::adjustDirections(graphicsRegistry);

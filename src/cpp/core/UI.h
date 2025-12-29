@@ -94,7 +94,6 @@ class Widget : public std::enable_shared_from_this<Widget>, public core::Propert
     DEFINE_GETTER_SETTER(backgroundImage, BackgroundImage);
 
     static inline int s_entityType = 0;
-    static inline int s_entitySubType = 0;
 
   private:
     bool inside(const Vec2& pos) const;

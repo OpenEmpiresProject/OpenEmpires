@@ -6,8 +6,10 @@ namespace core
 class GraphicsID;
 class GraphicsLoadupDataProvider
 {
-public:
-    struct Data{};
+  public:
+    struct Data
+    {
+    };
 
     virtual Data getData(const GraphicsID& id) = 0;
 };

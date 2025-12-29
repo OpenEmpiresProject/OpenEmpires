@@ -129,7 +129,7 @@ class EntityModelLoader : public core::EntityFactory, public core::PropertyIniti
                                                pybind11::handle entityDefinition);
     static ComponentType createCompHousing(pybind11::object module,
                                            pybind11::handle entityDefinition);
-    uint32_t createEntity(uint32_t entityType, uint32_t entitySubType) override;
+    uint32_t createEntity(uint32_t entityType) override;
 
   protected:
     struct ConstructionSiteData
@@ -153,17 +153,17 @@ class EntityModelLoader : public core::EntityFactory, public core::PropertyIniti
     void addComponentsForNaturalResource(uint32_t entityType);
     void addComponentsForTileset(uint32_t entityType);
     void addComponentIfNotNull(uint32_t entityType, const ComponentType& comp);
-    void loadDRSForAnimations(uint32_t entityType,
-                              uint32_t entitySubType,
-                              pybind11::handle entityDefinition);
+    void loadDRSForAnimations(uint32_t entityType, pybind11::handle entityDefinition);
     void loadDRSForStillImage(pybind11::object module,
                               uint32_t entityType,
-                              uint32_t entitySubType,
-                              pybind11::handle entityDefinition);
+                              pybind11::handle entityDefinition,
+                              int constructionType,
+                              int uiElementType,
+                              int isShadow);
     void loadDRSForIcon(uint32_t entityType,
-                        uint32_t entitySubType,
+                        uint32_t uiElementType,
                         pybind11::handle entityDefinition);
-    core::GraphicsID readIconDef(uint32_t entitySubType, pybind11::handle entityDefinition);
+    core::GraphicsID readIconDef(uint32_t uiElementType, pybind11::handle entityDefinition);
     ConstructionSiteData getSite(const std::string& sizeStr);
     void setSite(const std::string& sizeStr, const std::map<int, int>& progressToFrames);
     void attachConstructionSites(uint32_t entityType, const std::string& sizeStr);
@@ -171,9 +171,9 @@ class EntityModelLoader : public core::EntityFactory, public core::PropertyIniti
     void setDRSLoaderFunc(std::function<core::Ref<drs::DRSFile>(const std::string&)> func);
     void setBoundingBoxReadFunc(
         std::function<core::Rect<int>(core::Ref<drs::DRSFile>, uint32_t)> func);
-    template <typename T> T& getComponent(uint32_t entityType, uint32_t entitySubType)
+    template <typename T> T& getComponent(uint32_t entityType)
     {
-        auto mapKey = entityType + entitySubType * m_entitySubTypeMapKeyOffset;
+        auto mapKey = entityType;
 
         auto it = m_componentsByEntityType.find(mapKey);
         if (it != m_componentsByEntityType.end())
@@ -201,13 +201,15 @@ class EntityModelLoader : public core::EntityFactory, public core::PropertyIniti
     }
 
     void processGraphic(uint32_t entityType,
-                        uint32_t entitySubType,
                         pybind11::handle graphicObj,
                         const core::Vec2& anchor,
                         core::BuildingOrientation orientation,
                         bool flip,
                         std::optional<int> frameIndex,
-                        int state);
+                        int state,
+                        int constructionType,
+                        int uiElementType,
+                        int isShadow);
 
   private:
     const std::string m_unitsFile = "units";

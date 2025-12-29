@@ -57,27 +57,25 @@ class PropertyInitializer
     }
 };
 
-//template <FixedString Name, auto Member> struct PropertyDesc;
+// template <FixedString Name, auto Member> struct PropertyDesc;
 //
-//template <FixedString Name, typename C, typename T, Property<T> C::* Member>
-//struct PropertyDesc<Name, Member>
+// template <FixedString Name, typename C, typename T, Property<T> C::* Member>
+// struct PropertyDesc<Name, Member>
 //{
-//    static constexpr auto name = Name;
+//     static constexpr auto name = Name;
 //
-//    using component_type = C;
-//    using value_type = T;
-//    using property_type = Property<T>;
+//     using component_type = C;
+//     using value_type = T;
+//     using property_type = Property<T>;
 //
-//    static constexpr auto member = Member;
-//};
-// 
-// 
-// template <typename T>
-// concept HasProperties = requires {
-//     { T::properties() };
+//     static constexpr auto member = Member;
 // };
-
-
+//
+//
+//  template <typename T>
+//  concept HasProperties = requires {
+//      { T::properties() };
+//  };
 
 } // namespace core
 

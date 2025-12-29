@@ -126,22 +126,22 @@ class Game
 
         core::GraphicsID defaultIcon;
         defaultIcon.entityType = game::EntityTypes::ET_UI_ELEMENT;
-        defaultIcon.entitySubType = game::EntitySubTypes::UI_CURSOR;
+        defaultIcon.uiElementType = (int) game::UIElementTypes::CURSOR;
         defaultIcon.variation = 0;
 
         core::GraphicsID buildIcon;
         buildIcon.entityType = game::EntityTypes::ET_UI_ELEMENT;
-        buildIcon.entitySubType = game::EntitySubTypes::UI_CURSOR;
+        buildIcon.uiElementType = (int) game::UIElementTypes::CURSOR;
         buildIcon.variation = 7;
 
         core::GraphicsID assignTaskCursor;
         assignTaskCursor.entityType = game::EntityTypes::ET_UI_ELEMENT;
-        assignTaskCursor.entitySubType = game::EntitySubTypes::UI_CURSOR;
+        assignTaskCursor.uiElementType = (int) game::UIElementTypes::CURSOR;
         assignTaskCursor.variation = 3;
 
         core::GraphicsID garrisonCursor;
         garrisonCursor.entityType = game::EntityTypes::ET_UI_ELEMENT;
-        garrisonCursor.entitySubType = game::EntitySubTypes::UI_CURSOR;
+        garrisonCursor.uiElementType = (int) game::UIElementTypes::CURSOR;
         garrisonCursor.variation = 13;
 
         entityTypeRegistry->registerCursorGraphic(core::CursorType::DEFAULT_INGAME, defaultIcon);

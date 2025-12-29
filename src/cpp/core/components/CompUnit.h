@@ -18,9 +18,6 @@ class CompUnit
     Property<UnitType> type;
 
   public:
-    Property<uint32_t> typeInt;
-
-  public:
     CommandQueueType commandQueue;
     bool isGarrisoned = false;
 };
