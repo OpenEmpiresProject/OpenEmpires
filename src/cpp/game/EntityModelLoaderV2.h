@@ -28,6 +28,7 @@
 #include <optional>
 #include <pybind11/embed.h>
 #include <variant>
+#include "DRSInterface.h"
 
 namespace game
 {
@@ -39,11 +40,13 @@ struct DRSData : public core::GraphicsLoadupDataProvider::Data
         int slpId = -1;
         core::Vec2 anchor = core::Vec2::null;
         std::optional<int> frameIndex;
+        bool flip = false;
 
         Part(core::Ref<drs::DRSFile> drs,
              int slp,
              const core::Vec2& anchor,
-             std::optional<int> frameIndex);
+             std::optional<int> frameIndex,
+             bool flip);
     };
     std::vector<Part> parts;
     core::Rect<int> clipRect;
@@ -57,7 +60,7 @@ class EntityModelLoaderV2 : public core::EntityFactory,
                             core::GraphicsLoadupDataProvider
 {
   public:
-    EntityModelLoaderV2(const std::string& scriptDir);
+    EntityModelLoaderV2(const std::string& scriptDir, core::Ref<DRSInterface> drsInterface);
     ~EntityModelLoaderV2();
 
     // TODO - evaluate to use EventHandler::init instead
@@ -76,6 +79,7 @@ class EntityModelLoaderV2 : public core::EntityFactory,
     void loadAll(const pybind11::object& module);
     void loadEntityTypes(const pybind11::object& module);
     void postProcessing();
+    void loadUnprogressedFields();
     pybind11::object loadModelImporterModule();
 
   private:
@@ -83,6 +87,8 @@ class EntityModelLoaderV2 : public core::EntityFactory,
     struct ComponentHolder
     {
         std::list<ComponentType> components;
+
+        core::GraphicsID createGraphicsID(const std::map<std::string, std::string>& filters) const;
     };
 
     template <typename T> std::list<std::string> enrich(T& comp, const pybind11::object& obj)
@@ -177,6 +183,10 @@ class EntityModelLoaderV2 : public core::EntityFactory,
 
     std::map<std::type_index, std::list<std::string_view>> m_modelsByComponentType;
     std::unordered_map<std::type_index, EmplaceFn> m_componentFactories;
+
+    core::Ref<DRSInterface> m_drsInterface;
+
+    std::unordered_map<core::GraphicsID, DRSData> m_DRSDataByGraphicsId;
 };
 } // namespace game
 

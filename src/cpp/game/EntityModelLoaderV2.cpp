@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <pybind11/stl.h>
 #include <variant>
+#include "utils/Utils.h"
 
 using namespace game;
 using namespace core;
@@ -17,7 +18,6 @@ using namespace drs;
 namespace py = pybind11;
 
 extern UnitAction getAction(const std::string actionname);
-extern uint32_t getEntitySubType(uint32_t entityType, const std::string& name);
 extern ResourceType getResourceType(const std::string& name);
 extern BuildingOrientation getBuildingOrientation(const std::string& name);
 extern int getState(const std::string& name);
@@ -99,17 +99,180 @@ template <typename Tuple, typename F> constexpr void for_each_tuple(Tuple&& t, F
     std::apply([&](auto&&... elems) { (f(elems), ...); }, std::forward<Tuple>(t));
 }
 
+struct _Constructible
+{
+    
+};
+
+
+struct SingleGraphic
+{
+    std::string drsFile;
+    int slp_id;
+    std::optional<Vec2> anchor;
+    std::optional<int> frameIndex;
+    std::optional<Rect<int>> clipRect;
+    std::optional<bool> flip;
+};
+
+struct Icon : public SingleGraphic
+{
+    int index;
+};
+
+
+struct CompositeGraphic
+{
+    std::vector<SingleGraphic> parts;
+    Vec2 anchor;
+    bool flip;
+};
+
+using GraphicImpl = std::variant<SingleGraphic, CompositeGraphic>;
+
+struct GraphicVariant
+{
+    GraphicImpl graphic;
+    std::map<std::string, std::string> variationFilter;
+
+    BuildingOrientation getBuildingOrientation() const
+    {
+        auto it = variationFilter.find("orientation");
+        if (it != variationFilter.end())
+        {
+            return ::getBuildingOrientation(it->second);
+        }
+        return BuildingOrientation::NO_ORIENTATION;
+    }
+
+    int getState() const
+    {
+        auto it = variationFilter.find("state");
+        if (it != variationFilter.end())
+        {
+            return ::getState(it->second);
+        }
+        return 0;
+    }
+
+    std::vector<SingleGraphic> getAllSingleGraphics() const
+    {
+        std::vector<SingleGraphic> result;
+        std::visit(
+            [&](auto&& graphic)
+            {
+                using T = std::decay_t<decltype(graphic)>;
+                if constexpr (std::is_same_v<T, SingleGraphic>)
+                {
+                    result.push_back(graphic);
+                }
+                else if constexpr (std::is_same_v<T, CompositeGraphic>)
+                {
+                    result = graphic.parts;
+                }
+            },
+            graphic);
+        return result;
+    }
+
+    bool isComposite() const
+    {
+        return std::holds_alternative<CompositeGraphic>(graphic);
+    }
+};
+
+struct Graphic
+{
+    std::vector<GraphicVariant> variants;
+};
+
+PYBIND11_EMBEDDED_MODULE(graphic_defs, m)
+{
+    py::class_<_Constructible>(m, "_Constructible")
+        .def(py::init<>());
+
+    py::class_<Vec2>(m, "Point")
+        .def(py::init<int, int>(), py::arg("x"), py::arg("y"))
+        .def_readonly("x", &Vec2::x)
+        .def_readonly("y", &Vec2::y);
+
+    py::class_<SingleGraphic>(m, "SingleGraphic")
+        .def(py::init<std::string, int, std::optional<Vec2>, std::optional<int>,
+                      std::optional<Rect<int>>, std::optional<bool>>(),
+             py::kw_only(),
+             py::arg("drs_file") = "graphics.drs",
+             py::arg("slp_id"),
+             py::arg("anchor") = std::nullopt, 
+             py::arg("frame_index") = std::nullopt,
+             py::arg("clip_rect") = std::nullopt,
+             py::arg("flip") = std::nullopt)
+        .def_readonly("drs_file", &SingleGraphic::drsFile)
+        .def_readonly("slp_id", &SingleGraphic::slp_id)
+        .def_readonly("frame_index", &SingleGraphic::frameIndex)
+        .def_readonly("clip_rect", &SingleGraphic::clipRect)
+        .def_readonly("flip", &SingleGraphic::flip)
+        .def_readonly("anchor", &SingleGraphic::anchor);
+
+    py::class_<Icon, SingleGraphic>(m, "Icon")
+        .def(py::init<std::string, int, std::optional<Vec2>, int>(), py::kw_only(),
+             py::arg("drs_file") = "graphics.drs", py::arg("slp_id"),
+             py::arg("anchor") = std::nullopt, py::arg("index"))
+        .def_readonly("index", &Icon::index);
+
+    py::class_<CompositeGraphic>(m, "CompositeGraphic")
+        .def(py::init<std::vector<SingleGraphic>, Vec2, bool>(), py::kw_only(), py::arg("parts"),
+             py::arg("anchor"), py::arg("flip"))
+        .def_readonly("parts", &CompositeGraphic::parts)
+        .def_readonly("flip", &CompositeGraphic::flip)
+        .def_readonly("anchor", &CompositeGraphic::anchor);
+
+    py::class_<GraphicVariant>(m, "GraphicVariant")
+        .def(py::init<GraphicImpl, std::map<std::string, std::string>>(), py::kw_only(),
+             py::arg("graphic"), py::arg("variation_filter"))
+        .def_readonly("graphic", &GraphicVariant::graphic)
+        .def_readonly("variation_filter", &GraphicVariant::variationFilter);
+
+    py::class_<Graphic>(m, "Graphic")
+        .def(py::init<std::vector<GraphicVariant>>(), py::kw_only(), py::arg("variants"))
+        .def_readonly("variants", &Graphic::variants);
+}
+
+DRSData getDRSData(const SingleGraphic& graphicData,
+                   const CompositeGraphic& compositeData,
+                   core::Ref<DRSInterface> drsInterface)
+{
+    auto drsFile = drsInterface->loadDRSFile(graphicData.drsFile);
+    auto boundingBox = drsInterface->getBoundingBox(graphicData.drsFile,
+                                                   graphicData.slp_id,
+                                                    graphicData.frameIndex.value_or(0));
+
+    DRSData data;
+    data.parts.push_back(DRSData::Part(drsFile, graphicData.slp_id,
+                                       graphicData.anchor.value_or(Vec2::null),
+                                       graphicData.frameIndex,
+                                       graphicData.flip.value_or(false)));
+    data.boundingRect = boundingBox;
+    data.clipRect = graphicData.clipRect.value_or(Rect<int>());
+    data.anchor = compositeData.anchor;
+    data.flip = compositeData.flip;
+
+    return data;
+}
+
+
 DRSData::Part::Part(core::Ref<drs::DRSFile> drs,
                     int slp,
                     const core::Vec2& anchor,
-                    std::optional<int> frameIndex)
-    : drsFile(drs), slpId(slp), anchor(anchor), frameIndex(frameIndex)
+                    std::optional<int> frameIndex, bool flip)
+    : drsFile(drs), slpId(slp), anchor(anchor), frameIndex(frameIndex), flip(flip)
 {
 }
 
 static const int g_entitySubTypeMapKeyOffset = 100000;
 
-EntityModelLoaderV2::EntityModelLoaderV2(const std::string& scriptDir) : m_scriptDir(scriptDir)
+EntityModelLoaderV2::EntityModelLoaderV2(const std::string& scriptDir,
+                                         core::Ref<DRSInterface> drsInterface)
+    : m_scriptDir(scriptDir), m_drsInterface(drsInterface)
 {
     // constructor
 }
@@ -166,6 +329,7 @@ void EntityModelLoaderV2::init()
     validateEntities(module);
     loadEntityTypes(module);
     loadAll(module);
+    loadUnprogressedFields();
     postProcessing();
 }
 
@@ -180,7 +344,7 @@ void EntityModelLoaderV2::loadEntityTypes(const py::object& module)
     // Specialized core entity types
     typeRegistry->registerEntityType("villager", EntityTypes::ET_VILLAGER);
     typeRegistry->registerEntityType("wood", EntityTypes::ET_TREE);
-    typeRegistry->registerEntityType("construction_site", EntityTypes::ET_CONSTRUCTION_SITE);
+    //typeRegistry->registerEntityType("construction_site", EntityTypes::ET_CONSTRUCTION_SITE);
 
     for (const auto& name : entityNames)
         typeRegistry->registerEntityType(name, typeRegistry->getNextAvailableEntityType());
@@ -374,3 +538,74 @@ void EntityModelLoaderV2::initPython()
     if (!Py_IsInitialized())
         py::initialize_interpreter();
 }
+
+void EntityModelLoaderV2::loadUnprogressedFields()
+{
+    for (auto [entityName, unprocessedFields] : m_unprocessedFieldsByEntityName)
+    {
+        auto& holder = m_componentsByEntityName[entityName];
+
+        for (auto [fieldName, pyObj] : unprocessedFields.fields)
+        {
+            if (fieldName == "graphics")
+            {
+                auto graphic = pyObj.cast<Graphic>();
+
+                for (const auto& variant : graphic.variants)
+                {
+                    auto allSingleGraphics = variant.getAllSingleGraphics();
+
+                    auto compositeGraphic =
+                        Utils::get_or<CompositeGraphic>(variant.graphic, CompositeGraphic());
+
+                    for (const auto& singleGraphic : allSingleGraphics)
+                    {
+                        auto drsData = getDRSData(singleGraphic, compositeGraphic, m_drsInterface);
+                        spam("Entity {} has graphic with DRS file {} and SLP id {}",
+                             entityName, singleGraphic.drsFile, singleGraphic.slp_id);
+
+                        auto graphicsId = holder->createGraphicsID(variant.variationFilter);
+                        m_DRSDataByGraphicsId[graphicsId] = drsData;
+                    }
+                }
+            }
+        }
+    }
+}
+
+ core::GraphicsID EntityModelLoaderV2::ComponentHolder::createGraphicsID(
+    const std::map<std::string, std::string>& filters) const
+ {
+     GraphicsID id;
+
+     if (filters.contains("orientation"))
+         id.orientation = (int)getBuildingOrientation(filters.at("orientation"));
+     if (filters.contains("state"))
+         id.state = getState(filters.at("state"));
+     if (filters.contains("construction_site"))
+         id.isConstructing = filters.at("state") == "true" ? 1 : 0;
+
+     for (auto& comp : components)
+     {
+         if (const auto& c = std::get_if<CompEntityInfo>(&comp))
+         {
+             id.entityType = c->entityType;
+         }
+         if (const auto& c = std::get_if<CompBuilding>(&comp))
+         {
+             //id.entityType = c->entityType;
+         }
+ 
+         // id.variation --> Needs for Icon
+         
+         // id.action    --> Only needed for animated graphics
+         // id.frame     --> Loaded in DRSGraphicsLoader
+         // id.direction --> Loaded in DRSGraphicsLoader
+         // id.playerId  --> Set at runtime
+         // id.civilization  --> Not used atm
+         // id.age           --> Not used atm
+         // id.uiElementType
+         // id.isShadow
+     }
+     return id;
+ }

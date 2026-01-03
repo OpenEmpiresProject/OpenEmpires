@@ -3,7 +3,7 @@ from game_model_defs import *
 all_models = [
 	Villager(
         name="villager",
-        display_name="Villager",
+        display_name="VillagerX",
         unit_type = UnitType.VILLAGER,
         line_of_sight=256*5,
         moving_speed=256,

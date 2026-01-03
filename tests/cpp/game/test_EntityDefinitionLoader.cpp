@@ -393,7 +393,6 @@ all_buildings= [
 	    loader.setSite("medium", std::map<int, int>());
 	    GraphicsID siteId;
 	    siteId.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
-        siteId.buildingSizeType = (int)BuildingSizeTypes::MEDIUM_SIZE;
 	    EntityModelLoader::EntityDRSData data;
 	    data.parts.push_back(EntityModelLoader::EntityDRSData::Part(nullptr, 111, Vec2::null, std::nullopt));
 	    loader.setDRSData(siteId, data);
@@ -501,7 +500,6 @@ all_construction_sites= [
         {
             GraphicsID id;
             id.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
-            id.buildingSizeType = (int)BuildingSizeTypes::SMALL_SIZE;
             auto drsData = loader.getDRSData(id);
             EXPECT_EQ(drsData.parts[0].slpId, 236);
 
@@ -514,7 +512,6 @@ all_construction_sites= [
         {
             GraphicsID id;
             id.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
-            id.buildingSizeType = (int) BuildingSizeTypes::MEDIUM_SIZE;
             auto drsData = loader.getDRSData(id);
             EXPECT_EQ(drsData.parts[0].slpId, 237);
 

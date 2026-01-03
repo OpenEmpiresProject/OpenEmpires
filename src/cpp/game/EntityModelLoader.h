@@ -142,7 +142,6 @@ class EntityModelLoader : public core::EntityFactory, public core::PropertyIniti
     void loadUnits(pybind11::object module);
     void loadNaturalResources(pybind11::object module);
     void loadBuildings(pybind11::object module);
-    void loadConstructionSites(pybind11::object module);
     void loadTileSets(pybind11::object module);
     void loadUIElements(pybind11::object module);
     void addCommonComponents(pybind11::object module,
@@ -157,16 +156,15 @@ class EntityModelLoader : public core::EntityFactory, public core::PropertyIniti
     void loadDRSForStillImage(pybind11::object module,
                               uint32_t entityType,
                               pybind11::handle entityDefinition,
-                              int constructionType,
                               int uiElementType,
                               int isShadow);
     void loadDRSForIcon(uint32_t entityType,
                         uint32_t uiElementType,
                         pybind11::handle entityDefinition);
     core::GraphicsID readIconDef(uint32_t uiElementType, pybind11::handle entityDefinition);
-    ConstructionSiteData getSite(const std::string& sizeStr);
+    //ConstructionSiteData getSite(const std::string& sizeStr);
     void setSite(const std::string& sizeStr, const std::map<int, int>& progressToFrames);
-    void attachConstructionSites(uint32_t entityType, const std::string& sizeStr);
+    //void attachConstructionSites(uint32_t entityType, const std::string& sizeStr);
     void setDRSData(const core::GraphicsID& id, const EntityDRSData& data);
     void setDRSLoaderFunc(std::function<core::Ref<drs::DRSFile>(const std::string&)> func);
     void setBoundingBoxReadFunc(
@@ -207,16 +205,15 @@ class EntityModelLoader : public core::EntityFactory, public core::PropertyIniti
                         bool flip,
                         std::optional<int> frameIndex,
                         int state,
-                        int constructionType,
                         int uiElementType,
-                        int isShadow);
+                        int isShadow,
+                        bool isConstructionSite);
 
   private:
     const std::string m_unitsFile = "units";
     std::map<uint32_t, std::list<ComponentType>> m_componentsByEntityType;
     std::unordered_map<core::GraphicsID, EntityDRSData> m_DRSDataByGraphicsIdHash;
     std::unordered_map<std::string, core::Ref<drs::DRSFile>> m_drsFilesByName;
-    std::map<std::string /*size*/, ConstructionSiteData> m_constructionSitesBySize;
     std::function<core::Ref<drs::DRSFile>(const std::string&)> m_drsLoadFunc;
     std::function<core::Rect<int>(core::Ref<drs::DRSFile>, uint32_t)> m_boundingBoxReadFunc;
 

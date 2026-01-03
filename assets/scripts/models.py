@@ -10,7 +10,11 @@ all_entity_names: List[str] = [
     "mine_camp",
     "town_center",
     "house",
-    "construction_site",
+    "construction_site_small",
+    "construction_site_medium",
+    "construction_site_large",
+    "construction_site_huge",
+    "construction_site_gate",
     "barracks",
     "militia",
     "palisade",
@@ -115,16 +119,20 @@ all_natural_resources: List[NaturalResource] = [
 
 all_buildings: List[Building] = [
     ResourceDropOff(
-        name="mill", 
+        name="mill",
         display_name="Mill",
         line_of_sight=256*5,
         size="medium",
+        construction_site="construction_site_medium",
         accepted_resources=["food"], 
         graphics=Graphic(
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=3483),
-                    variation_filter={GraphicVariantType.THEME:"default"})]),
+                    variation_filter={GraphicVariantType.THEME:"default"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(slp_id=237),
+                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"})]),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=21)
     ),
     ResourceDropOff(
@@ -132,12 +140,16 @@ all_buildings: List[Building] = [
         display_name="Lumber Camp",
         line_of_sight=256*5,
         size="medium",
+        construction_site="construction_site_medium",
         accepted_resources=["wood"], 
         graphics=Graphic(
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=3505),
-                    variation_filter={GraphicVariantType.THEME:"default"})]),
+                    variation_filter={GraphicVariantType.THEME:"default"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(slp_id=237),
+                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"})]),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=40)
     ),
     ResourceDropOff(
@@ -145,12 +157,16 @@ all_buildings: List[Building] = [
         display_name="Mining Camp",
         line_of_sight=256*5,
         size="medium",
+        construction_site="construction_site_medium",
         accepted_resources=["gold", "stone"],
         graphics=Graphic(
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=3492),
-                    variation_filter={GraphicVariantType.THEME:"default"})]),
+                    variation_filter={GraphicVariantType.THEME:"default"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(slp_id=237),
+                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"})]),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=39)
     ),
     TownCenter(
@@ -158,6 +174,7 @@ all_buildings: List[Building] = [
         display_name="Town Center",
         line_of_sight=256*5,
         size="huge",
+        construction_site="construction_site_huge",
         accepted_resources=["gold", "stone", "food"],
         unit_creation_speed=40,
         producible_units=[Shortcut(name="villager", shortcut="v")],
@@ -178,7 +195,10 @@ all_buildings: List[Building] = [
                             SingleGraphic(slp_id=4621, anchor=Point(x=-161,y=0)), 
                             SingleGraphic(slp_id=3597, anchor=Point(x=185,y=47)), 
                             SingleGraphic(slp_id=4613, anchor=Point(x=-46,y=48))]),
-                    variation_filter={GraphicVariantType.THEME:"default"})]),
+                    variation_filter={GraphicVariantType.THEME:"default"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(slp_id=239),
+                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"})]),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=28)
     ),
     House(
@@ -187,11 +207,15 @@ all_buildings: List[Building] = [
         display_name="House",
         line_of_sight=256*2,
         size="medium",
+        construction_site="construction_site_medium",
         graphics=Graphic(
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=2223),
-                    variation_filter={GraphicVariantType.THEME:"default"})]),
+                    variation_filter={GraphicVariantType.THEME:"default"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(slp_id=237),
+                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"})]),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=34)
     ),
     MilitaryBuilding(
@@ -199,13 +223,17 @@ all_buildings: List[Building] = [
         display_name="Barracks",
         line_of_sight=256*2,
         size="large",
+        construction_site="construction_site_large",
         unit_creation_speed=40,
         max_queue_size=10,
         graphics=Graphic(
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=130),
-                    variation_filter={GraphicVariantType.THEME:"default"})]),
+                    variation_filter={GraphicVariantType.THEME:"default"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(slp_id=238),
+                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"})]),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=3),
         producible_units=[Shortcut(name="militia", shortcut="m")]
     ),
@@ -214,6 +242,7 @@ all_buildings: List[Building] = [
         display_name="Palisade",
         line_of_sight=256*2,
         size="small",
+        construction_site="construction_site_small",
         graphics=Graphic(
             variants=[
                 GraphicVariant(
@@ -246,6 +275,7 @@ all_buildings: List[Building] = [
         display_name="Stone Wall",
         line_of_sight=256*2,
         size="small",
+        construction_site="construction_site_small",
         graphics=Graphic(
             variants=[
                 GraphicVariant(
@@ -268,6 +298,9 @@ all_buildings: List[Building] = [
                     graphic=SingleGraphic(slp_id=2110, frame_index=4),
                     variation_filter={GraphicVariantType.THEME:"default", 
                                       GraphicVariantType.ORIENTATION:"vertical"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(slp_id=236),
+                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"})
         ]),
         icon=Icon(drs_file="interfac.drs", slp_id=50705, index=29),
         connected_constructions_allowed=True,
@@ -280,6 +313,7 @@ all_buildings: List[Building] = [
         active_tracking = True,
         line_of_sight_shape = LineOfSightShape.CIRCLE,
         size="gate",
+        construction_site="construction_site_gate",
         graphics=Graphic(
             variants=[
                 # Closed Gates
@@ -382,76 +416,31 @@ all_buildings: List[Building] = [
                     variation_filter={GraphicVariantType.THEME:"default", 
                                       GraphicVariantType.ORIENTATION:"vertical",
                                       GraphicVariantType.STATE:"opened"}),
-        ]),
-        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=36),
-        default_orientation="diagonal_forward"
-    ),
-]
-
-all_construction_sites: List[ConstructionSite] = [
-    ConstructionSite(
-        name="construction_site",
-        size="small",
-        graphics=Graphic(
-            variants=[
-                GraphicVariant(
-                    graphic=SingleGraphic(slp_id=236),
-                    variation_filter={GraphicVariantType.THEME:"default"})]),
-        progress_frame_map={33:0, 66:1, 99:2}),
-    ConstructionSite(
-        name="construction_site",
-        size="medium",
-        graphics=Graphic(
-            variants=[
-                GraphicVariant(
-                    graphic=SingleGraphic(slp_id=237),
-                    variation_filter={GraphicVariantType.THEME:"default"})]),
-        progress_frame_map={33:0, 66:1, 99:2}),
-    ConstructionSite(
-        name="construction_site",
-        size="large",
-        graphics=Graphic(
-            variants=[
-                GraphicVariant(
-                    graphic=SingleGraphic(slp_id=238),
-                    variation_filter={GraphicVariantType.THEME:"default"})]),
-        progress_frame_map={33:0, 66:1, 99:2}),
-    ConstructionSite(
-        name="construction_site",
-        size="huge",
-        graphics=Graphic(
-            variants=[
-                GraphicVariant(
-                    graphic=SingleGraphic(slp_id=239),
-                    variation_filter={GraphicVariantType.THEME:"default"})]),
-        progress_frame_map={33:0, 66:1, 99:2}),
-    ConstructionSite(
-        name="construction_site",
-        size="gate",
-        graphics=Graphic(
-            variants=[
+                # Construction sites
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=3706),
                     variation_filter={GraphicVariantType.THEME:"default", 
                                       GraphicVariantType.ORIENTATION:"diagonal_forward",
-                                      GraphicVariantType.STATE:"closed"}),
+                                      GraphicVariantType.CONSTRUCTION_SITE:"true"}),
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=3706, flip=True),
                     variation_filter={GraphicVariantType.THEME:"default", 
                                       GraphicVariantType.ORIENTATION:"diagonal_backward",
-                                      GraphicVariantType.STATE:"closed"}),
+                                      GraphicVariantType.CONSTRUCTION_SITE:"true"}),
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=4067),
                     variation_filter={GraphicVariantType.THEME:"default", 
                                       GraphicVariantType.ORIENTATION:"horizontal",
-                                      GraphicVariantType.STATE:"closed"}),
+                                      GraphicVariantType.CONSTRUCTION_SITE:"true"}),
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=4155),
                     variation_filter={GraphicVariantType.THEME:"default", 
                                       GraphicVariantType.ORIENTATION:"vertical",
-                                      GraphicVariantType.STATE:"closed"}),
+                                      GraphicVariantType.CONSTRUCTION_SITE:"true"})
         ]),
-        progress_frame_map={33:0, 66:1, 99:2})
+        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=36),
+        default_orientation="diagonal_forward"
+    ),
 ]
 
 all_tilesets: List[TileSet] = [
@@ -492,5 +481,5 @@ all_ui_elements: List[UIElement] = [
                         variation_filter={GraphicVariantType.THEME:"default"})]),)
 ]
 
-lists = [all_units, all_natural_resources, all_buildings, all_construction_sites, all_tilesets, all_ui_elements]
+lists = [all_units, all_natural_resources, all_buildings, all_tilesets, all_ui_elements]
 all_models = [x for lst in lists for x in lst]

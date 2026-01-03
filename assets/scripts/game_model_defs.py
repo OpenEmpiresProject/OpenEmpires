@@ -41,3 +41,4 @@ class GraphicVariantType(str, Enum):
     CIVILIZATION = "civilization"
     ORIENTATION = "orientation"
     STATE = "state"
+    CONSTRUCTION_SITE = "construction_site"

@@ -51,22 +51,6 @@ UnitAction getAction(const std::string actionname)
     return actions.at(actionname);
 }
 
-uint32_t getBuildingSizeType(const std::string& name)
-{
-    if (name == "small")
-        return (int) BuildingSizeTypes::SMALL_SIZE;
-    else if (name == "medium")
-        return (int) BuildingSizeTypes::MEDIUM_SIZE;
-    else if (name == "large")
-        return (int) BuildingSizeTypes::LARGE_SIZE;
-    else if (name == "huge")
-        return (int) BuildingSizeTypes::HUGE_SIZE;
-    else if (name == "gate")
-        return (int) BuildingSizeTypes::GATE_SIZE;
-    else
-        spdlog::warn("Unknown building size type {}", name);
-}
-
 uint32_t getUIElementType(const std::string& name)
 {
     if (name == "resource_panel")
@@ -215,7 +199,7 @@ void EntityModelLoader::load()
     loadEntityTypes(module);
     loadUnits(module);
     loadNaturalResources(module);
-    loadConstructionSites(module);
+    //loadConstructionSites(module);
     loadBuildings(module);
     loadTileSets(module);
     loadUIElements(module);
@@ -282,7 +266,7 @@ void EntityModelLoader::loadNaturalResources(py::object module)
                 addCommonComponents(module, entityType, entry);
 
                 // TODO: needs migration: start
-                loadDRSForStillImage(module, entityType, entry, 0, 0, 0);
+                loadDRSForStillImage(module, entityType, entry, 0, 0);
 
                 GraphicsID id;
                 id.entityType = entityType;
@@ -298,7 +282,7 @@ void EntityModelLoader::loadNaturalResources(py::object module)
                     if (py::hasattr(entry, "shadow"))
                     {
                         py::object stump = entry.attr("shadow");
-                        loadDRSForStillImage(module, entityType, stump, 0, 0, (int) true);
+                        loadDRSForStillImage(module, entityType, stump, 0, (int) true);
 
                         CompGraphics graphics;
                         graphics.layer = GraphicLayer::ON_GROUND;
@@ -339,10 +323,8 @@ void EntityModelLoader::loadBuildings(pybind11::object module)
                 addCommonComponents(module, entityType, entry);
 
                 // TODO: needs migration: start
-                // auto buildingSizeType = getBuildingSizeType(size);
 
-                loadDRSForStillImage(module, entityType, entry, 0, 0, 0);
-                attachConstructionSites(entityType, size);
+                loadDRSForStillImage(module, entityType, entry, 0, 0);
 
                 for (auto& drsIt : m_DRSDataByGraphicsIdHash)
                 {
@@ -363,33 +345,6 @@ void EntityModelLoader::loadBuildings(pybind11::object module)
     }
 }
 
-void EntityModelLoader::loadConstructionSites(pybind11::object module)
-{
-    if (py::hasattr(module, "all_construction_sites"))
-    {
-        py::list entries = module.attr("all_construction_sites");
-        auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
-
-        for (auto entry : entries)
-        {
-            std::string name = entry.attr("name").cast<std::string>();
-
-            // TODO: needs migration: start
-            ConstructionSiteData data;
-            auto sizeStr = readValue<std::string>(entry, "size");
-            data.size = getBuildingSize(sizeStr);
-            data.progressToFrames = entry.attr("progress_frame_map").cast<std::map<int, int>>();
-            m_constructionSitesBySize[sizeStr] = data;
-
-            auto entityType = typeRegistry->getEntityType(name);
-
-            auto buildingSizeType = getBuildingSizeType(sizeStr);
-            loadDRSForStillImage(module, entityType, entry, buildingSizeType, 0, 0);
-            // TODO: needs migration: end
-        }
-    }
-}
-
 void EntityModelLoader::loadTileSets(pybind11::object module)
 {
     if (py::hasattr(module, "all_tilesets"))
@@ -400,7 +355,7 @@ void EntityModelLoader::loadTileSets(pybind11::object module)
         {
             addComponentsForTileset(EntityTypes::ET_TILE);
             // TODO: needs migration: start
-            loadDRSForStillImage(module, EntityTypes::ET_TILE, entry, 0, 0, 0);
+            loadDRSForStillImage(module, EntityTypes::ET_TILE, entry, 0, 0);
             // TODO: needs migration: end
         }
     }
@@ -418,7 +373,7 @@ void EntityModelLoader::loadUIElements(pybind11::object module)
 
             auto elementType = getUIElementType(name);
             // TODO: needs migration: start
-            loadDRSForStillImage(module, EntityTypes::ET_UI_ELEMENT, entry, 0, elementType, 0);
+            loadDRSForStillImage(module, EntityTypes::ET_UI_ELEMENT, entry, elementType, 0);
             // TODO: needs migration: end
         }
     }
@@ -670,9 +625,9 @@ void EntityModelLoader::processGraphic(uint32_t entityType,
                                        bool flip,
                                        std::optional<int> frameIndex,
                                        int state,
-                                       int constructionType,
                                        int uiElementType,
-                                       int isShadow)
+                                       int isShadow,
+                                       bool isConstructionSite)
 {
     // TODO: handle theme
     auto drsFileName = EntityModelLoader::readValue<std::string>(graphicObj, "drs_file");
@@ -707,9 +662,9 @@ void EntityModelLoader::processGraphic(uint32_t entityType,
     id.entityType = entityType;
     id.orientation = (int) orientation;
     id.state = state;
-    id.buildingSizeType = constructionType;
     id.uiElementType = uiElementType;
     id.isShadow = isShadow;
+    id.isConstructing = isConstructionSite;
 
     auto boundingBox = m_boundingBoxReadFunc(drsFile, slpId);
 
@@ -740,7 +695,6 @@ void EntityModelLoader::processGraphic(uint32_t entityType,
 void EntityModelLoader::loadDRSForStillImage(pybind11::object module,
                                              uint32_t entityType,
                                              pybind11::handle entityDefinition,
-                                             int constructionType,
                                              int uiElementType,
                                              int isShadow)
 {
@@ -778,6 +732,8 @@ void EntityModelLoader::loadDRSForStillImage(pybind11::object module,
                 state = getState(stateStr);
             }
 
+            bool isConstructionSite = filters.contains("construction_site");
+
             if (py::isinstance(graphicsEntry, compositeGraphicClass))
             {
                 bool flip = readValue<bool>(graphicsEntry, "flip");
@@ -788,7 +744,8 @@ void EntityModelLoader::loadDRSForStillImage(pybind11::object module,
 
                 for (auto part : parts)
                     processGraphic(entityType, part, Vec2(anchorX, anchorY), orientation, flip,
-                                   std::nullopt, state, constructionType, uiElementType, isShadow);
+                                   std::nullopt, state, uiElementType, isShadow,
+                                   isConstructionSite);
             }
             else
             {
@@ -799,7 +756,7 @@ void EntityModelLoader::loadDRSForStillImage(pybind11::object module,
                 }
                 bool flip = readValue<bool>(graphicsEntry, "flip");
                 processGraphic(entityType, graphicsEntry, Vec2::null, orientation, flip, frameIndex,
-                               state, constructionType, uiElementType, isShadow);
+                               state, uiElementType, isShadow, isConstructionSite);
             }
         }
     }
@@ -842,79 +799,6 @@ void EntityModelLoader::loadDRSForIcon(uint32_t entityType,
         m_DRSDataByGraphicsIdHash[id] = data;
     }
 }
-// TODO: needs migration: start
-EntityModelLoader::ConstructionSiteData EntityModelLoader::getSite(const std::string& sizeStr)
-{
-    return m_constructionSitesBySize.at(sizeStr);
-}
-
-void EntityModelLoader::setSite(const std::string& sizeStr,
-                                const std::map<int, int>& progressToFrames)
-{
-    m_constructionSitesBySize[sizeStr] = ConstructionSiteData{.progressToFrames = progressToFrames};
-}
-
-void EntityModelLoader::attachConstructionSites(uint32_t entityType, const std::string& sizeStr)
-{
-    // Approach: Find and attach construction site variants to the original
-    // building component for the entity type.
-    auto& components = m_componentsByEntityType.at(entityType);
-    auto siteData = m_constructionSitesBySize.at(sizeStr);
-
-    for (auto& comp : components)
-    {
-        if (std::holds_alternative<CompBuilding>(comp))
-        {
-            auto& buildingComp = std::get<CompBuilding>(comp);
-            buildingComp.visualVariationByProgress = siteData.progressToFrames;
-            // Fallback to the main variation if the building progress is 100. This is used
-            // to switch to the main building texture instead of the construction site texture
-            // using entitySubType.
-            // So when entitySubType is resetted to default to display the main building, we
-            // need to default the variation also.
-            buildingComp.visualVariationByProgress[100] = 0;
-            break;
-        }
-    }
-
-    for (const auto& [id, drs] : m_DRSDataByGraphicsIdHash)
-    {
-        if (id.entityType == entityType)
-        {
-            // Approach: Find the construction site DRS data and attach it to building entity
-            // as entity sub types.
-            GraphicsID siteId;
-            siteId.entityType = EntityTypes::ET_CONSTRUCTION_SITE;
-            siteId.buildingSizeType = getBuildingSizeType(sizeStr);
-            siteId.orientation = id.orientation;
-
-            // Try finding the construction site with exact orientation first, then without any
-            // specific orientation. Eg: Both walls and gates have orientations, but only gate's
-            // construction site has orientation specific graphics.
-            //
-            if (not m_DRSDataByGraphicsIdHash.contains(siteId))
-            {
-                siteId.orientation = (int) BuildingOrientation::NO_ORIENTATION;
-                if (not m_DRSDataByGraphicsIdHash.contains(siteId))
-                {
-                    spdlog::error("Could not find construction site graphics for entity {}",
-                                  id.toString());
-                    continue;
-                }
-            }
-            const auto& siteDRSData = m_DRSDataByGraphicsIdHash.at(siteId);
-
-            GraphicsID buildingAttachedSiteId = id;
-            // buildingAttachedSiteId.entityType = entityType;
-            buildingAttachedSiteId.isConstructing = (int) true;
-            // buildingAttachedSiteId.orientation = id.orientation;
-
-            spdlog::debug("============> {}", buildingAttachedSiteId.toString());
-            m_DRSDataByGraphicsIdHash[buildingAttachedSiteId] = siteDRSData;
-        }
-    }
-}
-// TODO: needs migration: end
 
 void EntityModelLoader::setDRSData(const GraphicsID& id, const EntityDRSData& data)
 {
@@ -1141,9 +1025,25 @@ ComponentType EntityModelLoader::createCompBuilding(py::object module,
             CompBuilding comp;
 
             auto sizeStr = readValue<std::string>(entityDefinition, "size");
+            auto constructionSiteName = readValue<std::string>(entityDefinition, "construction_site");
             auto size = getBuildingSize(sizeStr);
 
+            std::map<int, int> progressMap;
+            try
+            {
+                progressMap =
+                    readValue<std::map<int, int>>(entityDefinition, "progress_frame_map");
+            }
+            catch (const std::exception& e)
+            {
+                auto what = e.what();
+                int ii = 0;
+            }
+
             PropertyInitializer::set<Size>(comp.size, size);
+            PropertyInitializer::set<std::string>(comp.constructionSiteName, constructionSiteName);
+            PropertyInitializer::set<std::map<int, int>>(comp.visualVariationByProgress,
+                                                         progressMap);
 
             if (py::hasattr(module, "ResourceDropOff"))
             {
@@ -1257,7 +1157,7 @@ void EntityModelLoader::loadEntityTypes(pybind11::object module)
     // Specialized core entity types
     typeRegistry->registerEntityType("villager", EntityTypes::ET_VILLAGER);
     typeRegistry->registerEntityType("wood", EntityTypes::ET_TREE);
-    typeRegistry->registerEntityType("construction_site", EntityTypes::ET_CONSTRUCTION_SITE);
+    //typeRegistry->registerEntityType("construction_site", EntityTypes::ET_CONSTRUCTION_SITE);
 
     // Generic entity types
     if (py::hasattr(module, "all_entity_names"))

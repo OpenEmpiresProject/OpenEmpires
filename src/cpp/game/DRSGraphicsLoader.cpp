@@ -204,7 +204,7 @@ class GraphicsLoaderFromDRSImpl
     {
         loadSurfaces(atlasGenerator, renderer, surfaces, id.entityType, clipRect, id.action,
                      id.playerId, frames, anchors, graphicsRegistry, isCursor, id.orientation, flip,
-                     id.state, id.isConstructing, id.buildingSizeType, id.uiElementType,
+                     id.state, id.isConstructing, id.uiElementType,
                      id.isShadow);
     }
 
@@ -223,7 +223,6 @@ class GraphicsLoaderFromDRSImpl
                              bool flip,
                              int state,
                              int isConstruction,
-                             int buildingSizeType,
                              int uiElementType,
                              int isShadow)
     {
@@ -271,7 +270,6 @@ class GraphicsLoaderFromDRSImpl
             id.orientation = orientation;
             id.state = state;
             id.isConstructing = isConstruction;
-            id.buildingSizeType = buildingSizeType;
             id.uiElementType = uiElementType;
             id.isShadow = isShadow;
 
@@ -344,7 +342,6 @@ class GraphicsLoaderFromDRSImpl
                                         int orientation,
                                         int state,
                                         int isConstructing,
-                                        int buildingSizeType,
                                         int uiElementType,
                                         int isShadow)
     {
@@ -387,7 +384,7 @@ class GraphicsLoaderFromDRSImpl
         loadSurfaces(atlasGenerator, renderer, mergedSurfaceVec, baseId.entityType,
                      drsData.clipRect, baseId.action, baseId.playerId, frames, newAnchors,
                      graphicsRegistry, false, orientation, flip, state, isConstructing,
-                     buildingSizeType, uiElementType, isShadow);
+                     uiElementType, isShadow);
     }
 
     static void loadSLPWithAllFrames(shared_ptr<DRSFile> drs,
@@ -404,7 +401,6 @@ class GraphicsLoaderFromDRSImpl
                                      std::optional<int> frameIndex,
                                      int state,
                                      int isConstructing,
-                                     int buildingSizeType,
                                      int uiElementType,
                                      int isShadow)
     {
@@ -430,7 +426,7 @@ class GraphicsLoaderFromDRSImpl
 
         loadSurfaces(atlasGenerator, renderer, surfaces, entityType, clipRect, action, playerId,
                      frames, anchors, graphicsRegistry, false, orientation, flip, state,
-                     isConstructing, buildingSizeType, uiElementType, isShadow);
+                     isConstructing, uiElementType, isShadow);
     }
 
     static bool isTextureFlippingNeededEntity(int entityType)
@@ -524,14 +520,14 @@ void DRSGraphicsLoader::loadGraphics(SDL_Renderer& renderer,
                     drsData.parts[0].drsFile, drsData.parts[0].slpId, id.entityType, id.action,
                     id.playerId, renderer, graphicsRegistry, atlasGenerator, drsData.clipRect,
                     drsData.flip, baseId.orientation, drsData.parts[0].frameIndex, id.state,
-                    id.isConstructing, id.buildingSizeType, id.uiElementType, id.isShadow);
+                    id.isConstructing, id.uiElementType, id.isShadow);
             }
         }
         else // Multi-part texture
         {
             GraphicsLoaderFromDRSImpl::loadSLPWithMergingParts(
                 drsData, id, renderer, graphicsRegistry, atlasGenerator, drsData.flip,
-                baseId.orientation, id.state, id.isConstructing, id.buildingSizeType,
+                baseId.orientation, id.state, id.isConstructing,
                 id.uiElementType, id.isShadow);
         }
     }

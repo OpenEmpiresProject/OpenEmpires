@@ -1,9 +1,9 @@
 from typing import Dict, List, Optional, Union
 from enum import IntEnum, Enum
+from graphic_defs import *
 
 # Core entity definitions. These definitions are known to the game. It is possible to compose these
 # to define new entity types. But not possible to change these.
-
 class _Constructible:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
@@ -13,43 +13,6 @@ class Model:
     name: str
 
 
-class Rect(_Constructible):
-    x: int
-    y: int
-    w: int
-    h: int
-
-
-class Point(_Constructible):
-    x: int
-    y: int
-
-
-class SingleGraphic(_Constructible):
-    drs_file: str = "graphics.drs"
-    slp_id: int
-    clip_rect: Optional[Rect]
-    anchor: Optional[Point]
-    flip: bool = False
-    frame_index: Optional[int]
-
-
-class CompositeGraphic(_Constructible):
-    parts: List[SingleGraphic]
-    anchor: Point
-    flip: bool = False
-
-
-
-class GraphicVariant(_Constructible):
-    graphic: Union[SingleGraphic, CompositeGraphic]
-    variation_filter: Dict[str, str]
-
-
-class Graphic(_Constructible):
-    variants: List[GraphicVariant]
-
-
 class Animation(_Constructible):
     name: str
     frame_count: int = 15
@@ -57,10 +20,6 @@ class Animation(_Constructible):
     drs_file: str = "graphics.drs"
     slp_id: int
     repeatable: bool = True
-
-
-class Icon(SingleGraphic):
-    index: int
 
 
 class UnitType(IntEnum):
@@ -130,9 +89,12 @@ class Tree(NaturalResource, _Constructible):
 class Building(Vision, Model, Selectable):
     line_of_sight_shape: LineOfSightShape = LineOfSightShape.ROUNDED_SQUARE
     size: str
+    construction_site: str  # Construction site name
     graphics: Graphic
     connected_constructions_allowed: Optional[bool] # Allows to constructing series of same building such as walls
     default_orientation: Optional[str]
+    progress_frame_map: Dict[int, int] = {33:0, 66:1, 99:2, 100:0}
+
 
 
 class CompoSiteGraphicBuilding(Building):
@@ -156,13 +118,6 @@ class Housing:
 class Garrison:
     garrisonable_unit_types: List[UnitType]
     garrison_capacity: int
-
-
-class ConstructionSite(_Constructible, Model):
-    name: str = "construction_site"
-    size: str
-    graphics: Graphic
-    progress_frame_map: Dict[int, int]
 
 
 class TileSet(_Constructible, Model):
@@ -193,6 +148,5 @@ def get_all_core_defs():
             ResourceDropOff.__name__: ResourceDropOff,
             UnitFactory.__name__: UnitFactory,
             Housing.__name__: Housing,
-            ConstructionSite.__name__: ConstructionSite,
             TileSet.__name__: TileSet,
             UIElement.__name__: UIElement}
