@@ -51,7 +51,7 @@ UnitAction getAction(const std::string actionname)
     return actions.at(actionname);
 }
 
-uint32_t getUIElementType(const std::string& name)
+int getUIElementType(const std::string& name)
 {
     if (name == "resource_panel")
         return (int) UIElementTypes::RESOURCE_PANEL;
@@ -226,6 +226,7 @@ void EntityModelLoader::loadUnits(py::object module)
 
                 // TODO: needs migration: start
                 loadDRSForAnimations(entityType, py_unit);
+                loadDRSForStillImage(module, entityType, py_unit, 0, 0);
 
                 GraphicsID id;
                 id.entityType = entityType;
@@ -627,7 +628,8 @@ void EntityModelLoader::processGraphic(uint32_t entityType,
                                        int state,
                                        int uiElementType,
                                        int isShadow,
-                                       bool isConstructionSite)
+                                       bool isConstructionSite,
+                                       bool isIcon)
 {
     // TODO: handle theme
     auto drsFileName = EntityModelLoader::readValue<std::string>(graphicObj, "drs_file");
@@ -665,6 +667,7 @@ void EntityModelLoader::processGraphic(uint32_t entityType,
     id.uiElementType = uiElementType;
     id.isShadow = isShadow;
     id.isConstructing = isConstructionSite;
+    id.isIcon = isIcon;
 
     auto boundingBox = m_boundingBoxReadFunc(drsFile, slpId);
 
@@ -733,6 +736,7 @@ void EntityModelLoader::loadDRSForStillImage(pybind11::object module,
             }
 
             bool isConstructionSite = filters.contains("construction_site");
+            bool isIcon = filters.contains("icon");
 
             if (py::isinstance(graphicsEntry, compositeGraphicClass))
             {
@@ -744,8 +748,8 @@ void EntityModelLoader::loadDRSForStillImage(pybind11::object module,
 
                 for (auto part : parts)
                     processGraphic(entityType, part, Vec2(anchorX, anchorY), orientation, flip,
-                                   std::nullopt, state, uiElementType, isShadow,
-                                   isConstructionSite);
+                                   std::nullopt, state, uiElementType, isShadow, isConstructionSite,
+                                   isIcon);
             }
             else
             {
@@ -756,7 +760,7 @@ void EntityModelLoader::loadDRSForStillImage(pybind11::object module,
                 }
                 bool flip = readValue<bool>(graphicsEntry, "flip");
                 processGraphic(entityType, graphicsEntry, Vec2::null, orientation, flip, frameIndex,
-                               state, uiElementType, isShadow, isConstructionSite);
+                               state, uiElementType, isShadow, isConstructionSite, isIcon);
             }
         }
     }
@@ -821,6 +825,7 @@ GraphicsID EntityModelLoader::readIconDef(uint32_t uiElementType, pybind11::hand
         icon.entityType = EntityTypes::ET_UI_ELEMENT;
         icon.uiElementType = uiElementType;
         icon.variation = index;
+        icon.isIcon = (int) true;
 
         loadDRSForIcon(EntityTypes::ET_UI_ELEMENT, uiElementType, iconDef);
         return icon;

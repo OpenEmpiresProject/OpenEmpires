@@ -30,7 +30,8 @@ class GraphicsID
             uint64_t isConstructing : 1;   // 2 values (a bool)
             uint64_t uiElementType : 9;    // 512 values
             uint64_t isShadow : 1;         // 2 values (a bool)
-            uint64_t reserved : 48;
+            uint64_t isIcon : 1;           // 2 values (a bool)
+            uint64_t reserved : 47;
         };
         struct
         {
@@ -57,6 +58,7 @@ class GraphicsID
         isConstructing = int(false);
         uiElementType = 0;
         isShadow = 0;
+        isIcon = 0;
         direction = static_cast<uint64_t>(Direction::NONE);
         orientation = static_cast<uint64_t>(BuildingOrientation::NO_ORIENTATION);
         reserved = 0;
@@ -75,6 +77,7 @@ class GraphicsID
         id.isConstructing = isConstructing;
         id.uiElementType = uiElementType;
         id.isShadow = isShadow;
+        id.isIcon = isIcon;
         return id;
     }
 
@@ -104,8 +107,8 @@ class GraphicsID
         return "GraphicsID(T" + std::to_string(entityType) + ", A" + std::to_string(action) +
                ", F" + std::to_string(frame) + ", D" + std::to_string(static_cast<int>(direction)) +
                ", V" + std::to_string(variation) + ", P" + std::to_string(playerId) + ", O" +
-               std::to_string(orientation) + ", S" + std::to_string(state) + ", C" + std::to_string(isConstructing) + ", Sh" +
-               std::to_string(isShadow) + ")";
+               std::to_string(orientation) + ", S" + std::to_string(state) + ", C" + std::to_string(isConstructing) + ", Sh" + std::to_string(isShadow) + ", Ic" +
+               std::to_string(isIcon) + ")";
     }
 
   private:

@@ -39,13 +39,18 @@ void HUDUpdater::onUnitSelection(const Event& e)
 
     for (auto unit : m_currentSelection.selectedEntities)
     {
-        auto& comSelectible = m_stateMan->getComponent<CompSelectible>(unit);
+        auto [selectible, entityInfo] =
+            m_stateMan->getComponents<CompSelectible, CompEntityInfo>(unit);
+        //auto& comSelectible = m_stateMan->getComponent<CompSelectible>(unit);
         if (m_selectedIcon != nullptr)
         {
             m_selectedIcon->setVisible(true);
-            m_selectedIcon->setBackgroundImage(comSelectible.icon);
+            GraphicsID icon(entityInfo.entityType);
+            icon.isIcon = (int) true;
+
+            m_selectedIcon->setBackgroundImage(icon);
             m_selectedName->setVisible(true);
-            m_selectedName->setText(comSelectible.displayName);
+            m_selectedName->setText(selectible.displayName);
         }
         else
         {

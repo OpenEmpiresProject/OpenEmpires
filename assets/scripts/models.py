@@ -43,7 +43,11 @@ all_units: List[Unit] = [
                     Shortcut(name="stone_wall", shortcut="o"),
                     Shortcut(name="stone_gate", shortcut="i"),
                     Shortcut(name="house", shortcut="h")],
-        icon=Icon(drs_file="interfac.drs", slp_id=50730, index=16),
+        graphics=Graphic(
+            variants=[
+                GraphicVariant(
+                    graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50730, frame_index=16),
+                    variation_filter={GraphicVariantType.ICON:"true"})]),
         animations=[
             Animation(name="idle", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1388),
             Animation(name="move", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1392),
@@ -62,7 +66,11 @@ all_units: List[Unit] = [
         line_of_sight=256*5,
         moving_speed=256,
         housing_need=1,
-        icon=Icon(drs_file="interfac.drs", slp_id=50730, index=8),
+        graphics=Graphic(
+            variants=[
+                GraphicVariant(
+                    graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50730, frame_index=8),
+                    variation_filter={GraphicVariantType.ICON:"true"})]),
         animations=[
             Animation(name="idle", frame_count=6, speed=15, drs_file="graphics.drs", slp_id=993),
             Animation(name="move", frame_count=12, speed=15, drs_file="graphics.drs", slp_id=997),
@@ -79,8 +87,10 @@ all_natural_resources: List[NaturalResource] = [
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=4479),
-                    variation_filter={GraphicVariantType.THEME:"default"})]),
-        icon=Icon(drs_file="interfac.drs", slp_id=50731, index=3),
+                    variation_filter={GraphicVariantType.THEME:"default"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50731, frame_index=3),
+                    variation_filter={GraphicVariantType.ICON:"true"})]),
     ),
     NaturalResource(
         name="stone",
@@ -90,8 +100,10 @@ all_natural_resources: List[NaturalResource] = [
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=1034),
-                    variation_filter={GraphicVariantType.THEME:"default"})]),
-        icon=Icon(drs_file="interfac.drs", slp_id=50731, index=1),
+                    variation_filter={GraphicVariantType.THEME:"default"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50731, frame_index=1),
+                    variation_filter={GraphicVariantType.ICON:"true"})]),
     ),
     Tree(
         name="wood",
@@ -104,7 +116,10 @@ all_natural_resources: List[NaturalResource] = [
                     variation_filter={GraphicVariantType.THEME:"oak"}),
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=1252),
-                    variation_filter={GraphicVariantType.THEME:"oak", GraphicVariantType.STATE:"stump"})
+                    variation_filter={GraphicVariantType.THEME:"oak", GraphicVariantType.STATE:"stump"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50731, frame_index=0),
+                    variation_filter={GraphicVariantType.ICON:"true"})
                 ]),
         shadow=NaturalResourceAdditionalPart(
             name="shadow", 
@@ -113,7 +128,6 @@ all_natural_resources: List[NaturalResource] = [
                         GraphicVariant(
                             graphic=SingleGraphic(slp_id=2296),
                             variation_filter={GraphicVariantType.THEME:"oak"})])),
-        icon=Icon(drs_file="interfac.drs", slp_id=50731, index=0),
     ),
 ]
 
@@ -132,8 +146,10 @@ all_buildings: List[Building] = [
                     variation_filter={GraphicVariantType.THEME:"default"}),
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=237),
-                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"})]),
-        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=21)
+                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50705, frame_index=21),
+                    variation_filter={GraphicVariantType.ICON:"true"})]),
     ),
     ResourceDropOff(
         name="wood_camp", 
@@ -149,8 +165,10 @@ all_buildings: List[Building] = [
                     variation_filter={GraphicVariantType.THEME:"default"}),
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=237),
-                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"})]),
-        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=40)
+                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50705, frame_index=40),
+                    variation_filter={GraphicVariantType.ICON:"true"})]),
     ),
     ResourceDropOff(
         name="mine_camp", 
@@ -166,8 +184,10 @@ all_buildings: List[Building] = [
                     variation_filter={GraphicVariantType.THEME:"default"}),
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=237),
-                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"})]),
-        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=39)
+                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50705, frame_index=39),
+                    variation_filter={GraphicVariantType.ICON:"true"})]),
     ),
     TownCenter(
         name="town_center", 
@@ -198,8 +218,10 @@ all_buildings: List[Building] = [
                     variation_filter={GraphicVariantType.THEME:"default"}),
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=239),
-                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"})]),
-        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=28)
+                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50705, frame_index=28),
+                    variation_filter={GraphicVariantType.ICON:"true"})]),
     ),
     House(
         housing_capacity=5,
@@ -215,8 +237,10 @@ all_buildings: List[Building] = [
                     variation_filter={GraphicVariantType.THEME:"default"}),
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=237),
-                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"})]),
-        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=34)
+                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50705, frame_index=34),
+                    variation_filter={GraphicVariantType.ICON:"true"})]),
     ),
     MilitaryBuilding(
         name="barracks",
@@ -233,8 +257,10 @@ all_buildings: List[Building] = [
                     variation_filter={GraphicVariantType.THEME:"default"}),
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=238),
-                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"})]),
-        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=3),
+                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50705, frame_index=3),
+                    variation_filter={GraphicVariantType.ICON:"true"})]),
         producible_units=[Shortcut(name="militia", shortcut="m")]
     ),
     Wall(
@@ -265,8 +291,10 @@ all_buildings: List[Building] = [
                     graphic=SingleGraphic(slp_id=1828, frame_index=4),
                     variation_filter={GraphicVariantType.THEME:"default", 
                                       GraphicVariantType.ORIENTATION:"vertical"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50705, frame_index=30),
+                    variation_filter={GraphicVariantType.ICON:"true"})
         ]),
-        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=30),
         connected_constructions_allowed=True,
         default_orientation="corner"
     ),
@@ -300,9 +328,11 @@ all_buildings: List[Building] = [
                                       GraphicVariantType.ORIENTATION:"vertical"}),
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=236),
-                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"})
+                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50705, frame_index=29),
+                    variation_filter={GraphicVariantType.ICON:"true"})
         ]),
-        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=29),
         connected_constructions_allowed=True,
         default_orientation="corner"
     ),
@@ -316,6 +346,10 @@ all_buildings: List[Building] = [
         construction_site="construction_site_gate",
         graphics=Graphic(
             variants=[
+                # Icon
+                GraphicVariant(
+                    graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50705, frame_index=36),
+                    variation_filter={GraphicVariantType.ICON:"true"}),
                 # Closed Gates
                 GraphicVariant(
                     graphic=CompositeGraphic(
@@ -438,7 +472,6 @@ all_buildings: List[Building] = [
                                       GraphicVariantType.ORIENTATION:"vertical",
                                       GraphicVariantType.CONSTRUCTION_SITE:"true"})
         ]),
-        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=36),
         default_orientation="diagonal_forward"
     ),
 ]

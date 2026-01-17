@@ -17,11 +17,13 @@
 #include "components/CompVision.h"
 #include "utils/Size.h"
 #include "utils/Types.h"
+#include "components/CompUIElement.h"
 
 // TODO: move to a namespace
 extern core::BuildingOrientation getBuildingOrientation(const std::string& name);
 extern core::Size getBuildingSize(const std::string& name);
 extern core::LineOfSightShape getLOSShape(const std::string& name);
+extern int getUIElementType(const std::string& name);
 
 namespace game
 {
@@ -106,6 +108,7 @@ class ComponentModelMapper
                                        core::CompHousing,
                                        core::CompGraphics,
                                        core::CompAnimation,
+                                       core::CompUIElement,
                                        core::CompUnit>;
 
     // clang-format off
@@ -118,6 +121,7 @@ class ComponentModelMapper
             ModelPropertyMapping<&core::CompBuilding::size>                         ("Building", "size", getBuildingSize),
             ModelPropertyMapping<&core::CompBuilding::acceptedResourceNames>        ("ResourceDropOff", "accepted_resources"),
             ModelPropertyMapping<&core::CompEntityInfo::entityName>                 ("Model", "name"),
+            ModelPropertyMapping<&core::CompUIElement::uiElementType>               ("UIElement", "name", getUIElementType),
             ModelPropertyMapping<&core::CompResourceGatherer::capacity>             ("Gatherer", "resource_capacity"),
             ModelPropertyMapping<&core::CompResourceGatherer::gatherSpeed>          ("Gatherer", "gather_speed"),
             ModelPropertyMapping<&core::CompResource::resourceName>                 ("Model", "name"),

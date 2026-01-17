@@ -167,6 +167,7 @@ void GraphicsInstructor::updateGraphicComponents()
                     gc.entityType = ui.backgroundImage.entityType;
                     gc.uiElementType = ui.backgroundImage.uiElementType;
                     gc.variation = ui.backgroundImage.variation;
+                    gc.isIcon = ui.backgroundImage.isIcon;
                 }
             }
         }

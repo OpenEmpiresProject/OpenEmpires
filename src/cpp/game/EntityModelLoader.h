@@ -207,7 +207,8 @@ class EntityModelLoader : public core::EntityFactory, public core::PropertyIniti
                         int state,
                         int uiElementType,
                         int isShadow,
-                        bool isConstructionSite);
+                        bool isConstructionSite,
+                        bool isIcon);
 
   private:
     const std::string m_unitsFile = "units";

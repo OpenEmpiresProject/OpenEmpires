@@ -10,6 +10,7 @@
 #include <pybind11/stl.h>
 #include <variant>
 #include "utils/Utils.h"
+#include "components/CompUIElement.h"
 
 using namespace game;
 using namespace core;
@@ -584,6 +585,8 @@ void EntityModelLoaderV2::loadUnprogressedFields()
          id.state = getState(filters.at("state"));
      if (filters.contains("construction_site"))
          id.isConstructing = filters.at("state") == "true" ? 1 : 0;
+     if (filters.contains("icon"))
+         id.isIcon = filters.at("icon") == "true" ? 1 : 0;
 
      for (auto& comp : components)
      {
@@ -591,21 +594,18 @@ void EntityModelLoaderV2::loadUnprogressedFields()
          {
              id.entityType = c->entityType;
          }
-         if (const auto& c = std::get_if<CompBuilding>(&comp))
+         if (const auto& c = std::get_if<CompUIElement>(&comp))
          {
-             //id.entityType = c->entityType;
+             id.uiElementType = c->uiElementType;
          }
  
-         // id.variation --> Needs for Icon
-         
          // id.action    --> Only needed for animated graphics
          // id.frame     --> Loaded in DRSGraphicsLoader
          // id.direction --> Loaded in DRSGraphicsLoader
          // id.playerId  --> Set at runtime
          // id.civilization  --> Not used atm
          // id.age           --> Not used atm
-         // id.uiElementType
-         // id.isShadow
+         // id.isShadow     --> TODO: Shadows need rework/redesign
      }
      return id;
  }

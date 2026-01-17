@@ -37,8 +37,8 @@ class LineOfSightShape(str, Enum):
     
 
 class Selectable:
-    icon: Icon
     display_name: str
+    graphics: Graphic # Use for Icon at the moment
 
 
 class Vision:
@@ -136,7 +136,6 @@ def get_all_core_defs():
             SingleGraphic.__name__: SingleGraphic,
             GraphicVariant.__name__: GraphicVariant,
             Animation.__name__: Animation,
-            Icon.__name__: Icon,
             Unit.__name__: Unit,
             Shortcut.__name__: Shortcut,
             Builder.__name__: Builder,

@@ -42,7 +42,3 @@ class GraphicVariant(_Constructible):
 
 class Graphic(_Constructible):
     variants: List[GraphicVariant]
-
-
-class Icon(SingleGraphic):
-    index: int
