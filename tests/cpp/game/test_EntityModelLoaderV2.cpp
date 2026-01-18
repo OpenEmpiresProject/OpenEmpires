@@ -16,6 +16,21 @@ namespace py = pybind11;
 
 namespace game
 {
+class DummyDRSInterface : public DRSInterface
+{
+    core::Ref<drs::DRSFile> loadDRSFile(const std::string& filename)
+    {
+        return CreateRef<DRSFile>();
+    }
+    core::Rect<int> getBoundingBox(const std::string& drsFilename,
+        int slpId,
+        int frameIndex = 0)
+    {
+        return {};
+    }
+};
+
+
 class EntityModelLoaderTest : public ::testing::Test
 {
   public:
@@ -23,6 +38,7 @@ class EntityModelLoaderTest : public ::testing::Test
     {
         m_typeReg = CreateRef<EntityTypeRegistry>();
         m_stateMan = CreateRef<StateManager>();
+        m_drsInterface = CreateRef<DummyDRSInterface>();
         ServiceRegistry::getInstance().registerService(m_typeReg);
         ServiceRegistry::getInstance().registerService(m_stateMan);
     }
@@ -33,13 +49,14 @@ class EntityModelLoaderTest : public ::testing::Test
 
     Ref<StateManager> m_stateMan;
     Ref<EntityTypeRegistry> m_typeReg;
+    Ref<DRSInterface> m_drsInterface;
 };
 TEST_F(EntityModelLoaderTest, CreateEntitySimple)
 {
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("basic");
+        EntityModelLoaderV2 loader("basic", m_drsInterface);
         loader.init();
         
         // Act
@@ -66,7 +83,7 @@ TEST_F(EntityModelLoaderTest, CreateBuilder)
         m_typeReg->registerEntityType("wood_camp", 11);
         m_typeReg->registerEntityType("mine_camp", 12);
 
-        EntityModelLoaderV2 loader("builder");
+        EntityModelLoaderV2 loader("builder", m_drsInterface);
         loader.init();
 
         // Act
@@ -90,7 +107,7 @@ TEST_F(EntityModelLoaderTest, CreateBuilding)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("building");
+        EntityModelLoaderV2 loader("building", m_drsInterface);
         loader.init();
 
         // Act
@@ -116,7 +133,7 @@ TEST_F(EntityModelLoaderTest, CreateResource)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("resource");
+        EntityModelLoaderV2 loader("resource", m_drsInterface);
         loader.init();
 
         // Act
@@ -139,7 +156,7 @@ TEST_F(EntityModelLoaderTest, CreateGatherer)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("gatherer");
+        EntityModelLoaderV2 loader("gatherer", m_drsInterface);
         loader.init();
 
         // Act
@@ -162,7 +179,7 @@ TEST_F(EntityModelLoaderTest, CreateSelectables)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("selectable");
+        EntityModelLoaderV2 loader("selectable", m_drsInterface);
         loader.init();
 
         // Act
@@ -191,7 +208,7 @@ TEST_F(EntityModelLoaderTest, CreateTransform)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("transform");
+        EntityModelLoaderV2 loader("transform", m_drsInterface);
         loader.init();
 
         // Act
@@ -217,7 +234,7 @@ TEST_F(EntityModelLoaderTest, CreateUnit)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("unit");
+        EntityModelLoaderV2 loader("unit", m_drsInterface);
         loader.init();
 
         // Act
@@ -241,7 +258,7 @@ TEST_F(EntityModelLoaderTest, CreateUnitFactory)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("unit_factory");
+        EntityModelLoaderV2 loader("unit_factory", m_drsInterface);
         loader.init();
 
         // Act
@@ -265,7 +282,7 @@ TEST_F(EntityModelLoaderTest, CreateGarrison)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("garrison");
+        EntityModelLoaderV2 loader("garrison", m_drsInterface);
         loader.init();
 
         // Act
@@ -290,7 +307,7 @@ TEST_F(EntityModelLoaderTest, CreateVision)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("vision");
+        EntityModelLoaderV2 loader("vision", m_drsInterface);
         loader.init();
 
         // Act
@@ -322,7 +339,7 @@ TEST_F(EntityModelLoaderTest, CreateHousing)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("housing");
+        EntityModelLoaderV2 loader("housing", m_drsInterface);
         loader.init();
 
         // Act
@@ -345,7 +362,7 @@ TEST_F(EntityModelLoaderTest, DefaultEmptyComponents)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("transform");
+        EntityModelLoaderV2 loader("transform", m_drsInterface);
         loader.init();
 
         // Act

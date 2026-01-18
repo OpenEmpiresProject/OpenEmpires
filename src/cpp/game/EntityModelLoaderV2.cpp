@@ -126,7 +126,7 @@ struct CompositeGraphic
 {
     std::vector<SingleGraphic> parts;
     Vec2 anchor;
-    bool flip;
+    std::optional<bool> flip;
 };
 
 using GraphicImpl = std::variant<SingleGraphic, CompositeGraphic>;
@@ -221,8 +221,8 @@ PYBIND11_EMBEDDED_MODULE(graphic_defs, m)
         .def_readonly("index", &Icon::index);
 
     py::class_<CompositeGraphic>(m, "CompositeGraphic")
-        .def(py::init<std::vector<SingleGraphic>, Vec2, bool>(), py::kw_only(), py::arg("parts"),
-             py::arg("anchor"), py::arg("flip"))
+        .def(py::init<std::vector<SingleGraphic>, Vec2, std::optional<bool>>(), py::kw_only(),
+             py::arg("parts"), py::arg("anchor"), py::arg("flip") = std::nullopt)
         .def_readonly("parts", &CompositeGraphic::parts)
         .def_readonly("flip", &CompositeGraphic::flip)
         .def_readonly("anchor", &CompositeGraphic::anchor);
@@ -255,7 +255,7 @@ DRSData getDRSData(const SingleGraphic& graphicData,
     data.boundingRect = boundingBox;
     data.clipRect = graphicData.clipRect.value_or(Rect<int>());
     data.anchor = compositeData.anchor;
-    data.flip = compositeData.flip;
+    data.flip = compositeData.flip.value_or(false);
 
     return data;
 }

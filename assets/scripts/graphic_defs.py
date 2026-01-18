@@ -32,7 +32,7 @@ class SingleGraphic(_Constructible):
 class CompositeGraphic(_Constructible):
     parts: List[SingleGraphic]
     anchor: Point
-    flip: bool = False
+    flip: Optional[bool] = False
 
 
 class GraphicVariant(_Constructible):

@@ -17,17 +17,9 @@ all_models = [
             variants=[
                 GraphicVariant(
                     graphic=CompositeGraphic(
-                        anchor=Point(x=187, y=195),
-                        parts=[
-                            SingleGraphic(slp_id=900), 
-                            SingleGraphic(slp_id=3601, anchor=Point(x=153,y=-20)), 
-                            SingleGraphic(slp_id=3605, anchor=Point(x=187,y=0)), 
-                            SingleGraphic(slp_id=4617, anchor=Point(x=-46,y=-20)), 
-                            SingleGraphic(slp_id=4621, anchor=Point(x=-161,y=0)), 
-                            SingleGraphic(slp_id=3597, anchor=Point(x=185,y=47)), 
-                            SingleGraphic(slp_id=4613, anchor=Point(x=-46,y=48))]),
-                    variation_filter={GraphicVariantType.THEME:"default"})]),
-        icon=Icon(drs_file="interfac.drs", slp_id=50705, index=28)
+                        parts=[],
+                        anchor=Point(x=187, y=195)),
+                    variation_filter={GraphicVariantType.THEME:"default"})])
     )
 ]
 
