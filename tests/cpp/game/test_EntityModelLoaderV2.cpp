@@ -112,7 +112,8 @@ TEST_F(EntityModelLoaderTest, CreateBuilding)
 
         // Act
         EntityFactory* factory = dynamic_cast<EntityFactory*>(&loader);
-        auto entity = factory->createEntity(m_typeReg->getEntityType("mill"));
+        const auto entityType = m_typeReg->getEntityType("mill");
+        auto entity = factory->createEntity(entityType);
 
         // Assert
         auto& building = m_stateMan->getComponent<CompBuilding>(entity);
@@ -121,6 +122,28 @@ TEST_F(EntityModelLoaderTest, CreateBuilding)
         EXPECT_EQ(building.acceptedResourceNames.value()[0], "food");
         EXPECT_EQ(building.defaultOrientation.value(), BuildingOrientation::CORNER);
         EXPECT_EQ(building.connectedConstructionsAllowed.value(), false);
+
+        // Validate building graphics
+        auto drsProvider = dynamic_cast<GraphicsLoadupDataProvider*>(&loader);
+        GraphicsID gid(entityType);
+        auto& data = (DRSData&)drsProvider->getData(gid);
+        EXPECT_EQ(data.parts.size(), 1);
+        EXPECT_EQ(data.parts[0].slpId, 3483);
+
+        // Validate icon graphics
+        gid.isIcon = true;
+        auto& iconData = (DRSData&) drsProvider->getData(gid);
+        EXPECT_EQ(iconData.parts.size(), 1);
+        EXPECT_EQ(iconData.parts[0].slpId, 50705);
+        EXPECT_EQ(iconData.parts[0].frameIndex, 21);
+
+        // Validate construction site graphics
+        gid.isConstructing = 1;
+        gid.isIcon = 0;
+        auto& constructData = (DRSData&) drsProvider->getData(gid);
+        EXPECT_EQ(constructData.parts.size(), 1);
+        EXPECT_EQ(constructData.parts[0].slpId, 237);
+
     }
     catch (const py::error_already_set& e)
     {
@@ -399,4 +422,117 @@ TEST_F(EntityModelLoaderTest, DefaultEmptyComponents)
         FAIL() << e.what();
     }
 }
+
+TEST_F(EntityModelLoaderTest, BuildingOrientation)
+{
+    try
+    {
+        // Arrange
+        EntityModelLoaderV2 loader("graphic-orientation", m_drsInterface);
+        loader.init();
+
+        // Act
+        EntityFactory* factory = dynamic_cast<EntityFactory*>(&loader);
+        const auto entityType = m_typeReg->getEntityType("palisade");
+        auto entity = factory->createEntity(entityType);
+
+        // Assert
+        auto& building = m_stateMan->getComponent<CompBuilding>(entity);
+        EXPECT_EQ(building.size.value(), Size(1, 1));
+        EXPECT_EQ(building.defaultOrientation.value(), BuildingOrientation::CORNER);
+        EXPECT_EQ(building.connectedConstructionsAllowed.value(), true);
+
+        // Validate building graphics
+        auto drsProvider = dynamic_cast<GraphicsLoadupDataProvider*>(&loader);
+        GraphicsID gid(entityType);
+        {
+            gid.orientation = static_cast<uint64_t>(BuildingOrientation::DIAGONAL_FORWARD);
+            auto& data = (DRSData&) drsProvider->getData(gid);
+            EXPECT_EQ(data.parts.size(), 1);
+            EXPECT_EQ(data.parts[0].slpId, 1828);
+            EXPECT_EQ(data.parts[0].frameIndex, 0);
+        }
+        {
+            gid.orientation = static_cast<uint64_t>(BuildingOrientation::DIAGONAL_BACKWARD);
+            auto& data = (DRSData&) drsProvider->getData(gid);
+            EXPECT_EQ(data.parts.size(), 1);
+            EXPECT_EQ(data.parts[0].slpId, 1828);
+            EXPECT_EQ(data.parts[0].frameIndex, 1);
+        }
+        {
+            gid.orientation = static_cast<uint64_t>(BuildingOrientation::CORNER);
+            auto& data = (DRSData&) drsProvider->getData(gid);
+            EXPECT_EQ(data.parts.size(), 1);
+            EXPECT_EQ(data.parts[0].slpId, 1828);
+            EXPECT_EQ(data.parts[0].frameIndex, 2);
+        }
+        {
+
+            gid.orientation = static_cast<uint64_t>(BuildingOrientation::HORIZONTAL);
+            auto& data = (DRSData&) drsProvider->getData(gid);
+            EXPECT_EQ(data.parts.size(), 1);
+            EXPECT_EQ(data.parts[0].slpId, 1828);
+            EXPECT_EQ(data.parts[0].frameIndex, 3);
+        }
+        {
+
+            gid.orientation = static_cast<uint64_t>(BuildingOrientation::VERTICAL);
+            auto& data = (DRSData&) drsProvider->getData(gid);
+            EXPECT_EQ(data.parts.size(), 1);
+            EXPECT_EQ(data.parts[0].slpId, 1828);
+            EXPECT_EQ(data.parts[0].frameIndex, 4);
+        }
+    }
+    catch (const py::error_already_set& e)
+    {
+        FAIL() << e.what();
+    }
+}
+
+TEST_F(EntityModelLoaderTest, Animations)
+{
+    try
+    {
+        // Arrange
+        EntityModelLoaderV2 loader("unit", m_drsInterface);
+        loader.init();
+
+        // Act
+        auto factory = dynamic_cast<EntityFactory*>(&loader);
+        const auto entityType = m_typeReg->getEntityType("militia");
+        auto militia = factory->createEntity(entityType);
+
+        // Assert
+        // Validate DRS data
+        auto drsProvider = dynamic_cast<GraphicsLoadupDataProvider*>(&loader);
+        GraphicsID gid(entityType);
+        {
+            gid.action = UnitAction::IDLE;
+            auto& data = (DRSData&) drsProvider->getData(gid);
+            EXPECT_EQ(data.parts.size(), 1);
+            EXPECT_EQ(data.parts[0].slpId, 993);
+        }
+        {
+            gid.action = UnitAction::MOVE;
+            auto& data = (DRSData&) drsProvider->getData(gid);
+            EXPECT_EQ(data.parts.size(), 1);
+            EXPECT_EQ(data.parts[0].slpId, 997);
+        }
+
+        // Validate CompAnimation
+        EXPECT_TRUE(m_stateMan->hasComponent<CompAnimation>(militia));
+        auto& compAnimation = m_stateMan->getComponent<CompAnimation>(militia);
+        EXPECT_EQ(compAnimation.animations[UnitAction::IDLE].value().frames, 6);
+        EXPECT_EQ(compAnimation.animations[UnitAction::MOVE].value().frames, 12);
+        EXPECT_EQ(compAnimation.animations[UnitAction::IDLE].value().speed, 15);
+        EXPECT_EQ(compAnimation.animations[UnitAction::MOVE].value().speed, 10); // Default value
+
+    }
+    catch (const py::error_already_set& e)
+    {
+        FAIL() << e.what();
+    }
+}
+
+
 } // namespace game

@@ -42,3 +42,12 @@ class GraphicVariant(_Constructible):
 
 class Graphic(_Constructible):
     variants: List[GraphicVariant]
+
+
+class Animation(_Constructible):
+    name: str
+    frame_count: int = 15
+    speed: int = 10
+    drs_file: str = "graphics.drs"
+    slp_id: int
+    repeatable: bool = True

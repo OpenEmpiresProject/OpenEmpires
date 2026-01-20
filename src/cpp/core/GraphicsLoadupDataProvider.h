@@ -11,7 +11,7 @@ class GraphicsLoadupDataProvider
     {
     };
 
-    virtual Data getData(const GraphicsID& id) = 0;
+    virtual const Data& getData(const GraphicsID& id) = 0;
 };
 } // namespace core
 

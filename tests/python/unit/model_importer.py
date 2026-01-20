@@ -11,7 +11,7 @@ all_models = [
         icon=Icon(drs_file="interfac.drs", slp_id=50730, index=8),
         animations=[
             Animation(name="idle", frame_count=6, speed=15, drs_file="graphics.drs", slp_id=993),
-            Animation(name="move", frame_count=12, speed=15, drs_file="graphics.drs", slp_id=997),
+            Animation(name="move", frame_count=12, slp_id=997),
         ]
     )
 ]

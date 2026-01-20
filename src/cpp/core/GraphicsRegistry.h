@@ -151,12 +151,12 @@ struct Texture
     SDL_Cursor* cursor = nullptr;
 };
 
-struct Animation
-{
-    std::vector<int64_t> frames; // Frames in terms of TextureIDs
-    bool repeatable = false;
-    int speed = 10; // FPS
-};
+//struct Animation
+//{
+//    std::vector<int64_t> frames; // Frames in terms of TextureIDs
+//    bool repeatable = false;
+//    int speed = 10; // FPS
+//};
 
 class GraphicsRegistry
 {

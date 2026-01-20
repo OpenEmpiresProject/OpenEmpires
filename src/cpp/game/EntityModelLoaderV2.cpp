@@ -187,6 +187,16 @@ struct Graphic
     std::vector<GraphicVariant> variants;
 };
 
+struct Animation
+{
+    std::string name;
+    int frameCount;
+    int speed;
+    int slpId;
+    std::string drsFile;
+    bool repeatable;
+};
+
 PYBIND11_EMBEDDED_MODULE(graphic_defs, m)
 {
     py::class_<_Constructible>(m, "_Constructible")
@@ -236,6 +246,18 @@ PYBIND11_EMBEDDED_MODULE(graphic_defs, m)
     py::class_<Graphic>(m, "Graphic")
         .def(py::init<std::vector<GraphicVariant>>(), py::kw_only(), py::arg("variants"))
         .def_readonly("variants", &Graphic::variants);
+
+    py::class_<Animation>(m, "Animation")
+        .def(py::init<std::string, int, int, int, std::string, bool>(),
+             py::kw_only(), py::arg("name"), py::arg("frame_count") = 15,
+             py::arg("speed") = 10, py::arg("slp_id"),
+             py::arg("drs_file") = "graphics.drs", py::arg("repeatable") = true)
+        .def_readonly("name", &Animation::name)
+        .def_readonly("frame_count", &Animation::frameCount)
+        .def_readonly("speed", &Animation::speed)
+        .def_readonly("slp_id", &Animation::slpId)
+        .def_readonly("drs_file", &Animation::drsFile)
+        .def_readonly("repeatable", &Animation::repeatable);
 }
 
 DRSData getDRSData(const SingleGraphic& graphicData,
@@ -260,6 +282,18 @@ DRSData getDRSData(const SingleGraphic& graphicData,
     return data;
 }
 
+DRSData getDRSData(const Animation& animation,
+                   core::Ref<DRSInterface> drsInterface)
+{
+    auto drsFile = drsInterface->loadDRSFile(animation.drsFile);
+    auto boundingBox = drsInterface->getBoundingBox(animation.drsFile, animation.slpId, 0);
+
+    DRSData data;
+    data.parts.push_back(DRSData::Part(drsFile, animation.slpId, Vec2::null, 0, false));
+    data.boundingRect = boundingBox;
+
+    return data;
+}
 
 DRSData::Part::Part(core::Ref<drs::DRSFile> drs,
                     int slp,
@@ -316,9 +350,9 @@ uint32_t EntityModelLoaderV2::createEntity(uint32_t entityType)
     return entity;
 }
 
-core::GraphicsLoadupDataProvider::Data EntityModelLoaderV2::getData(const core::GraphicsID& id)
+const core::GraphicsLoadupDataProvider::Data& EntityModelLoaderV2::getData(const core::GraphicsID& id)
 {
-    return {};
+    return m_DRSDataByGraphicsId.at(id);
 }
 
 void EntityModelLoaderV2::init()
@@ -542,6 +576,8 @@ void EntityModelLoaderV2::initPython()
 
 void EntityModelLoaderV2::loadUnprogressedFields()
 {
+    auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+
     for (auto [entityName, unprocessedFields] : m_unprocessedFieldsByEntityName)
     {
         auto& holder = m_componentsByEntityName[entityName];
@@ -570,6 +606,33 @@ void EntityModelLoaderV2::loadUnprogressedFields()
                     }
                 }
             }
+            else if (fieldName == "animations")
+            {
+                auto compPtr = holder->tryGetComponent<CompAnimation>();
+                debug_assert(compPtr, "Could not find animation component for entity {}", entityName);
+
+                auto animations = pyObj.cast<std::list<Animation>>();
+
+                for (const auto& animation : animations)
+                {
+                    auto drsData = getDRSData(animation, m_drsInterface);
+                    spam("Entity {} has animation with DRS file {} and SLP id {} for action", entityName,
+                         animation.drsFile, animation.slpId, animation.name);
+
+                    auto entityType = typeRegistry->getEntityType(entityName);
+                    // TODO - Support filters
+                    GraphicsID graphicsId(entityType);
+                    graphicsId.action = getAction(animation.name);
+
+                    m_DRSDataByGraphicsId[graphicsId] = drsData;
+
+                    CompAnimation::ActionAnimation actionAnimation;
+                    actionAnimation.frames = animation.frameCount;
+                    actionAnimation.speed = animation.speed;
+                    actionAnimation.repeatable = animation.repeatable;
+                    compPtr->animations[graphicsId.action] = actionAnimation;
+                }
+            }
         }
     }
 }
@@ -577,6 +640,8 @@ void EntityModelLoaderV2::loadUnprogressedFields()
  core::GraphicsID EntityModelLoaderV2::ComponentHolder::createGraphicsID(
     const std::map<std::string, std::string>& filters) const
  {
+     auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+
      GraphicsID id;
 
      if (filters.contains("orientation"))
@@ -584,15 +649,18 @@ void EntityModelLoaderV2::loadUnprogressedFields()
      if (filters.contains("state"))
          id.state = getState(filters.at("state"));
      if (filters.contains("construction_site"))
-         id.isConstructing = filters.at("state") == "true" ? 1 : 0;
+         id.isConstructing = filters.at("construction_site") == "true" ? 1 : 0;
      if (filters.contains("icon"))
          id.isIcon = filters.at("icon") == "true" ? 1 : 0;
+
+     bool foundEntityType = false;
 
      for (auto& comp : components)
      {
          if (const auto& c = std::get_if<CompEntityInfo>(&comp))
          {
-             id.entityType = c->entityType;
+             id.entityType = typeRegistry->getEntityType(c->entityName);
+             foundEntityType = true;
          }
          if (const auto& c = std::get_if<CompUIElement>(&comp))
          {
@@ -607,5 +675,6 @@ void EntityModelLoaderV2::loadUnprogressedFields()
          // id.age           --> Not used atm
          // id.isShadow     --> TODO: Shadows need rework/redesign
      }
+     debug_assert(foundEntityType, "Entity type is not found in component holder");
      return id;
  }

@@ -57,7 +57,7 @@ struct DRSData : public core::GraphicsLoadupDataProvider::Data
 
 class EntityModelLoaderV2 : public core::EntityFactory,
                             public core::PropertyInitializer,
-                            core::GraphicsLoadupDataProvider
+                            public core::GraphicsLoadupDataProvider
 {
   public:
     EntityModelLoaderV2(const std::string& scriptDir, core::Ref<DRSInterface> drsInterface);
@@ -74,7 +74,7 @@ class EntityModelLoaderV2 : public core::EntityFactory,
 
   private:
     uint32_t createEntity(uint32_t entityType) override;
-    Data getData(const core::GraphicsID& id) override;
+    const Data& getData(const core::GraphicsID& id) override;
 
     void loadAll(const pybind11::object& module);
     void loadEntityTypes(const pybind11::object& module);
@@ -89,6 +89,16 @@ class EntityModelLoaderV2 : public core::EntityFactory,
         std::list<ComponentType> components;
 
         core::GraphicsID createGraphicsID(const std::map<std::string, std::string>& filters) const;
+
+        template<typename T> T* tryGetComponent()
+        {
+            for (auto& comp : components)
+            {
+                if (T* ptr = std::get_if<T>(&comp))
+                    return ptr;
+            }
+            return nullptr;
+        }
     };
 
     template <typename T> std::list<std::string> enrich(T& comp, const pybind11::object& obj)
