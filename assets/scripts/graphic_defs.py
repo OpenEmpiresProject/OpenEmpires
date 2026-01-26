@@ -62,3 +62,8 @@ class Animation(_Constructible):
     drs_file: str = "graphics.drs"
     slp_id: int
     repeatable: bool = True
+
+# TODO - Rename this module
+class Shortcut(_Constructible):
+    name: str
+    shortcut: str # A single character shortcut. Relative to the selection.

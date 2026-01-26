@@ -28,6 +28,6 @@ all_models = [
     )
 ]
 
-all_entity_names = ["villager"]
+all_entity_names = ["villager", "mill", "wood_camp", "mine_camp"]
 def validate_all():
     return True

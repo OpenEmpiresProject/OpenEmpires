@@ -99,8 +99,12 @@ TEST_F(EntityModelLoaderTest, CreateBuilder)
         // Assert
         auto& builder = m_stateMan->getComponent<CompBuilder>(entity);
         EXPECT_EQ(builder.buildSpeed.value(), 40);
-        EXPECT_EQ(builder.buildableTypesByShortcut.value().size(),3);
-        EXPECT_EQ(builder.buildableNameByShortcut.value().size(), 3);
+        EXPECT_EQ(builder.buildableTypesByShortcut.value().size(), 3);
+        EXPECT_EQ(builder.buildableTypesByShortcut.value().at('m'), m_typeReg->getEntityType("mill"));
+        EXPECT_EQ(builder.buildableTypesByShortcut.value().at('l'),
+                  m_typeReg->getEntityType("wood_camp"));
+        EXPECT_EQ(builder.buildableTypesByShortcut.value().at('n'),
+                  m_typeReg->getEntityType("mine_camp"));
     }
     catch (const py::error_already_set& e)
     {
@@ -339,6 +343,10 @@ TEST_F(EntityModelLoaderTest, CreateUnitFactory)
 
         auto boundingBoxes = selectible.boundingBoxes.value();
         EXPECT_EQ(boundingBoxes.at(0, static_cast<int>(Direction::NONE)), Rect<int>(0, 0, 32, 32));
+
+        EXPECT_EQ(factoryComp.producibleUnitShortcuts.value().size(), 1);
+        EXPECT_EQ(factoryComp.producibleUnitShortcuts.value().at('m'),
+                  m_typeReg->getEntityType("militia"));
     }
     catch (const py::error_already_set& e)
     {

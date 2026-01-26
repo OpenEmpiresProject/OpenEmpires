@@ -48,11 +48,6 @@ class Unit(Vision, Model, Selectable, Animated):
     unit_type: UnitType
 
 
-class Shortcut(_Constructible):
-    name: str
-    shortcut: str # A single character shortcut. Relative to the selection.
-
-
 class Builder:
     build_speed: int
     buildables:  List[Shortcut] # List of buildings can create from this

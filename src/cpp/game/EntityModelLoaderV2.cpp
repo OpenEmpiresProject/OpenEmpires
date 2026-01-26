@@ -249,6 +249,12 @@ struct Animation
     bool repeatable;
 };
 
+struct Shortcut
+{
+    std::string name;
+    std::string shortcut;
+};
+
 PYBIND11_EMBEDDED_MODULE(graphic_defs, m)
 {
     py::class_<_Constructible>(m, "_Constructible")
@@ -322,6 +328,12 @@ PYBIND11_EMBEDDED_MODULE(graphic_defs, m)
         .value("SKY", GraphicLayer::SKY)
         .value("UI", GraphicLayer::UI)
         .export_values();
+
+     py::class_<Shortcut>(m, "Shortcut")
+        .def(py::init<std::string, std::string>(), py::kw_only(),
+             py::arg("name"), py::arg("shortcut"))
+        .def_readonly("name", &Shortcut::name)
+        .def_readonly("shortcut", &Shortcut::shortcut);
 }
 
 DRSData getDRSData(const SingleGraphic& graphicData,
@@ -519,40 +531,6 @@ void EntityModelLoaderV2::postProcessing()
                 PropertyInitializer::set(info->entityType, entityType);
             }
 
-            if (auto builder = std::get_if<CompBuilder>(&componentVar))
-            {
-                auto buildablesObj = getUnprocessedField(entityName, "buildables");
-
-                std::unordered_map<char, std::string> entityNameByShortcut;
-                std::unordered_map<char, uint32_t> entityTypeByShortcut;
-
-                for (auto building : buildablesObj)
-                {
-                    auto name = readValue<std::string>(building, "name");
-
-                    if (typeRegistry->isValid(name))
-                    {
-                        auto shortcut = readValue<std::string>(building, "shortcut");
-                        char key = 0;
-                        if (shortcut.empty() == false)
-                        {
-                            key = shortcut.c_str()[0];
-                        }
-
-                        entityNameByShortcut[key] = name;
-                        entityTypeByShortcut[key] = typeRegistry->getEntityType(name);
-                    }
-                    else
-                    {
-                        spdlog::warn("Builder component of entity {} has invalid buildable {}",
-                                     entityName, name);
-                    }
-                }
-                PropertyInitializer::set<std::unordered_map<char, std::string>>(
-                    builder->buildableNameByShortcut, entityNameByShortcut);
-                PropertyInitializer::set(builder->buildableTypesByShortcut, entityTypeByShortcut);
-            }
-
             if (auto selectible = std::get_if<CompSelectible>(&componentVar))
             {
                 auto id = compHolder->createGraphicsID();
@@ -595,31 +573,6 @@ void EntityModelLoaderV2::postProcessing()
                 idleCmd->setPriority(Command::DEFAULT_PRIORITY);
                 PropertyInitializer::set(unit->defaultCommand, idleCmd);
             }
-
-          /*  if (auto factory = std::get_if<CompUnitFactory>(&componentVar))
-            {
-                auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
-
-                std::vector<uint32_t> possibleUnitTypes;
-                for (auto& possibleUnit : factory->producibleUnitNames.value())
-                {
-                    if (typeRegistry->isValid(possibleUnit))
-                    {
-                        possibleUnitTypes.push_back(typeRegistry->getEntityType(possibleUnit));
-                    }
-                }
-
-                std::unordered_map<char, uint32_t> entityTypesByShortcut;
-                for (auto [key, name] : factory.producibleUnitNamesByShortcuts.value())
-                {
-                    if (typeRegistry->isValid(name))
-                    {
-                        entityTypesByShortcut[key] = typeRegistry->getEntityType(name);
-                    }
-                }
-                PropertyInitializer::set(factory.producibleUnitTypes, possibleUnitTypes);
-                PropertyInitializer::set(factory.producibleUnitShortcuts, entityTypesByShortcut);
-            }*/
 
             // Add component specific post processing (eg: lazy loading/enriching) here
         }
@@ -776,6 +729,50 @@ void EntityModelLoaderV2::loadUnprogressedFields()
                     actionAnimation.repeatable = animation.repeatable;
                     compPtr->animations[graphicsId.action] = actionAnimation;
                 }
+            }
+            else if (fieldName == "producible_units")
+            {
+
+                auto compPtr = holder->tryGetComponent<CompUnitFactory>();
+                debug_assert(compPtr, "Could not find unit factor component for entity {}",
+                             entityName);
+
+                auto shortcuts = pyObj.cast<std::list<Shortcut>>();
+
+                std::unordered_map<char, uint32_t> entityTypesByShortcut;
+
+                auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+                for (auto& shortcut : shortcuts)
+                {
+                    if (typeRegistry->isValid(shortcut.name))
+                    {
+                        auto key = shortcut.shortcut.c_str()[0];
+                        entityTypesByShortcut[key] = typeRegistry->getEntityType(shortcut.name);
+                    }
+                }
+                PropertyInitializer::set(compPtr->producibleUnitShortcuts, entityTypesByShortcut);
+            }
+            else if (fieldName == "buildables")
+            {
+                auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+
+                auto compPtr = holder->tryGetComponent<CompBuilder>();
+                debug_assert(compPtr, "Could not find builder component for entity {}",
+                             entityName);
+
+                auto shortcuts = pyObj.cast<std::list<Shortcut>>();
+
+                std::unordered_map<char, uint32_t> entityTypesByShortcut;
+
+                for (auto& shortcut : shortcuts)
+                {
+                    if (typeRegistry->isValid(shortcut.name))
+                    {
+                        auto key = shortcut.shortcut.c_str()[0];
+                        entityTypesByShortcut[key] = typeRegistry->getEntityType(shortcut.name);
+                    }
+                }
+                PropertyInitializer::set(compPtr->buildableTypesByShortcut, entityTypesByShortcut);
             }
         }
     }

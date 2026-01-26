@@ -12,10 +12,10 @@ namespace core
 class CompUnitFactory
 {
   public:
-    Property<std::vector<uint32_t>> producibleUnitTypes;    // Entity types
-    Property<std::vector<std::string>> producibleUnitNames; // Entity names
+    Property<std::vector<uint32_t>> producibleUnitTypes;    // Entity types. TODO: Remove
+    Property<std::vector<std::string>> producibleUnitNames; // Entity names. TODO: Remove
     Property<std::unordered_map<char, uint32_t>> producibleUnitShortcuts;
-    Property<std::unordered_map<char, std::string>> producibleUnitNamesByShortcuts;
+    Property<std::unordered_map<char, std::string>> producibleUnitNamesByShortcuts; // TODO: Remove
     Property<uint32_t> maxQueueSize;
     Property<uint32_t> unitCreationSpeed;
 
