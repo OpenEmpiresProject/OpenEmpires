@@ -20,6 +20,7 @@ all_models = [
         display_name="Gold Mine",
         resource_amount=1000,
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=4479),
@@ -33,6 +34,7 @@ all_models = [
         size="medium",
         accepted_resources=["food"], 
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=3483),
@@ -42,6 +44,7 @@ all_models = [
     TileSet(
         name="default_tileset",
         graphics=Graphic(
+            layer=GraphicLayer.GROUND,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(drs_file="terrain.drs", slp_id=15001),

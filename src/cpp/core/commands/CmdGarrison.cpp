@@ -104,3 +104,8 @@ void CmdGarrison::garrison()
     m_stateMan->gameMap().removeEntity(MapLayerType::UNITS,
                                        m_components->transform.getTilePosition(), m_entityID);
 }
+
+core::Command* CmdGarrison::clone()
+{
+    return ObjectPool<CmdGarrison>::acquire(*this);
+}

@@ -8,6 +8,7 @@ all_models = [
         line_of_sight=256*2,
         size="medium",
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=2223),

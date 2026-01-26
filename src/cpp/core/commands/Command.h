@@ -51,6 +51,7 @@ class Command
     virtual bool onExecute(int deltaTimeMs, int currentTick, std::list<Command*>& newCommands) = 0;
     virtual std::string toString() const = 0;
     virtual void destroy() = 0;
+    virtual Command* clone() = 0;
 
     void setPriority(int m_priority)
     {
@@ -65,7 +66,11 @@ class Command
     void setEntityID(uint32_t entityID)
     {
         m_entityID = entityID;
-        m_components = std::make_shared<UnitComponentRefs>(m_stateMan.getRef(), entityID);
+    }
+
+    void init()
+    {
+        m_components = std::make_shared<UnitComponentRefs>(m_stateMan.getRef(), m_entityID);
     }
 
     uint32_t getEntityID() const

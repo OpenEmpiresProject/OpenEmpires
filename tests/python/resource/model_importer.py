@@ -6,6 +6,7 @@ all_models = [
         display_name="Gold Mine",
         resource_amount=1000,
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=4479),

@@ -14,6 +14,7 @@ all_models = [
         garrisonable_unit_types = [UnitType.VILLAGER],
         garrison_capacity = 10,
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=CompositeGraphic(

@@ -36,6 +36,7 @@ class CmdMove : public Command
     void onQueue() override;
     bool onExecute(int deltaTimeMs, int currentTick, std::list<Command*>& subCommands) override;
     std::string toString() const override;
+    Command* clone() override;
     void destroy() override;
 
     void animate(int deltaTimeMs, int currentTick);

@@ -9,6 +9,7 @@ all_models = [
         unit_creation_speed=40,
         max_queue_size=10,
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=130),

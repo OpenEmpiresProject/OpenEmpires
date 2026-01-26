@@ -29,6 +29,11 @@ class CompUnitFactory
     {
         productionQueue.reserve(Constants::ABSOLUTE_MAX_UNIT_QUEUE_SIZE);
     }
+
+    void onCreate(uint32_t entity)
+    {
+
+    }
 };
 
 } // namespace core

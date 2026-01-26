@@ -721,3 +721,8 @@ bool CmdMove::isTargetCloseEnough() const
                m_components->transform.goalRadiusSquared;
     }
 }
+
+core::Command* CmdMove::clone()
+{
+    return ObjectPool<CmdMove>::acquire(*this);
+}

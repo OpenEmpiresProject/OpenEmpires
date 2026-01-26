@@ -42,6 +42,7 @@ class CompBuilding
     bool acceptResource(uint8_t resourceType) const;
     std::vector<uint8_t> getAcceptedResources() const;
     bool isConstructed() const;
+    bool isConstructing() const;
     int getVariationByConstructionProgress() const;
     Rect<float> getLandInFeetRect() const;
     static Rect<float> getLandInFeetRect(const LandArea& area);

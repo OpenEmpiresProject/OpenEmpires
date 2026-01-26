@@ -47,6 +47,12 @@ template <typename T> class Flat2DArray
         return m_data[y * m_width + x];
     }
 
+    void set(size_t x, size_t y, const T& value)
+    {
+        assert(x < m_width && y < m_height);
+        m_data[y * m_width + x] = value;
+    }
+
     // Unchecked access (fast)
     T& operator()(size_t x, size_t y)
     {

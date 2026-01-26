@@ -38,6 +38,11 @@ class CmdDropResource : public Command
         return "drop-resource";
     }
 
+    Command* clone() override
+    {
+        return ObjectPool<CmdDropResource>::acquire(*this);
+    }
+
     void destroy() override
     {
         ObjectPool<CmdDropResource>::release(this);

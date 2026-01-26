@@ -213,3 +213,8 @@ std::vector<uint8_t> CompBuilding::getAcceptedResources() const
     }
     return resources;
 }
+
+bool CompBuilding::isConstructing() const
+{
+    return constructionProgress < 100;
+}

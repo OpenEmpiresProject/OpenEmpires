@@ -4,10 +4,12 @@
 #include "EntityModelLoaderV2.h"
 #include "components/CompAnimation.h"
 #include "GameTypes.h"
+#include "utils/Types.h"
 
 #include  <filesystem>
 #include "EntityTypeRegistry.h"
 #include "EntityFactory.h"
+#include "commands/CmdIdle.h"
 
 using namespace std;
 using namespace core;
@@ -18,6 +20,10 @@ namespace game
 {
 class DummyDRSInterface : public DRSInterface
 {
+  public:
+    Rect<int> boundingBoxToReturn;
+
+  private:
     core::Ref<drs::DRSFile> loadDRSFile(const std::string& filename)
     {
         return CreateRef<DRSFile>();
@@ -26,7 +32,7 @@ class DummyDRSInterface : public DRSInterface
         int slpId,
         int frameIndex = 0)
     {
-        return {};
+        return boundingBoxToReturn;
     }
 };
 
@@ -156,6 +162,10 @@ TEST_F(EntityModelLoaderTest, CreateResource)
     try
     {
         // Arrange
+        Ref<DummyDRSInterface> dummyDRS =
+            std::dynamic_pointer_cast<DummyDRSInterface>(m_drsInterface);
+        dummyDRS->boundingBoxToReturn = Rect<int>(0, 0, 32, 32);
+
         EntityModelLoaderV2 loader("resource", m_drsInterface);
         loader.init();
 
@@ -165,8 +175,13 @@ TEST_F(EntityModelLoaderTest, CreateResource)
 
         // Assert
         auto& resource = m_stateMan->getComponent<CompResource>(entity);
+        auto& selectible = m_stateMan->getComponent<CompSelectible>(entity);
+
         EXPECT_EQ(resource.resourceName.value(), "gold");
         EXPECT_EQ(resource.resourceAmount.value(), 1000);
+
+        auto boundingBoxes = selectible.boundingBoxes.value();
+        EXPECT_EQ(boundingBoxes.at(0, static_cast<int>(Direction::SOUTH)), Rect<int>(0, 0, 32, 32));
     }
     catch (const py::error_already_set& e)
     {
@@ -257,6 +272,9 @@ TEST_F(EntityModelLoaderTest, CreateUnit)
     try
     {
         // Arrange
+        Ref<DummyDRSInterface> dummyDRS = std::dynamic_pointer_cast<DummyDRSInterface>(m_drsInterface);
+        dummyDRS->boundingBoxToReturn = Rect<int>(0, 0, 32, 32);
+
         EntityModelLoaderV2 loader("unit", m_drsInterface);
         loader.init();
 
@@ -266,9 +284,28 @@ TEST_F(EntityModelLoaderTest, CreateUnit)
 
         // Assert
         auto& unitComp = m_stateMan->getComponent<CompUnit>(militia);
+        auto& graphicComp = m_stateMan->getComponent<CompGraphics>(militia);
+        auto& selectible = m_stateMan->getComponent<CompSelectible>(militia);
 
         EXPECT_EQ(unitComp.housingNeed.value(), 1);
         EXPECT_EQ(unitComp.type.value(), UnitType::INFANTRY);
+
+        // Verify default command is CmdIdle and entity is set correctly
+        auto defaultCmd = std::dynamic_pointer_cast<core::CmdIdle>(unitComp.defaultCommand.value());
+        ASSERT_NE(defaultCmd, nullptr);
+        EXPECT_EQ(defaultCmd->getEntityID(), (uint32_t)entt::null);
+
+        Command* firstCmd = unitComp.commandQueue.top();
+        ASSERT_NE(dynamic_cast<core::CmdIdle*>(firstCmd), nullptr);
+        EXPECT_EQ(firstCmd->getEntityID(), militia);
+
+        EXPECT_EQ(graphicComp.layer.value(), GraphicLayer::ENTITIES);
+        EXPECT_EQ(selectible.displayName.value(), "Militia");
+
+        auto boundingBoxes = selectible.boundingBoxes.value();
+        EXPECT_EQ(boundingBoxes.at(0, static_cast<int>(Direction::SOUTH)),
+                  Rect<int>(0, 0, 32, 32));
+
     }
     catch (const py::error_already_set& e)
     {
@@ -281,6 +318,10 @@ TEST_F(EntityModelLoaderTest, CreateUnitFactory)
     try
     {
         // Arrange
+        Ref<DummyDRSInterface> dummyDRS =
+            std::dynamic_pointer_cast<DummyDRSInterface>(m_drsInterface);
+        dummyDRS->boundingBoxToReturn = Rect<int>(0, 0, 32, 32);
+
         EntityModelLoaderV2 loader("unit_factory", m_drsInterface);
         loader.init();
 
@@ -290,9 +331,14 @@ TEST_F(EntityModelLoaderTest, CreateUnitFactory)
 
         // Assert
         auto& factoryComp = m_stateMan->getComponent<CompUnitFactory>(barracks);
+        auto& selectible = m_stateMan->getComponent<CompSelectible>(barracks);
 
         EXPECT_EQ(factoryComp.maxQueueSize.value(), 10);
         EXPECT_EQ(factoryComp.unitCreationSpeed.value(), 40);
+        EXPECT_EQ(selectible.displayName.value(), "Barracks");
+
+        auto boundingBoxes = selectible.boundingBoxes.value();
+        EXPECT_EQ(boundingBoxes.at(0, static_cast<int>(Direction::NONE)), Rect<int>(0, 0, 32, 32));
     }
     catch (const py::error_already_set& e)
     {

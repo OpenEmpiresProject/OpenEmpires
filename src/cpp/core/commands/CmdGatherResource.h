@@ -82,6 +82,7 @@ class CmdGatherResource : public Command
     void onStart() override;
     void onQueue() override;
     std::string toString() const override;
+    Command* clone() override;
     void destroy() override;
 
     /**

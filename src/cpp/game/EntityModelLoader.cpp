@@ -233,11 +233,17 @@ void EntityModelLoader::loadUnits(py::object module)
                 auto drsData = m_DRSDataByGraphicsIdHash.at(id);
 
                 auto& sc = getComponent<CompSelectible>(entityType);
+
+                auto boundingBoxes = sc.boundingBoxes.value();
+                boundingBoxes.resize(1,
+                                         static_cast<int>(Direction::NONE) + 1); // 1 state
                 for (int i = static_cast<int>(Direction::NORTH);
                      i <= static_cast<int>(Direction::NORTHWEST); ++i)
                 {
-                    sc.boundingBoxes[i] = drsData.boundingRect;
+                    boundingBoxes.set(0, i, drsData.boundingRect);
                 }
+                PropertyInitializer::set(sc.boundingBoxes, boundingBoxes);
+
                 // TODO: needs migration: end
             }
             else
@@ -274,7 +280,11 @@ void EntityModelLoader::loadNaturalResources(py::object module)
                 auto drsData = m_DRSDataByGraphicsIdHash.at(id);
 
                 auto& sc = getComponent<CompSelectible>(entityType);
-                sc.boundingBoxes[static_cast<int>(Direction::NONE)] = drsData.boundingRect;
+                auto boundingBoxes = sc.boundingBoxes.value();
+                boundingBoxes.resize(1,
+                                     static_cast<int>(Direction::NONE) + 1); // 1 state
+                boundingBoxes.set(0, static_cast<int>(Direction::NONE), drsData.boundingRect);
+                PropertyInitializer::set(sc.boundingBoxes, boundingBoxes);
 
                 py::object treeClass = module.attr("Tree");
                 if (py::isinstance(entry, treeClass))
@@ -286,7 +296,8 @@ void EntityModelLoader::loadNaturalResources(py::object module)
                         loadDRSForStillImage(module, entityType, stump, 0, (int) true);
 
                         CompGraphics graphics;
-                        graphics.layer = GraphicLayer::ON_GROUND;
+                        PropertyInitializer::set(graphics.layer, GraphicLayer::ON_GROUND);
+
 
                         CompEntityInfo info(entityType);
 
@@ -333,7 +344,15 @@ void EntityModelLoader::loadBuildings(pybind11::object module)
                     {
                         auto& drsData = drsIt.second;
                         auto& sc = getComponent<CompSelectible>(entityType);
-                        sc.boundingBoxes[drsIt.first.direction] = drsData.boundingRect;
+
+                        auto boxesCopy = sc.boundingBoxes.value();
+                        boxesCopy.resize(1,
+                                         static_cast<int>(Direction::NONE) + 1); // 1 state
+                        // Bounding box will be same regardless of the state
+                        // TODO: Support different oriented buildings such as gates
+                        boxesCopy.set(0, drsIt.first.direction,
+                                      drsData.boundingRect); // only 1 state for buildings
+                        PropertyInitializer::set(sc.boundingBoxes, boxesCopy);
                     }
                 }
                 // TODO: needs migration: end
@@ -509,7 +528,8 @@ void EntityModelLoader::addComponentsForUnit(uint32_t entityType)
     // TODO: needs migration: start
 
     CompGraphics graphics;
-    graphics.layer = GraphicLayer::ENTITIES;
+    PropertyInitializer::set(graphics.layer, GraphicLayer::ENTITIES);
+
     graphics.debugOverlays.push_back({DebugOverlay::Type::ARROW, core::Color::GREEN,
                                       DebugOverlay::FixedPosition::BOTTOM_CENTER,
                                       DebugOverlay::FixedPosition::CENTER});
@@ -539,7 +559,8 @@ void EntityModelLoader::addComponentsForBuilding(uint32_t entityType)
 {
     // TODO: needs migration: start
     CompGraphics graphics;
-    graphics.layer = GraphicLayer::ENTITIES;
+    PropertyInitializer::set(graphics.layer, GraphicLayer::ENTITIES);
+
     // TODO: needs migration: end
 
     addComponentIfNotNull(entityType, CompRendering());
@@ -552,7 +573,8 @@ void EntityModelLoader::addComponentsForNaturalResource(uint32_t entityType)
 {
     // TODO: needs migration: start
     CompGraphics graphics;
-    graphics.layer = GraphicLayer::ENTITIES;
+    PropertyInitializer::set(graphics.layer, GraphicLayer::ENTITIES);
+
     // TODO: needs migration: end
 
     addComponentIfNotNull(entityType, graphics);
@@ -565,7 +587,8 @@ void EntityModelLoader::addComponentsForTileset(uint32_t entityType)
     // TODO: needs migration: start
 
     CompGraphics graphics;
-    graphics.layer = GraphicLayer::GROUND;
+    PropertyInitializer::set(graphics.layer, GraphicLayer::GROUND);
+
     DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, core::Color::GREY,
                          DebugOverlay::FixedPosition::BOTTOM_CENTER};
     overlay.customPos1 = DebugOverlay::FixedPosition::CENTER_LEFT;

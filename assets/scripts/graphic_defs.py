@@ -1,4 +1,5 @@
 from typing import Dict, List, Optional, Union
+from enum import IntEnum
 
 # Core entity definitions. These definitions are known to the game. It is possible to compose these
 # to define new entity types. But not possible to change these.
@@ -40,7 +41,17 @@ class GraphicVariant(_Constructible):
     variation_filter: Dict[str, str]
 
 
+class GraphicLayer(IntEnum):
+    NONE = -1
+    GROUND = 0
+    ON_GROUND = 1
+    ENTITIES = 2
+    SKY = 3
+    UI = 4
+
+
 class Graphic(_Constructible):
+    layer: GraphicLayer
     variants: List[GraphicVariant]
 
 

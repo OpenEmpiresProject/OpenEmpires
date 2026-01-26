@@ -274,3 +274,8 @@ bool CmdBuild::lookForResourceToGather(std::list<Command*>& newCommands)
     }
     return false;
 }
+
+core::Command* CmdBuild::clone()
+{
+    return ObjectPool<CmdBuild>::acquire(*this);
+}

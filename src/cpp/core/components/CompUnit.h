@@ -18,8 +18,21 @@ class CompUnit
     Property<UnitType> type;
 
   public:
+    Property<Ref<Command>> defaultCommand;
+
     CommandQueueType commandQueue;
     bool isGarrisoned = false;
+
+    void onCreate(uint32_t entity)
+    {
+        while (not commandQueue.empty())
+        {
+            commandQueue.pop();
+        }
+        auto cloned = defaultCommand.value()->clone();
+        cloned->setEntityID(entity);
+        commandQueue.push(cloned);
+    }
 };
 
 } // namespace core

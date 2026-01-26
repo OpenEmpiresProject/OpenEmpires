@@ -29,6 +29,7 @@
 #include <pybind11/embed.h>
 #include <variant>
 #include "DRSInterface.h"
+#include "ServiceRegistry.h"
 
 namespace game
 {
@@ -55,6 +56,9 @@ struct DRSData : public core::GraphicsLoadupDataProvider::Data
     bool flip = false;
 };
 
+template <typename T> void maybeOnCreate(entt::basic_registry<uint32_t>& reg, uint32_t e);
+
+
 class EntityModelLoaderV2 : public core::EntityFactory,
                             public core::PropertyInitializer,
                             public core::GraphicsLoadupDataProvider
@@ -74,7 +78,8 @@ class EntityModelLoaderV2 : public core::EntityFactory,
 
   private:
     uint32_t createEntity(uint32_t entityType) override;
-    const Data& getData(const core::GraphicsID& id) override;
+    const Data& getData(const core::GraphicsID& id) const override;
+    bool hasData(const core::GraphicsID& id) const override;
 
     void loadAll(const pybind11::object& module);
     void loadEntityTypes(const pybind11::object& module);
@@ -88,6 +93,7 @@ class EntityModelLoaderV2 : public core::EntityFactory,
     {
         std::list<ComponentType> components;
 
+        core::GraphicsID createGraphicsID() const;
         core::GraphicsID createGraphicsID(const std::map<std::string, std::string>& filters) const;
 
         template<typename T> T* tryGetComponent()
@@ -164,16 +170,20 @@ class EntityModelLoaderV2 : public core::EntityFactory,
     }
 
     template <typename T>
-    std::list<std::string> emplace(ComponentType& c, const pybind11::object& obj)
+    std::list<std::string> createAndEnrichComponent(ComponentType& c, const pybind11::object& obj)
     {
+        auto stateMan = core::ServiceRegistry::getInstance().getService<core::StateManager>();
+        auto& registry = stateMan->getRegistry();
+        registry.on_construct<T>().connect<&maybeOnCreate<T>>();
+
         auto& comp = c.emplace<T>();
         return enrich(comp, obj);
     }
 
-    using EmplaceFn = std::list<std::string> (EntityModelLoaderV2::*)(ComponentType&,
+    using ComponentFactoryFunc = std::list<std::string> (EntityModelLoaderV2::*)(ComponentType&,
                                                                       const pybind11::object&);
 
-    EmplaceFn getEmplaceFunc(std::type_index componentTypeIndex) const;
+    ComponentFactoryFunc getComponentFactoryFunc(std::type_index componentTypeIndex) const;
 
     std::map<uint32_t, core::Ref<ComponentHolder>> m_componentsByEntityType;
     std::map<std::string, core::Ref<ComponentHolder>> m_componentsByEntityName;
@@ -191,13 +201,24 @@ class EntityModelLoaderV2 : public core::EntityFactory,
     pybind11::object getUnprocessedField(const std::string& entityName,
                                          const std::string& fieldName);
 
-    std::map<std::type_index, std::list<std::string_view>> m_modelsByComponentType;
-    std::unordered_map<std::type_index, EmplaceFn> m_componentFactories;
+    std::map<std::type_index, std::set<std::string_view>> m_modelsByComponentType;
+    std::unordered_map<std::type_index, ComponentFactoryFunc> m_componentFactories;
 
     core::Ref<DRSInterface> m_drsInterface;
 
     std::unordered_map<core::GraphicsID, DRSData> m_DRSDataByGraphicsId;
 };
+
+
+template <typename T> void maybeOnCreate(entt::basic_registry<uint32_t>& reg, uint32_t e)
+{
+    if constexpr (requires(T t, uint32_t e) { t.onCreate(e); })
+    {
+        auto& comp = reg.get<T>(e);
+        comp.onCreate(e);
+    }
+}
+
 } // namespace game
 
 #endif // GAME_ENTITYMODELLOADERV2_H

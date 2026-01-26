@@ -22,6 +22,7 @@ all_models = [
         size="medium",
         accepted_resources=["food"], 
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=3483),

@@ -8,6 +8,7 @@ all_models = [
         size="small",
         construction_site="construction_site_small",
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=1828, frame_index=0),

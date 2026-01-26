@@ -68,6 +68,9 @@ inline constexpr std::array<GraphicLayer, 5> g_graphicLayersOrder{
 class CompGraphics : public GraphicsID
 {
   public:
+    Property<GraphicLayer> layer = GraphicLayer::NONE;
+
+  public:
     uint32_t entityID = entt::null;
     Feet positionInFeet = Feet::null;
     Vec2 positionInScreenUnits;
@@ -77,7 +80,6 @@ class CompGraphics : public GraphicsID
     bool isDestroyed = false;
     bool isEnabled = true;
     bool bypass = false;
-    GraphicLayer layer = GraphicLayer::NONE;
     LandArea landArea;
 
     CompGraphics()

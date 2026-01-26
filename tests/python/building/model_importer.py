@@ -10,6 +10,7 @@ all_models = [
         accepted_resources=["food"], 
         default_orientation="corner",
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=3483),
