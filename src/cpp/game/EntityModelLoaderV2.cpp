@@ -31,6 +31,7 @@ extern bool isInstanceOf(py::object module,
                          py::handle entityDefinition,
                          const std::string& baseClass);
 
+
 // Performs default command initialization for unit component
 // TODO : This shouldn't be in the game layer but in core layer
 //void onUnitComponentCreate(entt::basic_registry<uint32_t>& reg, uint32_t e)
@@ -730,50 +731,6 @@ void EntityModelLoaderV2::loadUnprogressedFields()
                     compPtr->animations[graphicsId.action] = actionAnimation;
                 }
             }
-            else if (fieldName == "producible_units")
-            {
-
-                auto compPtr = holder->tryGetComponent<CompUnitFactory>();
-                debug_assert(compPtr, "Could not find unit factor component for entity {}",
-                             entityName);
-
-                auto shortcuts = pyObj.cast<std::list<Shortcut>>();
-
-                std::unordered_map<char, uint32_t> entityTypesByShortcut;
-
-                auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
-                for (auto& shortcut : shortcuts)
-                {
-                    if (typeRegistry->isValid(shortcut.name))
-                    {
-                        auto key = shortcut.shortcut.c_str()[0];
-                        entityTypesByShortcut[key] = typeRegistry->getEntityType(shortcut.name);
-                    }
-                }
-                PropertyInitializer::set(compPtr->producibleUnitShortcuts, entityTypesByShortcut);
-            }
-            else if (fieldName == "buildables")
-            {
-                auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
-
-                auto compPtr = holder->tryGetComponent<CompBuilder>();
-                debug_assert(compPtr, "Could not find builder component for entity {}",
-                             entityName);
-
-                auto shortcuts = pyObj.cast<std::list<Shortcut>>();
-
-                std::unordered_map<char, uint32_t> entityTypesByShortcut;
-
-                for (auto& shortcut : shortcuts)
-                {
-                    if (typeRegistry->isValid(shortcut.name))
-                    {
-                        auto key = shortcut.shortcut.c_str()[0];
-                        entityTypesByShortcut[key] = typeRegistry->getEntityType(shortcut.name);
-                    }
-                }
-                PropertyInitializer::set(compPtr->buildableTypesByShortcut, entityTypesByShortcut);
-            }
         }
     }
 }
@@ -860,4 +817,24 @@ void EntityModelLoaderV2::loadUnprogressedFields()
          // id.isShadow     --> TODO: Shadows need rework/redesign
      }
      return id;
+ }
+
+ std::unordered_map<char, uint32_t> getShortcuts(const std::any& value)
+ {
+     auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+
+     auto pyObj = std::any_cast<py::object>(value);
+     auto shortcuts = pyObj.cast<std::list<Shortcut>>();
+
+     std::unordered_map<char, uint32_t> entityTypesByShortcut;
+
+     for (auto& shortcut : shortcuts)
+     {
+         if (typeRegistry->isValid(shortcut.name))
+         {
+             auto key = shortcut.shortcut.c_str()[0];
+             entityTypesByShortcut[key] = typeRegistry->getEntityType(shortcut.name);
+         }
+     }
+     return entityTypesByShortcut;
  }

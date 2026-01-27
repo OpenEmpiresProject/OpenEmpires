@@ -19,17 +19,21 @@
 #include "utils/Types.h"
 #include "components/CompUIElement.h"
 
+#include <any>
+
 // TODO: move to a namespace
 extern core::BuildingOrientation getBuildingOrientation(const std::string& name);
 extern core::Size getBuildingSize(const std::string& name);
 extern core::LineOfSightShape getLOSShape(const std::string& name);
 extern int getUIElementType(const std::string& name);
+extern std::unordered_map<char, uint32_t> getShortcuts(const std::any& value);
 
 namespace game
 {
 
 template <typename T> using ConverterFnStr = T (*)(const std::string&);
 template <typename T> using ConverterFnInt = T (*)(int);
+template <typename T> using ConverterFn = T (*)(const std::any&);
 
 template <auto Member> struct ModelPropertyMapping;
 
@@ -39,6 +43,7 @@ template <typename C, typename T, core::Property<T> C::* Member> struct ModelPro
     std::string_view modelName;
     ConverterFnStr<T> converterFuncStr = nullptr;
     ConverterFnInt<T> converterFuncInt = nullptr;
+    ConverterFn<T> converterFunc = nullptr;
 
     using component_type = C;
     using value_type = T;
@@ -62,6 +67,13 @@ template <typename C, typename T, core::Property<T> C::* Member> struct ModelPro
                                    std::string_view property,
                                    ConverterFnInt<T> converterFunc)
         : propertyName(property), modelName(model), converterFuncInt(converterFunc)
+    {
+    }
+
+    constexpr ModelPropertyMapping(std::string_view model,
+                                   std::string_view property,
+                                   ConverterFn<T> converterFunc)
+        : propertyName(property), modelName(model), converterFunc(converterFunc)
     {
     }
 };
@@ -116,6 +128,7 @@ class ComponentModelMapper
     {
         return std::tuple{
             ModelPropertyMapping<&core::CompBuilder::buildSpeed>                    ("Builder", "build_speed"),
+            ModelPropertyMapping<&core::CompBuilder::buildableTypesByShortcut>      ("Builder", "buildables", getShortcuts),
             ModelPropertyMapping<&core::CompBuilding::connectedConstructionsAllowed>("Building", "connected_constructions_allowed"),
             ModelPropertyMapping<&core::CompBuilding::defaultOrientation>           ("Building", "default_orientation", getBuildingOrientation),
             ModelPropertyMapping<&core::CompBuilding::size>                         ("Building", "size", getBuildingSize),
@@ -130,6 +143,7 @@ class ComponentModelMapper
             ModelPropertyMapping<&core::CompTransform::speed>                       ("Unit", "moving_speed"),
             ModelPropertyMapping<&core::CompUnitFactory::maxQueueSize>              ("UnitFactory", "max_queue_size"),
             ModelPropertyMapping<&core::CompUnitFactory::unitCreationSpeed>         ("UnitFactory", "unit_creation_speed"),
+            ModelPropertyMapping<&core::CompUnitFactory::producibleUnitShortcuts>   ("UnitFactory", "producible_units", getShortcuts),
             ModelPropertyMapping<&core::CompGarrison::capacity>                     ("Garrison", "garrison_capacity"),
             ModelPropertyMapping<&core::CompGarrison::unitTypesInt>                 ("Garrison", "garrisonable_unit_types"),
             ModelPropertyMapping<&core::CompVision::lineOfSight>                    ("Vision", "line_of_sight"),

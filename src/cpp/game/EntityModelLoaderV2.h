@@ -151,6 +151,13 @@ class EntityModelLoaderV2 : public core::EntityFactory,
                                         PropertyInitializer::set<Value>(comp.*(M::member),
                                                                         convertedValue);
                                     }
+                                    else if (mappings.converterFunc != nullptr)
+                                    {
+                                        auto convertedValue =
+                                            (*mappings.converterFunc)(value);
+                                        PropertyInitializer::set<Value>(comp.*(M::member),
+                                                                        convertedValue);
+                                    }
                                     else
                                     {
                                         PropertyInitializer::set<Value>(comp.*(M::member),
