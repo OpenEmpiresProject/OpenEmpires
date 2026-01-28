@@ -20,6 +20,7 @@
 #include "components/CompUIElement.h"
 
 #include <any>
+#include <optional>
 
 // TODO: move to a namespace
 extern core::BuildingOrientation getBuildingOrientation(const std::string& name);
@@ -27,6 +28,8 @@ extern core::Size getBuildingSize(const std::string& name);
 extern core::LineOfSightShape getLOSShape(const std::string& name);
 extern int getUIElementType(const std::string& name);
 extern std::unordered_map<char, uint32_t> getShortcuts(const std::any& value);
+extern uint8_t getAcceptedResourceFlag(const std::any& value);
+extern uint32_t getEntityType(const std::string& name);
 
 namespace game
 {
@@ -35,9 +38,30 @@ template <typename T> using ConverterFnStr = T (*)(const std::string&);
 template <typename T> using ConverterFnInt = T (*)(int);
 template <typename T> using ConverterFn = T (*)(const std::any&);
 
+// DefaultStorage mechanism to store default values only for trivial types instead of
+// putting the value in the ModelPropertyMapping because for non-trivial types ModelPropertyMapping 
+// construction will not be constexpr anymore.
+//
+template <typename T, bool = std::is_trivially_destructible_v<T> && std::is_trivially_copyable_v<T>>
+struct DefaultStorage;
+
+// trivial case ? store the value
+template <typename T> struct DefaultStorage<T, true>
+{
+    // It is important to initialize this to comply with constexpr requirements
+    T value{};
+};
+
+// non-trivial case ? store nothing
+template <typename T> struct DefaultStorage<T, false>
+{
+    // empty
+};
+
 template <auto Member> struct ModelPropertyMapping;
 
-template <typename C, typename T, core::Property<T> C::* Member> struct ModelPropertyMapping<Member>
+template <typename C, typename T, core::Property<T> C::* Member>
+struct ModelPropertyMapping<Member> : public DefaultStorage<T>
 {
     std::string_view propertyName{};
     std::string_view modelName;
@@ -76,6 +100,14 @@ template <typename C, typename T, core::Property<T> C::* Member> struct ModelPro
         : propertyName(property), modelName(model), converterFunc(converterFunc)
     {
     }
+
+    constexpr ModelPropertyMapping(
+                                   std::string_view model,
+                                   std::string_view property,
+                                   const T& defaultValue)
+        : propertyName(property), modelName(model), DefaultStorage<T>{defaultValue}
+    {
+    }
 };
 
 template <typename C> struct ModelMapping
@@ -88,18 +120,6 @@ template <typename C> struct ModelMapping
     {
     }
 };
-
-template <typename M, typename = void> struct is_property_mapping : std::false_type
-{
-};
-
-template <typename M>
-struct is_property_mapping<M, std::void_t<decltype(M::member), typename M::value_type>>
-    : std::true_type
-{
-};
-
-template <typename M> inline constexpr bool is_property_mapping_v = is_property_mapping<M>::value;
 
 class ComponentModelMapper
 {
@@ -133,14 +153,17 @@ class ComponentModelMapper
             ModelPropertyMapping<&core::CompBuilding::defaultOrientation>           ("Building", "default_orientation", getBuildingOrientation),
             ModelPropertyMapping<&core::CompBuilding::size>                         ("Building", "size", getBuildingSize),
             ModelPropertyMapping<&core::CompBuilding::acceptedResourceNames>        ("ResourceDropOff", "accepted_resources"),
+            ModelPropertyMapping<&core::CompBuilding::dropOffForResourceType>       ("ResourceDropOff", "accepted_resources", getAcceptedResourceFlag),
             ModelPropertyMapping<&core::CompEntityInfo::entityName>                 ("Model", "name"),
+            ModelPropertyMapping<&core::CompEntityInfo::entityType>                 ("Model", "name", getEntityType),
             ModelPropertyMapping<&core::CompUIElement::uiElementType>               ("UIElement", "name", getUIElementType),
             ModelPropertyMapping<&core::CompResourceGatherer::capacity>             ("Gatherer", "resource_capacity"),
             ModelPropertyMapping<&core::CompResourceGatherer::gatherSpeed>          ("Gatherer", "gather_speed"),
-            ModelPropertyMapping<&core::CompResource::resourceName>                 ("Model", "name"),
+            ModelPropertyMapping<&core::CompResource::resourceName>                 ("NaturalResource", "name"),
             ModelPropertyMapping<&core::CompResource::resourceAmount>               ("NaturalResource", "resource_amount"),
             ModelPropertyMapping<&core::CompSelectible::displayName>                ("Selectable", "display_name"),
             ModelPropertyMapping<&core::CompTransform::speed>                       ("Unit", "moving_speed"),
+            ModelPropertyMapping<&core::CompTransform::hasRotation>                 ("Unit", "moving_speed", true),
             ModelPropertyMapping<&core::CompUnitFactory::maxQueueSize>              ("UnitFactory", "max_queue_size"),
             ModelPropertyMapping<&core::CompUnitFactory::unitCreationSpeed>         ("UnitFactory", "unit_creation_speed"),
             ModelPropertyMapping<&core::CompUnitFactory::producibleUnitShortcuts>   ("UnitFactory", "producible_units", getShortcuts),
@@ -165,6 +188,20 @@ class ComponentModelMapper
     }
     // clang-format on
 };
+
+
+template <typename M, typename = void> struct is_property_mapping : std::false_type
+{
+};
+
+template <typename M>
+struct is_property_mapping<M, std::void_t<decltype(M::member), typename M::value_type>>
+    : std::true_type
+{
+};
+
+template <typename M> inline constexpr bool is_property_mapping_v = is_property_mapping<M>::value;
+
 } // namespace game
 
 #endif // GAME_COMPONENTMODELMAPPER_H

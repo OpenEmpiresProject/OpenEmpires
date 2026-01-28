@@ -17,7 +17,7 @@ class CompResource
 
   public:
     Property<std::string> resourceName;
-    Property<uint32_t> resourceAmount;
+    Property<uint32_t> resourceAmount; // TODO: Isn't this a duplicate of original.amount?
 
   public:
     uint32_t remainingAmount = 0;

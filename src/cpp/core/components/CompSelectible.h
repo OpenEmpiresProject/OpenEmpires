@@ -17,7 +17,7 @@ class CompSelectible
 {
   public:
     using Rect2DArray = Flat2DArray<Rect<int>>;
-    Property<GraphicsID> icon;
+    Property<GraphicsID> icon; // TODO: To remove. Now isIcon flag under same graphic ID heirarchy is used
     Property<std::string> displayName;
     Property<Rect2DArray> boundingBoxes;
 

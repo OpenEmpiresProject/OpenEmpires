@@ -158,6 +158,11 @@ class EntityModelLoaderV2 : public core::EntityFactory,
                                         PropertyInitializer::set<Value>(comp.*(M::member),
                                                                         convertedValue);
                                     }
+                                    /*else if (mappings.defaultValue.has_value())
+                                    {
+                                        PropertyInitializer::set<Value>(
+                                            comp.*(M::member), mappings.defaultValue.value());
+                                    }*/
                                     else
                                     {
                                         PropertyInitializer::set<Value>(comp.*(M::member),

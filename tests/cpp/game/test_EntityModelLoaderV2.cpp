@@ -132,6 +132,7 @@ TEST_F(EntityModelLoaderTest, CreateBuilding)
         EXPECT_EQ(building.acceptedResourceNames.value()[0], "food");
         EXPECT_EQ(building.defaultOrientation.value(), BuildingOrientation::CORNER);
         EXPECT_EQ(building.connectedConstructionsAllowed.value(), false);
+        EXPECT_EQ(building.dropOffForResourceType.value(), ResourceType::FOOD);
 
         // Validate building graphics
         auto drsProvider = dynamic_cast<GraphicsLoadupDataProvider*>(&loader);
@@ -183,6 +184,9 @@ TEST_F(EntityModelLoaderTest, CreateResource)
 
         EXPECT_EQ(resource.resourceName.value(), "gold");
         EXPECT_EQ(resource.resourceAmount.value(), 1000);
+        EXPECT_EQ(resource.remainingAmount, 1000); // Not a property, but should be initialized
+        EXPECT_EQ(resource.original.value().amount, 1000);
+        EXPECT_EQ(resource.original.value().type, ResourceType::GOLD);
 
         auto boundingBoxes = selectible.boundingBoxes.value();
         EXPECT_EQ(boundingBoxes.at(0, static_cast<int>(Direction::SOUTH)), Rect<int>(0, 0, 32, 32));
@@ -290,6 +294,7 @@ TEST_F(EntityModelLoaderTest, CreateUnit)
         auto& unitComp = m_stateMan->getComponent<CompUnit>(militia);
         auto& graphicComp = m_stateMan->getComponent<CompGraphics>(militia);
         auto& selectible = m_stateMan->getComponent<CompSelectible>(militia);
+        auto& transform = m_stateMan->getComponent<CompTransform>(militia);
 
         EXPECT_EQ(unitComp.housingNeed.value(), 1);
         EXPECT_EQ(unitComp.type.value(), UnitType::INFANTRY);
@@ -309,6 +314,9 @@ TEST_F(EntityModelLoaderTest, CreateUnit)
         auto boundingBoxes = selectible.boundingBoxes.value();
         EXPECT_EQ(boundingBoxes.at(0, static_cast<int>(Direction::SOUTH)),
                   Rect<int>(0, 0, 32, 32));
+
+        EXPECT_EQ(transform.hasRotation.value(), true);
+
 
     }
     catch (const py::error_already_set& e)
@@ -336,6 +344,7 @@ TEST_F(EntityModelLoaderTest, CreateUnitFactory)
         // Assert
         auto& factoryComp = m_stateMan->getComponent<CompUnitFactory>(barracks);
         auto& selectible = m_stateMan->getComponent<CompSelectible>(barracks);
+        auto& transform = m_stateMan->getComponent<CompTransform>(barracks);
 
         EXPECT_EQ(factoryComp.maxQueueSize.value(), 10);
         EXPECT_EQ(factoryComp.unitCreationSpeed.value(), 40);
@@ -347,6 +356,9 @@ TEST_F(EntityModelLoaderTest, CreateUnitFactory)
         EXPECT_EQ(factoryComp.producibleUnitShortcuts.value().size(), 1);
         EXPECT_EQ(factoryComp.producibleUnitShortcuts.value().at('m'),
                   m_typeReg->getEntityType("militia"));
+
+        EXPECT_EQ(transform.hasRotation.value(), false);
+
     }
     catch (const py::error_already_set& e)
     {

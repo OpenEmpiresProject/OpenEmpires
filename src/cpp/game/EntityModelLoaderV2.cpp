@@ -528,8 +528,6 @@ void EntityModelLoaderV2::postProcessing()
                     typeRegistry->registerEntityType(entityName, entityType);
                 }*/
                 m_componentsByEntityType[entityType] = compHolder;
-
-                PropertyInitializer::set(info->entityType, entityType);
             }
 
             if (auto selectible = std::get_if<CompSelectible>(&componentVar))
@@ -573,6 +571,13 @@ void EntityModelLoaderV2::postProcessing()
                 Ref<Command> idleCmd = CreateRef<CmdIdle>();
                 idleCmd->setPriority(Command::DEFAULT_PRIORITY);
                 PropertyInitializer::set(unit->defaultCommand, idleCmd);
+            }
+
+            if (auto resource = std::get_if<CompResource>(&componentVar))
+            {
+                PropertyInitializer::set<InGameResource>(resource->original,
+                    InGameResource(getResourceType(resource->resourceName), resource->resourceAmount));
+                resource->remainingAmount = resource->original.value().amount;
             }
 
             // Add component specific post processing (eg: lazy loading/enriching) here
@@ -821,12 +826,12 @@ void EntityModelLoaderV2::loadUnprogressedFields()
 
  std::unordered_map<char, uint32_t> getShortcuts(const std::any& value)
  {
-     auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
 
      auto pyObj = std::any_cast<py::object>(value);
      auto shortcuts = pyObj.cast<std::list<Shortcut>>();
 
      std::unordered_map<char, uint32_t> entityTypesByShortcut;
+     auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
 
      for (auto& shortcut : shortcuts)
      {
@@ -838,3 +843,24 @@ void EntityModelLoaderV2::loadUnprogressedFields()
      }
      return entityTypesByShortcut;
  }
+
+
+uint8_t getAcceptedResourceFlag(const std::any& value)
+{
+    auto pyObj = std::any_cast<py::object>(value);
+    auto acceptedResources = pyObj.cast<std::list<std::string>>();
+
+    uint8_t acceptedResourceFlag = 0;
+    for (auto& resStr : acceptedResources)
+    {
+        auto resType = getResourceType(resStr);
+        acceptedResourceFlag |= resType;
+    }
+    return acceptedResourceFlag;
+}
+
+uint32_t getEntityType(const std::string& name)
+{
+    auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+    return typeRegistry->getEntityType(name);
+}
