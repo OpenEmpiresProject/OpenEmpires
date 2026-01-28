@@ -17,7 +17,7 @@ class CompGarrison
     Property<uint32_t> capacity;
 
   public:
-    Property<std::vector<uint32_t>> unitTypesInt;
+    //Property<std::vector<uint32_t>> unitTypesInt;
 
   public:
     struct GarrisonedUnit

@@ -30,6 +30,9 @@ extern int getUIElementType(const std::string& name);
 extern std::unordered_map<char, uint32_t> getShortcuts(const std::any& value);
 extern uint8_t getAcceptedResourceFlag(const std::any& value);
 extern uint32_t getEntityType(const std::string& name);
+extern std::unordered_set<core::UnitType> getGarrisonableUnitTypes(const std::any& value);
+extern core::Ref<core::Command> getUnitDefaultCommand(const std::any&);
+
 
 namespace game
 {
@@ -168,13 +171,14 @@ class ComponentModelMapper
             ModelPropertyMapping<&core::CompUnitFactory::unitCreationSpeed>         ("UnitFactory", "unit_creation_speed"),
             ModelPropertyMapping<&core::CompUnitFactory::producibleUnitShortcuts>   ("UnitFactory", "producible_units", getShortcuts),
             ModelPropertyMapping<&core::CompGarrison::capacity>                     ("Garrison", "garrison_capacity"),
-            ModelPropertyMapping<&core::CompGarrison::unitTypesInt>                 ("Garrison", "garrisonable_unit_types"),
+            ModelPropertyMapping<&core::CompGarrison::unitTypes>                    ("Garrison", "garrisonable_unit_types", getGarrisonableUnitTypes),
             ModelPropertyMapping<&core::CompVision::lineOfSight>                    ("Vision", "line_of_sight"),
             ModelPropertyMapping<&core::CompVision::lineOfSightShape>               ("Vision", "line_of_sight_shape", getLOSShape),
             ModelPropertyMapping<&core::CompVision::activeTracking>                 ("Vision", "active_tracking"),
             ModelPropertyMapping<&core::CompHousing::housingCapacity>               ("Housing", "housing_capacity"),
             ModelPropertyMapping<&core::CompUnit::housingNeed>                      ("Unit", "housing_need"),
             ModelPropertyMapping<&core::CompUnit::type>                             ("Unit", "unit_type", core::getUnitType),
+            ModelPropertyMapping<&core::CompUnit::defaultCommand>                   ("Unit", "unit_type", getUnitDefaultCommand), // "unit_type" is a dummy here
             ModelMapping<core::CompTransform>                                       ("NaturalResource"),
             ModelMapping<core::CompTransform>                                       ("Building"),
             ModelMapping<core::CompTransform>                                       ("TileSet"),

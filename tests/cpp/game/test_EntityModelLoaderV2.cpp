@@ -382,8 +382,8 @@ TEST_F(EntityModelLoaderTest, CreateGarrison)
         auto& garrison = m_stateMan->getComponent<CompGarrison>(tc);
 
         EXPECT_EQ(garrison.capacity.value(), 10);
-        EXPECT_EQ(garrison.unitTypesInt.value().size(), 1);
-        EXPECT_EQ(garrison.unitTypesInt.value()[0], 1);
+        EXPECT_EQ(garrison.unitTypes.value().size(), 1);
+        EXPECT_TRUE(garrison.unitTypes.value().contains(UnitType::VILLAGER));
     }
     catch (const py::error_already_set& e)
     {

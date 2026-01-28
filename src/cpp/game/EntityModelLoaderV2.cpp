@@ -519,15 +519,15 @@ void EntityModelLoaderV2::postProcessing()
         {
             if (auto info = std::get_if<CompEntityInfo>(&componentVar))
             {
-                uint32_t entityType = 0;
+                //uint32_t entityType = 0;
                 // if (typeRegistry->isValid(entityName))
-                entityType = typeRegistry->getEntityType(entityName);
+                //entityType = typeRegistry->getEntityType(entityName);
                 /*else
                 {
                     entityType = typeRegistry->getNextAvailableEntityType();
                     typeRegistry->registerEntityType(entityName, entityType);
                 }*/
-                m_componentsByEntityType[entityType] = compHolder;
+                m_componentsByEntityType[info->entityType] = compHolder;
             }
 
             if (auto selectible = std::get_if<CompSelectible>(&componentVar))
@@ -566,12 +566,12 @@ void EntityModelLoaderV2::postProcessing()
                 PropertyInitializer::set(selectible->boundingBoxes, boundixBoxes);
             }
 
-            if (auto unit = std::get_if<CompUnit>(&componentVar))
+         /*   if (auto unit = std::get_if<CompUnit>(&componentVar))
             {
                 Ref<Command> idleCmd = CreateRef<CmdIdle>();
                 idleCmd->setPriority(Command::DEFAULT_PRIORITY);
                 PropertyInitializer::set(unit->defaultCommand, idleCmd);
-            }
+            }*/
 
             if (auto resource = std::get_if<CompResource>(&componentVar))
             {
@@ -863,4 +863,24 @@ uint32_t getEntityType(const std::string& name)
 {
     auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
     return typeRegistry->getEntityType(name);
+}
+
+std::unordered_set<core::UnitType> getGarrisonableUnitTypes(const std::any& value)
+{
+    auto pyObj = std::any_cast<py::object>(value);
+    auto unitTypeInts = pyObj.cast<std::list<uint32_t>>();
+
+    std::unordered_set<UnitType> unitTypes;
+    for (auto typeInt : unitTypeInts)
+    {
+        unitTypes.insert(getUnitType(typeInt));
+    }
+    return unitTypes;
+}
+
+core::Ref<core::Command> getUnitDefaultCommand(const std::any&)
+{
+    Ref<Command> idleCmd = CreateRef<CmdIdle>();
+    idleCmd->setPriority(Command::DEFAULT_PRIORITY);
+    return idleCmd;
 }
