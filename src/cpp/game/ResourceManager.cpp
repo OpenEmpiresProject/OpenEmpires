@@ -51,9 +51,9 @@ void ResourceManager::onTick(const Event& e)
                     info.variation = 0; //  regardless of the tree type, this is the chopped version
                     // TODO: Might not be the most optimal way to bring down the bounding box a
                     // chopped tree
-                    //auto tw = Constants::TILE_PIXEL_WIDTH;
-                    //auto th = Constants::TILE_PIXEL_HEIGHT;
-                    //select.boundingBoxes[static_cast<int>(Direction::NONE)] =
+                    // auto tw = Constants::TILE_PIXEL_WIDTH;
+                    // auto th = Constants::TILE_PIXEL_HEIGHT;
+                    // select.boundingBoxes[static_cast<int>(Direction::NONE)] =
                     //    Rect<int>(tw / 2, th / 2, tw, th);
 
                     auto tile = transform.position.toTile();

@@ -319,89 +319,109 @@ void DemoWorldCreator::createTile(uint32_t x, uint32_t y, EntityTypes entityType
 
 void DemoWorldCreator::createHUD()
 {
-    ui::Widget::s_entityType = EntityTypes::ET_UI_ELEMENT;
-    GraphicsID resourcePanelBackground;
-    resourcePanelBackground.entityType = EntityTypes::ET_UI_ELEMENT;
-    resourcePanelBackground.uiElementType = (int) UIElementTypes::RESOURCE_PANEL;
+    auto typeReg = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+    auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
+    const auto genericWidgetEntityType = typeReg->getEntityType("generic_widget");
 
-    auto window = CreateRef<ui::Window>();
+    // ui::Widget::s_entityType = EntityTypes::ET_UI_ELEMENT;
+    GraphicsID resourcePanelBackground;
+    resourcePanelBackground.entityType = typeReg->getEntityType("resource_panel");
+    // resourcePanelBackground.entityType = EntityTypes::ET_UI_ELEMENT;
+    // resourcePanelBackground.uiElementType = (int) UIElementTypes::RESOURCE_PANEL;
+
+    auto window = CreateRef<ui::Window>(factory->createEntity(genericWidgetEntityType));
     WITH(window->withName("resourcePanel")->withBackgroundImage(resourcePanelBackground))
     {
         ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(window);
 
-        window->createChild<ui::Label>()
+        window->createChild<ui::Label>(factory->createEntity(genericWidgetEntityType))
             ->withText("0")
             ->withRect(Rect<int>(35, 5, 50, 20))
             ->withName("wood");
 
-        window->createChild<ui::Label>()
+        window->createChild<ui::Label>(factory->createEntity(genericWidgetEntityType))
             ->withText("0")
             ->withRect(Rect<int>(195, 5, 50, 20))
             ->withName("gold");
 
-        window->createChild<ui::Label>()
+        window->createChild<ui::Label>(factory->createEntity(genericWidgetEntityType))
             ->withText("0")
             ->withRect(Rect<int>(265, 5, 50, 20))
             ->withName("stone");
 
-        window->createChild<ui::Label>()
+        window->createChild<ui::Label>(factory->createEntity(genericWidgetEntityType))
             ->withText("0")
             ->withRect(Rect<int>(350, 5, 50, 20))
             ->withName("population");
 
-        window->createChild<ui::Label>()
+        window->createChild<ui::Label>(factory->createEntity(genericWidgetEntityType))
             ->withTextColor(core::Color::WHITE)
             ->withRect(Rect<int>(420, 5, 50, 20))
             ->withName("player");
     }
 
-    WITH(auto controlPanel = CreateRef<ui::Window>())
+    WITH(auto controlPanel = CreateRef<ui::Window>(factory->createEntity(genericWidgetEntityType)))
     {
         GraphicsID controlPanelBackground;
-        controlPanelBackground.entityType = EntityTypes::ET_UI_ELEMENT;
-        controlPanelBackground.uiElementType = (int) UIElementTypes::CONTROL_PANEL;
+        controlPanelBackground.entityType = typeReg->getEntityType("control_panel");
+        /*controlPanelBackground.entityType = EntityTypes::ET_UI_ELEMENT;
+        controlPanelBackground.uiElementType = (int) UIElementTypes::CONTROL_PANEL;*/
 
         controlPanel->withName("controlPanel")
             ->withBackgroundImage(controlPanelBackground)
             ->withRect(Rect<int>(0, -1, 675, 175)); // -1 is to attach to bottom of screen
         ServiceRegistry::getInstance().getService<UIManager>()->registerWindow(controlPanel);
 
-        WITH(auto hLayout = controlPanel->createChild<ui::Layout>())
+        WITH(auto hLayout = controlPanel->createChild<ui::Layout>(
+                 factory->createEntity(genericWidgetEntityType)))
         {
-            WITH(auto commandsLayout = hLayout->createChild<ui::Layout>()->withSize(275, 0))
+            WITH(
+                auto commandsLayout =
+                    hLayout->createChild<ui::Layout>(factory->createEntity(genericWidgetEntityType))
+                        ->withSize(275, 0))
             {
             }
 
-            WITH(auto infoLayout = hLayout->createChild<ui::Layout>()
-                                       ->withDirection(ui::LayoutDirection::Horizontal)
-                                       ->withSpacing(10)
-                                       ->withMargin(20)
-                                       ->withSize(400, 0))
+            WITH(
+                auto infoLayout =
+                    hLayout->createChild<ui::Layout>(factory->createEntity(genericWidgetEntityType))
+                        ->withDirection(ui::LayoutDirection::Horizontal)
+                        ->withSpacing(10)
+                        ->withMargin(20)
+                        ->withSize(400, 0))
             {
 
-                WITH(auto basicInfoLayout = infoLayout->createChild<ui::Layout>()
+                WITH(auto basicInfoLayout = infoLayout
+                                                ->createChild<ui::Layout>(
+                                                    factory->createEntity(genericWidgetEntityType))
                                                 ->withDirection(ui::LayoutDirection::Vertical)
                                                 ->withSize(80, 0))
                 {
-                    basicInfoLayout->createChild<ui::Label>()
+                    basicInfoLayout
+                        ->createChild<ui::Label>(factory->createEntity(genericWidgetEntityType))
                         ->withTextColor(core::Color::BLACK)
                         ->withSize(80, 20)
                         ->withName("selected_name")
                         ->withVisible(false);
-                    basicInfoLayout->createChild<ui::Label>()
+                    basicInfoLayout
+                        ->createChild<ui::Label>(factory->createEntity(genericWidgetEntityType))
                         ->withSize(m_iconSize, m_iconSize)
                         ->withName("selected_icon")
                         ->withVisible(false);
                 }
 
-                WITH(auto unitCreationLayout = infoLayout->createChild<ui::Layout>()
+                WITH(auto unitCreationLayout = infoLayout
+                                                   ->createChild<ui::Layout>(factory->createEntity(
+                                                       genericWidgetEntityType))
                                                    ->withDirection(ui::LayoutDirection::Vertical)
                                                    ->withLeftMargin(20)
                                                    ->withTopMargin(5)
                                                    ->withSpacing(10)
                                                    ->withSize(250, 0))
                 {
-                    WITH(auto garrisonLayout = unitCreationLayout->createChild<ui::Layout>()
+                    WITH(auto garrisonLayout = unitCreationLayout
+                                                   ->createChild<ui::Layout>(factory->createEntity(
+                                                       genericWidgetEntityType))
                                                    ->withDirection(ui::LayoutDirection::Horizontal)
                                                    ->withSpacing(5)
                                                    ->withName("garrisoned_units_row")
@@ -409,7 +429,9 @@ void DemoWorldCreator::createHUD()
                     {
                         for (int i = 0; i < Constants::ABSOLUTE_MAX_UNIT_GARRISON_SIZE; ++i)
                         {
-                            garrisonLayout->createChild<ui::Label>()
+                            garrisonLayout
+                                ->createChild<ui::Label>(
+                                    factory->createEntity(genericWidgetEntityType))
                                 ->withSize(m_iconSize, m_iconSize)
                                 ->withName(fmt::format("garrisoned_unit{}", i))
                                 ->withVisible(false);
@@ -417,20 +439,25 @@ void DemoWorldCreator::createHUD()
                     }
 
                     WITH(auto currentInProgressDetailsLayout =
-                             unitCreationLayout->createChild<ui::Layout>()
+                             unitCreationLayout
+                                 ->createChild<ui::Layout>(
+                                     factory->createEntity(genericWidgetEntityType))
                                  ->withDirection(ui::LayoutDirection::Horizontal)
                                  ->withSpacing(10)
                                  ->withName("creation_in_progress_group")
                                  ->withSize(0, 60))
                     {
-                        currentInProgressDetailsLayout->createChild<ui::Label>()
+                        currentInProgressDetailsLayout
+                            ->createChild<ui::Label>(factory->createEntity(genericWidgetEntityType))
                             ->withSize(m_iconSize, 0)
                             ->withName("unit_creating_icon");
 
                         const int barWithoutIconWidth = 250 - m_iconSize - 10 /*spacing*/;
 
                         WITH(auto progressBarLayout =
-                                 currentInProgressDetailsLayout->createChild<ui::Layout>()
+                                 currentInProgressDetailsLayout
+                                     ->createChild<ui::Layout>(
+                                         factory->createEntity(genericWidgetEntityType))
                                      ->withDirection(ui::LayoutDirection::Vertical)
                                      ->withName("progress_bar_noerror_group")
                                      ->withSize(barWithoutIconWidth, 0))
@@ -439,27 +466,36 @@ void DemoWorldCreator::createHUD()
                             // Creating - 50%
                             // Villager
                             //
-                            progressBarLayout->createChild<ui::Label>()
+                            progressBarLayout
+                                ->createChild<ui::Label>(
+                                    factory->createEntity(genericWidgetEntityType))
                                 ->withTextColor(core::Color::BLACK)
                                 ->withSize(0, 20)
                                 ->withName("progress_label");
 
-                            progressBarLayout->createChild<ui::Label>()
+                            progressBarLayout
+                                ->createChild<ui::Label>(
+                                    factory->createEntity(genericWidgetEntityType))
                                 ->withTextColor(core::Color::BLACK)
                                 ->withSize(0, 20)
                                 ->withName("progress_item_name");
 
                             GraphicsID progressBarBackground;
-                            progressBarBackground.entityType = EntityTypes::ET_UI_ELEMENT;
+                            progressBarBackground.entityType =
+                                typeReg->getEntityType("progress_bar");
+                            /*progressBarBackground.entityType = EntityTypes::ET_UI_ELEMENT;
                             progressBarBackground.uiElementType =
-                                (int) UIElementTypes::PROGRESS_BAR;
-                            progressBarLayout->createChild<ui::Label>()
+                                (int) UIElementTypes::PROGRESS_BAR;*/
+                            progressBarLayout
+                                ->createChild<ui::Label>(
+                                    factory->createEntity(genericWidgetEntityType))
                                 ->withBackgroundImage(progressBarBackground)
                                 ->withName("progress_bar_label")
                                 ->withSize(0, 10);
                         }
 
-                        currentInProgressDetailsLayout->createChild<ui::Label>()
+                        currentInProgressDetailsLayout
+                            ->createChild<ui::Label>(factory->createEntity(genericWidgetEntityType))
                             ->withTextColor(core::Color::RED)
                             ->withSize(barWithoutIconWidth, 20)
                             ->withName("progress_bar_error_label")
@@ -469,7 +505,9 @@ void DemoWorldCreator::createHUD()
                     }
 
                     WITH(auto restOfUnitQueuedLayout =
-                             unitCreationLayout->createChild<ui::Layout>()
+                             unitCreationLayout
+                                 ->createChild<ui::Layout>(
+                                     factory->createEntity(genericWidgetEntityType))
                                  ->withDirection(ui::LayoutDirection::Horizontal)
                                  ->withSpacing(5)
                                  ->withName("creation_queue_group")
@@ -477,7 +515,9 @@ void DemoWorldCreator::createHUD()
                     {
                         for (int i = 0; i < Constants::ABSOLUTE_MAX_UNIT_QUEUE_SIZE; ++i)
                         {
-                            restOfUnitQueuedLayout->createChild<ui::Label>()
+                            restOfUnitQueuedLayout
+                                ->createChild<ui::Label>(
+                                    factory->createEntity(genericWidgetEntityType))
                                 ->withSize(m_iconSize, m_iconSize)
                                 ->withName(fmt::format("queued_unit_icon_{}", i))
                                 ->withVisible(false);

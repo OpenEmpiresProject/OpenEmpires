@@ -199,7 +199,7 @@ void EntityModelLoader::load()
     loadEntityTypes(module);
     loadUnits(module);
     loadNaturalResources(module);
-    //loadConstructionSites(module);
+    // loadConstructionSites(module);
     loadBuildings(module);
     loadTileSets(module);
     loadUIElements(module);
@@ -236,7 +236,7 @@ void EntityModelLoader::loadUnits(py::object module)
 
                 auto boundingBoxes = sc.boundingBoxes.value();
                 boundingBoxes.resize(1,
-                                         static_cast<int>(Direction::NONE) + 1); // 1 state
+                                     static_cast<int>(Direction::NONE) + 1); // 1 state
                 for (int i = static_cast<int>(Direction::NORTH);
                      i <= static_cast<int>(Direction::NORTHWEST); ++i)
                 {
@@ -297,7 +297,6 @@ void EntityModelLoader::loadNaturalResources(py::object module)
 
                         CompGraphics graphics;
                         PropertyInitializer::set(graphics.layer, GraphicLayer::ON_GROUND);
-
 
                         CompEntityInfo info(entityType);
 
@@ -1053,14 +1052,14 @@ ComponentType EntityModelLoader::createCompBuilding(py::object module,
             CompBuilding comp;
 
             auto sizeStr = readValue<std::string>(entityDefinition, "size");
-            auto constructionSiteName = readValue<std::string>(entityDefinition, "construction_site");
+            // auto constructionSiteName = readValue<std::string>(entityDefinition,
+            // "construction_site");
             auto size = getBuildingSize(sizeStr);
 
             std::map<int, int> progressMap;
             try
             {
-                progressMap =
-                    readValue<std::map<int, int>>(entityDefinition, "progress_frame_map");
+                progressMap = readValue<std::map<int, int>>(entityDefinition, "progress_frame_map");
             }
             catch (const std::exception& e)
             {
@@ -1069,7 +1068,8 @@ ComponentType EntityModelLoader::createCompBuilding(py::object module,
             }
 
             PropertyInitializer::set<Size>(comp.size, size);
-            PropertyInitializer::set<std::string>(comp.constructionSiteName, constructionSiteName);
+            // PropertyInitializer::set<std::string>(comp.constructionSiteName,
+            // constructionSiteName);
             PropertyInitializer::set<std::map<int, int>>(comp.visualVariationByProgress,
                                                          progressMap);
 
@@ -1185,7 +1185,7 @@ void EntityModelLoader::loadEntityTypes(pybind11::object module)
     // Specialized core entity types
     typeRegistry->registerEntityType("villager", EntityTypes::ET_VILLAGER);
     typeRegistry->registerEntityType("wood", EntityTypes::ET_TREE);
-    //typeRegistry->registerEntityType("construction_site", EntityTypes::ET_CONSTRUCTION_SITE);
+    // typeRegistry->registerEntityType("construction_site", EntityTypes::ET_CONSTRUCTION_SITE);
 
     // Generic entity types
     if (py::hasattr(module, "all_entity_names"))

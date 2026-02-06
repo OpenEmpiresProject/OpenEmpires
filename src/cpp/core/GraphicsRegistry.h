@@ -5,6 +5,7 @@
 #include "utils/Types.h"
 
 #include <SDL3/SDL.h>
+#include <fmt/core.h>
 #include <string>
 #include <unordered_map>
 
@@ -17,21 +18,21 @@ class GraphicsID
     {
         struct
         {
-            uint64_t entityType : 15;      // 32,768 values
-            uint64_t action : 10;          // 1,024 values
-            uint64_t frame : 5;            // 32 values
-            uint64_t direction : 4;        // 16 values
-            uint64_t variation : 10;       // 1,024 values
-            uint64_t playerId : 4;         // 16 values
-            uint64_t civilization : 6;     // 64 values
-            uint64_t age : 3;              // 8 values
-            uint64_t orientation : 4;      // 8 values
-            uint64_t state : 4;            // 8 values
-            uint64_t isConstructing : 1;   // 2 values (a bool)
-            uint64_t uiElementType : 9;    // 512 values
-            uint64_t isShadow : 1;         // 2 values (a bool)
-            uint64_t isIcon : 1;           // 2 values (a bool)
-            uint64_t reserved : 47;
+            uint64_t entityType : 15;    // 32,768 values
+            uint64_t action : 10;        // 1,024 values
+            uint64_t frame : 5;          // 32 values
+            uint64_t direction : 4;      // 16 values
+            uint64_t variation : 10;     // 1,024 values
+            uint64_t playerId : 4;       // 16 values
+            uint64_t civilization : 6;   // 64 values
+            uint64_t age : 3;            // 8 values
+            uint64_t orientation : 4;    // 8 values
+            uint64_t state : 4;          // 8 values
+            uint64_t isConstructing : 1; // 2 values (a bool)
+            uint64_t uiElementType : 9;  // 512 values
+            uint64_t isShadow : 1;       // 2 values (a bool)
+            uint64_t isIcon : 1;         // 2 values (a bool)
+            uint64_t reserved : 46;
         };
         struct
         {
@@ -47,6 +48,8 @@ class GraphicsID
 
     GraphicsID()
     {
+        raw.low = 0;
+        raw.high = 0;
         entityType = 0;
         action = 0;
         frame = 0;
@@ -102,13 +105,38 @@ class GraphicsID
                (raw.high == other.raw.high && raw.low < other.raw.low);
     }
 
+    std::string toShortString() const
+    {
+        return fmt::format(
+            "GraphicsID(T{}{}{}{}{}{}{}{}{}{}{}{}{}{})", entityType,
+            (action ? ", A" + std::to_string(action) : ""),
+            (frame ? ", F" + std::to_string(frame) : ""),
+            (direction != static_cast<uint64_t>(Direction::NONE)
+                 ? ", D" + std::to_string(static_cast<int>(direction))
+                 : ""),
+            (variation ? ", V" + std::to_string(variation) : ""),
+            (playerId ? ", P" + std::to_string(playerId) : ""),
+            (civilization ? ", Civ" + std::to_string(civilization) : ""),
+            (age ? ", Age" + std::to_string(age) : ""),
+            (orientation != static_cast<uint64_t>(BuildingOrientation::NO_ORIENTATION)
+                 ? ", O" + std::to_string(orientation)
+                 : ""),
+            (state ? ", S" + std::to_string(state) : ""),
+            (isConstructing ? ", isC" + std::to_string(isConstructing) : ""),
+            (uiElementType ? ", ui" + std::to_string(uiElementType) : ""),
+            (isShadow ? ", isS" + std::to_string(isShadow) : ""),
+            (isIcon ? ", isI" + std::to_string(isIcon) : ""));
+    }
+
     std::string toString() const
     {
         return "GraphicsID(T" + std::to_string(entityType) + ", A" + std::to_string(action) +
                ", F" + std::to_string(frame) + ", D" + std::to_string(static_cast<int>(direction)) +
-               ", V" + std::to_string(variation) + ", P" + std::to_string(playerId) + ", O" +
-               std::to_string(orientation) + ", S" + std::to_string(state) + ", C" + std::to_string(isConstructing) + ", Sh" + std::to_string(isShadow) + ", Ic" +
-               std::to_string(isIcon) + ")";
+               ", V" + std::to_string(variation) + ", P" + std::to_string(playerId) + ", Civ" +
+               std::to_string(civilization) + ", Age" + std::to_string(age) + ", O" +
+               std::to_string(orientation) + ", S" + std::to_string(state) + ", isC" +
+               std::to_string(isConstructing) + ", ui" + std::to_string(uiElementType) + ", isS" +
+               std::to_string(isShadow) + ", isI" + std::to_string(isIcon) + ")";
     }
 
   private:
@@ -151,12 +179,12 @@ struct Texture
     SDL_Cursor* cursor = nullptr;
 };
 
-//struct Animation
+// struct Animation
 //{
-//    std::vector<int64_t> frames; // Frames in terms of TextureIDs
-//    bool repeatable = false;
-//    int speed = 10; // FPS
-//};
+//     std::vector<int64_t> frames; // Frames in terms of TextureIDs
+//     bool repeatable = false;
+//     int speed = 10; // FPS
+// };
 
 class GraphicsRegistry
 {

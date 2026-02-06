@@ -34,6 +34,7 @@ class GameAPI
 
     bool isReady();
     void quit();
+    int getEntityType(const std::string& entityName);
     core::Ref<core::Player> getPrimaryPlayer();
     uint32_t createVillager(core::Ref<core::Player>, const core::Feet& pos);
     std::list<uint32_t> getVillagers();

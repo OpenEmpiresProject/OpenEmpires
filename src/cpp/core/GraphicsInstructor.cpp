@@ -105,6 +105,11 @@ void GraphicsInstructor::updateGraphicComponents()
         gc.bypass = false;
         gc.state = entityInfo.state;
 
+        if (gc.entityType == 0)
+        {
+            int iii = 0;
+        }
+
         if (m_stateManager->hasComponent<CompSelectible>(entity))
         {
             auto& select = m_stateManager->getComponent<CompSelectible>(entity);
@@ -165,7 +170,7 @@ void GraphicsInstructor::updateGraphicComponents()
                 if (ui.backgroundImage.isValid())
                 {
                     gc.entityType = ui.backgroundImage.entityType;
-                    gc.uiElementType = ui.backgroundImage.uiElementType;
+                    // gc.uiElementType = ui.backgroundImage.uiElementType;
                     gc.variation = ui.backgroundImage.variation;
                     gc.isIcon = ui.backgroundImage.isIcon;
                 }

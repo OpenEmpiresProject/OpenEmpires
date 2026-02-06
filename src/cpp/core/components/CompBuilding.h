@@ -27,7 +27,7 @@ class CompBuilding
 
   public:
     Property<std::vector<std::string>> acceptedResourceNames;
-    Property<std::string> constructionSiteName;
+    // Property<std::string> constructionSiteName;
 
   public:
     bool validPlacement = true;

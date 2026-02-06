@@ -2,6 +2,7 @@
 
 #include "DemoWorldCreator.h"
 #include "EntityFactory.h"
+#include "EntityTypeRegistry.h"
 #include "EventLoop.h"
 #include "EventPublisher.h"
 #include "GameTypes.h"
@@ -209,7 +210,8 @@ const std::unordered_set<uint32_t>& GameAPI::getConstructionSites(uint32_t playe
 
     auto players = ServiceRegistry::getInstance().getService<PlayerFactory>();
     auto player = players->getPlayer(playerId);
-    return player->getMyConstructionSites();
+    auto& sites = player->getMyConstructionSites();
+    return sites;
 }
 
 void GameAPI::executeCustomSynchronizedAction(std::function<void()> func)
@@ -254,4 +256,12 @@ uint32_t GameAPI::getPlayerResourceAmount(uint32_t playerId, uint8_t resourceTyp
     auto players = ServiceRegistry::getInstance().getService<PlayerFactory>();
     auto player = players->getPlayer(playerId);
     return player->getResourceAmount(resourceType);
+}
+
+int GameAPI::getEntityType(const std::string& entityName)
+{
+    ScopedSynchronizer sync(m_sync);
+
+    auto typeReg = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+    return typeReg->getEntityType(entityName);
 }

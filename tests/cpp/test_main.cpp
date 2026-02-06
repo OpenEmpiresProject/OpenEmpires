@@ -19,7 +19,6 @@ class PythonTestEnvironment : public ::testing::Environment
 
     void TearDown() override
     {
-        py::finalize_interpreter();
     }
 };
 

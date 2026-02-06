@@ -3,10 +3,12 @@
 
 #include "ComponentModelMapper.h"
 #include "DRSFile.h"
+#include "DRSInterface.h"
 #include "EntityFactory.h"
 #include "GraphicsLoadupDataProvider.h"
 #include "Property.h"
 #include "Rect.h"
+#include "ServiceRegistry.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
 #include "components/CompBuilder.h"
@@ -28,8 +30,6 @@
 #include <optional>
 #include <pybind11/embed.h>
 #include <variant>
-#include "DRSInterface.h"
-#include "ServiceRegistry.h"
 
 namespace game
 {
@@ -58,13 +58,14 @@ struct DRSData : public core::GraphicsLoadupDataProvider::Data
 
 template <typename T> void maybeOnCreate(entt::basic_registry<uint32_t>& reg, uint32_t e);
 
-
 class EntityModelLoaderV2 : public core::EntityFactory,
                             public core::PropertyInitializer,
                             public core::GraphicsLoadupDataProvider
 {
   public:
-    EntityModelLoaderV2(const std::string& scriptDir, core::Ref<DRSInterface> drsInterface);
+    EntityModelLoaderV2(const std::string& scriptDir,
+                        const std::string& importerModule,
+                        core::Ref<DRSInterface> drsInterface);
     ~EntityModelLoaderV2();
 
     // TODO - evaluate to use EventHandler::init instead
@@ -96,7 +97,7 @@ class EntityModelLoaderV2 : public core::EntityFactory,
         core::GraphicsID createGraphicsID() const;
         core::GraphicsID createGraphicsID(const std::map<std::string, std::string>& filters) const;
 
-        template<typename T> T* tryGetComponent()
+        template <typename T> T* tryGetComponent()
         {
             for (auto& comp : components)
             {
@@ -130,12 +131,22 @@ class EntityModelLoaderV2 : public core::EntityFactory,
                             {
                                 const std::string_view name_sv = mappings.propertyName;
                                 const std::string name{name_sv}; // ensure null-terminated
+                                using Value = typename M::value_type;
 
                                 if (pybind11::hasattr(obj, name.c_str()))
                                 {
-                                    using Value = typename M::value_type;
 
                                     pybind11::object value = obj.attr(name.c_str());
+
+                                    if constexpr (requires(M m) { m.value; })
+                                    {
+                                        if (mappings.isSet)
+                                        {
+                                            PropertyInitializer::set<Value>(comp.*(M::member),
+                                                                            mappings.value);
+                                            return;
+                                        }
+                                    }
 
                                     if (mappings.converterFuncStr != nullptr)
                                     {
@@ -153,16 +164,10 @@ class EntityModelLoaderV2 : public core::EntityFactory,
                                     }
                                     else if (mappings.converterFunc != nullptr)
                                     {
-                                        auto convertedValue =
-                                            (*mappings.converterFunc)(value);
+                                        auto convertedValue = (*mappings.converterFunc)(value);
                                         PropertyInitializer::set<Value>(comp.*(M::member),
                                                                         convertedValue);
                                     }
-                                    /*else if (mappings.defaultValue.has_value())
-                                    {
-                                        PropertyInitializer::set<Value>(
-                                            comp.*(M::member), mappings.defaultValue.value());
-                                    }*/
                                     else
                                     {
                                         PropertyInitializer::set<Value>(comp.*(M::member),
@@ -184,22 +189,23 @@ class EntityModelLoaderV2 : public core::EntityFactory,
     template <typename T>
     std::list<std::string> createAndEnrichComponent(ComponentType& c, const pybind11::object& obj)
     {
-        auto stateMan = core::ServiceRegistry::getInstance().getService<core::StateManager>();
-        auto& registry = stateMan->getRegistry();
-        registry.on_construct<T>().connect<&maybeOnCreate<T>>();
+        // auto stateMan = core::ServiceRegistry::getInstance().getService<core::StateManager>();
+        // auto& registry = stateMan->getRegistry();
+        // registry.on_construct<T>().connect<&maybeOnCreate<T>>();
 
         auto& comp = c.emplace<T>();
         return enrich(comp, obj);
     }
 
-    using ComponentFactoryFunc = std::list<std::string> (EntityModelLoaderV2::*)(ComponentType&,
-                                                                      const pybind11::object&);
+    using ComponentFactoryFunc =
+        std::list<std::string> (EntityModelLoaderV2::*)(ComponentType&, const pybind11::object&);
 
     ComponentFactoryFunc getComponentFactoryFunc(std::type_index componentTypeIndex) const;
 
     std::map<uint32_t, core::Ref<ComponentHolder>> m_componentsByEntityType;
     std::map<std::string, core::Ref<ComponentHolder>> m_componentsByEntityName;
     const std::string m_scriptDir;
+    const std::string m_importerModule;
 
     struct UnprocessedFields
     {
@@ -220,7 +226,6 @@ class EntityModelLoaderV2 : public core::EntityFactory,
 
     std::unordered_map<core::GraphicsID, DRSData> m_DRSDataByGraphicsId;
 };
-
 
 template <typename T> void maybeOnCreate(entt::basic_registry<uint32_t>& reg, uint32_t e)
 {

@@ -31,6 +31,7 @@ class CompUnit
         }
         auto cloned = defaultCommand.value()->clone();
         cloned->setEntityID(entity);
+        cloned->init();
         commandQueue.push(cloned);
     }
 };

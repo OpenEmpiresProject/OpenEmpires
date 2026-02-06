@@ -41,7 +41,7 @@ void HUDUpdater::onUnitSelection(const Event& e)
     {
         auto [selectible, entityInfo] =
             m_stateMan->getComponents<CompSelectible, CompEntityInfo>(unit);
-        //auto& comSelectible = m_stateMan->getComponent<CompSelectible>(unit);
+        // auto& comSelectible = m_stateMan->getComponent<CompSelectible>(unit);
         if (m_selectedIcon != nullptr)
         {
             m_selectedIcon->setVisible(true);

@@ -162,9 +162,9 @@ class EntityModelLoader : public core::EntityFactory, public core::PropertyIniti
                         uint32_t uiElementType,
                         pybind11::handle entityDefinition);
     core::GraphicsID readIconDef(uint32_t uiElementType, pybind11::handle entityDefinition);
-    //ConstructionSiteData getSite(const std::string& sizeStr);
+    // ConstructionSiteData getSite(const std::string& sizeStr);
     void setSite(const std::string& sizeStr, const std::map<int, int>& progressToFrames);
-    //void attachConstructionSites(uint32_t entityType, const std::string& sizeStr);
+    // void attachConstructionSites(uint32_t entityType, const std::string& sizeStr);
     void setDRSData(const core::GraphicsID& id, const EntityDRSData& data);
     void setDRSLoaderFunc(std::function<core::Ref<drs::DRSFile>(const std::string&)> func);
     void setBoundingBoxReadFunc(

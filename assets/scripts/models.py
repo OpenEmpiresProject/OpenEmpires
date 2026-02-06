@@ -20,6 +20,12 @@ all_entity_names: List[str] = [
     "palisade",
     "stone_wall",
     "stone_gate",
+    "default_tileset",
+    "resource_panel",
+    "control_panel",
+    "progress_bar",
+    "cursor",
+    "generic_widget"
 ]
 
 
@@ -44,6 +50,7 @@ all_units: List[Unit] = [
                     Shortcut(name="stone_gate", shortcut="i"),
                     Shortcut(name="house", shortcut="h")],
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50730, frame_index=16),
@@ -67,6 +74,7 @@ all_units: List[Unit] = [
         moving_speed=256,
         housing_need=1,
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50730, frame_index=8),
@@ -84,6 +92,7 @@ all_natural_resources: List[NaturalResource] = [
         display_name="Gold Mine",
         resource_amount=1000,
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=4479),
@@ -97,6 +106,7 @@ all_natural_resources: List[NaturalResource] = [
         display_name="Stone Mine",
         resource_amount=1000,
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=1034),
@@ -110,6 +120,7 @@ all_natural_resources: List[NaturalResource] = [
         display_name="Tree",
         resource_amount=100,
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=4652),
@@ -124,6 +135,7 @@ all_natural_resources: List[NaturalResource] = [
         shadow=NaturalResourceAdditionalPart(
             name="shadow", 
             graphics=Graphic(
+                    layer=GraphicLayer.ON_GROUND,
                     variants=[
                         GraphicVariant(
                             graphic=SingleGraphic(slp_id=2296),
@@ -140,6 +152,7 @@ all_buildings: List[Building] = [
         construction_site="construction_site_medium",
         accepted_resources=["food"], 
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=3483),
@@ -159,6 +172,7 @@ all_buildings: List[Building] = [
         construction_site="construction_site_medium",
         accepted_resources=["wood"], 
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=3505),
@@ -178,6 +192,7 @@ all_buildings: List[Building] = [
         construction_site="construction_site_medium",
         accepted_resources=["gold", "stone"],
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=3492),
@@ -203,6 +218,7 @@ all_buildings: List[Building] = [
         garrisonable_unit_types = [UnitType.VILLAGER],
         garrison_capacity = 10,
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=CompositeGraphic(
@@ -231,6 +247,7 @@ all_buildings: List[Building] = [
         size="medium",
         construction_site="construction_site_medium",
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=2223),
@@ -251,6 +268,7 @@ all_buildings: List[Building] = [
         unit_creation_speed=40,
         max_queue_size=10,
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=130),
@@ -270,6 +288,7 @@ all_buildings: List[Building] = [
         size="small",
         construction_site="construction_site_small",
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=1828, frame_index=0),
@@ -293,7 +312,33 @@ all_buildings: List[Building] = [
                                       GraphicVariantType.ORIENTATION:"vertical"}),
                 GraphicVariant(
                     graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50705, frame_index=30),
-                    variation_filter={GraphicVariantType.ICON:"true"})
+                    variation_filter={GraphicVariantType.ICON:"true"}),
+                # Construction sites
+                GraphicVariant(
+                    graphic=SingleGraphic(slp_id=236),
+                    variation_filter={GraphicVariantType.THEME:"default", 
+                                      GraphicVariantType.ORIENTATION:"diagonal_forward",
+                                      GraphicVariantType.CONSTRUCTION_SITE:"true"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(slp_id=236, flip=True),
+                    variation_filter={GraphicVariantType.THEME:"default", 
+                                      GraphicVariantType.ORIENTATION:"diagonal_backward",
+                                      GraphicVariantType.CONSTRUCTION_SITE:"true"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(slp_id=236),
+                    variation_filter={GraphicVariantType.THEME:"default", 
+                                      GraphicVariantType.ORIENTATION:"horizontal",
+                                      GraphicVariantType.CONSTRUCTION_SITE:"true"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(slp_id=236),
+                    variation_filter={GraphicVariantType.THEME:"default", 
+                                      GraphicVariantType.ORIENTATION:"vertical",
+                                      GraphicVariantType.CONSTRUCTION_SITE:"true"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(slp_id=236),
+                    variation_filter={GraphicVariantType.THEME:"default", 
+                                      GraphicVariantType.ORIENTATION:"corner",
+                                      GraphicVariantType.CONSTRUCTION_SITE:"true"})
         ]),
         connected_constructions_allowed=True,
         default_orientation="corner"
@@ -305,6 +350,7 @@ all_buildings: List[Building] = [
         size="small",
         construction_site="construction_site_small",
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(slp_id=2110, frame_index=0),
@@ -327,11 +373,34 @@ all_buildings: List[Building] = [
                     variation_filter={GraphicVariantType.THEME:"default", 
                                       GraphicVariantType.ORIENTATION:"vertical"}),
                 GraphicVariant(
-                    graphic=SingleGraphic(slp_id=236),
-                    variation_filter={GraphicVariantType.CONSTRUCTION_SITE:"true"}),
-                GraphicVariant(
                     graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50705, frame_index=29),
-                    variation_filter={GraphicVariantType.ICON:"true"})
+                    variation_filter={GraphicVariantType.ICON:"true"}),
+                # Construction sites
+                GraphicVariant(
+                    graphic=SingleGraphic(slp_id=236),
+                    variation_filter={GraphicVariantType.THEME:"default", 
+                                      GraphicVariantType.ORIENTATION:"diagonal_forward",
+                                      GraphicVariantType.CONSTRUCTION_SITE:"true"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(slp_id=236, flip=True),
+                    variation_filter={GraphicVariantType.THEME:"default", 
+                                      GraphicVariantType.ORIENTATION:"diagonal_backward",
+                                      GraphicVariantType.CONSTRUCTION_SITE:"true"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(slp_id=236),
+                    variation_filter={GraphicVariantType.THEME:"default", 
+                                      GraphicVariantType.ORIENTATION:"horizontal",
+                                      GraphicVariantType.CONSTRUCTION_SITE:"true"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(slp_id=236),
+                    variation_filter={GraphicVariantType.THEME:"default", 
+                                      GraphicVariantType.ORIENTATION:"vertical",
+                                      GraphicVariantType.CONSTRUCTION_SITE:"true"}),
+                GraphicVariant(
+                    graphic=SingleGraphic(slp_id=236),
+                    variation_filter={GraphicVariantType.THEME:"default", 
+                                      GraphicVariantType.ORIENTATION:"corner",
+                                      GraphicVariantType.CONSTRUCTION_SITE:"true"})
         ]),
         connected_constructions_allowed=True,
         default_orientation="corner"
@@ -345,6 +414,7 @@ all_buildings: List[Building] = [
         size="gate",
         construction_site="construction_site_gate",
         graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
             variants=[
                 # Icon
                 GraphicVariant(
@@ -480,6 +550,7 @@ all_tilesets: List[TileSet] = [
     TileSet(
         name="default_tileset",
         graphics=Graphic(
+            layer=GraphicLayer.GROUND,
             variants=[
                 GraphicVariant(
                     graphic=SingleGraphic(drs_file="terrain.drs", slp_id=15001),
@@ -488,26 +559,37 @@ all_tilesets: List[TileSet] = [
 ]
 
 all_ui_elements: List[UIElement] = [
+    UIElement(name="generic_widget", 
+              graphics=Graphic(
+                layer=GraphicLayer.UI,
+                variants=[
+                    GraphicVariant(
+                        graphic=SingleGraphic(slp_id=4479, clip_rect=Rect(x=0, y=0, w=0, h=0)),
+                        variation_filter={GraphicVariantType.THEME:"default"})])),
     UIElement(name="resource_panel", 
               graphics=Graphic(
+                layer=GraphicLayer.UI,
                 variants=[
                     GraphicVariant(
                         graphic=SingleGraphic(drs_file="interfac.drs", slp_id=51135, clip_rect=Rect(x=0, y=0, w=400, h=25)),
                         variation_filter={GraphicVariantType.THEME:"default"})])),
     UIElement(name="control_panel",
               graphics=Graphic(
+                layer=GraphicLayer.UI,
                 variants=[
                     GraphicVariant(
                         graphic=SingleGraphic(drs_file="interfac.drs", slp_id=51135, clip_rect=Rect(x=0, y=593, w=680, h=175)),
                         variation_filter={GraphicVariantType.THEME:"default"})])),
     UIElement(name="progress_bar", 
               graphics=Graphic(
+                layer=GraphicLayer.UI,
                 variants=[
                     GraphicVariant(
                         graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50764),
                         variation_filter={GraphicVariantType.THEME:"default"})])),
     UIElement(name="cursor", 
               graphics=Graphic(
+                layer=GraphicLayer.UI,
                 variants=[
                     GraphicVariant(
                         graphic=SingleGraphic(drs_file="interfac.drs", slp_id=51000),

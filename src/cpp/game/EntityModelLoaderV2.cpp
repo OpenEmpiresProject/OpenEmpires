@@ -4,14 +4,14 @@
 #include "EntityTypeRegistry.h"
 #include "GameTypes.h"
 #include "ServiceRegistry.h"
+#include "commands/CmdIdle.h"
+#include "components/CompUIElement.h"
 #include "utils/Size.h"
+#include "utils/Utils.h"
 
 #include <filesystem>
 #include <pybind11/stl.h>
 #include <variant>
-#include "utils/Utils.h"
-#include "components/CompUIElement.h"
-#include "commands/CmdIdle.h"
 
 using namespace game;
 using namespace core;
@@ -31,10 +31,9 @@ extern bool isInstanceOf(py::object module,
                          py::handle entityDefinition,
                          const std::string& baseClass);
 
-
 // Performs default command initialization for unit component
 // TODO : This shouldn't be in the game layer but in core layer
-//void onUnitComponentCreate(entt::basic_registry<uint32_t>& reg, uint32_t e)
+// void onUnitComponentCreate(entt::basic_registry<uint32_t>& reg, uint32_t e)
 //{
 //    auto& comp = reg.get<CompUnit>(e);
 //
@@ -48,31 +47,29 @@ extern bool isInstanceOf(py::object module,
 //    comp.commandQueue.push(cloned);
 //}
 
-
-
 GraphicLayer getGraphicLayer(int layer)
 {
-    if (layer == (int)GraphicLayer::NONE)
+    if (layer == (int) GraphicLayer::NONE)
     {
         return GraphicLayer::NONE;
     }
-    else if (layer == (int)GraphicLayer::GROUND)
+    else if (layer == (int) GraphicLayer::GROUND)
     {
         return GraphicLayer::GROUND;
     }
-    else if (layer == (int)GraphicLayer::ON_GROUND)
+    else if (layer == (int) GraphicLayer::ON_GROUND)
     {
         return GraphicLayer::ON_GROUND;
     }
-    else if (layer == (int)GraphicLayer::ENTITIES)
+    else if (layer == (int) GraphicLayer::ENTITIES)
     {
         return GraphicLayer::ENTITIES;
     }
-    else if (layer == (int)GraphicLayer::SKY)
+    else if (layer == (int) GraphicLayer::SKY)
     {
         return GraphicLayer::SKY;
     }
-    else if (layer == (int)GraphicLayer::UI)
+    else if (layer == (int) GraphicLayer::UI)
     {
         return GraphicLayer::UI;
     }
@@ -154,9 +151,7 @@ template <typename Tuple, typename F> constexpr void for_each_tuple(Tuple&& t, F
 
 struct _Constructible
 {
-    
 };
-
 
 struct SingleGraphic
 {
@@ -172,7 +167,6 @@ struct Icon : public SingleGraphic
 {
     int index;
 };
-
 
 struct CompositeGraphic
 {
@@ -258,8 +252,7 @@ struct Shortcut
 
 PYBIND11_EMBEDDED_MODULE(graphic_defs, m)
 {
-    py::class_<_Constructible>(m, "_Constructible")
-        .def(py::init<>());
+    py::class_<_Constructible>(m, "_Constructible").def(py::init<>());
 
     py::class_<Vec2>(m, "Point")
         .def(py::init<int, int>(), py::arg("x"), py::arg("y"))
@@ -269,13 +262,9 @@ PYBIND11_EMBEDDED_MODULE(graphic_defs, m)
     py::class_<SingleGraphic>(m, "SingleGraphic")
         .def(py::init<std::string, int, std::optional<Vec2>, std::optional<int>,
                       std::optional<Rect<int>>, std::optional<bool>>(),
-             py::kw_only(),
-             py::arg("drs_file") = "graphics.drs",
-             py::arg("slp_id"),
-             py::arg("anchor") = std::nullopt, 
-             py::arg("frame_index") = std::nullopt,
-             py::arg("clip_rect") = std::nullopt,
-             py::arg("flip") = std::nullopt)
+             py::kw_only(), py::arg("drs_file") = "graphics.drs", py::arg("slp_id"),
+             py::arg("anchor") = std::nullopt, py::arg("frame_index") = std::nullopt,
+             py::arg("clip_rect") = std::nullopt, py::arg("flip") = std::nullopt)
         .def_readonly("drs_file", &SingleGraphic::drsFile)
         .def_readonly("slp_id", &SingleGraphic::slp_id)
         .def_readonly("frame_index", &SingleGraphic::frameIndex)
@@ -304,15 +293,13 @@ PYBIND11_EMBEDDED_MODULE(graphic_defs, m)
 
     py::class_<Graphic>(m, "Graphic")
         .def(py::init<std::vector<GraphicVariant>, GraphicLayer>(), py::kw_only(),
-             py::arg("variants"),
-             py::arg("layer"))
+             py::arg("variants"), py::arg("layer"))
         .def_readonly("variants", &Graphic::variants)
         .def_readonly("layer", &Graphic::layer);
 
     py::class_<Animation>(m, "Animation")
-        .def(py::init<std::string, int, int, int, std::string, bool>(),
-             py::kw_only(), py::arg("name"), py::arg("frame_count") = 15,
-             py::arg("speed") = 10, py::arg("slp_id"),
+        .def(py::init<std::string, int, int, int, std::string, bool>(), py::kw_only(),
+             py::arg("name"), py::arg("frame_count") = 15, py::arg("speed") = 10, py::arg("slp_id"),
              py::arg("drs_file") = "graphics.drs", py::arg("repeatable") = true)
         .def_readonly("name", &Animation::name)
         .def_readonly("frame_count", &Animation::frameCount)
@@ -330,27 +317,34 @@ PYBIND11_EMBEDDED_MODULE(graphic_defs, m)
         .value("UI", GraphicLayer::UI)
         .export_values();
 
-     py::class_<Shortcut>(m, "Shortcut")
-        .def(py::init<std::string, std::string>(), py::kw_only(),
-             py::arg("name"), py::arg("shortcut"))
+    py::class_<Shortcut>(m, "Shortcut")
+        .def(py::init<std::string, std::string>(), py::kw_only(), py::arg("name"),
+             py::arg("shortcut"))
         .def_readonly("name", &Shortcut::name)
         .def_readonly("shortcut", &Shortcut::shortcut);
+
+    py::class_<Rect<int>>(m, "Rect")
+        .def(py::init<int, int, int, int>(), py::kw_only(), py::arg("x"), py::arg("y"),
+             py::arg("w"), py::arg("h"))
+        .def_readonly("x", &Rect<int>::x)
+        .def_readonly("y", &Rect<int>::y)
+        .def_readonly("w", &Rect<int>::w)
+        .def_readonly("h", &Rect<int>::h);
 }
 
 DRSData getDRSData(const SingleGraphic& graphicData,
                    const CompositeGraphic& compositeData,
                    core::Ref<DRSInterface> drsInterface)
 {
-    auto drsFile = drsInterface->loadDRSFile(graphicData.drsFile);
-    auto boundingBox = drsInterface->getBoundingBox(graphicData.drsFile,
-                                                   graphicData.slp_id,
+    const std::string resolvedFileName = std::string("assets/") + graphicData.drsFile;
+    auto drsFile = drsInterface->loadDRSFile(resolvedFileName);
+    auto boundingBox = drsInterface->getBoundingBox(resolvedFileName, graphicData.slp_id,
                                                     graphicData.frameIndex.value_or(0));
 
     DRSData data;
     data.parts.push_back(DRSData::Part(drsFile, graphicData.slp_id,
                                        graphicData.anchor.value_or(Vec2::null),
-                                       graphicData.frameIndex,
-                                       graphicData.flip.value_or(false)));
+                                       graphicData.frameIndex, graphicData.flip.value_or(false)));
     data.boundingRect = boundingBox;
     data.clipRect = graphicData.clipRect.value_or(Rect<int>());
     data.anchor = compositeData.anchor;
@@ -359,14 +353,15 @@ DRSData getDRSData(const SingleGraphic& graphicData,
     return data;
 }
 
-DRSData getDRSData(const Animation& animation,
-                   core::Ref<DRSInterface> drsInterface)
+DRSData getDRSData(const Animation& animation, core::Ref<DRSInterface> drsInterface)
 {
-    auto drsFile = drsInterface->loadDRSFile(animation.drsFile);
-    auto boundingBox = drsInterface->getBoundingBox(animation.drsFile, animation.slpId, 0);
+    const std::string resolvedFileName = std::string("assets/") + animation.drsFile;
+
+    auto drsFile = drsInterface->loadDRSFile(resolvedFileName);
+    auto boundingBox = drsInterface->getBoundingBox(resolvedFileName, animation.slpId, 0);
 
     DRSData data;
-    data.parts.push_back(DRSData::Part(drsFile, animation.slpId, Vec2::null, 0, false));
+    data.parts.push_back(DRSData::Part(drsFile, animation.slpId, Vec2::null, nullopt, false));
     data.boundingRect = boundingBox;
 
     return data;
@@ -375,7 +370,8 @@ DRSData getDRSData(const Animation& animation,
 DRSData::Part::Part(core::Ref<drs::DRSFile> drs,
                     int slp,
                     const core::Vec2& anchor,
-                    std::optional<int> frameIndex, bool flip)
+                    std::optional<int> frameIndex,
+                    bool flip)
     : drsFile(drs), slpId(slp), anchor(anchor), frameIndex(frameIndex), flip(flip)
 {
 }
@@ -383,15 +379,14 @@ DRSData::Part::Part(core::Ref<drs::DRSFile> drs,
 static const int g_entitySubTypeMapKeyOffset = 100000;
 
 EntityModelLoaderV2::EntityModelLoaderV2(const std::string& scriptDir,
+                                         const std::string& importerModule,
                                          core::Ref<DRSInterface> drsInterface)
-    : m_scriptDir(scriptDir), m_drsInterface(drsInterface)
+    : m_scriptDir(scriptDir), m_drsInterface(drsInterface), m_importerModule(importerModule)
 {
-    // constructor
 }
 
 EntityModelLoaderV2::~EntityModelLoaderV2()
 {
-    // destructor
 }
 
 uint32_t EntityModelLoaderV2::createEntity(uint32_t entityType)
@@ -416,6 +411,23 @@ uint32_t EntityModelLoaderV2::createEntity(uint32_t entityType)
                         spam("Adding component {} to entity {} of type {}", typeid(comp).name(),
                              entity, entityType);
                         stateMan->addComponent(entity, comp);
+                    }
+                },
+                variantComponent);
+        }
+
+        // Calling onCreate hooks. This couldn't be done above since some components
+        // might depend on other components to be already present on the entity.
+        // Ideally this shouldn't be the case, but for now we have to deal with it.
+        for (const auto& variantComponent : componentHolder->components)
+        {
+            std::visit(
+                [&](auto&& comp)
+                {
+                    using T = std::decay_t<decltype(comp)>;
+                    if constexpr (!std::is_same_v<T, std::monostate>)
+                    {
+                        maybeOnCreate<T>(stateMan->getRegistry(), entity);
                     }
                 },
                 variantComponent);
@@ -460,9 +472,11 @@ void EntityModelLoaderV2::loadEntityTypes(const py::object& module)
 
     // TODO: Need to remove these hard codes along with stone and gold names
     // Specialized core entity types
+    typeRegistry->registerEntityType("ui_element", EntityTypes::ET_UI_ELEMENT);
+    typeRegistry->registerEntityType("default_tileset", EntityTypes::ET_TILE);
     typeRegistry->registerEntityType("villager", EntityTypes::ET_VILLAGER);
     typeRegistry->registerEntityType("wood", EntityTypes::ET_TREE);
-    //typeRegistry->registerEntityType("construction_site", EntityTypes::ET_CONSTRUCTION_SITE);
+    // typeRegistry->registerEntityType("construction_site", EntityTypes::ET_CONSTRUCTION_SITE);
 
     for (const auto& name : entityNames)
         typeRegistry->registerEntityType(name, typeRegistry->getNextAvailableEntityType());
@@ -513,20 +527,24 @@ void EntityModelLoaderV2::postProcessing()
     auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
     auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
 
-    for (auto [entityName, compHolder] : m_componentsByEntityName)
+    for (auto&& [entityName, compHolder] : m_componentsByEntityName)
     {
         for (auto& componentVar : compHolder->components)
         {
             if (auto info = std::get_if<CompEntityInfo>(&componentVar))
             {
-                //uint32_t entityType = 0;
-                // if (typeRegistry->isValid(entityName))
-                //entityType = typeRegistry->getEntityType(entityName);
+                // uint32_t entityType = 0;
+                //  if (typeRegistry->isValid(entityName))
+                // entityType = typeRegistry->getEntityType(entityName);
                 /*else
                 {
                     entityType = typeRegistry->getNextAvailableEntityType();
                     typeRegistry->registerEntityType(entityName, entityType);
                 }*/
+                if (info->entityType == 3)
+                {
+                    int iii = 0;
+                }
                 m_componentsByEntityType[info->entityType] = compHolder;
             }
 
@@ -566,26 +584,34 @@ void EntityModelLoaderV2::postProcessing()
                 PropertyInitializer::set(selectible->boundingBoxes, boundixBoxes);
             }
 
-         /*   if (auto unit = std::get_if<CompUnit>(&componentVar))
-            {
-                Ref<Command> idleCmd = CreateRef<CmdIdle>();
-                idleCmd->setPriority(Command::DEFAULT_PRIORITY);
-                PropertyInitializer::set(unit->defaultCommand, idleCmd);
-            }*/
+            /*   if (auto unit = std::get_if<CompUnit>(&componentVar))
+               {
+                   Ref<Command> idleCmd = CreateRef<CmdIdle>();
+                   idleCmd->setPriority(Command::DEFAULT_PRIORITY);
+                   PropertyInitializer::set(unit->defaultCommand, idleCmd);
+               }*/
 
             if (auto resource = std::get_if<CompResource>(&componentVar))
             {
-                PropertyInitializer::set<InGameResource>(resource->original,
-                    InGameResource(getResourceType(resource->resourceName), resource->resourceAmount));
+                PropertyInitializer::set<InGameResource>(
+                    resource->original, InGameResource(getResourceType(resource->resourceName),
+                                                       resource->resourceAmount));
                 resource->remainingAmount = resource->original.value().amount;
+            }
+
+            if (auto unit = std::get_if<CompUnit>(&componentVar))
+            {
+                auto info = compHolder->tryGetComponent<CompEntityInfo>();
+                typeRegistry->registerUnitType(info->entityType);
+                typeRegistry->registerUnitTypeHousingNeed(info->entityType, unit->housingNeed);
             }
 
             // Add component specific post processing (eg: lazy loading/enriching) here
         }
     }
 
- /*   auto& registry = stateMan->getRegistry();
-    registry.on_construct<CompUnit>().connect<&onUnitComponentCreate>();*/
+    /*   auto& registry = stateMan->getRegistry();
+       registry.on_construct<CompUnit>().connect<&onUnitComponentCreate>();*/
 }
 
 void EntityModelLoaderV2::storeUnprocessedFields(const std::string& entityName,
@@ -649,7 +675,8 @@ void EntityModelLoaderV2::preprocessComponents()
                                    }
                                });
 
-                m_componentFactories[typeid(Comp)] = &EntityModelLoaderV2::createAndEnrichComponent<Comp>;
+                m_componentFactories[typeid(Comp)] =
+                    &EntityModelLoaderV2::createAndEnrichComponent<Comp>;
             }
         });
 }
@@ -666,7 +693,39 @@ EntityModelLoaderV2::ComponentFactoryFunc EntityModelLoaderV2::getComponentFacto
 
 py::object EntityModelLoaderV2::loadModelImporterModule()
 {
-    return py::module_::import((m_scriptDir + ".model_importer").c_str());
+    try
+    {
+        py::module_ sys = py::module_::import("sys");
+        // py::dict modules = sys.attr("modules");
+
+        // modules.attr("pop")("model_importer", py::none());
+
+        py::list path = sys.attr("path");
+        path.insert(0, m_scriptDir);
+
+        auto module = py::module_::import(m_importerModule.c_str());
+
+        // path.attr("pop")(0);
+
+        return module;
+
+        /*py::module_ importlib = py::module_::import("importlib");
+
+        py::module_ sys = py::module_::import("sys");
+        sys.attr("path").attr("insert")(0, m_scriptDir);
+
+        auto module = py::module_::import("model_importer");
+        importlib.attr("reload")(module);
+
+        sys.attr("path").attr("pop")(0);
+
+        return module;*/
+    }
+    catch (const py::error_already_set& e)
+    {
+        spdlog::error("Failed to load model_importer module: {}", e.what());
+        throw std::runtime_error("Failed to load model_importer module");
+    }
 }
 
 void EntityModelLoaderV2::initPython()
@@ -688,9 +747,9 @@ void EntityModelLoaderV2::loadUnprogressedFields()
             if (fieldName == "graphics")
             {
                 auto graphic = pyObj.cast<Graphic>();
-                auto compPtr = holder->tryGetComponent<CompGraphics>();
+                const auto compPtr = holder->tryGetComponent<CompGraphics>();
                 PropertyInitializer::set(compPtr->layer, graphic.layer);
-                
+
                 for (const auto& variant : graphic.variants)
                 {
                     auto allSingleGraphics = variant.getAllSingleGraphics();
@@ -701,26 +760,42 @@ void EntityModelLoaderV2::loadUnprogressedFields()
                     for (const auto& singleGraphic : allSingleGraphics)
                     {
                         auto drsData = getDRSData(singleGraphic, compositeGraphic, m_drsInterface);
-                        spam("Entity {} has graphic with DRS file {} and SLP id {}",
-                             entityName, singleGraphic.drsFile, singleGraphic.slp_id);
 
                         auto graphicsId = holder->createGraphicsID(variant.variationFilter);
-                        m_DRSDataByGraphicsId[graphicsId] = drsData;
+
+                        if (m_DRSDataByGraphicsId.contains(graphicsId))
+                        {
+                            auto& parts = m_DRSDataByGraphicsId[graphicsId].parts;
+                            parts.push_back(drsData.parts[0]);
+
+                            spdlog::debug("{} maps to DRS: {}, SLP: {}, Part {}",
+                                          graphicsId.toShortString(), singleGraphic.drsFile,
+                                          singleGraphic.slp_id, parts.size());
+                        }
+                        else
+                        {
+                            m_DRSDataByGraphicsId[graphicsId] = drsData;
+
+                            spdlog::debug("{} maps to DRS: {}, SLP: {}", graphicsId.toShortString(),
+                                          singleGraphic.drsFile, singleGraphic.slp_id);
+                        }
                     }
                 }
             }
             else if (fieldName == "animations")
             {
-                auto compPtr = holder->tryGetComponent<CompAnimation>();
-                debug_assert(compPtr, "Could not find animation component for entity {}", entityName);
+                const auto compPtr = holder->tryGetComponent<CompAnimation>();
+                debug_assert(compPtr, "Could not find animation component for entity {}",
+                             entityName);
 
                 auto animations = pyObj.cast<std::list<Animation>>();
 
                 for (const auto& animation : animations)
                 {
                     auto drsData = getDRSData(animation, m_drsInterface);
-                    spam("Entity {} has animation with DRS file {} and SLP id {} for action", entityName,
-                         animation.drsFile, animation.slpId, animation.name);
+                    spdlog::debug(
+                        "Entity {} has animation with DRS file {} and SLP id {} for action {}",
+                        entityName, animation.drsFile, animation.slpId, animation.name);
 
                     auto entityType = typeRegistry->getEntityType(entityName);
                     // TODO - Support filters
@@ -740,110 +815,108 @@ void EntityModelLoaderV2::loadUnprogressedFields()
     }
 }
 
- core::GraphicsID EntityModelLoaderV2::ComponentHolder::createGraphicsID(
+core::GraphicsID EntityModelLoaderV2::ComponentHolder::createGraphicsID(
     const std::map<std::string, std::string>& filters) const
- {
-     auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+{
+    auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
 
-     GraphicsID id;
+    GraphicsID id;
 
-     if (filters.contains("orientation"))
-         id.orientation = (int)getBuildingOrientation(filters.at("orientation"));
-     if (filters.contains("state"))
-         id.state = getState(filters.at("state"));
-     if (filters.contains("construction_site"))
-         id.isConstructing = filters.at("construction_site") == "true" ? 1 : 0;
-     if (filters.contains("icon"))
-         id.isIcon = filters.at("icon") == "true" ? 1 : 0;
+    if (filters.contains("orientation"))
+        id.orientation = (int) getBuildingOrientation(filters.at("orientation"));
+    if (filters.contains("state"))
+        id.state = getState(filters.at("state"));
+    if (filters.contains("construction_site"))
+        id.isConstructing = filters.at("construction_site") == "true" ? 1 : 0;
+    if (filters.contains("icon"))
+        id.isIcon = filters.at("icon") == "true" ? 1 : 0;
 
-     bool foundEntityType = false;
+    bool foundEntityType = false;
 
-     for (auto& comp : components)
-     {
-         if (const auto& c = std::get_if<CompEntityInfo>(&comp))
-         {
-             id.entityType = typeRegistry->getEntityType(c->entityName);
-             foundEntityType = true;
-         }
-         if (const auto& c = std::get_if<CompUIElement>(&comp))
-         {
-             id.uiElementType = c->uiElementType;
-         }
- 
-         // id.action    --> Only needed for animated graphics
-         // id.frame     --> Loaded in DRSGraphicsLoader
-         // id.direction --> Loaded in DRSGraphicsLoader
-         // id.playerId  --> Set at runtime
-         // id.civilization  --> Not used atm
-         // id.age           --> Not used atm
-         // id.isShadow     --> TODO: Shadows need rework/redesign
-     }
-     debug_assert(foundEntityType, "Entity type is not found in component holder");
-     return id;
- }
+    for (auto& comp : components)
+    {
+        if (const auto& c = std::get_if<CompEntityInfo>(&comp))
+        {
+            id.entityType = typeRegistry->getEntityType(c->entityName);
+            foundEntityType = true;
+        }
+        /*if (const auto& c = std::get_if<CompUIElement>(&comp))
+        {
+            id.uiElementType = c->uiElementType;
+        }*/
 
- core::GraphicsID EntityModelLoaderV2::ComponentHolder::createGraphicsID() const
- {
-     GraphicsID id;
+        // id.action    --> Only needed for animated graphics
+        // id.frame     --> Loaded in DRSGraphicsLoader
+        // id.direction --> Loaded in DRSGraphicsLoader
+        // id.playerId  --> Set at runtime
+        // id.civilization  --> Not used atm
+        // id.age           --> Not used atm
+        // id.isShadow     --> TODO: Shadows need rework/redesign
+    }
+    debug_assert(foundEntityType, "Entity type is not found in component holder");
+    return id;
+}
 
-     for (auto& comp : components)
-     {
-         if (const auto& c = std::get_if<CompBuilding>(&comp))
-         {
-             id.orientation = (int) c->orientation;
-             id.isConstructing = (int)c->isConstructing();
-         }
-         if (const auto& c = std::get_if<CompEntityInfo>(&comp))
-         {
-             id.entityType = c->entityType;
-             id.state = c->state;
-         }
-         if (const auto& c = std::get_if<CompUIElement>(&comp))
-             id.uiElementType = c->uiElementType;
+core::GraphicsID EntityModelLoaderV2::ComponentHolder::createGraphicsID() const
+{
+    GraphicsID id;
 
-         if (const auto& c = std::get_if<CompAction>(&comp))
-             id.action = c->action;
+    for (auto& comp : components)
+    {
+        if (const auto& c = std::get_if<CompBuilding>(&comp))
+        {
+            id.orientation = (int) c->orientation;
+            id.isConstructing = (int) c->isConstructing();
+        }
+        if (const auto& c = std::get_if<CompEntityInfo>(&comp))
+        {
+            id.entityType = c->entityType;
+            id.state = c->state;
+        }
+        /*if (const auto& c = std::get_if<CompUIElement>(&comp))
+            id.uiElementType = c->uiElementType;*/
 
-         if (const auto& c = std::get_if<CompAnimation>(&comp))
-             id.frame = c->frame;
+        if (const auto& c = std::get_if<CompAction>(&comp))
+            id.action = c->action;
 
-         if (const auto& c = std::get_if<CompTransform>(&comp))
-             id.direction = (int)c->getDirection();
+        if (const auto& c = std::get_if<CompAnimation>(&comp))
+            id.frame = c->frame;
 
-         if (const auto& c = std::get_if<CompPlayer>(&comp))
-         {
-             if (c->player)
-                 id.playerId = c->player->getId();
-         }
+        if (const auto& c = std::get_if<CompTransform>(&comp))
+            id.direction = (int) c->getDirection();
 
-         // TODO Support these
-         // id.civilization  --> Not used atm
-         // id.age           --> Not used atm
-         // id.isShadow     --> TODO: Shadows need rework/redesign
-     }
-     return id;
- }
+        if (const auto& c = std::get_if<CompPlayer>(&comp))
+        {
+            if (c->player)
+                id.playerId = c->player->getId();
+        }
 
- std::unordered_map<char, uint32_t> getShortcuts(const std::any& value)
- {
+        // TODO Support these
+        // id.civilization  --> Not used atm
+        // id.age           --> Not used atm
+        // id.isShadow     --> TODO: Shadows need rework/redesign
+    }
+    return id;
+}
 
-     auto pyObj = std::any_cast<py::object>(value);
-     auto shortcuts = pyObj.cast<std::list<Shortcut>>();
+std::unordered_map<char, uint32_t> getShortcuts(const std::any& value)
+{
+    auto pyObj = std::any_cast<py::object>(value);
+    auto shortcuts = pyObj.cast<std::list<Shortcut>>();
 
-     std::unordered_map<char, uint32_t> entityTypesByShortcut;
-     auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+    std::unordered_map<char, uint32_t> entityTypesByShortcut;
+    auto typeRegistry = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
 
-     for (auto& shortcut : shortcuts)
-     {
-         if (typeRegistry->isValid(shortcut.name))
-         {
-             auto key = shortcut.shortcut.c_str()[0];
-             entityTypesByShortcut[key] = typeRegistry->getEntityType(shortcut.name);
-         }
-     }
-     return entityTypesByShortcut;
- }
-
+    for (auto& shortcut : shortcuts)
+    {
+        if (typeRegistry->isValid(shortcut.name))
+        {
+            auto key = shortcut.shortcut.c_str()[0];
+            entityTypesByShortcut[key] = typeRegistry->getEntityType(shortcut.name);
+        }
+    }
+    return entityTypesByShortcut;
+}
 
 uint8_t getAcceptedResourceFlag(const std::any& value)
 {

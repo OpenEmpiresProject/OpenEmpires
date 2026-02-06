@@ -12,12 +12,12 @@
 #include "components/CompResourceGatherer.h"
 #include "components/CompSelectible.h"
 #include "components/CompTransform.h"
+#include "components/CompUIElement.h"
 #include "components/CompUnit.h"
 #include "components/CompUnitFactory.h"
 #include "components/CompVision.h"
 #include "utils/Size.h"
 #include "utils/Types.h"
-#include "components/CompUIElement.h"
 
 #include <any>
 #include <optional>
@@ -33,7 +33,6 @@ extern uint32_t getEntityType(const std::string& name);
 extern std::unordered_set<core::UnitType> getGarrisonableUnitTypes(const std::any& value);
 extern core::Ref<core::Command> getUnitDefaultCommand(const std::any&);
 
-
 namespace game
 {
 
@@ -42,7 +41,7 @@ template <typename T> using ConverterFnInt = T (*)(int);
 template <typename T> using ConverterFn = T (*)(const std::any&);
 
 // DefaultStorage mechanism to store default values only for trivial types instead of
-// putting the value in the ModelPropertyMapping because for non-trivial types ModelPropertyMapping 
+// putting the value in the ModelPropertyMapping because for non-trivial types ModelPropertyMapping
 // construction will not be constexpr anymore.
 //
 template <typename T, bool = std::is_trivially_destructible_v<T> && std::is_trivially_copyable_v<T>>
@@ -53,6 +52,7 @@ template <typename T> struct DefaultStorage<T, true>
 {
     // It is important to initialize this to comply with constexpr requirements
     T value{};
+    bool isSet = false;
 };
 
 // non-trivial case ? store nothing
@@ -104,11 +104,10 @@ struct ModelPropertyMapping<Member> : public DefaultStorage<T>
     {
     }
 
-    constexpr ModelPropertyMapping(
-                                   std::string_view model,
+    constexpr ModelPropertyMapping(std::string_view model,
                                    std::string_view property,
                                    const T& defaultValue)
-        : propertyName(property), modelName(model), DefaultStorage<T>{defaultValue}
+        : propertyName(property), modelName(model), DefaultStorage<T>{defaultValue, true}
     {
     }
 };
@@ -157,9 +156,10 @@ class ComponentModelMapper
             ModelPropertyMapping<&core::CompBuilding::size>                         ("Building", "size", getBuildingSize),
             ModelPropertyMapping<&core::CompBuilding::acceptedResourceNames>        ("ResourceDropOff", "accepted_resources"),
             ModelPropertyMapping<&core::CompBuilding::dropOffForResourceType>       ("ResourceDropOff", "accepted_resources", getAcceptedResourceFlag),
+            ModelPropertyMapping<&core::CompBuilding::visualVariationByProgress>    ("Building", "progress_frame_map"),
             ModelPropertyMapping<&core::CompEntityInfo::entityName>                 ("Model", "name"),
             ModelPropertyMapping<&core::CompEntityInfo::entityType>                 ("Model", "name", getEntityType),
-            ModelPropertyMapping<&core::CompUIElement::uiElementType>               ("UIElement", "name", getUIElementType),
+            ModelPropertyMapping<&core::CompUIElement::uiElementType>               ("UIElement", "element_name", getUIElementType),
             ModelPropertyMapping<&core::CompResourceGatherer::capacity>             ("Gatherer", "resource_capacity"),
             ModelPropertyMapping<&core::CompResourceGatherer::gatherSpeed>          ("Gatherer", "gather_speed"),
             ModelPropertyMapping<&core::CompResource::resourceName>                 ("NaturalResource", "name"),
@@ -187,12 +187,12 @@ class ComponentModelMapper
             ModelMapping<core::CompRendering>                                       ("Model"),
             ModelMapping<core::CompPlayer>                                          ("Unit"),
             ModelMapping<core::CompPlayer>                                          ("Building"),
+            ModelMapping<core::CompTransform>                                       ("UIElement"),
             ModelMapping<core::CompGraphics>                                        ("Model")
         };
     }
     // clang-format on
 };
-
 
 template <typename M, typename = void> struct is_property_mapping : std::false_type
 {

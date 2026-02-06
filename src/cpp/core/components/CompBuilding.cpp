@@ -4,7 +4,8 @@ using namespace core;
 
 int CompBuilding::getVariationByConstructionProgress() const
 {
-    debug_assert(visualVariationByProgress.value().size() > 0, "Building's visual variation map is empty");
+    debug_assert(visualVariationByProgress.value().size() > 0,
+                 "Building's visual variation map is empty");
 
     auto it = visualVariationByProgress.value().lower_bound(constructionProgress);
     return it->second;

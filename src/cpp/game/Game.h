@@ -8,6 +8,7 @@
 #include "DRSGraphicsLoader.h"
 #include "DemoWorldCreator.h"
 #include "EntityModelLoader.h"
+#include "EntityModelLoaderV2.h"
 #include "EntityTypeRegistry.h"
 #include "EventLoop.h"
 #include "GameShortcutResolver.h"
@@ -31,6 +32,7 @@
 #include "utils/Types.h"
 
 #include <iostream>
+#include <pybind11/embed.h>
 #include <readerwriterqueue.h>
 #include <stop_token>
 #include <vector>
@@ -112,8 +114,14 @@ class Game
         auto cc = std::make_shared<core::CommandCenter>();
         core::ServiceRegistry::getInstance().registerService(cc);
 
-        auto entityDefLoader = std::make_shared<game::EntityModelLoader>();
-        entityDefLoader->load();
+        auto drsInterface = std::make_shared<game::DRSInterface>();
+        /*auto entityDefLoader =
+            std::make_shared<game::EntityModelLoader>();
+        entityDefLoader->load();*/
+
+        auto entityDefLoader = std::make_shared<game::EntityModelLoaderV2>(
+            "assets/scripts", "model_importer", drsInterface);
+        entityDefLoader->init();
         std::shared_ptr<core::EntityFactory> entityFactory = entityDefLoader;
         core::ServiceRegistry::getInstance().registerService(entityFactory);
 
@@ -124,24 +132,32 @@ class Game
         std::shared_ptr<core::ShortcutResolver> shortcutResolver = gameShortcutResolver;
         core::ServiceRegistry::getInstance().registerService(shortcutResolver);
 
+        auto cursorEntityType = entityTypeRegistry->getEntityType("cursor");
         core::GraphicsID defaultIcon;
-        defaultIcon.entityType = game::EntityTypes::ET_UI_ELEMENT;
-        defaultIcon.uiElementType = (int) game::UIElementTypes::CURSOR;
+        defaultIcon.entityType = cursorEntityType;
+        /*defaultIcon.entityType = game::EntityTypes::ET_UI_ELEMENT;
+        defaultIcon.uiElementType = (int) game::UIElementTypes::CURSOR;*/
         defaultIcon.variation = 0;
 
         core::GraphicsID buildIcon;
-        buildIcon.entityType = game::EntityTypes::ET_UI_ELEMENT;
-        buildIcon.uiElementType = (int) game::UIElementTypes::CURSOR;
+        defaultIcon.entityType = cursorEntityType;
+
+        //         buildIcon.entityType = game::EntityTypes::ET_UI_ELEMENT;
+        //         buildIcon.uiElementType = (int) game::UIElementTypes::CURSOR;
         buildIcon.variation = 7;
 
         core::GraphicsID assignTaskCursor;
-        assignTaskCursor.entityType = game::EntityTypes::ET_UI_ELEMENT;
-        assignTaskCursor.uiElementType = (int) game::UIElementTypes::CURSOR;
+        assignTaskCursor.entityType = cursorEntityType;
+
+        //         assignTaskCursor.entityType = game::EntityTypes::ET_UI_ELEMENT;
+        //         assignTaskCursor.uiElementType = (int) game::UIElementTypes::CURSOR;
         assignTaskCursor.variation = 3;
 
         core::GraphicsID garrisonCursor;
-        garrisonCursor.entityType = game::EntityTypes::ET_UI_ELEMENT;
-        garrisonCursor.uiElementType = (int) game::UIElementTypes::CURSOR;
+        garrisonCursor.entityType = cursorEntityType;
+        //
+        //         garrisonCursor.entityType = game::EntityTypes::ET_UI_ELEMENT;
+        //         garrisonCursor.uiElementType = (int) game::UIElementTypes::CURSOR;
         garrisonCursor.variation = 13;
 
         entityTypeRegistry->registerCursorGraphic(core::CursorType::DEFAULT_INGAME, defaultIcon);

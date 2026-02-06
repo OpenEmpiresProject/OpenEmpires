@@ -3,8 +3,10 @@
 #include "AtlasGenerator.h"
 #include "DRSFile.h"
 #include "EntityModelLoader.h"
+#include "EntityModelLoaderV2.h"
 #include "EntityTypeRegistry.h"
 #include "GameTypes.h"
+#include "GraphicsLoadupDataProvider.h"
 #include "SLPFile.h"
 #include "ServiceRegistry.h"
 #include "debug.h"
@@ -204,8 +206,7 @@ class GraphicsLoaderFromDRSImpl
     {
         loadSurfaces(atlasGenerator, renderer, surfaces, id.entityType, clipRect, id.action,
                      id.playerId, frames, anchors, graphicsRegistry, isCursor, id.orientation, flip,
-                     id.state, id.isConstructing, id.uiElementType,
-                     id.isShadow, id.isIcon);
+                     id.state, id.isConstructing, id.uiElementType, id.isShadow, id.isIcon);
     }
 
     static void loadSurfaces(AtlasGenerator& atlasGenerator,
@@ -224,7 +225,8 @@ class GraphicsLoaderFromDRSImpl
                              int state,
                              int isConstruction,
                              int uiElementType,
-                             int isShadow, int isIcon)
+                             int isShadow,
+                             int isIcon)
     {
         std::vector<SDL_Rect> srcRects;
         SDL_Texture* atlasTexture = nullptr;
@@ -317,6 +319,7 @@ class GraphicsLoaderFromDRSImpl
                     {
                         id.direction = static_cast<uint64_t>(Direction::NORTH);
                     }
+                    int iii = 0;
                 }
                 else
                 {
@@ -339,7 +342,7 @@ class GraphicsLoaderFromDRSImpl
         }
     }
 
-    static void loadSLPWithMergingParts(const EntityModelLoader::EntityDRSData& drsData,
+    static void loadSLPWithMergingParts(const DRSData& drsData,
                                         const GraphicsID& baseId,
                                         SDL_Renderer& renderer,
                                         GraphicsRegistry& graphicsRegistry,
@@ -349,7 +352,8 @@ class GraphicsLoaderFromDRSImpl
                                         int state,
                                         int isConstructing,
                                         int uiElementType,
-                                        int isShadow, int isIcon)
+                                        int isShadow,
+                                        int isIcon)
     {
         std::vector<SDL_Surface*> surfaces;
         std::vector<Vec2> anchors;
@@ -408,7 +412,8 @@ class GraphicsLoaderFromDRSImpl
                                      int state,
                                      int isConstructing,
                                      int uiElementType,
-                                     int isShadow, int isIcon)
+                                     int isShadow,
+                                     int isIcon)
     {
         auto slp = drs->getSLPFile(slpId);
 
@@ -500,7 +505,8 @@ void DRSGraphicsLoader::loadGraphics(SDL_Renderer& renderer,
                                      const std::list<GraphicsID>& idsToLoad)
 {
     auto entityFactory = ServiceRegistry::getInstance().getService<EntityFactory>();
-    Ref<EntityModelLoader> defLoader = dynamic_pointer_cast<EntityModelLoader>(entityFactory);
+    Ref<GraphicsLoadupDataProvider> dataProvider =
+        dynamic_pointer_cast<GraphicsLoadupDataProvider>(entityFactory);
 
     std::set<GraphicsID> uniqueBaseIds;
     for (auto& id : idsToLoad)
@@ -514,7 +520,7 @@ void DRSGraphicsLoader::loadGraphics(SDL_Renderer& renderer,
         auto baseId = id;
         baseId.playerId = 0;
 
-        auto drsData = defLoader->getDRSData(baseId);
+        auto& drsData = (DRSData&) dataProvider->getData(baseId);
 
         if (drsData.parts.size() == 1)
         {
@@ -545,12 +551,13 @@ void DRSGraphicsLoader::loadCursor(SDL_Renderer& renderer,
                                    const GraphicsID& cursorIdToLoad)
 {
     auto entityFactory = ServiceRegistry::getInstance().getService<EntityFactory>();
-    Ref<EntityModelLoader> defLoader = dynamic_pointer_cast<EntityModelLoader>(entityFactory);
+    Ref<GraphicsLoadupDataProvider> dataProvider =
+        dynamic_pointer_cast<GraphicsLoadupDataProvider>(entityFactory);
 
     auto baseId = cursorIdToLoad.getBaseId();
     baseId.playerId = 0;
 
-    auto drsData = defLoader->getDRSData(baseId);
+    auto drsData = (DRSData&) dataProvider->getData(baseId);
 
     if (drsData.parts.size() == 1 && drsData.parts[0].drsFile != nullptr)
     {

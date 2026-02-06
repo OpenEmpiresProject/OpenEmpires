@@ -51,18 +51,20 @@ class EntityModelLoaderTest : public ::testing::Test
 
     void TearDown() override
     {
+        //py::finalize_interpreter();
     }
 
     Ref<StateManager> m_stateMan;
     Ref<EntityTypeRegistry> m_typeReg;
     Ref<DRSInterface> m_drsInterface;
+    const std::string m_baseScriptDir = std::string(TEST_PYTHON_MODEL_DIR) + "/";
 };
 TEST_F(EntityModelLoaderTest, CreateEntitySimple)
 {
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("basic", m_drsInterface);
+        EntityModelLoaderV2 loader(m_baseScriptDir, "basic.model_importer", m_drsInterface);
         loader.init();
         
         // Act
@@ -89,7 +91,7 @@ TEST_F(EntityModelLoaderTest, CreateBuilder)
         m_typeReg->registerEntityType("wood_camp", 11);
         m_typeReg->registerEntityType("mine_camp", 12);
 
-        EntityModelLoaderV2 loader("builder", m_drsInterface);
+        EntityModelLoaderV2 loader(m_baseScriptDir, "builder.model_importer", m_drsInterface);
         loader.init();
 
         // Act
@@ -117,7 +119,7 @@ TEST_F(EntityModelLoaderTest, CreateBuilding)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("building", m_drsInterface);
+        EntityModelLoaderV2 loader(m_baseScriptDir, "building.model_importer", m_drsInterface);
         loader.init();
 
         // Act
@@ -171,7 +173,7 @@ TEST_F(EntityModelLoaderTest, CreateResource)
             std::dynamic_pointer_cast<DummyDRSInterface>(m_drsInterface);
         dummyDRS->boundingBoxToReturn = Rect<int>(0, 0, 32, 32);
 
-        EntityModelLoaderV2 loader("resource", m_drsInterface);
+        EntityModelLoaderV2 loader(m_baseScriptDir, "resource.model_importer", m_drsInterface);
         loader.init();
 
         // Act
@@ -202,7 +204,7 @@ TEST_F(EntityModelLoaderTest, CreateGatherer)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("gatherer", m_drsInterface);
+        EntityModelLoaderV2 loader(m_baseScriptDir, "gatherer.model_importer", m_drsInterface);
         loader.init();
 
         // Act
@@ -225,7 +227,7 @@ TEST_F(EntityModelLoaderTest, CreateSelectables)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("selectable", m_drsInterface);
+        EntityModelLoaderV2 loader(m_baseScriptDir, "selectable.model_importer", m_drsInterface);
         loader.init();
 
         // Act
@@ -254,7 +256,7 @@ TEST_F(EntityModelLoaderTest, CreateTransform)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("transform", m_drsInterface);
+        EntityModelLoaderV2 loader(m_baseScriptDir, "transform.model_importer", m_drsInterface);
         loader.init();
 
         // Act
@@ -283,7 +285,7 @@ TEST_F(EntityModelLoaderTest, CreateUnit)
         Ref<DummyDRSInterface> dummyDRS = std::dynamic_pointer_cast<DummyDRSInterface>(m_drsInterface);
         dummyDRS->boundingBoxToReturn = Rect<int>(0, 0, 32, 32);
 
-        EntityModelLoaderV2 loader("unit", m_drsInterface);
+        EntityModelLoaderV2 loader(m_baseScriptDir, "unit.model_importer", m_drsInterface);
         loader.init();
 
         // Act
@@ -334,7 +336,7 @@ TEST_F(EntityModelLoaderTest, CreateUnitFactory)
             std::dynamic_pointer_cast<DummyDRSInterface>(m_drsInterface);
         dummyDRS->boundingBoxToReturn = Rect<int>(0, 0, 32, 32);
 
-        EntityModelLoaderV2 loader("unit_factory", m_drsInterface);
+        EntityModelLoaderV2 loader(m_baseScriptDir, "unit_factory.model_importer", m_drsInterface);
         loader.init();
 
         // Act
@@ -371,7 +373,7 @@ TEST_F(EntityModelLoaderTest, CreateGarrison)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("garrison", m_drsInterface);
+        EntityModelLoaderV2 loader(m_baseScriptDir, "garrison.model_importer", m_drsInterface);
         loader.init();
 
         // Act
@@ -396,7 +398,7 @@ TEST_F(EntityModelLoaderTest, CreateVision)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("vision", m_drsInterface);
+        EntityModelLoaderV2 loader(m_baseScriptDir, "vision.model_importer", m_drsInterface);
         loader.init();
 
         // Act
@@ -428,7 +430,7 @@ TEST_F(EntityModelLoaderTest, CreateHousing)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("housing", m_drsInterface);
+        EntityModelLoaderV2 loader(m_baseScriptDir, "housing.model_importer", m_drsInterface);
         loader.init();
 
         // Act
@@ -451,7 +453,7 @@ TEST_F(EntityModelLoaderTest, DefaultEmptyComponents)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("transform", m_drsInterface);
+        EntityModelLoaderV2 loader(m_baseScriptDir, "transform.model_importer", m_drsInterface);
         loader.init();
 
         // Act
@@ -494,7 +496,7 @@ TEST_F(EntityModelLoaderTest, BuildingOrientation)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("graphic-orientation", m_drsInterface);
+        EntityModelLoaderV2 loader(m_baseScriptDir, "graphic-orientation.model_importer", m_drsInterface);
         loader.init();
 
         // Act
@@ -560,7 +562,7 @@ TEST_F(EntityModelLoaderTest, Animations)
     try
     {
         // Arrange
-        EntityModelLoaderV2 loader("unit", m_drsInterface);
+        EntityModelLoaderV2 loader(m_baseScriptDir, "unit.model_importer", m_drsInterface);
         loader.init();
 
         // Act
@@ -593,6 +595,32 @@ TEST_F(EntityModelLoaderTest, Animations)
         EXPECT_EQ(compAnimation.animations[UnitAction::IDLE].value().speed, 15);
         EXPECT_EQ(compAnimation.animations[UnitAction::MOVE].value().speed, 10); // Default value
 
+    }
+    catch (const py::error_already_set& e)
+    {
+        FAIL() << e.what();
+    }
+}
+
+
+TEST_F(EntityModelLoaderTest, CreateUIElement)
+{
+    try
+    {
+        // Arrange
+        EntityModelLoaderV2 loader(m_baseScriptDir, "ui.model_importer", m_drsInterface);
+        loader.init();
+
+        // Act
+        auto factory = dynamic_cast<EntityFactory*>(&loader);
+        auto ui = factory->createEntity(m_typeReg->getEntityType("ui_element"));
+
+        // Assert
+        auto& uiComp = m_stateMan->getComponent<CompUIElement>(ui);
+        auto& info = m_stateMan->getComponent<CompEntityInfo>(ui);
+
+        EXPECT_EQ(uiComp.uiElementType.value(), (int) UIElementTypes::RESOURCE_PANEL);
+        EXPECT_EQ(info.entityType.value(), (int) EntityTypes::ET_UI_ELEMENT);
     }
     catch (const py::error_already_set& e)
     {

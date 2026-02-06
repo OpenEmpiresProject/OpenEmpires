@@ -32,7 +32,6 @@ class CompUnitFactory
 
     void onCreate(uint32_t entity)
     {
-
     }
 };
 
