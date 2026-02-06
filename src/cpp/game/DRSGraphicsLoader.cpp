@@ -196,7 +196,7 @@ class GraphicsLoaderFromDRSImpl
     static void loadSurfaces(AtlasGenerator& atlasGenerator,
                              SDL_Renderer& renderer,
                              std::vector<SDL_Surface*>& surfaces,
-                             Rect<int> clipRect,
+                             std::optional<Rect<int>> clipRect,
                              const std::vector<Frame>& frames,
                              const std::vector<Vec2>& anchors,
                              GraphicsRegistry& graphicsRegistry,
@@ -213,7 +213,7 @@ class GraphicsLoaderFromDRSImpl
                              SDL_Renderer& renderer,
                              std::vector<SDL_Surface*>& surfaces,
                              uint32_t entityType,
-                             Rect<int> clipRect,
+                             std::optional<Rect<int>> clipRect,
                              uint32_t action,
                              uint32_t playerId,
                              const std::vector<Frame>& frames,
@@ -254,13 +254,13 @@ class GraphicsLoaderFromDRSImpl
         {
             auto& srcRect = srcRects[i];
 
-            if (clipRect.w != 0 && clipRect.h != 0)
+            if (clipRect)
             {
-                srcRect.w = min(clipRect.w, srcRect.w);
-                srcRect.h = min(clipRect.h, srcRect.h);
+                srcRect.w = min(clipRect->w, srcRect.w);
+                srcRect.h = min(clipRect->h, srcRect.h);
 
-                srcRect.x = clipRect.x;
-                srcRect.y = clipRect.y;
+                srcRect.x = clipRect->x;
+                srcRect.y = clipRect->y;
             }
 
             Size imageSize = {srcRect.w, srcRect.h};
@@ -405,7 +405,7 @@ class GraphicsLoaderFromDRSImpl
                                      SDL_Renderer& renderer,
                                      GraphicsRegistry& graphicsRegistry,
                                      AtlasGenerator& atlasGenerator,
-                                     Rect<int> clipRect,
+                                     std::optional<Rect<int>> clipRect,
                                      bool flip,
                                      int orientation,
                                      std::optional<int> frameIndex,

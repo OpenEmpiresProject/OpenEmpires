@@ -320,7 +320,7 @@ all_buildings: List[Building] = [
                                       GraphicVariantType.ORIENTATION:"diagonal_forward",
                                       GraphicVariantType.CONSTRUCTION_SITE:"true"}),
                 GraphicVariant(
-                    graphic=SingleGraphic(slp_id=236, flip=True),
+                    graphic=SingleGraphic(slp_id=236),
                     variation_filter={GraphicVariantType.THEME:"default", 
                                       GraphicVariantType.ORIENTATION:"diagonal_backward",
                                       GraphicVariantType.CONSTRUCTION_SITE:"true"}),
@@ -564,6 +564,8 @@ all_ui_elements: List[UIElement] = [
                 layer=GraphicLayer.UI,
                 variants=[
                     GraphicVariant(
+                        # Using a random graphic here and making it invisible by setting clip_rect to 0
+                        # since this is a logical UI element that doesn't have a visual representation
                         graphic=SingleGraphic(slp_id=4479, clip_rect=Rect(x=0, y=0, w=0, h=0)),
                         variation_filter={GraphicVariantType.THEME:"default"})])),
     UIElement(name="resource_panel", 

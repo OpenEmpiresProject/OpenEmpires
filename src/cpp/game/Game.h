@@ -123,7 +123,9 @@ class Game
             "assets/scripts", "model_importer", drsInterface);
         entityDefLoader->init();
         std::shared_ptr<core::EntityFactory> entityFactory = entityDefLoader;
+        std::shared_ptr<core::GraphicsLoadupDataProvider> graphicProvider = entityDefLoader;
         core::ServiceRegistry::getInstance().registerService(entityFactory);
+        core::ServiceRegistry::getInstance().registerService(graphicProvider);
 
         auto buildingMngr = std::make_shared<core::BuildingManager>();
         auto unitManager = std::make_shared<core::UnitManager>();

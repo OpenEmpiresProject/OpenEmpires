@@ -344,11 +344,11 @@ DRSData getDRSData(const SingleGraphic& graphicData,
     DRSData data;
     data.parts.push_back(DRSData::Part(drsFile, graphicData.slp_id,
                                        graphicData.anchor.value_or(Vec2::null),
-                                       graphicData.frameIndex, graphicData.flip.value_or(false)));
+                                       graphicData.frameIndex));
     data.boundingRect = boundingBox;
-    data.clipRect = graphicData.clipRect.value_or(Rect<int>());
+    data.clipRect = graphicData.clipRect;
     data.anchor = compositeData.anchor;
-    data.flip = compositeData.flip.value_or(false);
+    data.flip = compositeData.flip.value_or(graphicData.flip.value_or(false));
 
     return data;
 }
@@ -361,7 +361,7 @@ DRSData getDRSData(const Animation& animation, core::Ref<DRSInterface> drsInterf
     auto boundingBox = drsInterface->getBoundingBox(resolvedFileName, animation.slpId, 0);
 
     DRSData data;
-    data.parts.push_back(DRSData::Part(drsFile, animation.slpId, Vec2::null, nullopt, false));
+    data.parts.push_back(DRSData::Part(drsFile, animation.slpId, Vec2::null, nullopt));
     data.boundingRect = boundingBox;
 
     return data;
@@ -370,9 +370,8 @@ DRSData getDRSData(const Animation& animation, core::Ref<DRSInterface> drsInterf
 DRSData::Part::Part(core::Ref<drs::DRSFile> drs,
                     int slp,
                     const core::Vec2& anchor,
-                    std::optional<int> frameIndex,
-                    bool flip)
-    : drsFile(drs), slpId(slp), anchor(anchor), frameIndex(frameIndex), flip(flip)
+                    std::optional<int> frameIndex)
+    : drsFile(drs), slpId(slp), anchor(anchor), frameIndex(frameIndex)
 {
 }
 
@@ -387,6 +386,8 @@ EntityModelLoaderV2::EntityModelLoaderV2(const std::string& scriptDir,
 
 EntityModelLoaderV2::~EntityModelLoaderV2()
 {
+    // py::gil_scoped_acquire acquire;
+    m_unprocessedFieldsByEntityName.clear();
 }
 
 uint32_t EntityModelLoaderV2::createEntity(uint32_t entityType)
@@ -518,7 +519,7 @@ void EntityModelLoaderV2::loadAll(const py::object& module)
         debug_assert(not entityName.empty(), "Entity info is not initialized");
         m_componentsByEntityName[entityName] = holder;
 
-        storeUnprocessedFields(entityName, pyObj, allProcessedFields);
+        storeUnprocessedFields(entityName, pyObj.ptr(), allProcessedFields);
     }
 }
 
@@ -615,7 +616,7 @@ void EntityModelLoaderV2::postProcessing()
 }
 
 void EntityModelLoaderV2::storeUnprocessedFields(const std::string& entityName,
-                                                 const pybind11::object& obj,
+                                                 const pybind11::handle& obj,
                                                  const std::list<std::string>& processedFields)
 {
     py::dict dict = obj.attr("__dict__");
@@ -636,23 +637,6 @@ void EntityModelLoaderV2::storeUnprocessedFields(const std::string& entityName,
 
     if (not unprocessed.fields.empty())
         m_unprocessedFieldsByEntityName[entityName] = unprocessed;
-}
-
-pybind11::object EntityModelLoaderV2::getUnprocessedField(const std::string& entityName,
-                                                          const std::string& fieldName)
-{
-    auto it = m_unprocessedFieldsByEntityName.find(entityName);
-
-    if (it != m_unprocessedFieldsByEntityName.end())
-    {
-        auto fieldIt = it->second.fields.find(fieldName);
-
-        if (fieldIt != it->second.fields.end())
-        {
-            return fieldIt->second;
-        }
-    }
-    py::none();
 }
 
 void EntityModelLoaderV2::preprocessComponents()
@@ -763,7 +747,8 @@ void EntityModelLoaderV2::loadUnprogressedFields()
 
                         auto graphicsId = holder->createGraphicsID(variant.variationFilter);
 
-                        if (m_DRSDataByGraphicsId.contains(graphicsId))
+                        addData(graphicsId, drsData);
+                        /*if (m_DRSDataByGraphicsId.contains(graphicsId))
                         {
                             auto& parts = m_DRSDataByGraphicsId[graphicsId].parts;
                             parts.push_back(drsData.parts[0]);
@@ -778,7 +763,7 @@ void EntityModelLoaderV2::loadUnprogressedFields()
 
                             spdlog::debug("{} maps to DRS: {}, SLP: {}", graphicsId.toShortString(),
                                           singleGraphic.drsFile, singleGraphic.slp_id);
-                        }
+                        }*/
                     }
                 }
             }
@@ -802,7 +787,8 @@ void EntityModelLoaderV2::loadUnprogressedFields()
                     GraphicsID graphicsId(entityType);
                     graphicsId.action = getAction(animation.name);
 
-                    m_DRSDataByGraphicsId[graphicsId] = drsData;
+                    // m_DRSDataByGraphicsId[graphicsId] = drsData;
+                    addData(graphicsId, drsData);
 
                     CompAnimation::ActionAnimation actionAnimation;
                     actionAnimation.frames = animation.frameCount;
@@ -897,6 +883,27 @@ core::GraphicsID EntityModelLoaderV2::ComponentHolder::createGraphicsID() const
         // id.isShadow     --> TODO: Shadows need rework/redesign
     }
     return id;
+}
+
+void EntityModelLoaderV2::addData(const core::GraphicsID& id, const Data& data)
+{
+    auto& drsData = (DRSData&) data;
+    if (m_DRSDataByGraphicsId.contains(id))
+    {
+        auto& parts = m_DRSDataByGraphicsId[id].parts;
+        parts.push_back(drsData.parts[0]);
+
+        spdlog::debug("{} maps to DRS: {}, SLP: {}, Part {}", id.toShortString(),
+                      drsData.parts[0].drsFile->getFilename(), drsData.parts[0].slpId,
+                      parts.size());
+    }
+    else
+    {
+        m_DRSDataByGraphicsId[id] = drsData;
+
+        spdlog::debug("{} maps to DRS: {}, SLP: {}", id.toShortString(),
+                      drsData.parts[0].drsFile->getFilename(), drsData.parts[0].slpId);
+    }
 }
 
 std::unordered_map<char, uint32_t> getShortcuts(const std::any& value)

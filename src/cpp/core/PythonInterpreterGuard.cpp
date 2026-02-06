@@ -6,7 +6,7 @@
 //
 // The file is intentionally minimal: constructing a single global py::scoped_interpreter
 // guarantees the interpreter (and the GIL) exist for the entire program lifetime.
-//static pybind11::scoped_interpreter s_globalPythonInterpreter{};
+// static pybind11::scoped_interpreter s_globalPythonInterpreter{};
 
 class PythonInitializer
 {

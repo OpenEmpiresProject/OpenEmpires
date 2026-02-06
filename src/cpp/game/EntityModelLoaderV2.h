@@ -41,16 +41,14 @@ struct DRSData : public core::GraphicsLoadupDataProvider::Data
         int slpId = -1;
         core::Vec2 anchor = core::Vec2::null;
         std::optional<int> frameIndex;
-        bool flip = false;
-
+       
         Part(core::Ref<drs::DRSFile> drs,
              int slp,
              const core::Vec2& anchor,
-             std::optional<int> frameIndex,
-             bool flip);
+             std::optional<int> frameIndex);
     };
     std::vector<Part> parts;
-    core::Rect<int> clipRect;
+    std::optional<core::Rect<int>> clipRect;
     core::Vec2 anchor;
     core::Rect<int> boundingRect;
     bool flip = false;
@@ -81,6 +79,7 @@ class EntityModelLoaderV2 : public core::EntityFactory,
     uint32_t createEntity(uint32_t entityType) override;
     const Data& getData(const core::GraphicsID& id) const override;
     bool hasData(const core::GraphicsID& id) const override;
+    void addData(const core::GraphicsID& id, const Data& data);
 
     void loadAll(const pybind11::object& module);
     void loadEntityTypes(const pybind11::object& module);
@@ -209,15 +208,12 @@ class EntityModelLoaderV2 : public core::EntityFactory,
 
     struct UnprocessedFields
     {
-        std::map<std::string, pybind11::object> fields;
+        std::map<std::string, pybind11::handle> fields;
     };
     std::map<std::string, UnprocessedFields> m_unprocessedFieldsByEntityName;
     void storeUnprocessedFields(const std::string& entityName,
-                                const pybind11::object& obj,
+                                const pybind11::handle& obj,
                                 const std::list<std::string>& processedFields);
-
-    pybind11::object getUnprocessedField(const std::string& entityName,
-                                         const std::string& fieldName);
 
     std::map<std::type_index, std::set<std::string_view>> m_modelsByComponentType;
     std::unordered_map<std::type_index, ComponentFactoryFunc> m_componentFactories;

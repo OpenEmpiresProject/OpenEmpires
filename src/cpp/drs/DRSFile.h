@@ -18,6 +18,10 @@ class DRSFile
     bool load(const std::string& filename);
     SLPFile getSLPFile(uint32_t resourceId);
     std::vector<uint32_t> listResources() const;
+    const std::string& getFilename() const
+    {
+        return m_filename;
+    }
 
   private:
     std::shared_ptr<DRSResourceData> getResource(uint32_t resourceId);
@@ -25,6 +29,7 @@ class DRSFile
     std::ifstream m_file;
     std::unordered_map<uint32_t, std::shared_ptr<DRSResourceData>> m_resources;
     std::mutex m_fileMutex;
+    std::string m_filename;
 };
 } // namespace drs
 
