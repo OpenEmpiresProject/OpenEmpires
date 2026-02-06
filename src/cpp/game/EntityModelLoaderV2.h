@@ -41,7 +41,7 @@ struct DRSData : public core::GraphicsLoadupDataProvider::Data
         int slpId = -1;
         core::Vec2 anchor = core::Vec2::null;
         std::optional<int> frameIndex;
-       
+
         Part(core::Ref<drs::DRSFile> drs,
              int slp,
              const core::Vec2& anchor,
