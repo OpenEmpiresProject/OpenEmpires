@@ -7,7 +7,6 @@
 #include "CursorManager.h"
 #include "DRSGraphicsLoader.h"
 #include "DemoWorldCreator.h"
-#include "EntityModelLoader.h"
 #include "EntityModelLoaderV2.h"
 #include "EntityTypeRegistry.h"
 #include "EventLoop.h"
@@ -115,10 +114,6 @@ class Game
         core::ServiceRegistry::getInstance().registerService(cc);
 
         auto drsInterface = std::make_shared<game::DRSInterface>();
-        /*auto entityDefLoader =
-            std::make_shared<game::EntityModelLoader>();
-        entityDefLoader->load();*/
-
         auto entityDefLoader = std::make_shared<game::EntityModelLoaderV2>(
             "assets/scripts", "model_importer", drsInterface);
         entityDefLoader->init();

@@ -2,7 +2,6 @@
 
 #include "AtlasGenerator.h"
 #include "DRSFile.h"
-#include "EntityModelLoader.h"
 #include "EntityModelLoaderV2.h"
 #include "EntityTypeRegistry.h"
 #include "GameTypes.h"
@@ -319,7 +318,6 @@ class GraphicsLoaderFromDRSImpl
                     {
                         id.direction = static_cast<uint64_t>(Direction::NORTH);
                     }
-                    int iii = 0;
                 }
                 else
                 {

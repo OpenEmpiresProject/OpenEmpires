@@ -12,7 +12,6 @@ enum EntityTypes
     ET_TILE = 2,
     ET_VILLAGER = 3,
     ET_TREE = 4,
-    // ET_CONSTRUCTION_SITE = 5,
 
     ET_UI_ELEMENT = 10000
 };

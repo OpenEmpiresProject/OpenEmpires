@@ -19,103 +19,26 @@ using namespace std;
 using namespace drs;
 namespace py = pybind11;
 
-extern UnitAction getAction(const std::string actionname);
-extern ResourceType getResourceType(const std::string& name);
-extern BuildingOrientation getBuildingOrientation(const std::string& name);
-extern int getState(const std::string& name);
-extern Size getBuildingSize(const std::string& name);
-extern LineOfSightShape getLOSShape(const std::string& name);
-extern Rect<int> getBoundingBox(shared_ptr<DRSFile> drs, uint32_t slpId);
-extern void validateEntities(pybind11::object module);
-extern bool isInstanceOf(py::object module,
-                         py::handle entityDefinition,
-                         const std::string& baseClass);
+// Forward declarations of global functions
+void validatePython();
+void validateEntities(py::object module);
+bool isInstanceOf(py::object module, py::handle entityDefinition, const std::string& baseClass);
+UnitAction getAction(const std::string actionname);
+ResourceType getResourceType(const std::string& name);
+BuildingOrientation getBuildingOrientation(const std::string& name);
+int getState(const std::string& name);
 
-// Performs default command initialization for unit component
-// TODO : This shouldn't be in the game layer but in core layer
-// void onUnitComponentCreate(entt::basic_registry<uint32_t>& reg, uint32_t e)
-//{
-//    auto& comp = reg.get<CompUnit>(e);
-//
-//    while (not comp.commandQueue.empty())
-//    {
-//        comp.commandQueue.pop();
-//    }
-//    auto cloned = comp.defaultCommand.value()->clone();
-//    cloned->setEntityID(e);
-//
-//    comp.commandQueue.push(cloned);
-//}
+struct SingleGraphic;
+struct CompositeGraphic;
+struct Animation;
+DRSData getDRSData(const SingleGraphic& graphicData,
+                   const CompositeGraphic& compositeData,
+                   core::Ref<DRSInterface> drsInterface);
+DRSData getDRSData(const Animation& animation, core::Ref<DRSInterface> drsInterface);
 
-GraphicLayer getGraphicLayer(int layer)
+template <typename T> static T readValue(py::handle object, const std::string& key)
 {
-    if (layer == (int) GraphicLayer::NONE)
-    {
-        return GraphicLayer::NONE;
-    }
-    else if (layer == (int) GraphicLayer::GROUND)
-    {
-        return GraphicLayer::GROUND;
-    }
-    else if (layer == (int) GraphicLayer::ON_GROUND)
-    {
-        return GraphicLayer::ON_GROUND;
-    }
-    else if (layer == (int) GraphicLayer::ENTITIES)
-    {
-        return GraphicLayer::ENTITIES;
-    }
-    else if (layer == (int) GraphicLayer::SKY)
-    {
-        return GraphicLayer::SKY;
-    }
-    else if (layer == (int) GraphicLayer::UI)
-    {
-        return GraphicLayer::UI;
-    }
-    else
-    {
-        throw std::runtime_error("Invalid graphic layer value: " + std::to_string(layer));
-    }
-}
-
-void validatePython()
-{
-    py::module_ sys = py::module_::import("sys");
-
-    auto paths = sys.attr("path");
-    std::vector<std::string> pathVec;
-    spdlog::info("Python sys.path:");
-
-    for (auto item : paths)
-    {
-        spdlog::info("  {}", item.cast<std::string>());
-    }
-
-    // Try importing pydantic
-    py::module_ pydantic = py::module_::import("pydantic");
-    spdlog::info("Pydantic is found");
-
-    // Simple pydantic BaseModel test
-    py::exec(R"(
-from pydantic import BaseModel, ValidationError
-
-class MyModel(BaseModel):
-    x: int
-
-# valid instance
-m = MyModel(x=10)
-# invalid instance to see validation
-try:
-    m2 = MyModel(x="not an int")
-except ValidationError as e:
-    print("Validated pybind setup")
-)");
-}
-
-template <typename T> static T readValue(pybind11::handle object, const std::string& key)
-{
-    if (pybind11::hasattr(object, key.c_str()))
+    if (py::hasattr(object, key.c_str()))
     {
         return object.attr(key.c_str()).cast<T>();
     }
@@ -123,7 +46,7 @@ template <typename T> static T readValue(pybind11::handle object, const std::str
     {
         auto cls = object.get_type();
 
-        if (pybind11::hasattr(cls, key.c_str()))
+        if (py::hasattr(cls, key.c_str()))
             return cls.attr(key.c_str()).cast<T>();
     }
     return T();
@@ -148,6 +71,12 @@ template <typename Tuple, typename F> constexpr void for_each_tuple(Tuple&& t, F
 {
     std::apply([&](auto&&... elems) { (f(elems), ...); }, std::forward<Tuple>(t));
 }
+
+//////////////////////////////////////////////////////////////////////////
+// Data structures representing the graphics definitions as defined in
+// Python. These are used as intermediate representations to convert the
+// Python definitions into the internal C++ structures
+//////////////////////////////////////////////////////////////////////////
 
 struct _Constructible
 {
@@ -332,40 +261,9 @@ PYBIND11_EMBEDDED_MODULE(graphic_defs, m)
         .def_readonly("h", &Rect<int>::h);
 }
 
-DRSData getDRSData(const SingleGraphic& graphicData,
-                   const CompositeGraphic& compositeData,
-                   core::Ref<DRSInterface> drsInterface)
-{
-    const std::string resolvedFileName = std::string("assets/") + graphicData.drsFile;
-    auto drsFile = drsInterface->loadDRSFile(resolvedFileName);
-    auto boundingBox = drsInterface->getBoundingBox(resolvedFileName, graphicData.slp_id,
-                                                    graphicData.frameIndex.value_or(0));
-
-    DRSData data;
-    data.parts.push_back(DRSData::Part(drsFile, graphicData.slp_id,
-                                       graphicData.anchor.value_or(Vec2::null),
-                                       graphicData.frameIndex));
-    data.boundingRect = boundingBox;
-    data.clipRect = graphicData.clipRect;
-    data.anchor = compositeData.anchor;
-    data.flip = compositeData.flip.value_or(graphicData.flip.value_or(false));
-
-    return data;
-}
-
-DRSData getDRSData(const Animation& animation, core::Ref<DRSInterface> drsInterface)
-{
-    const std::string resolvedFileName = std::string("assets/") + animation.drsFile;
-
-    auto drsFile = drsInterface->loadDRSFile(resolvedFileName);
-    auto boundingBox = drsInterface->getBoundingBox(resolvedFileName, animation.slpId, 0);
-
-    DRSData data;
-    data.parts.push_back(DRSData::Part(drsFile, animation.slpId, Vec2::null, nullopt));
-    data.boundingRect = boundingBox;
-
-    return data;
-}
+//////////////////////////////////////////////////////////////////////////
+// Implementation of EntityModelLoaderV2
+//////////////////////////////////////////////////////////////////////////
 
 DRSData::Part::Part(core::Ref<drs::DRSFile> drs,
                     int slp,
@@ -477,7 +375,6 @@ void EntityModelLoaderV2::loadEntityTypes(const py::object& module)
     typeRegistry->registerEntityType("default_tileset", EntityTypes::ET_TILE);
     typeRegistry->registerEntityType("villager", EntityTypes::ET_VILLAGER);
     typeRegistry->registerEntityType("wood", EntityTypes::ET_TREE);
-    // typeRegistry->registerEntityType("construction_site", EntityTypes::ET_CONSTRUCTION_SITE);
 
     for (const auto& name : entityNames)
         typeRegistry->registerEntityType(name, typeRegistry->getNextAvailableEntityType());
@@ -534,18 +431,6 @@ void EntityModelLoaderV2::postProcessing()
         {
             if (auto info = std::get_if<CompEntityInfo>(&componentVar))
             {
-                // uint32_t entityType = 0;
-                //  if (typeRegistry->isValid(entityName))
-                // entityType = typeRegistry->getEntityType(entityName);
-                /*else
-                {
-                    entityType = typeRegistry->getNextAvailableEntityType();
-                    typeRegistry->registerEntityType(entityName, entityType);
-                }*/
-                if (info->entityType == 3)
-                {
-                    int iii = 0;
-                }
                 m_componentsByEntityType[info->entityType] = compHolder;
             }
 
@@ -585,13 +470,6 @@ void EntityModelLoaderV2::postProcessing()
                 PropertyInitializer::set(selectible->boundingBoxes, boundixBoxes);
             }
 
-            /*   if (auto unit = std::get_if<CompUnit>(&componentVar))
-               {
-                   Ref<Command> idleCmd = CreateRef<CmdIdle>();
-                   idleCmd->setPriority(Command::DEFAULT_PRIORITY);
-                   PropertyInitializer::set(unit->defaultCommand, idleCmd);
-               }*/
-
             if (auto resource = std::get_if<CompResource>(&componentVar))
             {
                 PropertyInitializer::set<InGameResource>(
@@ -610,13 +488,10 @@ void EntityModelLoaderV2::postProcessing()
             // Add component specific post processing (eg: lazy loading/enriching) here
         }
     }
-
-    /*   auto& registry = stateMan->getRegistry();
-       registry.on_construct<CompUnit>().connect<&onUnitComponentCreate>();*/
 }
 
 void EntityModelLoaderV2::storeUnprocessedFields(const std::string& entityName,
-                                                 const pybind11::handle& obj,
+                                                 const py::handle& obj,
                                                  const std::list<std::string>& processedFields)
 {
     py::dict dict = obj.attr("__dict__");
@@ -680,30 +555,10 @@ py::object EntityModelLoaderV2::loadModelImporterModule()
     try
     {
         py::module_ sys = py::module_::import("sys");
-        // py::dict modules = sys.attr("modules");
-
-        // modules.attr("pop")("model_importer", py::none());
-
         py::list path = sys.attr("path");
         path.insert(0, m_scriptDir);
 
-        auto module = py::module_::import(m_importerModule.c_str());
-
-        // path.attr("pop")(0);
-
-        return module;
-
-        /*py::module_ importlib = py::module_::import("importlib");
-
-        py::module_ sys = py::module_::import("sys");
-        sys.attr("path").attr("insert")(0, m_scriptDir);
-
-        auto module = py::module_::import("model_importer");
-        importlib.attr("reload")(module);
-
-        sys.attr("path").attr("pop")(0);
-
-        return module;*/
+        return py::module_::import(m_importerModule.c_str());
     }
     catch (const py::error_already_set& e)
     {
@@ -714,6 +569,8 @@ py::object EntityModelLoaderV2::loadModelImporterModule()
 
 void EntityModelLoaderV2::initPython()
 {
+    // Support externally initialized Python interpreter as well. Will be useful in
+    // testing.
     if (!Py_IsInitialized())
         py::initialize_interpreter();
 }
@@ -748,22 +605,6 @@ void EntityModelLoaderV2::loadUnprogressedFields()
                         auto graphicsId = holder->createGraphicsID(variant.variationFilter);
 
                         addData(graphicsId, drsData);
-                        /*if (m_DRSDataByGraphicsId.contains(graphicsId))
-                        {
-                            auto& parts = m_DRSDataByGraphicsId[graphicsId].parts;
-                            parts.push_back(drsData.parts[0]);
-
-                            spdlog::debug("{} maps to DRS: {}, SLP: {}, Part {}",
-                                          graphicsId.toShortString(), singleGraphic.drsFile,
-                                          singleGraphic.slp_id, parts.size());
-                        }
-                        else
-                        {
-                            m_DRSDataByGraphicsId[graphicsId] = drsData;
-
-                            spdlog::debug("{} maps to DRS: {}, SLP: {}", graphicsId.toShortString(),
-                                          singleGraphic.drsFile, singleGraphic.slp_id);
-                        }*/
                     }
                 }
             }
@@ -787,7 +628,6 @@ void EntityModelLoaderV2::loadUnprogressedFields()
                     GraphicsID graphicsId(entityType);
                     graphicsId.action = getAction(animation.name);
 
-                    // m_DRSDataByGraphicsId[graphicsId] = drsData;
                     addData(graphicsId, drsData);
 
                     CompAnimation::ActionAnimation actionAnimation;
@@ -826,10 +666,6 @@ core::GraphicsID EntityModelLoaderV2::ComponentHolder::createGraphicsID(
             id.entityType = typeRegistry->getEntityType(c->entityName);
             foundEntityType = true;
         }
-        /*if (const auto& c = std::get_if<CompUIElement>(&comp))
-        {
-            id.uiElementType = c->uiElementType;
-        }*/
 
         // id.action    --> Only needed for animated graphics
         // id.frame     --> Loaded in DRSGraphicsLoader
@@ -859,8 +695,6 @@ core::GraphicsID EntityModelLoaderV2::ComponentHolder::createGraphicsID() const
             id.entityType = c->entityType;
             id.state = c->state;
         }
-        /*if (const auto& c = std::get_if<CompUIElement>(&comp))
-            id.uiElementType = c->uiElementType;*/
 
         if (const auto& c = std::get_if<CompAction>(&comp))
             id.action = c->action;
@@ -904,6 +738,79 @@ void EntityModelLoaderV2::addData(const core::GraphicsID& id, const Data& data)
         spdlog::debug("{} maps to DRS: {}, SLP: {}", id.toShortString(),
                       drsData.parts[0].drsFile->getFilename(), drsData.parts[0].slpId);
     }
+}
+
+//////////////////////////////////////////////////////////////////////////
+/// Global helper functions
+//////////////////////////////////////////////////////////////////////////
+
+DRSData getDRSData(const SingleGraphic& graphicData,
+                   const CompositeGraphic& compositeData,
+                   core::Ref<DRSInterface> drsInterface)
+{
+    const std::string resolvedFileName = std::string("assets/") + graphicData.drsFile;
+    auto drsFile = drsInterface->loadDRSFile(resolvedFileName);
+    auto boundingBox = drsInterface->getBoundingBox(resolvedFileName, graphicData.slp_id,
+                                                    graphicData.frameIndex.value_or(0));
+
+    DRSData data;
+    data.parts.push_back(DRSData::Part(drsFile, graphicData.slp_id,
+                                       graphicData.anchor.value_or(Vec2::null),
+                                       graphicData.frameIndex));
+    data.boundingRect = boundingBox;
+    data.clipRect = graphicData.clipRect;
+    data.anchor = compositeData.anchor;
+    data.flip = compositeData.flip.value_or(graphicData.flip.value_or(false));
+
+    return data;
+}
+
+DRSData getDRSData(const Animation& animation, core::Ref<DRSInterface> drsInterface)
+{
+    const std::string resolvedFileName = std::string("assets/") + animation.drsFile;
+
+    auto drsFile = drsInterface->loadDRSFile(resolvedFileName);
+    auto boundingBox = drsInterface->getBoundingBox(resolvedFileName, animation.slpId, 0);
+
+    DRSData data;
+    data.parts.push_back(DRSData::Part(drsFile, animation.slpId, Vec2::null, nullopt));
+    data.boundingRect = boundingBox;
+
+    return data;
+}
+
+void validatePython()
+{
+    py::module_ sys = py::module_::import("sys");
+
+    auto paths = sys.attr("path");
+    std::vector<std::string> pathVec;
+    spdlog::info("Python sys.path:");
+
+    for (auto item : paths)
+    {
+        spdlog::info("  {}", item.cast<std::string>());
+    }
+
+    // Try importing pydantic
+    py::module_ pydantic = py::module_::import("pydantic");
+    spdlog::info("Pydantic is found");
+
+    // Simple pydantic BaseModel test
+    py::exec(R"(
+from pydantic import BaseModel, ValidationError
+
+class MyModel(BaseModel):
+    x: int
+
+# valid instance
+m = MyModel(x=10)
+# invalid instance to see validation
+try:
+    m2 = MyModel(x="not an int")
+except ValidationError as e:
+    print("Validated pybind setup")
+)");
 }
 
 std::unordered_map<char, uint32_t> getShortcuts(const std::any& value)
@@ -963,4 +870,124 @@ core::Ref<core::Command> getUnitDefaultCommand(const std::any&)
     Ref<Command> idleCmd = CreateRef<CmdIdle>();
     idleCmd->setPriority(Command::DEFAULT_PRIORITY);
     return idleCmd;
+}
+
+BuildingOrientation getBuildingOrientation(const std::string& name)
+{
+    static unordered_map<string, BuildingOrientation> orientations = {
+        {"diagonal_forward", BuildingOrientation::DIAGONAL_FORWARD},
+        {"diagonal_backward", BuildingOrientation::DIAGONAL_BACKWARD},
+        {"corner", BuildingOrientation::CORNER},
+        {"horizontal", BuildingOrientation::HORIZONTAL},
+        {"vertical", BuildingOrientation::VERTICAL},
+        {"no_orientation", BuildingOrientation::NO_ORIENTATION},
+    };
+    return orientations.at(name);
+}
+
+Size getBuildingSize(const std::string& name)
+{
+    if (name == "small")
+        return Size(1, 1);
+    else if (name == "medium")
+        return Size(2, 2);
+    else if (name == "large")
+        return Size(3, 3);
+    else if (name == "huge")
+        return Size(4, 4);
+    else if (name == "gate")
+        return Size(4, 1);
+    else
+    {
+        debug_assert(false, "unknown building size");
+        return Size(0, 0);
+    }
+}
+
+LineOfSightShape getLOSShape(const std::string& name)
+{
+    if (name == "circle")
+        return LineOfSightShape::CIRCLE;
+    else if (name == "rounded_square")
+        return LineOfSightShape::ROUNDED_SQUARE;
+    else
+    {
+        debug_assert(false, "unknown line-of-sight shape");
+        return LineOfSightShape::UNKNOWN;
+    }
+}
+
+int getUIElementType(const std::string& name)
+{
+    if (name == "resource_panel")
+        return (int) UIElementTypes::RESOURCE_PANEL;
+    else if (name == "control_panel")
+        return (int) UIElementTypes::CONTROL_PANEL;
+    else if (name == "progress_bar")
+        return (int) UIElementTypes::PROGRESS_BAR;
+    else if (name == "cursor")
+        return (int) UIElementTypes::CURSOR;
+    return (int) UIElementTypes::UNKNOWN;
+}
+
+UnitAction getAction(const std::string actionname)
+{
+    static unordered_map<string, UnitAction> actions = {
+        {"idle", UnitAction::IDLE},
+        {"move", UnitAction::MOVE},
+        {"chop", UnitAction::CHOPPING},
+        {"mine", UnitAction::MINING},
+        {"carry_lumber", UnitAction::CARRYING_LUMBER},
+        {"carry_gold", UnitAction::CARRYING_GOLD},
+        {"carry_stone", UnitAction::CARRYING_STONE},
+        {"build", UnitAction::BUILDING},
+    };
+
+    return actions.at(actionname);
+}
+
+ResourceType getResourceType(const std::string& name)
+{
+    static unordered_map<string, ResourceType> resTypes = {
+        {"wood", ResourceType::WOOD},
+        {"gold", ResourceType::GOLD},
+        {"stone", ResourceType::STONE},
+        {"food", ResourceType::FOOD},
+    };
+    return resTypes.at(name);
+}
+
+int getState(const std::string& name)
+{
+    static unordered_map<string, int> states = {{"closed", 0}, {"opened", 1}, {"stump", 1}};
+    return states.at(name);
+}
+
+void validateEntities(py::object module)
+{
+    py::object validateAllFunc = module.attr("validate_all");
+    py::object result = validateAllFunc();
+    bool success = result.cast<bool>();
+
+    if (success == false)
+    {
+        throw std::runtime_error("Entity validation failed");
+    }
+    else
+    {
+        spdlog::debug("Entity validation passed");
+    }
+}
+
+bool isInstanceOf(py::object module, py::handle entityDefinition, const std::string& baseClass)
+{
+    if (py::hasattr(module, baseClass.c_str()))
+    {
+        py::object cls = module.attr(baseClass.c_str());
+        if (py::isinstance(entityDefinition, cls))
+        {
+            return true;
+        }
+    }
+    return false;
 }
