@@ -1,11 +1,14 @@
 #ifndef GAME_COMPONENTMODELMAPPER_H
 #define GAME_COMPONENTMODELMAPPER_H
 #include "Property.h"
+#include "components/CompArmor.h"
+#include "components/CompAttack.h"
 #include "components/CompBuilder.h"
 #include "components/CompBuilding.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGarrison.h"
 #include "components/CompGraphics.h"
+#include "components/CompHealth.h"
 #include "components/CompHousing.h"
 #include "components/CompRendering.h"
 #include "components/CompResource.h"
@@ -32,6 +35,8 @@ extern uint8_t getAcceptedResourceFlag(const std::any& value);
 extern uint32_t getEntityType(const std::string& name);
 extern std::unordered_set<core::UnitType> getGarrisonableUnitTypes(const std::any& value);
 extern core::Ref<core::Command> getUnitDefaultCommand(const std::any&);
+extern std::vector<int> getAttackOrArmorPerClass(const std::any&);
+extern std::vector<float> getMultiplierPerClass(const std::any&);
 
 namespace game
 {
@@ -127,23 +132,26 @@ class ComponentModelMapper
 {
   public:
     using ComponentType = std::variant<core::CompAction,
+                                       core::CompAnimation,
+                                       core::CompArmor,
+                                       core::CompAttack,
                                        core::CompBuilder,
                                        core::CompBuilding,
                                        core::CompEntityInfo,
-                                       core::CompRendering,
+                                       core::CompGarrison,
+                                       core::CompGraphics,
+                                       core::CompHealth,
+                                       core::CompHousing,
                                        core::CompPlayer,
                                        core::CompResourceGatherer,
+                                       core::CompRendering,
                                        core::CompResource,
                                        core::CompSelectible,
                                        core::CompTransform,
                                        core::CompUnitFactory,
-                                       core::CompGarrison,
-                                       core::CompVision,
-                                       core::CompHousing,
-                                       core::CompGraphics,
-                                       core::CompAnimation,
                                        core::CompUIElement,
-                                       core::CompUnit>;
+                                       core::CompUnit,
+                                       core::CompVision>;
 
     // clang-format off
     static constexpr auto mappings()
@@ -179,6 +187,11 @@ class ComponentModelMapper
             ModelPropertyMapping<&core::CompUnit::housingNeed>                      ("Unit", "housing_need"),
             ModelPropertyMapping<&core::CompUnit::type>                             ("Unit", "unit_type", core::getUnitType),
             ModelPropertyMapping<&core::CompUnit::defaultCommand>                   ("Unit", "unit_type", getUnitDefaultCommand), // "unit_type" is a dummy here
+            ModelPropertyMapping<&core::CompArmor::armorPerClass>                   ("Armor", "armor", getAttackOrArmorPerClass),
+            ModelPropertyMapping<&core::CompArmor::damageResistance>                ("Armor", "damage_resistance"),
+            ModelPropertyMapping<&core::CompAttack::attackPerClass>                 ("Attack", "attack", getAttackOrArmorPerClass),
+            ModelPropertyMapping<&core::CompAttack::attackMultiplierPerClass>       ("Attack", "attack_multiplier", getMultiplierPerClass),
+            ModelPropertyMapping<&core::CompHealth::maxHealth>                      ("Health", "health"),
             ModelMapping<core::CompTransform>                                       ("NaturalResource"),
             ModelMapping<core::CompTransform>                                       ("Building"),
             ModelMapping<core::CompTransform>                                       ("TileSet"),

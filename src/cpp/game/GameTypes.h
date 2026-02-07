@@ -53,6 +53,15 @@ enum ResourceType : uint8_t
     FOOD = 1 << 3,  // 00001000
 };
 
+enum class ArmorClass
+{
+    INFANTRY = 0,
+    MELEE = 1,
+    PIERCE = 2,
+
+    MAX_CLASS = 3
+};
+
 } // namespace game
 
 #endif

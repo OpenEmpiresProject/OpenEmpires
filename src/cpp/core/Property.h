@@ -3,11 +3,15 @@
 
 #include "utils/Types.h"
 
+#include <concepts>
 #include <stdexcept>
 
 namespace core
 {
 class PropertyInitializer;
+
+template <typename T>
+concept HasSubscript = requires(const T& t) { t[0]; };
 
 template <typename T> class Property
 {
@@ -35,6 +39,20 @@ template <typename T> class Property
     bool isSet() const
     {
         return m_isSet;
+    }
+
+    template <typename U = T>
+    requires HasSubscript<U>
+    decltype(auto) operator[](size_t index) const
+    {
+        if (m_isSet)
+        {
+            return m_value[index];
+        }
+        else
+        {
+            throw std::logic_error("Property not set!");
+        }
     }
 
   private:

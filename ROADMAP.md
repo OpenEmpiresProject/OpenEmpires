@@ -61,13 +61,14 @@ We use milestone versions for planning. Early versions are experimental. Feature
 > Goal: Enable unit combat, formations, and health mechanics.
 
 ### Features:
-- [ ] Combat units - militia
+- [x] Combat units - militia
 - [ ] Health and damage system
 - [ ] Attack-move
 - [ ] Basic formation movement
 - [ ] Death animations and corpse handling
 - [ ] Projectiles
 - [ ] Combat units - archer
+- [ ] Property bonus system
 
 ---
 

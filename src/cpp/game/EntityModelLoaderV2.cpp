@@ -991,3 +991,31 @@ bool isInstanceOf(py::object module, py::handle entityDefinition, const std::str
     }
     return false;
 }
+
+std::vector<int> getAttackOrArmorPerClass(const std::any& value)
+{
+    auto pyObj = std::any_cast<py::object>(value);
+    auto valuesPerClass = pyObj.cast<std::map<int, int>>();
+
+    std::vector<int> values((int) ArmorClass::MAX_CLASS, 0);
+
+    for (auto [cls, val] : valuesPerClass)
+    {
+        values[cls] = val;
+    }
+    return values;
+}
+
+std::vector<float> getMultiplierPerClass(const std::any& value)
+{
+    auto pyObj = std::any_cast<py::object>(value);
+    auto valuesPerClass = pyObj.cast<std::map<int, float>>();
+
+    std::vector<float> values((int) ArmorClass::MAX_CLASS, 0);
+
+    for (auto [cls, val] : valuesPerClass)
+    {
+        values[cls] = val;
+    }
+    return values;
+}

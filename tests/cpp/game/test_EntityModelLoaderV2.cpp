@@ -297,6 +297,9 @@ TEST_F(EntityModelLoaderTest, CreateUnit)
         auto& graphicComp = m_stateMan->getComponent<CompGraphics>(militia);
         auto& selectible = m_stateMan->getComponent<CompSelectible>(militia);
         auto& transform = m_stateMan->getComponent<CompTransform>(militia);
+        auto& attack = m_stateMan->getComponent<CompAttack>(militia);
+        auto& health = m_stateMan->getComponent<CompHealth>(militia);
+        auto& armor = m_stateMan->getComponent<CompArmor>(militia);
 
         EXPECT_EQ(unitComp.housingNeed.value(), 1);
         EXPECT_EQ(unitComp.type.value(), UnitType::INFANTRY);
@@ -319,7 +322,18 @@ TEST_F(EntityModelLoaderTest, CreateUnit)
 
         EXPECT_EQ(transform.hasRotation.value(), true);
 
-
+        EXPECT_EQ(attack.attackPerClass[(int) ArmorClass::INFANTRY], 0);
+        EXPECT_EQ(attack.attackPerClass[(int) ArmorClass::MELEE], 10);
+        EXPECT_EQ(attack.attackPerClass[(int) ArmorClass::PIERCE], 5);
+        EXPECT_FLOAT_EQ(attack.attackMultiplierPerClass[(int) ArmorClass::INFANTRY], 0);
+        EXPECT_FLOAT_EQ(attack.attackMultiplierPerClass[(int) ArmorClass::MELEE], 1.5);
+        EXPECT_FLOAT_EQ(attack.attackMultiplierPerClass[(int) ArmorClass::PIERCE], 0.5);
+        EXPECT_EQ(armor.armorPerClass[(int) ArmorClass::INFANTRY], 0);
+        EXPECT_EQ(armor.armorPerClass[(int) ArmorClass::MELEE], 20);
+        EXPECT_EQ(armor.armorPerClass[(int) ArmorClass::PIERCE], 25);
+        EXPECT_FLOAT_EQ(armor.damageResistance.value(), 0.1);
+        EXPECT_EQ(health.maxHealth.value(), 100);
+        EXPECT_FLOAT_EQ(health.health, 100);
     }
     catch (const py::error_already_set& e)
     {

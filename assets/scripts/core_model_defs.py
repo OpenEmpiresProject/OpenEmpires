@@ -42,7 +42,21 @@ class Animated:
     animations: List[Animation]
 
 
-class Unit(Vision, Model, Selectable, Animated):
+class Health:
+    health: int
+
+
+class Attack:
+    attack: Dict[int, int] # Per class
+    attack_multiplier: Dict[int, float] # Per class
+
+
+class Armor:
+    armor: Dict[int, int] # Per class
+    damage_resistance: float = 0.0 # Between 0 and 1
+
+
+class Unit(Vision, Model, Selectable, Animated, Health, Attack, Armor):
     moving_speed: int
     housing_need: int
     unit_type: UnitType
@@ -72,7 +86,7 @@ class Tree(NaturalResource, _Constructible):
     shadow: NaturalResourceAdditionalPart
 
 
-class Building(Vision, Model, Selectable):
+class Building(Vision, Model, Selectable, Health):
     line_of_sight_shape: LineOfSightShape = LineOfSightShape.ROUNDED_SQUARE
     size: str
     construction_site: str  # Construction site name
