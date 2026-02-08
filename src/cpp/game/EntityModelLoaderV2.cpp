@@ -485,6 +485,17 @@ void EntityModelLoaderV2::postProcessing()
                 typeRegistry->registerUnitTypeHousingNeed(info->entityType, unit->housingNeed);
             }
 
+            if (auto armor = std::get_if<CompArmor>(&componentVar))
+            {
+                std::vector<int> values((int) ArmorClass::MAX_CLASS, armor->baseArmor);
+
+                for (auto [cls, val] : armor->armorPerClassMap.value())
+                {
+                    values[cls] = val;
+                }
+                PropertyInitializer::set(armor->armorPerClass, values);
+            }
+
             // Add component specific post processing (eg: lazy loading/enriching) here
         }
     }

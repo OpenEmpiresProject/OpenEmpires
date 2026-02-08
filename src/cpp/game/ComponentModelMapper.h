@@ -187,8 +187,9 @@ class ComponentModelMapper
             ModelPropertyMapping<&core::CompUnit::housingNeed>                      ("Unit", "housing_need"),
             ModelPropertyMapping<&core::CompUnit::type>                             ("Unit", "unit_type", core::getUnitType),
             ModelPropertyMapping<&core::CompUnit::defaultCommand>                   ("Unit", "unit_type", getUnitDefaultCommand), // "unit_type" is a dummy here
-            ModelPropertyMapping<&core::CompArmor::armorPerClass>                   ("Armor", "armor", getAttackOrArmorPerClass),
+            ModelPropertyMapping<&core::CompArmor::armorPerClassMap>                ("Armor", "armor"),
             ModelPropertyMapping<&core::CompArmor::damageResistance>                ("Armor", "damage_resistance"),
+            ModelPropertyMapping<&core::CompArmor::baseArmor>                       ("Armor", "base_armor"),
             ModelPropertyMapping<&core::CompAttack::attackPerClass>                 ("Attack", "attack", getAttackOrArmorPerClass),
             ModelPropertyMapping<&core::CompAttack::attackMultiplierPerClass>       ("Attack", "attack_multiplier", getMultiplierPerClass),
             ModelPropertyMapping<&core::CompHealth::maxHealth>                      ("Health", "health"),

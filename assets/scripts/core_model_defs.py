@@ -53,6 +53,7 @@ class Attack:
 
 class Armor:
     armor: Dict[int, int] # Per class
+    base_armor: int = 1000
     damage_resistance: float = 0.0 # Between 0 and 1
 
 
