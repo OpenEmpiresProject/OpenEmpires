@@ -2,6 +2,7 @@
 
 #include "CompAction.h"
 #include "CompAnimation.h"
+#include "CompAttack.h"
 #include "CompEntityInfo.h"
 #include "CompGraphics.h"
 #include "CompPlayer.h"
@@ -16,11 +17,12 @@ UnitComponentRefs::UnitComponentRefs(std::tuple<CompAction&,
                                                 CompPlayer&,
                                                 CompTransform&,
                                                 CompUnit&,
-                                                CompVision&> components)
+                                                CompVision&,
+                                                CompAttack&> components)
     : action{std::get<0>(components)}, animation{std::get<1>(components)},
       entityInfo{std::get<2>(components)}, player{std::get<3>(components)},
       transform{std::get<4>(components)}, unit{std::get<5>(components)},
-      vision{std::get<6>(components)}
+      vision{std::get<6>(components)}, attack{std::get<7>(components)}
 {
 }
 
@@ -31,6 +33,7 @@ UnitComponentRefs::UnitComponentRefs(Ref<StateManager> stateMan, uint32_t entity
                                                 CompPlayer,
                                                 CompTransform,
                                                 CompUnit,
-                                                CompVision>(entityID))
+                                                CompVision,
+                                                CompAttack>(entityID))
 {
 }

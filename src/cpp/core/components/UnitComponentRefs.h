@@ -16,6 +16,7 @@ class CompPlayer;
 class CompTransform;
 class CompUnit;
 class CompVision;
+class CompAttack;
 
 class UnitComponentRefs
 {
@@ -27,6 +28,7 @@ class UnitComponentRefs
     CompTransform& transform;
     CompUnit& unit;
     CompVision& vision;
+    CompAttack& attack;
 
     UnitComponentRefs(Ref<StateManager> stateMan, uint32_t entityID);
 
@@ -37,7 +39,8 @@ class UnitComponentRefs
                                  CompPlayer&,
                                  CompTransform&,
                                  CompUnit&,
-                                 CompVision&> components);
+                                 CompVision&,
+                                 CompAttack&> components);
 };
 } // namespace core
 

@@ -325,7 +325,7 @@ TEST_F(EntityModelLoaderTest, CreateUnit)
         EXPECT_EQ(attack.attackPerClass[(int) ArmorClass::INFANTRY], 0);
         EXPECT_EQ(attack.attackPerClass[(int) ArmorClass::MELEE], 10);
         EXPECT_EQ(attack.attackPerClass[(int) ArmorClass::PIERCE], 5);
-        EXPECT_FLOAT_EQ(attack.attackMultiplierPerClass[(int) ArmorClass::INFANTRY], 0);
+        EXPECT_FLOAT_EQ(attack.attackMultiplierPerClass[(int) ArmorClass::INFANTRY], 1);
         EXPECT_FLOAT_EQ(attack.attackMultiplierPerClass[(int) ArmorClass::MELEE], 1.5);
         EXPECT_FLOAT_EQ(attack.attackMultiplierPerClass[(int) ArmorClass::PIERCE], 0.5);
 

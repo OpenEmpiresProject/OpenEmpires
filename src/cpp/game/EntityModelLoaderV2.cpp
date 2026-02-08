@@ -1022,7 +1022,7 @@ std::vector<float> getMultiplierPerClass(const std::any& value)
     auto pyObj = std::any_cast<py::object>(value);
     auto valuesPerClass = pyObj.cast<std::map<int, float>>();
 
-    std::vector<float> values((int) ArmorClass::MAX_CLASS, 0);
+    std::vector<float> values((int) ArmorClass::MAX_CLASS, 1);
 
     for (auto [cls, val] : valuesPerClass)
     {

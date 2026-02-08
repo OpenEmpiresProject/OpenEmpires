@@ -42,7 +42,7 @@ template <typename T> class Property
     }
 
     template <typename U = T>
-    requires HasSubscript<U>
+        requires HasSubscript<U>
     decltype(auto) operator[](size_t index) const
     {
         if (m_isSet)
