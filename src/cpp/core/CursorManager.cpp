@@ -1,8 +1,10 @@
 #include "CursorManager.h"
 
+#include "components/CompBuilder.h"
 #include "components/CompCursor.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
+#include "components/CompPlayer.h"
 #include "components/CompTransform.h"
 
 using namespace core;
@@ -91,11 +93,24 @@ void CursorManager::onTick(const Event& e)
             auto queryResult = m_stateMan->whatIsAt(m_currentCursorPosition);
             if (queryResult.entity != entt::null)
             {
-                // TODO: Check whether at least 1 villager present
-                setCursor(CursorType::ASSIGN_TASK);
-                return;
+                auto inputBasedPlayer = m_inputPlayerController->getPlayer();
+                auto targetPlayer = m_stateMan->tryGetComponent<CompPlayer>(queryResult.entity);
+                if (targetPlayer and (not inputBasedPlayer->isSame(targetPlayer->player)) and
+                    (not inputBasedPlayer->isAlly(targetPlayer->player)))
+                {
+                    setCursor(CursorType::ATTACK);
+                    return;
+                }
+
+                for (auto entity : m_currentEntitySelectionData.selection.selectedEntities)
+                {
+                    if (m_stateMan->hasComponent<CompBuilder>(entity))
+                    {
+                        setCursor(CursorType::ASSIGN_TASK);
+                        return;
+                    }
+                }
             }
-            // TODO: Military tasks
         }
         setCursor(CursorType::DEFAULT_INGAME);
     }

@@ -27,7 +27,7 @@ class CompTransform
   public:
     Feet position{0, 0}; // Position in feet
     int rotation = 0;    // Rotation in degrees from feet North (0 degrees is up)
-    int goalRadiusSquared = 150 ^ 2;
+    int goalRadiusSquared = 150 * 150;
     int goalRadius = 150;
     int selectionBoxWidth = 15;
     int selectionBoxHeight = 30;

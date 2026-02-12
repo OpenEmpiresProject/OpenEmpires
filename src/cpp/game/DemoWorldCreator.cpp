@@ -75,6 +75,7 @@ void DemoWorldCreator::create()
     auto players = createPlayers();
     createVillager(players[0], Tile(20, 20));
     createVillager(players[1], Tile(25, 25));
+    createMilitia(players[0], Tile(20, 25));
     registerVillagerActions();
     createHUD();
 
@@ -138,6 +139,29 @@ void DemoWorldCreator::createVillager(Ref<core::Player> player, const Tile& tile
             villager);
 
     transform.position = Feet(tilePos.x * 256 + 128, tilePos.x * 256 + 50);
+    transform.face(Direction::SOUTH);
+    selectible.selectionIndicator = {GraphicAddon::Type::ISO_CIRCLE,
+                                     GraphicAddon::IsoCircle{10, Vec2(0, 0)}};
+    playerComp.player = player;
+
+    auto newTile = transform.position.toTile();
+    stateMan->gameMap().addEntity(MapLayerType::UNITS, newTile, villager);
+
+    player->getFogOfWar()->markAsExplored(transform.position, vision.lineOfSight);
+}
+
+void DemoWorldCreator::createMilitia(core::Ref<core::Player> player, const core::Tile& pos)
+{
+    auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
+    auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
+    auto typeReg = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
+
+    auto villager = factory->createEntity(typeReg->getEntityType("militia"));
+    auto [transform, unit, selectible, playerComp, vision] =
+        stateMan->getComponents<CompTransform, CompUnit, CompSelectible, CompPlayer, CompVision>(
+            villager);
+
+    transform.position = pos.toFeet();
     transform.face(Direction::SOUTH);
     selectible.selectionIndicator = {GraphicAddon::Type::ISO_CIRCLE,
                                      GraphicAddon::IsoCircle{10, Vec2(0, 0)}};
@@ -536,6 +560,12 @@ std::vector<Ref<Player>> DemoWorldCreator::createPlayers()
     auto player2 = playerManager->createPlayer();
     auto playercontroller = ServiceRegistry::getInstance().getService<PlayerController>();
     playercontroller->setPlayer(player);
+
+    player->setAllegiance(player2, Allegiance::ENEMY);
+    player2->setAllegiance(player, Allegiance::ENEMY);
+
+    player->setHousingCapacity(10);
+    player2->setHousingCapacity(10);
 
     return {player, player2};
 }

@@ -468,6 +468,14 @@ void EntityModelLoaderV2::postProcessing()
                     }
                 }
                 PropertyInitializer::set(selectible->boundingBoxes, boundixBoxes);
+
+                typeRegistry->registerHUDDisplayName(id.entityType,
+                                                     selectible->displayName.value());
+                GraphicsID icon;
+                icon.entityType = id.entityType;
+                icon.isIcon = true;
+                // TODO - Should avoid creating GraphicsIDs manually like this
+                typeRegistry->registerHUDIcon(id.entityType, icon);
             }
 
             if (auto resource = std::get_if<CompResource>(&componentVar))
@@ -952,6 +960,7 @@ UnitAction getAction(const std::string actionname)
         {"carry_gold", UnitAction::CARRYING_GOLD},
         {"carry_stone", UnitAction::CARRYING_STONE},
         {"build", UnitAction::BUILDING},
+        {"attack", UnitAction::ATTACK},
     };
 
     return actions.at(actionname);

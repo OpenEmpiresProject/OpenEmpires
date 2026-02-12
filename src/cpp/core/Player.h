@@ -26,6 +26,12 @@ class Player
     {
         return m_id != INVALID_ID;
     }
+
+    bool isSame(Ref<Player> other) const
+    {
+        return other && other->getId() == m_id;
+    }
+
     void grantResource(uint8_t resourceType, uint32_t amount);
     bool spendResource(uint8_t resourceType, uint32_t amount);
     uint32_t getResourceAmount(uint8_t resourceType) const;
@@ -38,6 +44,11 @@ class Player
     uint32_t getVacantHousingCapacity() const
     {
         return std::max((int) m_housingCapacity - (int) m_currentPopulation, 0);
+    }
+
+    void setHousingCapacity(uint32_t capacity)
+    {
+        m_housingCapacity = capacity;
     }
 
     uint32_t getHousingCapacity() const
@@ -70,6 +81,28 @@ class Player
         return m_myBuildings.contains(buildingId);
     }
 
+    Allegiance getAllegiance(Ref<Player> otherPlayer) const
+    {
+        debug_assert(otherPlayer->isValid(), "Invalid player to get allegiance with");
+        debug_assert(otherPlayer->getId() < Constants::MAX_PLAYERS,
+                     "Invalid player ID to get allegiance with");
+        return allegianceToPlayers[otherPlayer->getId()];
+    }
+
+    bool isAlly(Ref<Player> otherPlayer) const
+    {
+        return getAllegiance(std::move(otherPlayer)) == Allegiance::ALLY;
+    }
+
+    void setAllegiance(Ref<Player> otherPlayer, Allegiance allegiance)
+    {
+        debug_assert(otherPlayer->isValid(), "Invalid player to update allegiance with");
+        debug_assert(otherPlayer->getId() < Constants::MAX_PLAYERS,
+                     "Invalid player ID to update allegiance with");
+
+        allegianceToPlayers[otherPlayer->getId()] = allegiance;
+    }
+
   private:
     static constexpr uint8_t INVALID_ID = std::numeric_limits<uint8_t>::max();
 
@@ -82,6 +115,7 @@ class Player
     LazyServiceRef<StateManager> m_stateMan;
     uint32_t m_housingCapacity = 0;
     uint32_t m_currentPopulation = 0;
+    std::array<Allegiance, Constants::MAX_PLAYERS> allegianceToPlayers; // By player id
 };
 
 } // namespace core

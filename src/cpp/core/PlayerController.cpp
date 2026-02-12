@@ -5,6 +5,7 @@
 #include "PlayerFactory.h"
 #include "ServiceRegistry.h"
 #include "StateManager.h"
+#include "commands/CmdAttack.h"
 #include "commands/CmdBuild.h"
 #include "commands/CmdGarrison.h"
 #include "commands/CmdGatherResource.h"
@@ -52,7 +53,10 @@ void PlayerController::resolveAction(const Vec2& screenPos)
     auto layer = result.layer;
     bool gatherable = m_stateMan->hasComponent<CompResource>(target);
     bool construction = m_stateMan->hasComponent<CompBuilding>(target);
+    auto targetOwner = m_stateMan->tryGetComponent<CompPlayer>(target);
     bool isGarrisonInProgress = m_garrisonOperationInProgress;
+    bool canAttack = targetOwner and (not m_player->isSame(targetOwner->player)) and
+                     (not m_player->isAlly(targetOwner->player));
 
     for (auto entity : m_currentEntitySelection.selection.selectedEntities)
     {
@@ -81,15 +85,22 @@ void PlayerController::resolveAction(const Vec2& screenPos)
 
             publishEvent(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, entity});
         }
-        else if (isGarrisonInProgress && construction)
+        else if (isGarrisonInProgress and construction and m_player->isOwned(target))
         {
             // TODO: Original game allows to use both right and left clicks for garrison. Here we
             // use only the right click
             tryCompleteGarrison(entity, target);
         }
-        else if (construction)
+        else if (construction and m_player->isOwned(target))
         {
             auto cmd = ObjectPool<CmdBuild>::acquire();
+            cmd->target = target;
+
+            publishEvent(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, entity});
+        }
+        else if (canAttack)
+        {
+            auto cmd = ObjectPool<CmdAttack>::acquire();
             cmd->target = target;
 
             publishEvent(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, entity});

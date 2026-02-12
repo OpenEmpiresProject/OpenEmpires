@@ -40,9 +40,10 @@ all_units: List[Unit] = [
         gather_speed=10,
         resource_capacity=100,
         housing_need=1,
+        attack_rate=2,
         attack={ArmorClass.MELEE: 10},
         attack_multiplier={},
-        armor={},
+        armor={ArmorClass.MELEE: 5},
         health=100,
         buildables=[Shortcut(name="mill", shortcut="m"),
                     Shortcut(name="wood_camp", shortcut="l"),
@@ -78,6 +79,7 @@ all_units: List[Unit] = [
         moving_speed=256,
         housing_need=1,
         damage_resistance=0.1,
+        attack_rate=2,
         attack={ArmorClass.MELEE: 10, ArmorClass.PIERCE: 5},
         attack_multiplier={},
         armor={ArmorClass.MELEE: 20},
@@ -91,6 +93,7 @@ all_units: List[Unit] = [
         animations=[
             Animation(name="idle", frame_count=6, speed=15, drs_file="graphics.drs", slp_id=993),
             Animation(name="move", frame_count=12, speed=15, drs_file="graphics.drs", slp_id=997),
+            Animation(name="attack", frame_count=10, speed=15, drs_file="graphics.drs", slp_id=987),
         ]
     ),
 ]

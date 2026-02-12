@@ -14,6 +14,7 @@
 #include "components/CompGraphics.h"
 #include "components/CompPlayer.h"
 #include "components/CompResource.h"
+#include "components/CompSelectible.h"
 #include "components/CompTransform.h"
 #include "components/CompUnit.h"
 #include "debug.h"
@@ -60,8 +61,13 @@ void CmdMove::onQueue()
         targetPos =
             findClosestEdgeOfStaticEntity(targetEntity, m_components->transform.position, rect);
     }
+    else if (targetEntity != entt::null)
+    {
+        auto& targetTransform = m_stateMan->getComponent<CompTransform>(targetEntity);
+        targetPos = targetTransform.position;
+    }
 
-    if (targetPos.isNull() == false)
+    if (not targetPos.isNull())
     {
         m_path = findPath(targetPos);
         refinePath();
@@ -85,6 +91,10 @@ void CmdMove::onQueue()
             StateManager::markDirty(tileEntity);
         }
 #endif
+    }
+    else
+    {
+        spdlog::error("Target entity {}'s position could not be determined", targetEntity);
     }
 }
 
@@ -693,6 +703,14 @@ bool CmdMove::overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& b
     return (dx * dx + dy * dy) <= radiusSq;
 }
 
+bool CmdMove::overlaps(const Feet& unitPos, float radiusSq, const Feet& targetPos) const
+{
+    const float dx = unitPos.x - targetPos.x;
+    const float dy = unitPos.y - targetPos.y;
+
+    return (dx * dx + dy * dy) <= radiusSq;
+}
+
 /**
  * @brief Checks if the target is close enough to the unit.
  *
@@ -728,6 +746,15 @@ bool CmdMove::isTargetCloseEnough() const
             auto unitRadiusSq = m_components->transform.goalRadiusSquared;
 
             return overlaps(unitPos, unitRadiusSq, rect);
+        }
+        else if (m_stateMan->hasComponent<CompSelectible>(targetEntity))
+        {
+            auto& targetTransform = m_stateMan->getComponent<CompTransform>(targetEntity);
+
+            auto unitPos = m_components->transform.position;
+            auto unitRadiusSq = m_components->transform.goalRadiusSquared;
+
+            return overlaps(unitPos, unitRadiusSq, targetTransform.position);
         }
         debug_assert(false, "Unknown entity type for target {}", targetEntity);
         return true;

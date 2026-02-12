@@ -10,6 +10,7 @@ all_models = [
         housing_need=1,
         health=100,
         damage_resistance=0.1,
+        attack_rate=2,
         attack={ArmorClass.MELEE: 10, ArmorClass.PIERCE: 5},
         attack_multiplier={ArmorClass.MELEE: 1.5, ArmorClass.PIERCE: 0.5},
         armor={ArmorClass.MELEE: 20, ArmorClass.PIERCE: 25},

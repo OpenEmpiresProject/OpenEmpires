@@ -322,6 +322,7 @@ TEST_F(EntityModelLoaderTest, CreateUnit)
 
         EXPECT_EQ(transform.hasRotation.value(), true);
 
+        EXPECT_EQ(attack.attackRate, 2);
         EXPECT_EQ(attack.attackPerClass[(int) ArmorClass::INFANTRY], 0);
         EXPECT_EQ(attack.attackPerClass[(int) ArmorClass::MELEE], 10);
         EXPECT_EQ(attack.attackPerClass[(int) ArmorClass::PIERCE], 5);

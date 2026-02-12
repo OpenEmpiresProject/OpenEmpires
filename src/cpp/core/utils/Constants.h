@@ -33,6 +33,8 @@ class Constants
 
     static const int ABSOLUTE_MAX_UNIT_QUEUE_SIZE = 20;
     static const int ABSOLUTE_MAX_UNIT_GARRISON_SIZE = 20;
+
+    static const int MAX_PLAYERS = 20;
 };
 } // namespace core
 

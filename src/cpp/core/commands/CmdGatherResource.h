@@ -1,5 +1,5 @@
-#ifndef CMDATTACK_H
-#define CMDATTACK_H
+#ifndef CMD_GATHER_RESOURCE_H
+#define CMD_GATHER_RESOURCE_H
 
 #include "Coordinates.h"
 #include "Feet.h"

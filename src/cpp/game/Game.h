@@ -132,35 +132,29 @@ class Game
         auto cursorEntityType = entityTypeRegistry->getEntityType("cursor");
         core::GraphicsID defaultIcon;
         defaultIcon.entityType = cursorEntityType;
-        /*defaultIcon.entityType = game::EntityTypes::ET_UI_ELEMENT;
-        defaultIcon.uiElementType = (int) game::UIElementTypes::CURSOR;*/
         defaultIcon.variation = 0;
 
         core::GraphicsID buildIcon;
         defaultIcon.entityType = cursorEntityType;
-
-        //         buildIcon.entityType = game::EntityTypes::ET_UI_ELEMENT;
-        //         buildIcon.uiElementType = (int) game::UIElementTypes::CURSOR;
         buildIcon.variation = 7;
 
         core::GraphicsID assignTaskCursor;
         assignTaskCursor.entityType = cursorEntityType;
-
-        //         assignTaskCursor.entityType = game::EntityTypes::ET_UI_ELEMENT;
-        //         assignTaskCursor.uiElementType = (int) game::UIElementTypes::CURSOR;
         assignTaskCursor.variation = 3;
 
         core::GraphicsID garrisonCursor;
         garrisonCursor.entityType = cursorEntityType;
-        //
-        //         garrisonCursor.entityType = game::EntityTypes::ET_UI_ELEMENT;
-        //         garrisonCursor.uiElementType = (int) game::UIElementTypes::CURSOR;
         garrisonCursor.variation = 13;
+
+        core::GraphicsID attackCursor;
+        attackCursor.entityType = cursorEntityType;
+        attackCursor.variation = 4;
 
         entityTypeRegistry->registerCursorGraphic(core::CursorType::DEFAULT_INGAME, defaultIcon);
         entityTypeRegistry->registerCursorGraphic(core::CursorType::BUILD, buildIcon);
         entityTypeRegistry->registerCursorGraphic(core::CursorType::ASSIGN_TASK, assignTaskCursor);
         entityTypeRegistry->registerCursorGraphic(core::CursorType::GARRISON, garrisonCursor);
+        entityTypeRegistry->registerCursorGraphic(core::CursorType::ATTACK, attackCursor);
 
         auto cursorManager = std::make_shared<core::CursorManager>();
         core::ServiceRegistry::getInstance().registerService(cursorManager);

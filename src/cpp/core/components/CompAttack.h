@@ -12,6 +12,7 @@ class CompAttack
   public:
     Property<std::vector<int>> attackPerClass;
     Property<std::vector<float>> attackMultiplierPerClass;
+    Property<int> attackRate;
 };
 
 } // namespace core

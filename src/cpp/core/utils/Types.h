@@ -87,6 +87,7 @@ enum UnitAction
     CARRYING_LUMBER = 5,
     CARRYING_GOLD = 6,
     CARRYING_STONE = 7,
+    ATTACK = 8
 };
 
 enum class UnitType
@@ -252,6 +253,13 @@ enum class LineOfSightShape
     ROUNDED_SQUARE,
 
     UNKNOWN
+};
+
+enum class Allegiance
+{
+    NEUTRAL = 0,
+    ALLY,
+    ENEMY
 };
 
 template <typename T> constexpr int toInt(const T& t) noexcept

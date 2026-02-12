@@ -61,6 +61,7 @@ class CmdMove : public Command
                                        const Feet& fromPos,
                                        const Rect<float>& land) const;
     bool overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& buildingRect) const;
+    bool overlaps(const Feet& unitPos, float radiusSq, const Feet& targetPos) const;
     bool isTargetCloseEnough() const;
 };
 } // namespace core

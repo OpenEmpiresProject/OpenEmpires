@@ -190,6 +190,7 @@ class ComponentModelMapper
             ModelPropertyMapping<&core::CompArmor::armorPerClassMap>                ("Armor", "armor"),
             ModelPropertyMapping<&core::CompArmor::damageResistance>                ("Armor", "damage_resistance"),
             ModelPropertyMapping<&core::CompArmor::baseArmor>                       ("Armor", "base_armor"),
+            ModelPropertyMapping<&core::CompAttack::attackRate>                     ("Attack", "attack_rate"),
             ModelPropertyMapping<&core::CompAttack::attackPerClass>                 ("Attack", "attack", getAttackOrArmorPerClass),
             ModelPropertyMapping<&core::CompAttack::attackMultiplierPerClass>       ("Attack", "attack_multiplier", getMultiplierPerClass),
             ModelPropertyMapping<&core::CompHealth::maxHealth>                      ("Health", "health"),

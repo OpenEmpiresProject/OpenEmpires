@@ -130,6 +130,30 @@ StateManager::TileMapQueryResult StateManager::whatIsAt(const Vec2& screenPos)
                     }
                 }
             }
+            else if (m_gameMap.isOccupied(MapLayerType::UNITS, pos))
+            {
+                auto& entities = m_gameMap.getEntities(MapLayerType::UNITS, pos);
+
+                for (auto entity : entities)
+                {
+                    if (hasComponent<CompSelectible>(entity))
+                    {
+                        auto [select, transform] =
+                            getComponents<CompSelectible, CompTransform>(entity);
+                        auto entityScreenPos = m_coordinates->feetToScreenUnits(transform.position);
+
+                        const auto& boundingBox = select.getBoundingBox(transform.getDirection());
+                        auto screenRect = Rect<int>(entityScreenPos.x - boundingBox.x,
+                                                    entityScreenPos.y - boundingBox.y,
+                                                    boundingBox.w, boundingBox.h);
+
+                        if (screenRect.contains(screenPos))
+                        {
+                            return {.entity = entity, .layer = MapLayerType::UNITS};
+                        }
+                    }
+                }
+            }
         }
     }
     return result;

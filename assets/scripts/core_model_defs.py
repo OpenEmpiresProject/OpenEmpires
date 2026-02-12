@@ -49,6 +49,7 @@ class Health:
 class Attack:
     attack: Dict[int, int] # Per class
     attack_multiplier: Dict[int, float] # Per class
+    attack_rate: int # Per second
 
 
 class Armor:
