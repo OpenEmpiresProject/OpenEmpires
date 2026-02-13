@@ -176,7 +176,7 @@ bool core::CmdGatherResource::isResourceAvailable() const
 bool core::CmdGatherResource::isCloseEnough() const
 {
     const auto& transformMy = m_components->transform;
-    auto threshold = transformMy.goalRadius + Constants::FEET_PER_TILE / 2;
+    auto threshold = transformMy.goalRadiusSquared;
     auto distanceSquared = transformMy.position.distanceSquared(m_targetPosition);
     return transformMy.position.distanceSquared(m_targetPosition) < (threshold * threshold);
 }

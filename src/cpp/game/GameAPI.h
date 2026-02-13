@@ -36,9 +36,13 @@ class GameAPI
     void quit();
     int getEntityType(const std::string& entityName);
     core::Ref<core::Player> getPrimaryPlayer();
+    core::Ref<core::Player> getPlayer(uint8_t id);
     uint32_t createVillager(core::Ref<core::Player>, const core::Feet& pos);
+    uint32_t createUnit(core::Ref<core::Player>, const core::Feet& pos, uint32_t entityType);
     std::list<uint32_t> getVillagers();
     void commandToMove(uint32_t unit, const core::Feet& target);
+    void commandToAttack(uint32_t unit, uint32_t target);
+
     void placeBuilding(
         uint32_t playerId,
         int buildingType,
@@ -57,6 +61,7 @@ class GameAPI
     uint32_t getPlayerResourceAmount(uint32_t playerId, uint8_t resourceType);
 
     void executeCustomSynchronizedAction(std::function<void()> func);
+    int getHealth(uint32_t entity);
 
   private:
     std::shared_ptr<Synchronizer> m_sync;

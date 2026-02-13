@@ -5,15 +5,10 @@
 
 #include <gtest/gtest.h>
 
-// Expose private members of CmdAttack for testing purposes only
-#define private public
 #include "commands/CmdAttack.h"
-#undef private
-
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
 #include "components/CompArmor.h"
-#include "components/CompAttack.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompPlayer.h"
 #include "components/CompTransform.h"
@@ -24,6 +19,14 @@ using game::ArmorClass;
 
 namespace core
 {
+class CmdAttackExposed : public CmdAttack
+{
+public:
+    float getDamage(const CompArmor& target) const
+    {
+        return CmdAttack::getDamage(target);
+    }
+};
 
 class CmdAttackTest : public ::testing::Test, public core::PropertyInitializer
 {
@@ -49,7 +52,7 @@ class CmdAttackTest : public ::testing::Test, public core::PropertyInitializer
         m_stateMan->addComponent<CompAttack>(m_entity, CompAttack());
 
         // Create CmdAttack instance and initialize so m_components points to entity components
-        m_cmd = std::make_unique<CmdAttack>();
+        m_cmd = std::make_unique<CmdAttackExposed>();
         m_cmd->setEntityID(m_entity);
         m_cmd->init();
     }
@@ -85,7 +88,7 @@ class CmdAttackTest : public ::testing::Test, public core::PropertyInitializer
 
     Ref<StateManager> m_stateMan;
     uint32_t m_entity = entt::null;
-    std::unique_ptr<CmdAttack> m_cmd;
+    std::unique_ptr<CmdAttackExposed> m_cmd;
 };
 
 // 1. attacker's class has matching armor class in target with value greater than zero

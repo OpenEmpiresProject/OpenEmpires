@@ -11,6 +11,7 @@
 #include "Renderer.h"
 #include "ServiceRegistry.h"
 #include "SubSystemRegistry.h"
+#include "commands/CmdAttack.h"
 #include "commands/CmdBuild.h"
 #include "commands/CmdIdle.h"
 #include "commands/CmdMove.h"
@@ -75,6 +76,14 @@ Ref<Player> GameAPI::getPrimaryPlayer()
     return controller->getPlayer();
 }
 
+core::Ref<core::Player> GameAPI::getPlayer(uint8_t id)
+{
+    ScopedSynchronizer sync(m_sync);
+
+    auto factory = ServiceRegistry::getInstance().getService<PlayerFactory>();
+    return factory->getPlayer(id);
+}
+
 uint32_t GameAPI::createVillager(Ref<core::Player> player, const Feet& pos)
 {
     ScopedSynchronizer sync(m_sync);
@@ -89,6 +98,33 @@ uint32_t GameAPI::createVillager(Ref<core::Player> player, const Feet& pos)
             villager);
 
     transform.position = Feet(tilePos.x * 256 + 128, tilePos.x * 256 + 50);
+    transform.face(Direction::SOUTH);
+    playerComp.player = player;
+
+    auto newTile = transform.position.toTile();
+    stateMan->gameMap().addEntity(MapLayerType::UNITS, newTile, villager);
+
+    player->getFogOfWar()->markAsExplored(transform.position, vision.lineOfSight);
+
+    return villager;
+}
+
+uint32_t GameAPI::createUnit(core::Ref<core::Player> player,
+                             const core::Feet& pos,
+                             uint32_t entityType)
+{
+    ScopedSynchronizer sync(m_sync);
+
+    auto tilePos = pos.toTile();
+    auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
+    auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
+
+    auto villager = factory->createEntity(entityType);
+    auto [transform, unit, selectible, playerComp, vision] =
+        stateMan->getComponents<CompTransform, CompUnit, CompSelectible, CompPlayer, CompVision>(
+            villager);
+
+    transform.position = pos;
     transform.face(Direction::SOUTH);
     playerComp.player = player;
 
@@ -122,6 +158,21 @@ void GameAPI::commandToMove(uint32_t unit, const Feet& target)
 
     auto cmd = ObjectPool<CmdMove>::acquire();
     cmd->targetPos = target;
+    Event event(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, unit});
+
+    eventPublisher->publish(event);
+}
+
+void GameAPI::commandToAttack(uint32_t unit, uint32_t target)
+{
+    ScopedSynchronizer sync(m_sync);
+
+    auto subSys = SubSystemRegistry::getInstance().getSubSystem("EventLoop");
+    auto eventLoop = static_pointer_cast<EventLoop>(subSys);
+    auto eventPublisher = static_pointer_cast<EventPublisher>(eventLoop);
+
+    auto cmd = ObjectPool<CmdAttack>::acquire();
+    cmd->target = target;
     Event event(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, unit});
 
     eventPublisher->publish(event);
@@ -165,6 +216,9 @@ Feet GameAPI::getUnitPosition(uint32_t unit)
 
     auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     auto& transform = stateMan->getComponent<CompTransform>(unit);
+
+    spdlog::debug("Queried position of unit {}: ({}, {})", unit, transform.position.x,
+                  transform.position.y);
     return transform.position;
 }
 
@@ -264,4 +318,12 @@ int GameAPI::getEntityType(const std::string& entityName)
 
     auto typeReg = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
     return typeReg->getEntityType(entityName);
+}
+
+int GameAPI::getHealth(uint32_t entity)
+{
+    ScopedSynchronizer sync(m_sync);
+    auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
+    auto healthComp = stateMan->tryGetComponent<CompHealth>(entity);
+    return healthComp ? healthComp->health : -1;
 }

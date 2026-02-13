@@ -62,7 +62,11 @@ endif
 # Run the integration tests (directly execute the test binary)
 integ-test: build
 	@echo "Running integration tests..."
+ifeq ($(strip $(FILTER)),)
 	$(BUILD_DIR)/bin/Debug/$(INTEG_TEST_EXEC)
+else
+	$(BUILD_DIR)/bin/Debug/$(INTEG_TEST_EXEC) --gtest_filter=$(FILTER)
+endif
 
 # Run the game (directly execute the game binary)
 run: build

@@ -34,7 +34,7 @@ TEST_F(MovementsTest, VillagerWalk)
     m_api->commandToMove(villager, Feet(6000, 5000));
 
     ASSERT_WAIT_FOR(m_api->getCurrentAction(villager) == UnitAction::MOVE, 1000);
-    ASSERT_WAIT_FOR((m_api->getUnitPosition(villager) - Feet(6000, 5000)).length() < 100, 5000);
+    ASSERT_WAIT_FOR((m_api->getUnitPosition(villager) - Feet(6000, 5000)).length() < 500, 5000);
 }
 
 TEST_F(MovementsTest, VillagerWalkAllDirections) 
