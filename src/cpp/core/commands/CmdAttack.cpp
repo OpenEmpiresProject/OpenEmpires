@@ -1,4 +1,5 @@
 #include "commands/CmdAttack.h"
+#include "ProximityChecker.h"
 
 void core::CmdAttack::onStart()
 {
@@ -88,12 +89,7 @@ bool core::CmdAttack::isCloseEnough()
 {
     debug_assert(target != entt::null, "Proposed entity to attack is null");
 
-    auto& targetTransform = m_stateMan->getComponent<CompTransform>(target);
-
-    auto unitPos = m_components->transform.position;
-    auto unitRadiusSq = m_components->transform.goalRadiusSquared;
-
-    return overlaps(unitPos, unitRadiusSq, targetTransform.position);
+    return ProximityChecker::isInProximity(m_components->transform, target, m_stateMan.getRef());
 }
 
 bool core::CmdAttack::isComplete()
@@ -130,12 +126,4 @@ float core::CmdAttack::getDamage(const CompArmor& target) const
     }
     totalDamage = std::max(1.0f, totalDamage * (1.0f - target.damageResistance.value()));
     return totalDamage;
-}
-
-bool core::CmdAttack::overlaps(const Feet& unitPos, float radiusSq, const Feet& targetPos)
-{
-    float dx = unitPos.x - targetPos.x;
-    float dy = unitPos.y - targetPos.y;
-
-    return (dx * dx + dy * dy) <= radiusSq;
 }

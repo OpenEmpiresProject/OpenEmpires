@@ -88,7 +88,7 @@ class Tree(NaturalResource, _Constructible):
     shadow: NaturalResourceAdditionalPart
 
 
-class Building(Vision, Model, Selectable, Health):
+class Building(Vision, Model, Selectable, Health, Armor):
     line_of_sight_shape: LineOfSightShape = LineOfSightShape.ROUNDED_SQUARE
     size: str
     construction_site: str  # Construction site name

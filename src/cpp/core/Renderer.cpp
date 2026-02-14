@@ -744,14 +744,15 @@ void RendererImpl::renderGraphicAddons(const Vec2& screenPos, CompRendering* rc)
         break;
         case GraphicAddon::Type::HEALTH_BAR:
         {
-            // For health bar, we want to maintain a constant height regardless of the source rect
-            // height. So we adjust the screen position by moving it up by the difference between
-            // the source rect height.
-            // We do this since different frames have different anchors, so if we just rely on the
-            // anchor, the health bar will move up and down as the animation plays which looks bad.
+            // For health bar, we want to maintain a constant position for a given action. For
+            // instance, when villager building, texture width and anchor changes across frames.
+            // Another example is when a unit is walking, the anchor goes up and down across frames.
+            // Therefore, we first negate the anchor to get the top left position of the texture
+            // and then calculate the screen position using given alignment.
             //
             Vec2 screenPosWithConstantHeight =
-                screenPos - Vec2(0, rc->constantHeight - rc->anchor.y);
+                screenPos - Vec2(rc->srcRect.w/2 - rc->anchor.x, rc->constantHeight - rc->anchor.y);
+            
             SDL_FRect dstRect = {screenPosWithConstantHeight.x, screenPosWithConstantHeight.y,
                                  rc->srcRect.w, rc->constantHeight};
             auto alignedScreenPos = convertAlignmentToPosition(addon.alignment, dstRect);

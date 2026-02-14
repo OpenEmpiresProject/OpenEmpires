@@ -34,7 +34,6 @@ class CmdAttack : public Command
     bool isCloseEnough();
     bool isComplete();
     void moveCloser(std::list<Command*>& newCommands);
-    static bool overlaps(const Feet& unitPos, float radiusSq, const Feet& targetPos);
 
   private:
     int timeSinceLastAttackMs = 0;
