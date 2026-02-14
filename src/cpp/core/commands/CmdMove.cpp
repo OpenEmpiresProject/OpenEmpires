@@ -4,6 +4,7 @@
 #include "EventPublisher.h"
 #include "PathFinderBase.h"
 #include "Player.h"
+#include "ProximityChecker.h"
 #include "Rect.h"
 #include "ServiceRegistry.h"
 #include "Settings.h"
@@ -726,43 +727,12 @@ bool CmdMove::isTargetCloseEnough() const
 {
     if (targetEntity != entt::null)
     {
-        if (m_stateMan->hasComponent<CompBuilding>(targetEntity))
-        {
-            auto& building = m_stateMan->getComponent<CompBuilding>(targetEntity);
-            auto rect = building.getLandInFeetRect();
-
-            auto unitPos = m_components->transform.position;
-            auto unitRadiusSq = m_components->transform.goalRadiusSquared;
-
-            return overlaps(unitPos, unitRadiusSq, rect);
-        }
-        else if (m_stateMan->hasComponent<CompResource>(targetEntity))
-        {
-            auto [transform, resource] =
-                m_stateMan->getComponents<CompTransform, CompResource>(targetEntity);
-            auto rect = resource.getLandInFeetRect(transform.position);
-
-            auto unitPos = m_components->transform.position;
-            auto unitRadiusSq = m_components->transform.goalRadiusSquared;
-
-            return overlaps(unitPos, unitRadiusSq, rect);
-        }
-        else if (m_stateMan->hasComponent<CompSelectible>(targetEntity))
-        {
-            auto& targetTransform = m_stateMan->getComponent<CompTransform>(targetEntity);
-
-            auto unitPos = m_components->transform.position;
-            auto unitRadiusSq = m_components->transform.goalRadiusSquared;
-
-            return overlaps(unitPos, unitRadiusSq, targetTransform.position);
-        }
-        debug_assert(false, "Unknown entity type for target {}", targetEntity);
-        return true;
+        return ProximityChecker::isInProximity(m_components->transform, targetEntity,
+                                               m_stateMan.getRef());
     }
     else
     {
-        return m_components->transform.position.distanceSquared(targetPos) <
-               m_components->transform.goalRadiusSquared;
+        return ProximityChecker::isInProximity(m_components->transform, targetPos);
     }
 }
 

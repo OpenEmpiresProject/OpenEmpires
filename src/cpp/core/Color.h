@@ -20,12 +20,12 @@ struct Color
     {
     }
 
-    bool operator==(const Color& other) const
+    constexpr bool operator==(const Color& other) const
     {
         return r == other.r && g == other.g && b == other.b && a == other.a;
     }
 
-    bool operator!=(const Color& other) const
+    constexpr bool operator!=(const Color& other) const
     {
         return !(*this == other);
     }
@@ -36,8 +36,8 @@ struct Color
     static const Color PURPLE;
     static const Color YELLOW;
     static const Color NONE;
-    static const Color BLACK;
     static const Color WHITE;
+    static const Color BLACK;
     static const Color GREY;
 };
 } // namespace core

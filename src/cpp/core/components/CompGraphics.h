@@ -26,24 +26,11 @@ struct DebugOverlay
         ARROW,
     };
 
-    enum class FixedPosition : uint8_t
-    {
-        TOP_LEFT,
-        TOP_CENTER,
-        TOP_RIGHT,
-        CENTER_LEFT,
-        CENTER,
-        CENTER_RIGHT,
-        BOTTOM_LEFT,
-        BOTTOM_CENTER,
-        BOTTOM_RIGHT
-    };
-
     Type type = Type::CIRCLE;
     Color color = Color::RED;
-    FixedPosition anchor = FixedPosition::CENTER;
-    FixedPosition customPos1;
-    FixedPosition customPos2;
+    Alignment anchor = Alignment::CENTER;
+    Alignment customPos1;
+    Alignment customPos2;
     Vec2 arrowEnd;
     Feet absolutePosition = Feet::null; // Doesn't honour anchor
     Feet rhombusCorners[4];
@@ -69,6 +56,7 @@ class CompGraphics : public GraphicsID
 {
   public:
     Property<GraphicLayer> layer = GraphicLayer::NONE;
+    Property<int> constantHeight;
 
   public:
     uint32_t entityID = entt::null;

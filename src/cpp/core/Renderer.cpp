@@ -170,7 +170,7 @@ class RendererImpl
     void generateTicks();
     void onTick();
     void handleViewportMovement();
-    Vec2 getDebugOverlayPosition(DebugOverlay::FixedPosition anchor, const SDL_FRect& rect);
+    Vec2 convertAlignmentToPosition(Alignment anchor, const SDL_FRect& rect);
     void renderCirlceInIsometric(SDL_Renderer* renderer,
                                  Sint16 cx,
                                  Sint16 cy,
@@ -667,19 +667,22 @@ void RendererImpl::renderGameEntities()
 
     for (auto& rc : objectsToRender)
     {
-        Vec2 screenPos = rc->positionInScreenUnits - rc->anchor;
+        Vec2 screenpos = rc->positionInScreenUnits;
+        Vec2 anchorAdjustedScreenPos = rc->positionInScreenUnits - rc->anchor;
 
         if (rc->positionInFeet.isNull() == false)
         {
-            screenPos = m_coordinates.feetToScreenUnits(rc->positionInFeet) - rc->anchor;
+            screenpos = m_coordinates.feetToScreenUnits(rc->positionInFeet);
+            anchorAdjustedScreenPos = screenpos - rc->anchor;
 
             if (m_showFogOfWar && fogOfWar.isExplored(rc->positionInFeet.toTile()) == false)
                 continue;
         }
 
-        SDL_FRect dstRect = {screenPos.x, screenPos.y, rc->srcRect.w, rc->srcRect.h};
+        SDL_FRect dstRect = {anchorAdjustedScreenPos.x, anchorAdjustedScreenPos.y, rc->srcRect.w,
+                             rc->srcRect.h};
 
-        renderGraphicAddons(screenPos, rc);
+        renderGraphicAddons(anchorAdjustedScreenPos, rc);
         renderTexture(dstRect, rc);
         renderDebugOverlays(dstRect, rc);
     }
@@ -739,6 +742,45 @@ void RendererImpl::renderGraphicAddons(const Vec2& screenPos, CompRendering* rc)
             renderText(screenPos + rc->anchor, textAddon.text, textAddon.color);
         }
         break;
+        case GraphicAddon::Type::HEALTH_BAR:
+        {
+            // For health bar, we want to maintain a constant height regardless of the source rect
+            // height. So we adjust the screen position by moving it up by the difference between
+            // the source rect height.
+            // We do this since different frames have different anchors, so if we just rely on the
+            // anchor, the health bar will move up and down as the animation plays which looks bad.
+            //
+            Vec2 screenPosWithConstantHeight =
+                screenPos - Vec2(0, rc->constantHeight - rc->anchor.y);
+            SDL_FRect dstRect = {screenPosWithConstantHeight.x, screenPosWithConstantHeight.y,
+                                 rc->srcRect.w, rc->constantHeight};
+            auto alignedScreenPos = convertAlignmentToPosition(addon.alignment, dstRect);
+
+            // TODO: Support colors if required
+            // TODO: Might need changes to the offset dynamically depending on the resolution
+            constexpr int barWidth = 25;
+            constexpr int barHeight = 4;
+            const Color missingHealthColor = Color::RED;
+            const Color remainingHealth = Color::GREEN;
+            SDL_FRect barRect = {alignedScreenPos.x - barWidth / 2 - addon.horizontalOffset,
+                                 alignedScreenPos.y - barHeight / 2 - addon.verticalOffset,
+                                 barWidth, barHeight};
+            SDL_Color colorBefore;
+            SDL_GetRenderDrawColor(m_renderer, &colorBefore.r, &colorBefore.g, &colorBefore.b,
+                                   &colorBefore.a);
+
+            SDL_SetRenderDrawColor(m_renderer, missingHealthColor.r, missingHealthColor.g,
+                                   missingHealthColor.b, missingHealthColor.a);
+            SDL_RenderFillRect(m_renderer, &barRect);
+            const auto& healthBar = addon.getData<GraphicAddon::HealthBar>();
+            barRect.w *= healthBar.percentage; // scale width by health percentage
+            SDL_SetRenderDrawColor(m_renderer, remainingHealth.r, remainingHealth.g,
+                                   remainingHealth.b, remainingHealth.a);
+            SDL_RenderFillRect(m_renderer, &barRect);
+
+            SDL_SetRenderDrawColor(m_renderer, colorBefore.r, colorBefore.g, colorBefore.b,
+                                   colorBefore.a);
+        }
         default:
             break;
         }
@@ -782,7 +824,7 @@ void RendererImpl::renderDebugOverlays(const SDL_FRect& dstRect, CompRendering* 
     {
         for (auto& overlay : rc->debugOverlays)
         {
-            auto pos = getDebugOverlayPosition(overlay.anchor, dstRect);
+            auto pos = convertAlignmentToPosition(overlay.anchor, dstRect);
 
             switch (overlay.type)
             {
@@ -829,8 +871,8 @@ void RendererImpl::renderDebugOverlays(const SDL_FRect& dstRect, CompRendering* 
 
             case DebugOverlay::Type::RHOMBUS:
             {
-                auto end1 = getDebugOverlayPosition(overlay.customPos1, dstRect);
-                auto end2 = getDebugOverlayPosition(overlay.customPos2, dstRect);
+                auto end1 = convertAlignmentToPosition(overlay.customPos1, dstRect);
+                auto end2 = convertAlignmentToPosition(overlay.customPos2, dstRect);
 
                 // Lifting the lines by a single pixel to avoid the next tile overriding
                 // these
@@ -964,41 +1006,40 @@ void RendererImpl::handleViewportMovement()
     }
 }
 
-Vec2 RendererImpl::getDebugOverlayPosition(DebugOverlay::FixedPosition anchor,
-                                           const SDL_FRect& rect)
+Vec2 RendererImpl::convertAlignmentToPosition(Alignment alignment, const SDL_FRect& rect)
 {
     float x = rect.x;
     float y = rect.y;
     float w = rect.w;
     float h = rect.h;
 
-    switch (anchor)
+    switch (alignment)
     {
-    case DebugOverlay::FixedPosition::TOP_LEFT:
+    case Alignment::TOP_LEFT:
         return {x, y};
         break;
-    case DebugOverlay::FixedPosition::TOP_CENTER:
+    case Alignment::TOP_CENTER:
         return {x + w / 2, y};
         break;
-    case DebugOverlay::FixedPosition::TOP_RIGHT:
+    case Alignment::TOP_RIGHT:
         return {x + w, y};
         break;
-    case DebugOverlay::FixedPosition::CENTER_LEFT:
+    case Alignment::CENTER_LEFT:
         return {x, y + h / 2};
         break;
-    case DebugOverlay::FixedPosition::CENTER:
+    case Alignment::CENTER:
         return {x + w / 2, y + h / 2};
         break;
-    case DebugOverlay::FixedPosition::CENTER_RIGHT:
+    case Alignment::CENTER_RIGHT:
         return {x + w, y + h / 2};
         break;
-    case DebugOverlay::FixedPosition::BOTTOM_LEFT:
+    case Alignment::BOTTOM_LEFT:
         return {x, y + h};
         break;
-    case DebugOverlay::FixedPosition::BOTTOM_CENTER:
+    case Alignment::BOTTOM_CENTER:
         return {x + w / 2, y + h};
         break;
-    case DebugOverlay::FixedPosition::BOTTOM_RIGHT:
+    case Alignment::BOTTOM_RIGHT:
         return {x + w, y + h};
         break;
     }

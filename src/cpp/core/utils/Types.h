@@ -262,6 +262,19 @@ enum class Allegiance
     ENEMY
 };
 
+enum class Alignment : uint8_t
+{
+    TOP_LEFT,
+    TOP_CENTER,
+    TOP_RIGHT,
+    CENTER_LEFT,
+    CENTER,
+    CENTER_RIGHT,
+    BOTTOM_LEFT,
+    BOTTOM_CENTER,
+    BOTTOM_RIGHT
+};
+
 template <typename T> constexpr int toInt(const T& t) noexcept
 {
     return static_cast<int>(t);

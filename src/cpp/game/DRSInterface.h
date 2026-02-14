@@ -16,6 +16,7 @@ class DRSInterface
     virtual core::Rect<int> getBoundingBox(const std::string& drsFilename,
                                            int slpId,
                                            int frameIndex = 0);
+    virtual core::Rect<int> getBoundingBox(core::Ref<drs::DRSFile>, int slpId, int frameIndex = 0);
 
   private:
     std::unordered_map<std::string, core::Ref<drs::DRSFile>> m_drsFilesByName;

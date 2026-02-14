@@ -11,6 +11,7 @@
 #include "components/CompCursor.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
+#include "components/CompHealth.h"
 #include "components/CompPlayer.h"
 #include "components/CompResource.h"
 #include "components/CompSelectible.h"
@@ -112,6 +113,15 @@ void GraphicsInstructor::updateGraphicComponents()
             {
                 // TODO: Respect other addons
                 gc.addons = {select.selectionIndicator};
+
+                if (auto healthComp = m_stateManager->tryGetComponent<CompHealth>(entity))
+                {
+                    auto healthPercentage = std::max(healthComp->health, 0.0f) /
+                                            std::max(healthComp->maxHealth.value(), 1u);
+                    gc.addons.push_back({GraphicAddon::Type::HEALTH_BAR,
+                                         GraphicAddon::HealthBar{healthPercentage},
+                                         Alignment::TOP_CENTER});
+                }
             }
             else
             {

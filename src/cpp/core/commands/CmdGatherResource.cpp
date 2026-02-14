@@ -1,5 +1,7 @@
 #include "CmdGatherResource.h"
 
+#include "ProximityChecker.h"
+
 uint32_t core::CmdGatherResource::findClosestResource(uint8_t resourceType,
                                                       const Tile& startTile,
                                                       int maxRadius,
@@ -175,10 +177,7 @@ bool core::CmdGatherResource::isResourceAvailable() const
 
 bool core::CmdGatherResource::isCloseEnough() const
 {
-    const auto& transformMy = m_components->transform;
-    auto threshold = transformMy.goalRadiusSquared;
-    auto distanceSquared = transformMy.position.distanceSquared(m_targetPosition);
-    return transformMy.position.distanceSquared(m_targetPosition) < (threshold * threshold);
+    return ProximityChecker::isInProximity(m_components->transform, target, m_stateMan.getRef());
 }
 
 void core::CmdGatherResource::animate(int currentTick)

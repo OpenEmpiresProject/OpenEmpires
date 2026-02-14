@@ -18,7 +18,8 @@ struct GraphicAddon
         ISO_CIRCLE,
         SQUARE,
         RHOMBUS,
-        TEXT
+        TEXT,
+        HEALTH_BAR,
     };
 
     struct IsoCircle
@@ -46,10 +47,18 @@ struct GraphicAddon
         Color color;
     };
 
-    using Data = std::variant<std::monostate, IsoCircle, Square, Rhombus, Text>;
+    struct HealthBar
+    {
+        float percentage = 1.0f; // 0.0 to 1.0
+    };
+
+    using Data = std::variant<std::monostate, IsoCircle, Square, Rhombus, Text, HealthBar>;
 
     Type type = Type::NONE;
     Data data = std::monostate{};
+    Alignment alignment = Alignment::CENTER;
+    int verticalOffset = 0;
+    int horizontalOffset = 0;
 
     template <typename T> T getData() const
     {

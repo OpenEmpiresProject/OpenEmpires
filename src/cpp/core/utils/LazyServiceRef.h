@@ -51,7 +51,7 @@ template <typename T> class LazyServiceRef
      * @return Ref<T> Owning reference to the service; may be empty if the
      *                service is not registered.
      */
-    Ref<T> getRef()
+    const Ref<T>& getRef() const
     {
         resolve();
         return m_ref;

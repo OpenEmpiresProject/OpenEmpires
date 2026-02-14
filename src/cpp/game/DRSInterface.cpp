@@ -33,8 +33,15 @@ core::Rect<int> DRSInterface::getBoundingBox(const std::string& drsFilename,
                                              int frameIndex /*= 0*/)
 {
     auto drsFile = loadDRSFile(drsFilename);
+    return getBoundingBox(drsFile, slpId, frameIndex);
+}
+
+core::Rect<int> DRSInterface::getBoundingBox(core::Ref<drs::DRSFile> drsFile,
+                                             int slpId,
+                                             int frameIndex /*= 0*/)
+{
     auto frameInfos = drsFile->getSLPFile(slpId).getFrameInfos();
-    auto frame = frameInfos[frameIndex];
+    auto& frame = frameInfos[frameIndex];
     core::Rect<int> box(frame.hotspot_x, frame.hotspot_y, frame.width, frame.height);
     return box;
 }

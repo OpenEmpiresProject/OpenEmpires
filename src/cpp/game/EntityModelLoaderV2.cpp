@@ -607,12 +607,12 @@ void EntityModelLoaderV2::loadUnprogressedFields()
             if (fieldName == "graphics")
             {
                 auto graphic = pyObj.cast<Graphic>();
-                const auto compPtr = holder->tryGetComponent<CompGraphics>();
-                PropertyInitializer::set(compPtr->layer, graphic.layer);
+                int normalizedHeight = 0;
 
                 for (const auto& variant : graphic.variants)
                 {
                     auto allSingleGraphics = variant.getAllSingleGraphics();
+                    const bool calculateHeight = not variant.variationFilter.contains("icon");
 
                     auto compositeGraphic =
                         Utils::get_or<CompositeGraphic>(variant.graphic, CompositeGraphic());
@@ -624,8 +624,24 @@ void EntityModelLoaderV2::loadUnprogressedFields()
                         auto graphicsId = holder->createGraphicsID(variant.variationFilter);
 
                         addData(graphicsId, drsData);
+
+                        if (calculateHeight and not drsData.parts.empty())
+                        {
+                            int height = drsData.boundingRect.h;
+                            if (not drsData.anchor.isNull() and drsData.anchor.y > 0)
+                            {
+                                height = drsData.parts[0].anchor.y;
+                            }
+                            normalizedHeight = std::max(height, normalizedHeight);
+                        }
                     }
                 }
+
+                const auto compPtr = holder->tryGetComponent<CompGraphics>();
+                PropertyInitializer::set(compPtr->layer, graphic.layer);
+
+                if (normalizedHeight > 0)
+                    PropertyInitializer::set(compPtr->constantHeight, normalizedHeight);
             }
             else if (fieldName == "animations")
             {
@@ -634,6 +650,7 @@ void EntityModelLoaderV2::loadUnprogressedFields()
                              entityName);
 
                 auto animations = pyObj.cast<std::list<Animation>>();
+                float normalizedHeight = 0;
 
                 for (const auto& animation : animations)
                 {
@@ -654,7 +671,19 @@ void EntityModelLoaderV2::loadUnprogressedFields()
                     actionAnimation.speed = animation.speed;
                     actionAnimation.repeatable = animation.repeatable;
                     compPtr->animations[graphicsId.action] = actionAnimation;
+
+                    if (not drsData.parts.empty())
+                    {
+                        float height = drsData.boundingRect.h;
+                        if (not drsData.anchor.isNull() and drsData.anchor.y > 0)
+                        {
+                            height = drsData.parts[0].anchor.y;
+                        }
+                        normalizedHeight = std::max(height, normalizedHeight);
+                    }
                 }
+                const auto compGraphic = holder->tryGetComponent<CompGraphics>();
+                PropertyInitializer::set(compGraphic->constantHeight, (int) normalizedHeight);
             }
         }
     }
