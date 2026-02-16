@@ -6,6 +6,7 @@
 #include "FPSCounter.h"
 #include "GraphicsLoader.h"
 #include "GraphicsRegistry.h"
+#include "RenderingContext.h"
 #include "SDL3_gfxPrimitives.h"
 #include "ServiceRegistry.h"
 #include "Settings.h"
@@ -46,6 +47,8 @@ using namespace core;
 using namespace std::chrono;
 using namespace std;
 
+namespace core
+{
 struct FontAtlas
 {
     SDL_Texture* texture = nullptr;                // final atlas texture
@@ -53,6 +56,7 @@ struct FontAtlas
     int atlasWidth = 0;
     int atlasHeight = 0;
 };
+} // namespace core
 
 FontAtlas createFontAtlas(SDL_Renderer* renderer, TTF_Font* font, int padding = 2)
 {
@@ -134,6 +138,84 @@ FontAtlas createFontAtlas(SDL_Renderer* renderer, TTF_Font* font, int padding = 
     return result;
 }
 
+void renderCirlceInIsometric(SDL_Renderer* renderer,
+                             Sint16 cx,
+                             Sint16 cy,
+                             Sint16 r,
+                             Uint8 red,
+                             Uint8 green,
+                             Uint8 blue,
+                             Uint8 alpha)
+{
+    // Isometric ellipse radius
+    Sint16 rx = r * 2; // Horizontal radius (diameter of the circle)
+    Sint16 ry = r;     // Vertical radius (half of the original)
+
+    // Render the isometric ellipse
+    ellipseRGBA(renderer, cx, cy, rx, ry, red, green, blue, alpha);
+}
+
+void renderText(const FontAtlas& fontAtlas,
+                SDL_Renderer* renderer,
+                const Vec2& screenPos,
+                const std::string& text,
+                const Color& color)
+{
+    int x = screenPos.x;
+    for (char c : text)
+    {
+        SDL_Rect src = fontAtlas.glyphRects.at(c);
+
+        SDL_FRect srcRect = {(float) src.x, (float) src.y, (float) src.w, (float) src.h};
+        SDL_FRect dstRect = {(float) x, (float) screenPos.y, (float) src.w, (float) src.h};
+        x += src.w + 1;
+
+        SDL_SetTextureColorMod(fontAtlas.texture, color.r, color.g, color.b);
+        SDL_RenderTextureRotated(renderer, fontAtlas.texture, &srcRect, &dstRect, 0, nullptr,
+                                 SDL_FLIP_NONE);
+    }
+}
+
+Vec2 convertAlignmentToPosition(Alignment alignment, const SDL_FRect& rect)
+{
+    float x = rect.x;
+    float y = rect.y;
+    float w = rect.w;
+    float h = rect.h;
+
+    switch (alignment)
+    {
+    case Alignment::TOP_LEFT:
+        return {x, y};
+        break;
+    case Alignment::TOP_CENTER:
+        return {x + w / 2, y};
+        break;
+    case Alignment::TOP_RIGHT:
+        return {x + w, y};
+        break;
+    case Alignment::CENTER_LEFT:
+        return {x, y + h / 2};
+        break;
+    case Alignment::CENTER:
+        return {x + w / 2, y + h / 2};
+        break;
+    case Alignment::CENTER_RIGHT:
+        return {x + w, y + h / 2};
+        break;
+    case Alignment::BOTTOM_LEFT:
+        return {x, y + h};
+        break;
+    case Alignment::BOTTOM_CENTER:
+        return {x + w / 2, y + h};
+        break;
+    case Alignment::BOTTOM_RIGHT:
+        return {x + w, y + h};
+        break;
+    }
+    return {x, y};
+}
+
 namespace core
 {
 
@@ -170,15 +252,7 @@ class RendererImpl
     void generateTicks();
     void onTick();
     void handleViewportMovement();
-    Vec2 convertAlignmentToPosition(Alignment anchor, const SDL_FRect& rect);
-    void renderCirlceInIsometric(SDL_Renderer* renderer,
-                                 Sint16 cx,
-                                 Sint16 cy,
-                                 Sint16 r,
-                                 Uint8 red,
-                                 Uint8 green,
-                                 Uint8 blue,
-                                 Uint8 alpha);
+
     void loadFonts();
 
     SDL_Window* m_window = nullptr;
@@ -707,84 +781,21 @@ void RendererImpl::renderText(const Vec2& screenPos, const std::string& text, co
 
 void RendererImpl::renderGraphicAddons(const Vec2& screenPos, CompRendering* rc)
 {
+    RenderingContext context{
+        .renderer = m_renderer, .coordinates = m_coordinates, .fontAtlas = m_fontAtlas};
+
     for (auto& addon : rc->addons)
     {
-        switch (addon.type)
-        {
-        case GraphicAddon::Type::ISO_CIRCLE:
-        {
-            const auto& circle = addon.getData<GraphicAddon::IsoCircle>();
-            auto circleScreenPos = screenPos + rc->anchor + circle.center;
-
-            // TODO: Support colors if required
-            renderCirlceInIsometric(m_renderer, circleScreenPos.x, circleScreenPos.y, circle.radius,
-                                    255, 255, 255, 255);
-        }
-        break;
-        case GraphicAddon::Type::RHOMBUS:
-        {
-            const auto& rhombus = addon.getData<GraphicAddon::Rhombus>();
-            auto center = screenPos + rc->anchor;
-
-            lineRGBA(m_renderer, center.x - rhombus.width / 2, center.y, center.x,
-                     center.y - rhombus.height / 2, 255, 255, 255, 255);
-            lineRGBA(m_renderer, center.x, center.y - rhombus.height / 2,
-                     center.x + rhombus.width / 2, center.y, 255, 255, 255, 255);
-            lineRGBA(m_renderer, center.x + rhombus.width / 2, center.y, center.x,
-                     center.y + rhombus.height / 2, 255, 255, 255, 255);
-            lineRGBA(m_renderer, center.x, center.y + rhombus.height / 2,
-                     center.x - rhombus.width / 2, center.y, 255, 255, 255, 255);
-        }
-        break;
-        case GraphicAddon::Type::TEXT:
-        {
-            const auto& textAddon = addon.getData<GraphicAddon::Text>();
-            renderText(screenPos + rc->anchor, textAddon.text, textAddon.color);
-        }
-        break;
-        case GraphicAddon::Type::HEALTH_BAR:
-        {
-            // For health bar, we want to maintain a constant position for a given action. For
-            // instance, when villager building, texture width and anchor changes across frames.
-            // Another example is when a unit is walking, the anchor goes up and down across frames.
-            // Therefore, we first negate the anchor to get the top left position of the texture
-            // and then calculate the screen position using given alignment.
-            //
-            Vec2 screenPosWithConstantHeight =
-                screenPos - Vec2(rc->srcRect.w/2 - rc->anchor.x, rc->constantHeight - rc->anchor.y);
-            
-            SDL_FRect dstRect = {screenPosWithConstantHeight.x, screenPosWithConstantHeight.y,
-                                 rc->srcRect.w, rc->constantHeight};
-            auto alignedScreenPos = convertAlignmentToPosition(addon.alignment, dstRect);
-
-            // TODO: Support colors if required
-            // TODO: Might need changes to the offset dynamically depending on the resolution
-            constexpr int barWidth = 25;
-            constexpr int barHeight = 4;
-            const Color missingHealthColor = Color::RED;
-            const Color remainingHealth = Color::GREEN;
-            SDL_FRect barRect = {alignedScreenPos.x - barWidth / 2 - addon.horizontalOffset,
-                                 alignedScreenPos.y - barHeight / 2 - addon.verticalOffset,
-                                 barWidth, barHeight};
-            SDL_Color colorBefore;
-            SDL_GetRenderDrawColor(m_renderer, &colorBefore.r, &colorBefore.g, &colorBefore.b,
-                                   &colorBefore.a);
-
-            SDL_SetRenderDrawColor(m_renderer, missingHealthColor.r, missingHealthColor.g,
-                                   missingHealthColor.b, missingHealthColor.a);
-            SDL_RenderFillRect(m_renderer, &barRect);
-            const auto& healthBar = addon.getData<GraphicAddon::HealthBar>();
-            barRect.w *= healthBar.percentage; // scale width by health percentage
-            SDL_SetRenderDrawColor(m_renderer, remainingHealth.r, remainingHealth.g,
-                                   remainingHealth.b, remainingHealth.a);
-            SDL_RenderFillRect(m_renderer, &barRect);
-
-            SDL_SetRenderDrawColor(m_renderer, colorBefore.r, colorBefore.g, colorBefore.b,
-                                   colorBefore.a);
-        }
-        default:
-            break;
-        }
+        std::visit(
+            [&](auto& data)
+            {
+                using T = std::decay_t<decltype(data)>;
+                if constexpr (not std::is_same_v<T, std::monostate>)
+                {
+                    data.onRender(context, *rc, addon.alignment, addon.margin);
+                }
+            },
+            addon.data);
     }
 }
 
@@ -1005,63 +1016,6 @@ void RendererImpl::handleViewportMovement()
             m_coordinates.getViewportPositionInPixels() +
             Vec2(m_settings->getViewportMovingSpeed(), 0));
     }
-}
-
-Vec2 RendererImpl::convertAlignmentToPosition(Alignment alignment, const SDL_FRect& rect)
-{
-    float x = rect.x;
-    float y = rect.y;
-    float w = rect.w;
-    float h = rect.h;
-
-    switch (alignment)
-    {
-    case Alignment::TOP_LEFT:
-        return {x, y};
-        break;
-    case Alignment::TOP_CENTER:
-        return {x + w / 2, y};
-        break;
-    case Alignment::TOP_RIGHT:
-        return {x + w, y};
-        break;
-    case Alignment::CENTER_LEFT:
-        return {x, y + h / 2};
-        break;
-    case Alignment::CENTER:
-        return {x + w / 2, y + h / 2};
-        break;
-    case Alignment::CENTER_RIGHT:
-        return {x + w, y + h / 2};
-        break;
-    case Alignment::BOTTOM_LEFT:
-        return {x, y + h};
-        break;
-    case Alignment::BOTTOM_CENTER:
-        return {x + w / 2, y + h};
-        break;
-    case Alignment::BOTTOM_RIGHT:
-        return {x + w, y + h};
-        break;
-    }
-    return {x, y};
-}
-
-void RendererImpl::renderCirlceInIsometric(SDL_Renderer* renderer,
-                                           Sint16 cx,
-                                           Sint16 cy,
-                                           Sint16 r,
-                                           Uint8 red,
-                                           Uint8 green,
-                                           Uint8 blue,
-                                           Uint8 alpha)
-{
-    // Isometric ellipse radius
-    Sint16 rx = r * 2; // Horizontal radius (diameter of the circle)
-    Sint16 ry = r;     // Vertical radius (half of the original)
-
-    // Render the isometric ellipse
-    ellipseRGBA(renderer, cx, cy, rx, ry, red, green, blue, alpha);
 }
 
 void RendererImpl::loadFonts()
