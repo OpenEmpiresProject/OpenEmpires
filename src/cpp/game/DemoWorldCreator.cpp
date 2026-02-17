@@ -556,6 +556,7 @@ void DemoWorldCreator::createHUD()
 std::vector<Ref<Player>> DemoWorldCreator::createPlayers()
 {
     auto playerManager = ServiceRegistry::getInstance().getService<PlayerFactory>();
+    auto nature = playerManager->createPlayer(Constants::NATURE_PLAYER_ID);
     auto player = playerManager->createPlayer();
     auto player2 = playerManager->createPlayer();
     auto playercontroller = ServiceRegistry::getInstance().getService<PlayerController>();

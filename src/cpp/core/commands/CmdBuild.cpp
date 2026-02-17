@@ -90,13 +90,13 @@ void CmdBuild::animate(int deltaTimeMs, int currentTick)
     m_components->action.action = UnitAction::BUILDING;
     auto& actionAnimation = m_components->animation.animations[m_components->action.action];
 
-    auto ticksPerFrame = int(m_settings->getTicksPerSecond() /
-                             (actionAnimation.value().speed * m_settings->getGameSpeed()));
+    auto ticksPerFrame =
+        int(m_settings->getTicksPerSecond() / (actionAnimation.speed * m_settings->getGameSpeed()));
     if (currentTick % ticksPerFrame == 0)
     {
         StateManager::markDirty(m_entityID);
         m_components->animation.frame++;
-        m_components->animation.frame %= actionAnimation.value().frames; // Building is repeatable
+        m_components->animation.frame %= actionAnimation.frames; // Building is repeatable
     }
 }
 

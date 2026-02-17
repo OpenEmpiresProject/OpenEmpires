@@ -34,16 +34,11 @@ uint8_t PlayerFactory::getNextPlayerId() const
     }
     playerIds.sort();
 
-    // Using 1 based IDs for player to 1) allow using zero for default value 2) align with original
-    // game
-    uint8_t nextId = 1;
-    for (auto id : playerIds)
+    if (playerIds.empty())
+        return 0;
+    else
     {
-        if (id != nextId)
-        {
-            return nextId;
-        }
-        nextId++;
+        auto last = playerIds.back();
+        return ++last;
     }
-    return nextId;
 }

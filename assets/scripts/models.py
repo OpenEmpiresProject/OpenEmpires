@@ -69,6 +69,8 @@ all_units: List[Unit] = [
             Animation(name="carry_stone", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1879),
             Animation(name="carry_gold", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=2218),
             Animation(name="build", frame_count=15, speed=25, drs_file="graphics.drs", slp_id=1874),
+            Animation(name="die", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1385, repeatable=False),
+            Animation(name="decay_corpse", frame_count=5, speed=1, drs_file="graphics.drs", slp_id=1389, repeatable=False),
         ]
     ),
     MilitaryUnit(
@@ -94,6 +96,7 @@ all_units: List[Unit] = [
             Animation(name="idle", frame_count=6, speed=15, drs_file="graphics.drs", slp_id=993),
             Animation(name="move", frame_count=12, speed=15, drs_file="graphics.drs", slp_id=997),
             Animation(name="attack", frame_count=10, speed=15, drs_file="graphics.drs", slp_id=987),
+            Animation(name="die", frame_count=10, speed=10, drs_file="graphics.drs", slp_id=990, repeatable=False),
         ]
     ),
 ]

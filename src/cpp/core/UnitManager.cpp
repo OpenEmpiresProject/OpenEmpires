@@ -3,7 +3,9 @@
 #include "Coordinates.h"
 #include "EntityFactory.h"
 #include "PlayerFactory.h"
+#include "commands/CmdDie.h"
 #include "components/CompEntityInfo.h"
+#include "components/CompHealth.h"
 #include "components/CompPlayer.h"
 #include "components/CompSelectible.h"
 #include "components/CompTransform.h"
@@ -16,6 +18,7 @@ UnitManager::UnitManager()
     registerCallback(Event::Type::ENTITY_DELETE, this, &UnitManager::onEntityDeletion);
     registerCallback(Event::Type::UNIT_CREATION_FINISHED, this, &UnitManager::onCreateUnit);
     registerCallback(Event::Type::UNIT_TILE_MOVEMENT, this, &UnitManager::onUnitTileMovement);
+    registerCallback(Event::Type::TICK, this, &UnitManager::onTick);
 }
 
 void UnitManager::onUnitTileMovement(const Event& e)
@@ -37,6 +40,9 @@ void UnitManager::onEntityDeletion(const Event& e)
         info.isDestroyed = true;
         StateManager::markDirty(entity);
         m_stateMan->gameMap().removeEntity(MapLayerType::UNITS, transform.position.toTile(),
+                                           entity);
+        // Could be even a corpse by now
+        m_stateMan->gameMap().removeEntity(MapLayerType::ON_GROUND, transform.position.toTile(),
                                            entity);
         playerComp.player->removeOwnership(entity);
     }
@@ -67,4 +73,42 @@ void UnitManager::onCreateUnit(const Event& e)
     playerComp.player->ownEntity(unit);
 
     data.player->getFogOfWar()->markAsExplored(transform.position, vision.lineOfSight);
+}
+
+void UnitManager::onTick(const Event& e)
+{
+    handleHealths();
+}
+
+void UnitManager::handleHealths()
+{
+    if (m_nature == nullptr)
+    {
+        auto playerFactory = ServiceRegistry::getInstance().getService<PlayerFactory>();
+        m_nature = playerFactory->getPlayer(Constants::NATURE_PLAYER_ID);
+    }
+
+    for (auto entity : StateManager::getDirtyEntities())
+    {
+        if (auto healthComp = m_stateMan->tryGetComponent<CompHealth>(entity))
+        {
+            if (healthComp->health <= 0 and not healthComp->isDead)
+            {
+                spdlog::debug("Unit {} died. Transfering ownership to nature and placing on-ground",
+                              entity);
+                auto [playerComp, transform] =
+                    m_stateMan->getComponents<CompPlayer, CompTransform>(entity);
+                playerComp.player->removeOwnership(entity);
+
+                auto& gameMap = m_stateMan->gameMap();
+                gameMap.removeEntity(MapLayerType::UNITS, transform.position.toTile(), entity);
+                gameMap.addEntity(MapLayerType::ON_GROUND, transform.position.toTile(), entity);
+
+                auto cmd = ObjectPool<CmdDie>::acquire();
+                publishEvent(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, entity});
+
+                healthComp->isDead = true;
+            }
+        }
+    }
 }

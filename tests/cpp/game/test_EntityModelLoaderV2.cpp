@@ -608,10 +608,10 @@ TEST_F(EntityModelLoaderTest, Animations)
         // Validate CompAnimation
         EXPECT_TRUE(m_stateMan->hasComponent<CompAnimation>(militia));
         auto& compAnimation = m_stateMan->getComponent<CompAnimation>(militia);
-        EXPECT_EQ(compAnimation.animations[UnitAction::IDLE].value().frames, 6);
-        EXPECT_EQ(compAnimation.animations[UnitAction::MOVE].value().frames, 12);
-        EXPECT_EQ(compAnimation.animations[UnitAction::IDLE].value().speed, 15);
-        EXPECT_EQ(compAnimation.animations[UnitAction::MOVE].value().speed, 10); // Default value
+        EXPECT_EQ(compAnimation.animations[UnitAction::IDLE].frames, 6);
+        EXPECT_EQ(compAnimation.animations[UnitAction::MOVE].frames, 12);
+        EXPECT_EQ(compAnimation.animations[UnitAction::IDLE].speed, 15);
+        EXPECT_EQ(compAnimation.animations[UnitAction::MOVE].speed, 10); // Default value
 
     }
     catch (const py::error_already_set& e)

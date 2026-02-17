@@ -4,6 +4,7 @@
 #include "Settings.h"
 #include "components/CompBuilding.h"
 #include "components/CompHousing.h"
+#include "components/CompPlayer.h"
 #include "components/CompUnit.h"
 #include "debug.h"
 
@@ -118,4 +119,12 @@ void Player::removeOwnership(uint32_t entityId)
 bool Player::isOwned(uint32_t entityId) const
 {
     return m_ownedEntities.find(entityId) != m_ownedEntities.end();
+}
+
+void Player::transferOwnership(uint32_t entityId, Ref<Player> newOwner)
+{
+    removeOwnership(entityId);
+    m_stateMan->getComponent<CompPlayer>(entityId).player = newOwner;
+
+    newOwner->ownEntity(entityId);
 }

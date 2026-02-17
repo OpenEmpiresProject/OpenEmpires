@@ -11,7 +11,7 @@ class Constants
     static const int FEET_PER_TILE = 256; // Size of each tile in game unit of distance measurement
     static const int TILE_PIXEL_WIDTH = 96;
     static const int TILE_PIXEL_HEIGHT = 48;
-    static const int MAX_ANIMATIONS = 10;
+    static const int MAX_ANIMATIONS = 20;
     static const int MAX_ENTITY_SELECTION = 30;
     // Mouse should move at least 5 pixels to consider as a selection box
     static const int MIN_SELECTION_BOX_MOUSE_MOVEMENT = 25;
@@ -35,6 +35,8 @@ class Constants
     static const int ABSOLUTE_MAX_UNIT_GARRISON_SIZE = 20;
 
     static const int MAX_PLAYERS = 20;
+
+    static const int NATURE_PLAYER_ID = 0;
 };
 } // namespace core
 
