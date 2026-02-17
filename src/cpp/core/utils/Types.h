@@ -87,7 +87,9 @@ enum UnitAction
     CARRYING_LUMBER = 5,
     CARRYING_GOLD = 6,
     CARRYING_STONE = 7,
-    ATTACK = 8
+    ATTACK = 8,
+    DIE = 9,
+    DECAY_CORPSE = 10,
 };
 
 enum class UnitType

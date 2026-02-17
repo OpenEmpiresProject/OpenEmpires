@@ -15,7 +15,7 @@ class CompAnimation
         int speed = 10;
         bool repeatable = false;
     };
-    Property<ActionAnimation> animations[Constants::MAX_ANIMATIONS] = {};
+    Property<std::array<ActionAnimation, Constants::MAX_ANIMATIONS>> animations{};
 
   public:
     int frame = 0;

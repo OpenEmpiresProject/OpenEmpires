@@ -62,8 +62,8 @@ We use milestone versions for planning. Early versions are experimental. Feature
 
 ### Features:
 - [x] Combat units - militia
-- [ ] Health and damage system
-- [ ] Attack-move
+- [x] Health and damage system
+- [x] Attack-move
 - [ ] Basic formation movement
 - [ ] Death animations and corpse handling
 - [ ] Projectiles

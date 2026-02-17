@@ -147,6 +147,11 @@ struct LineOfSightData
     uint32_t target = entt::null;
 };
 
+struct CorpseData
+{
+    uint32_t entity = entt::null;
+};
+
 struct Event
 {
     enum class Type
@@ -175,6 +180,7 @@ struct Event
         UNGARRISON_REQUEST,
         GARRISON_REQUEST,
         MAX_TYPE_MARKER,
+        CORPSE_REQUEST,
     };
 
     using Data = std::variant<std::monostate,
@@ -193,7 +199,8 @@ struct Event
                               TrackingRequestData,
                               BuildingConstructedData,
                               LineOfSightData,
-                              BuildingPlacementData>;
+                              BuildingPlacementData,
+                              CorpseData>;
 
     const Type type = Type::NONE;
     const Data data = std::monostate{};

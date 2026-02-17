@@ -12,6 +12,7 @@ class CompHealth
 
   public:
     float health = 0.0;
+    bool isDead = false;
 
     void onCreate(uint32_t)
     {

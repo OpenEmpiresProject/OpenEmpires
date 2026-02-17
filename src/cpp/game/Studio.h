@@ -66,7 +66,7 @@ class Studio : public PropertyInitializer
                     last = now;
                     animation.frame++;
                     auto& actionAnimation = animation.animations[action.action];
-                    animation.frame %= actionAnimation.value().frames;
+                    animation.frame %= actionAnimation.frames;
                 }
             }
 
@@ -160,7 +160,7 @@ class Studio : public PropertyInitializer
 
                     animation.frame++;
                     auto& actionAnimation = animation.animations[action.action];
-                    animation.frame %= actionAnimation.value().frames;
+                    animation.frame %= actionAnimation.frames;
                 }
                 else if (event.key.scancode == SDL_SCANCODE_LEFT)
                 {
@@ -171,7 +171,7 @@ class Studio : public PropertyInitializer
                     animation.frame--;
                     auto& actionAnimation = animation.animations[action.action];
                     if (animation.frame < 0)
-                        animation.frame = actionAnimation.value().frames - 1;
+                        animation.frame = actionAnimation.frames - 1;
                 }
                 else if (event.key.scancode == SDL_SCANCODE_UP)
                 {
@@ -182,7 +182,7 @@ class Studio : public PropertyInitializer
                     animation.frame--;
                     auto& actionAnimation = animation.animations[action.action];
                     if (animation.frame < 0)
-                        animation.frame = actionAnimation.value().frames - 1;
+                        animation.frame = actionAnimation.frames - 1;
                 }
                 else if (event.key.scancode == SDL_SCANCODE_0)
                 {
@@ -227,15 +227,13 @@ class Studio : public PropertyInitializer
         PropertyInitializer::set<uint32_t>(transform.speed, 256);
 
         CompAnimation anim;
+        std::array<CompAnimation::ActionAnimation, Constants::MAX_ANIMATIONS> animations;
+        animations[UnitAction::IDLE] = CompAnimation::ActionAnimation{15, 10, true};
+        animations[UnitAction::MOVE] = CompAnimation::ActionAnimation{15, 15, true};
+        animations[UnitAction::CHOPPING] = CompAnimation::ActionAnimation{15, 10, true};
+        animations[UnitAction::MINING] = CompAnimation::ActionAnimation{15, 10, true};
 
-        PropertyInitializer::set(anim.animations[UnitAction::IDLE],
-                                 CompAnimation::ActionAnimation{15, 10, true});
-        PropertyInitializer::set(anim.animations[UnitAction::MOVE],
-                                 CompAnimation::ActionAnimation{15, 15, true});
-        PropertyInitializer::set(anim.animations[UnitAction::CHOPPING],
-                                 CompAnimation::ActionAnimation{15, 10, true});
-        PropertyInitializer::set(anim.animations[UnitAction::MINING],
-                                 CompAnimation::ActionAnimation{15, 10, true});
+        PropertyInitializer::set(anim.animations, animations);
 
         stateMan->addComponent(m_villager, transform);
         stateMan->addComponent(m_villager, m_rc);

@@ -12,6 +12,8 @@
 #include <filesystem>
 #include <pybind11/stl.h>
 #include <variant>
+#include "components/CompAnimation.h"
+#include <array>
 
 using namespace game;
 using namespace core;
@@ -652,6 +654,9 @@ void EntityModelLoaderV2::loadUnprogressedFields()
                 auto animations = pyObj.cast<std::list<Animation>>();
                 float normalizedHeight = 0;
 
+                std::array<CompAnimation::ActionAnimation, Constants::MAX_ANIMATIONS>
+                    actionAnimations{};
+
                 for (const auto& animation : animations)
                 {
                     auto drsData = getDRSData(animation, m_drsInterface);
@@ -670,7 +675,8 @@ void EntityModelLoaderV2::loadUnprogressedFields()
                     actionAnimation.frames = animation.frameCount;
                     actionAnimation.speed = animation.speed;
                     actionAnimation.repeatable = animation.repeatable;
-                    compPtr->animations[graphicsId.action] = actionAnimation;
+
+                    actionAnimations[graphicsId.action] = actionAnimation;
 
                     if (not drsData.parts.empty())
                     {
@@ -684,6 +690,7 @@ void EntityModelLoaderV2::loadUnprogressedFields()
                 }
                 const auto compGraphic = holder->tryGetComponent<CompGraphics>();
                 PropertyInitializer::set(compGraphic->constantHeight, (int) normalizedHeight);
+                PropertyInitializer::set(compPtr->animations, actionAnimations);
             }
         }
     }
@@ -990,6 +997,8 @@ UnitAction getAction(const std::string actionname)
         {"carry_stone", UnitAction::CARRYING_STONE},
         {"build", UnitAction::BUILDING},
         {"attack", UnitAction::ATTACK},
+        {"die", UnitAction::DIE},
+        {"decay_corpse", UnitAction::DECAY_CORPSE},
     };
 
     return actions.at(actionname);

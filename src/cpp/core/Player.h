@@ -39,6 +39,7 @@ class Player
 
     void ownEntity(uint32_t entityId);
     void removeOwnership(uint32_t entityId);
+    void transferOwnership(uint32_t entityId, Ref<Player> newOwner);
     bool isOwned(uint32_t entityId) const;
 
     uint32_t getVacantHousingCapacity() const
