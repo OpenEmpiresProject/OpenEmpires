@@ -53,7 +53,7 @@ class CmdDecayCorpse : public Command
 
         // TODO: speed should be float to accept very low speed animations like corpse decay
         auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.speed;
-        if (currentTick % ticksPerFrame == 0)
+        if (currentTick % (int)ticksPerFrame == 0)
         {
             StateManager::markDirty(m_entityID);
             m_components->animation.frame++;

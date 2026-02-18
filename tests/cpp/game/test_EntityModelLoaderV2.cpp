@@ -612,6 +612,8 @@ TEST_F(EntityModelLoaderTest, Animations)
         EXPECT_EQ(compAnimation.animations[UnitAction::MOVE].frames, 12);
         EXPECT_EQ(compAnimation.animations[UnitAction::IDLE].speed, 15);
         EXPECT_EQ(compAnimation.animations[UnitAction::MOVE].speed, 10); // Default value
+        EXPECT_FLOAT_EQ(compAnimation.animations[UnitAction::DECAY_CORPSE].speed, 0.1); // Support floats
+
 
     }
     catch (const py::error_already_set& e)

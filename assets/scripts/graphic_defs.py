@@ -58,7 +58,7 @@ class Graphic(_Constructible):
 class Animation(_Constructible):
     name: str
     frame_count: int = 15
-    speed: int = 10
+    speed: float = 10
     drs_file: str = "graphics.drs"
     slp_id: int
     repeatable: bool = True

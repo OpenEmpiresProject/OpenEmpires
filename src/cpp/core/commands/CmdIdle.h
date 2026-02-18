@@ -75,7 +75,7 @@ class CmdIdle : public Command
         const auto& actionAnimation = m_components->animation.animations[UnitAction::IDLE];
 
         auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.speed;
-        if (currentTick % ticksPerFrame == 0)
+        if (currentTick % (int)ticksPerFrame == 0)
         {
             StateManager::markDirty(m_entityID);
             m_components->animation.frame++;

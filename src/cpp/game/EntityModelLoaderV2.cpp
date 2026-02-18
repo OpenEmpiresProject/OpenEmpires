@@ -169,7 +169,7 @@ struct Animation
 {
     std::string name;
     int frameCount;
-    int speed;
+    float speed;
     int slpId;
     std::string drsFile;
     bool repeatable;
@@ -229,7 +229,7 @@ PYBIND11_EMBEDDED_MODULE(graphic_defs, m)
         .def_readonly("layer", &Graphic::layer);
 
     py::class_<Animation>(m, "Animation")
-        .def(py::init<std::string, int, int, int, std::string, bool>(), py::kw_only(),
+        .def(py::init<std::string, int, float, int, std::string, bool>(), py::kw_only(),
              py::arg("name"), py::arg("frame_count") = 15, py::arg("speed") = 10, py::arg("slp_id"),
              py::arg("drs_file") = "graphics.drs", py::arg("repeatable") = true)
         .def_readonly("name", &Animation::name)

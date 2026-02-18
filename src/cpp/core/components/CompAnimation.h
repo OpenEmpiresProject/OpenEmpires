@@ -12,7 +12,7 @@ class CompAnimation
     struct ActionAnimation
     {
         int frames = 0;
-        int speed = 10;
+        float speed = 10;
         bool repeatable = false;
     };
     Property<std::array<ActionAnimation, Constants::MAX_ANIMATIONS>> animations{};

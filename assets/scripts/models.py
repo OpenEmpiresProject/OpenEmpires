@@ -70,7 +70,7 @@ all_units: List[Unit] = [
             Animation(name="carry_gold", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=2218),
             Animation(name="build", frame_count=15, speed=25, drs_file="graphics.drs", slp_id=1874),
             Animation(name="die", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1385, repeatable=False),
-            Animation(name="decay_corpse", frame_count=5, speed=1, drs_file="graphics.drs", slp_id=1389, repeatable=False),
+            Animation(name="decay_corpse", frame_count=5, speed=0.1, drs_file="graphics.drs", slp_id=1389, repeatable=False),
         ]
     ),
     MilitaryUnit(

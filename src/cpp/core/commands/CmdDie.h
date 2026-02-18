@@ -59,7 +59,7 @@ class CmdDie : public Command
         bool animationCompleted = false;
 
         auto ticksPerFrame = m_settings->getTicksPerSecond() / actionAnimation.speed;
-        if (currentTick % ticksPerFrame == 0)
+        if (currentTick % (int)ticksPerFrame == 0)
         {
             StateManager::markDirty(m_entityID);
             m_components->animation.frame++;
