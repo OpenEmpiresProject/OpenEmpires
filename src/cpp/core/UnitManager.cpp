@@ -90,12 +90,13 @@ void UnitManager::handleHealths()
 
     for (auto entity : StateManager::getDirtyEntities())
     {
-        if (auto healthComp = m_stateMan->tryGetComponent<CompHealth>(entity))
+        if (auto unitComp = m_stateMan->tryGetComponent<CompUnit>(entity))
         {
-            if (healthComp->health <= 0 and not healthComp->isDead)
+            auto& healthComp = m_stateMan->getComponent<CompHealth>(entity);
+
+            if (healthComp.health <= 0 and not healthComp.isDead)
             {
-                spdlog::debug("Unit {} died. Transfering ownership to nature and placing on-ground",
-                              entity);
+                spdlog::debug("Unit {} died", entity);
                 auto [playerComp, transform] =
                     m_stateMan->getComponents<CompPlayer, CompTransform>(entity);
                 playerComp.player->removeOwnership(entity);
@@ -107,7 +108,7 @@ void UnitManager::handleHealths()
                 auto cmd = ObjectPool<CmdDie>::acquire();
                 publishEvent(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, entity});
 
-                healthComp->isDead = true;
+                healthComp.isDead = true;
             }
         }
     }

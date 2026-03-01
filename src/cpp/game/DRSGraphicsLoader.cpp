@@ -201,11 +201,13 @@ class GraphicsLoaderFromDRSImpl
                              GraphicsRegistry& graphicsRegistry,
                              bool isCursor,
                              bool flip,
-                             const GraphicsID& id)
+                             const GraphicsID& id,
+                             SLPLoadMode loadMode)
     {
         loadSurfaces(atlasGenerator, renderer, surfaces, id.entityType, clipRect, id.action,
                      id.playerId, frames, anchors, graphicsRegistry, isCursor, id.orientation, flip,
-                     id.state, id.isConstructing, id.uiElementType, id.isShadow, id.isIcon);
+                     id.state, id.isConstructing, id.uiElementType, id.isShadow, id.isIcon,
+                     loadMode);
     }
 
     static void loadSurfaces(AtlasGenerator& atlasGenerator,
@@ -225,7 +227,8 @@ class GraphicsLoaderFromDRSImpl
                              int isConstruction,
                              int uiElementType,
                              int isShadow,
-                             int isIcon)
+                             int isIcon,
+                             SLPLoadMode loadMode)
     {
         std::vector<SDL_Rect> srcRects;
         SDL_Texture* atlasTexture = nullptr;
@@ -277,59 +280,63 @@ class GraphicsLoaderFromDRSImpl
 
             Vec2 anchor = anchors[i];
 
-            // Icons are stored under the same entity type but flag isIcon is set. Therefore,
-            // we don't need to set variation/frame/direction for icons.
-            if (not isIcon)
+            if (loadMode == SLPLoadMode::TILESET)
             {
-                if (entityType == EntityTypes::ET_TILE)
-                {
-                    id.variation = frames[i].getId();
-                    anchor =
-                        Vec2(imageSize.width / 2 + 1,
-                             0); // Must override tile anchoring since their anchors don't work here
-                }
-                else if (typeRegistry->isAUnit(entityType))
-                {
-                    /* if the file name is 1388_01.bmp pattern last two digit represents the frame.
+                id.variation = frames[i].getId();
+                anchor =
+                    Vec2(imageSize.width / 2 + 1,
+                         0); // Must override tile anchoring since their anchors don't work here
+            }
+            else if (loadMode == SLPLoadMode::ANIMATION)
+            {
+                id.frame = frames[i].getId() - 1;
+            }
+            else if (loadMode == SLPLoadMode::DIRECTIONAL_ANIMATIONS)
+            {
+                /* if the file name is 1388_01.bmp pattern last two digit represents the frame.
                        each direction animation can contains 15 (max) frames. 1-15 for south, 16-30
                        for southwest, 31-45 for west, 46-60 for northwest, and so on. implement this
                        logic to manipulate frame number and direction of id (type of GraphicsID) */
-                    auto index = frames[i].getId() - 1;
-                    auto framesPerDirection = frames.size() / 5;
-                    id.frame = index % framesPerDirection;               // 0-14 (max)
-                    auto direction = (int) (index / framesPerDirection); // 0-4
-                    if (direction == 0)
-                    {
-                        id.direction = static_cast<uint64_t>(Direction::SOUTH);
-                    }
-                    else if (direction == 1)
-                    {
-                        id.direction = static_cast<uint64_t>(Direction::SOUTHWEST);
-                    }
-                    else if (direction == 2)
-                    {
-                        id.direction = static_cast<uint64_t>(Direction::WEST);
-                    }
-                    else if (direction == 3)
-                    {
-                        id.direction = static_cast<uint64_t>(Direction::NORTHWEST);
-                    }
-                    else if (direction == 4)
-                    {
-                        id.direction = static_cast<uint64_t>(Direction::NORTH);
-                    }
-                }
-                else
+                auto index = frames[i].getId() - 1;
+                auto framesPerDirection = frames.size() / 5;
+                id.frame = index % framesPerDirection;               // 0-14 (max)
+                auto direction = (int) (index / framesPerDirection); // 0-4
+                if (direction == 0)
                 {
-                    for (size_t i = 0; i < 1024; i++)
+                    id.direction = static_cast<uint64_t>(Direction::SOUTH);
+                }
+                else if (direction == 1)
+                {
+                    id.direction = static_cast<uint64_t>(Direction::SOUTHWEST);
+                }
+                else if (direction == 2)
+                {
+                    id.direction = static_cast<uint64_t>(Direction::WEST);
+                }
+                else if (direction == 3)
+                {
+                    id.direction = static_cast<uint64_t>(Direction::NORTHWEST);
+                }
+                else if (direction == 4)
+                {
+                    id.direction = static_cast<uint64_t>(Direction::NORTH);
+                }
+            }
+            else if (loadMode == SLPLoadMode::VARIATIONS)
+            {
+                for (size_t i = 0; i < 1024; i++)
+                {
+                    id.variation = i;
+                    if (!graphicsRegistry.hasTexture(id))
                     {
-                        id.variation = i;
-                        if (!graphicsRegistry.hasTexture(id))
-                        {
-                            break;
-                        }
+                        break;
                     }
                 }
+            }
+            else if (loadMode == SLPLoadMode::ICON)
+            {
+                // Icons are stored under the same entity type with flag isIcon is set. Therefore,
+                // we don't need to set variation/frame/direction for icons.
             }
 
             SDL_FRect* srcRectF = new SDL_FRect{(float) srcRect.x, (float) srcRect.y,
@@ -392,7 +399,7 @@ class GraphicsLoaderFromDRSImpl
         loadSurfaces(atlasGenerator, renderer, mergedSurfaceVec, baseId.entityType,
                      drsData.clipRect, baseId.action, baseId.playerId, frames, newAnchors,
                      graphicsRegistry, false, orientation, flip, state, isConstructing,
-                     uiElementType, isShadow, isIcon);
+                     uiElementType, isShadow, isIcon, drsData.slpLoadMode);
     }
 
     static void loadSLPWithAllFrames(shared_ptr<DRSFile> drs,
@@ -411,7 +418,8 @@ class GraphicsLoaderFromDRSImpl
                                      int isConstructing,
                                      int uiElementType,
                                      int isShadow,
-                                     int isIcon)
+                                     int isIcon,
+                                     SLPLoadMode loadMode)
     {
         auto slp = drs->getSLPFile(slpId);
 
@@ -435,7 +443,7 @@ class GraphicsLoaderFromDRSImpl
 
         loadSurfaces(atlasGenerator, renderer, surfaces, entityType, clipRect, action, playerId,
                      frames, anchors, graphicsRegistry, false, orientation, flip, state,
-                     isConstructing, uiElementType, isShadow, isIcon);
+                     isConstructing, uiElementType, isShadow, isIcon, loadMode);
     }
 
     static bool isTextureFlippingNeededEntity(int entityType)
@@ -530,7 +538,8 @@ void DRSGraphicsLoader::loadGraphics(SDL_Renderer& renderer,
                     drsData.parts[0].drsFile, drsData.parts[0].slpId, id.entityType, id.action,
                     id.playerId, renderer, graphicsRegistry, atlasGenerator, drsData.clipRect,
                     drsData.flip, baseId.orientation, drsData.parts[0].frameIndex, id.state,
-                    id.isConstructing, id.uiElementType, id.isShadow, id.isIcon);
+                    id.isConstructing, id.uiElementType, id.isShadow, id.isIcon,
+                    drsData.slpLoadMode);
             }
         }
         else // Multi-part texture

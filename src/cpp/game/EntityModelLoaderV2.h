@@ -33,6 +33,15 @@
 
 namespace game
 {
+enum class SLPLoadMode
+{
+    VARIATIONS,
+    DIRECTIONAL_ANIMATIONS,
+    ANIMATION,
+    TILESET,
+    ICON
+};
+
 struct DRSData : public core::GraphicsLoadupDataProvider::Data
 {
     struct Part
@@ -52,6 +61,7 @@ struct DRSData : public core::GraphicsLoadupDataProvider::Data
     core::Vec2 anchor;
     core::Rect<int> boundingRect;
     bool flip = false;
+    SLPLoadMode slpLoadMode = SLPLoadMode::VARIATIONS;
 };
 
 template <typename T> void maybeOnCreate(entt::basic_registry<uint32_t>& reg, uint32_t e);

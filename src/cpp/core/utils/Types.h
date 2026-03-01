@@ -277,6 +277,14 @@ enum class Alignment : uint8_t
     BOTTOM_RIGHT
 };
 
+enum FlameLevel
+{
+    SMALL = 0,
+    MEDIUM = 1,
+    LARGE = 2,
+    HUGE = 3,
+};
+
 template <typename T> constexpr int toInt(const T& t) noexcept
 {
     return static_cast<int>(t);

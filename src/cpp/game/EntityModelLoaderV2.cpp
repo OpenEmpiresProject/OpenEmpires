@@ -173,6 +173,7 @@ struct Animation
     int slpId;
     std::string drsFile;
     bool repeatable;
+    std::map<std::string, std::string> variationFilter;
 };
 
 struct Shortcut
@@ -229,15 +230,18 @@ PYBIND11_EMBEDDED_MODULE(graphic_defs, m)
         .def_readonly("layer", &Graphic::layer);
 
     py::class_<Animation>(m, "Animation")
-        .def(py::init<std::string, int, float, int, std::string, bool>(), py::kw_only(),
-             py::arg("name"), py::arg("frame_count") = 15, py::arg("speed") = 10, py::arg("slp_id"),
-             py::arg("drs_file") = "graphics.drs", py::arg("repeatable") = true)
+        .def(py::init<std::string, int, float, int, std::string, bool,
+                      std::map<std::string, std::string>>(),
+             py::kw_only(), py::arg("name"), py::arg("frame_count") = 15, py::arg("speed") = 10,
+             py::arg("slp_id"), py::arg("drs_file") = "graphics.drs", py::arg("repeatable") = true,
+             py::arg("variation_filter") = std::map<std::string, std::string>())
         .def_readonly("name", &Animation::name)
         .def_readonly("frame_count", &Animation::frameCount)
         .def_readonly("speed", &Animation::speed)
         .def_readonly("slp_id", &Animation::slpId)
         .def_readonly("drs_file", &Animation::drsFile)
-        .def_readonly("repeatable", &Animation::repeatable);
+        .def_readonly("repeatable", &Animation::repeatable)
+        .def_readonly("variation_filter", &Animation::variationFilter);
 
     py::enum_<GraphicLayer>(m, "GraphicLayer")
         .value("NONE", GraphicLayer::NONE)
@@ -506,6 +510,12 @@ void EntityModelLoaderV2::postProcessing()
                 PropertyInitializer::set(armor->armorPerClass, values);
             }
 
+            if (auto building = std::get_if<CompBuilding>(&componentVar))
+            {
+                PropertyInitializer::set(building->fireEntityType,
+                                         typeRegistry->getEntityType("fire"));
+            }
+
             // Add component specific post processing (eg: lazy loading/enriching) here
         }
     }
@@ -622,6 +632,18 @@ void EntityModelLoaderV2::loadUnprogressedFields()
                     for (const auto& singleGraphic : allSingleGraphics)
                     {
                         auto drsData = getDRSData(singleGraphic, compositeGraphic, m_drsInterface);
+                        if (graphic.layer == GraphicLayer::GROUND)
+                        {
+                            drsData.slpLoadMode = SLPLoadMode::TILESET;
+                        }
+                        else if (variant.variationFilter.contains("icon"))
+                        {
+                            drsData.slpLoadMode = SLPLoadMode::ICON;
+                        }
+                        else
+                        {
+                            drsData.slpLoadMode = SLPLoadMode::VARIATIONS;
+                        }
 
                         auto graphicsId = holder->createGraphicsID(variant.variationFilter);
 
@@ -660,14 +682,27 @@ void EntityModelLoaderV2::loadUnprogressedFields()
                 for (const auto& animation : animations)
                 {
                     auto drsData = getDRSData(animation, m_drsInterface);
+                    if (holder->tryGetComponent<CompUnit>() != nullptr)
+                    {
+                        drsData.slpLoadMode = SLPLoadMode::DIRECTIONAL_ANIMATIONS;
+                    }
+                    else
+                    {
+                        drsData.slpLoadMode = SLPLoadMode::ANIMATION;
+                    }
+
                     spdlog::debug(
                         "Entity {} has animation with DRS file {} and SLP id {} for action {}",
                         entityName, animation.drsFile, animation.slpId, animation.name);
 
                     auto entityType = typeRegistry->getEntityType(entityName);
                     // TODO - Support filters
-                    GraphicsID graphicsId(entityType);
-                    graphicsId.action = getAction(animation.name);
+                    GraphicsID graphicsId = holder->createGraphicsID(animation.variationFilter);
+
+                    if (animation.name != "fire")
+                    {
+                        graphicsId.action = getAction(animation.name);
+                    }
 
                     addData(graphicsId, drsData);
 
@@ -711,6 +746,8 @@ core::GraphicsID EntityModelLoaderV2::ComponentHolder::createGraphicsID(
         id.isConstructing = filters.at("construction_site") == "true" ? 1 : 0;
     if (filters.contains("icon"))
         id.isIcon = filters.at("icon") == "true" ? 1 : 0;
+    if (filters.contains("variation"))
+        id.variation = std::stoi(filters.at("variation"));
 
     bool foundEntityType = false;
 
@@ -1017,7 +1054,13 @@ ResourceType getResourceType(const std::string& name)
 
 int getState(const std::string& name)
 {
-    static unordered_map<string, int> states = {{"closed", 0}, {"opened", 1}, {"stump", 1}};
+    static unordered_map<string, int> states = {{"closed", 0},
+                                                {"opened", 1},
+                                                {"stump", 1},
+                                                {"small", FlameLevel::SMALL},
+                                                {"medium", FlameLevel::MEDIUM},
+                                                {"large", FlameLevel::LARGE},
+                                                {"huge", FlameLevel::HUGE}};
     return states.at(name);
 }
 

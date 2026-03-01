@@ -1,6 +1,7 @@
 #include "GraphicAddon.h"
 
 #include "Coordinates.h"
+#include "GraphicsRegistry.h"
 #include "RenderingContext.h"
 #include "SDL3_gfxPrimitives.h"
 #include "components/CompRendering.h"
@@ -9,10 +10,53 @@
 
 using namespace core;
 
+Vec2 getAnchorAdjustedScreenPos(const CompRendering& comp, const Coordinates& coordinates)
+{
+    if (comp.positionInFeet.isNull()) [[unlikely]]
+    {
+        return comp.positionInScreenUnits - comp.anchor;
+    }
+    else
+    {
+        return coordinates.feetToScreenUnits(comp.positionInFeet) - comp.anchor;
+    }
+}
+
 namespace core
 {
 struct FontAtlas;
+
+void GraphicAddon::Texture::onRenderAfterParent(const RenderingContext& context,
+                                                const CompRendering& comp,
+                                                Alignment alignment,
+                                                const Margin& margin)
+{
+    Vec2 anchorAdjustedScreenPos = getAnchorAdjustedScreenPos(comp, context.coordinates);
+    anchorAdjustedScreenPos += offset - anchor; // Apply texture offset
+    SDL_FRect dstRect = {anchorAdjustedScreenPos.x, anchorAdjustedScreenPos.y, srcRect.w,
+                         srcRect.h};
+
+    if (dstRect.w > 0 && dstRect.h > 0 && texture != nullptr)
+    {
+        // TODO: Still the shading color comes from parent component
+        SDL_SetTextureColorMod(texture, comp.shading.r, comp.shading.g, comp.shading.b);
+        SDL_RenderTextureRotated(context.renderer, texture, &(srcRect), &dstRect, 0, nullptr, flip);
+    }
 }
+
+void GraphicAddon::Texture::updateTextureDetails(const GraphicsRegistry& graphicsRegistry)
+{
+    // spdlog::debug("Updating fire graphic {}", graphicsId.toString());
+
+    auto& entry = graphicsRegistry.getTexture(graphicsId);
+    updated = true;
+    texture = entry.image;
+    anchor = entry.anchor;
+    srcRect = *(entry.srcRect);
+    flip = entry.flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
+}
+
+} // namespace core
 extern void renderCirlceInIsometric(SDL_Renderer* renderer,
                                     Sint16 cx,
                                     Sint16 cy,
@@ -27,18 +71,6 @@ extern void renderText(const FontAtlas& fontAtlas,
                        const std::string& text,
                        const Color& color);
 extern Vec2 convertAlignmentToPosition(Alignment alignment, const SDL_FRect& rect);
-
-Vec2 getAnchorAdjustedScreenPos(const CompRendering& comp, const Coordinates& coordinates)
-{
-    if (comp.positionInFeet.isNull()) [[unlikely]]
-    {
-        return comp.positionInScreenUnits - comp.anchor;
-    }
-    else
-    {
-        return coordinates.feetToScreenUnits(comp.positionInFeet) - comp.anchor;
-    }
-}
 
 void GraphicAddon::IsoCircle::onRender(const RenderingContext& context,
                                        const CompRendering& comp,

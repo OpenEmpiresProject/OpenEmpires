@@ -191,11 +191,11 @@ void HUDUpdater::updateBuildingConstruction(CompBuilding& building, CompEntityIn
 {
     auto displayName = m_typeRegistry->getHUDDisplayName(info.entityType);
 
-    m_progressTextLabel->setText(std::format("Building - {}%", building.constructionProgress));
+    m_progressTextLabel->setText(std::format("Building - {}%", building.getConstructionProgress()));
     m_progressItemNameLabel->setText(displayName);
     // Need a copy to update variation
     auto graphic = m_progressBarLabel->getBackgroundImage();
-    graphic.variation = building.constructionProgress;
+    graphic.variation = building.getConstructionProgress();
     m_progressBarLabel->setBackgroundImage(graphic);
 
     m_creationInProgressGroup->setVisible(true);

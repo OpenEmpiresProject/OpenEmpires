@@ -62,6 +62,8 @@ class Animation(_Constructible):
     drs_file: str = "graphics.drs"
     slp_id: int
     repeatable: bool = True
+    variation_filter: Dict[str, str] = {}
+
 
 # TODO - Rename this module
 class Shortcut(_Constructible):

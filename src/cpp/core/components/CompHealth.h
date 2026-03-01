@@ -14,6 +14,13 @@ class CompHealth
     float health = 0.0;
     bool isDead = false;
 
+    float getHealthPercentage() const
+    {
+        if (maxHealth.value() == 0)
+            return 0.0f;
+        return health / maxHealth.value() * 100;
+    }
+
     void onCreate(uint32_t)
     {
         health = maxHealth.value();

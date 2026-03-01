@@ -5,6 +5,7 @@
 #include "EventHandler.h"
 #include "FrameData.h"
 #include "PlayerController.h"
+#include "Settings.h"
 #include "ThreadSynchronizer.h"
 #include "utils/LazyServiceRef.h"
 
@@ -31,6 +32,7 @@ class GraphicsInstructor : public EventHandler
     LazyServiceRef<Coordinates> m_coordinates;
     LazyServiceRef<PlayerController> m_playerController;
     LazyServiceRef<StateManager> m_stateManager;
+    LazyServiceRef<Settings> m_settings;
     ThreadSynchronizer<FrameData>& m_synchronizer;
     uint32_t m_frameCount = 0;
     bool m_initialized = false;

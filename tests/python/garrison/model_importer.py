@@ -24,6 +24,6 @@ all_models = [
     )
 ]
 
-all_entity_names = ["town_center"]
+all_entity_names = ["town_center", "fire"]
 def validate_all():
     return True

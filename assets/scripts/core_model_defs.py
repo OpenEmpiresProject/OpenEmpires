@@ -39,7 +39,7 @@ class Vision:
 
 
 class Animated:
-    animations: List[Animation]
+    animations: Optional[List[Animation]]
 
 
 class Health:
@@ -88,7 +88,7 @@ class Tree(NaturalResource, _Constructible):
     shadow: NaturalResourceAdditionalPart
 
 
-class Building(Vision, Model, Selectable, Health, Armor):
+class Building(Vision, Model, Selectable, Health, Armor, Animated):
     line_of_sight_shape: LineOfSightShape = LineOfSightShape.ROUNDED_SQUARE
     size: str
     construction_site: str  # Construction site name
@@ -96,6 +96,7 @@ class Building(Vision, Model, Selectable, Health, Armor):
     connected_constructions_allowed: Optional[bool] # Allows to constructing series of same building such as walls
     default_orientation: Optional[str]
     progress_frame_map: Dict[int, int] = {33:0, 66:1, 99:2, 100:0}
+    fire_anchors: Optional[List[Point]]
 
 
 

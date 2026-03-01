@@ -5,9 +5,11 @@
 #include "ServiceRegistry.h"
 #include "StateManager.h"
 #include "commands/CmdBuild.h"
+#include "components/CompAnimation.h"
 #include "components/CompBuilding.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGarrison.h"
+#include "components/CompHealth.h"
 #include "components/CompPlayer.h"
 #include "components/CompSelectible.h"
 #include "components/CompTransform.h"
@@ -28,7 +30,8 @@ BuildingManager::BuildingManager()
 
 void BuildingManager::onTick(const Event& e)
 {
-    updateInProgressConstructions();
+    handleBuildingUpdates(e.getData<TickData>());
+    handleBuildingDamages(e.getData<TickData>());
     updateInProgressUnitCreations(e.getData<TickData>());
 }
 
@@ -90,7 +93,6 @@ std::tuple<CompEntityInfo&, CompBuilding&> BuildingManager::createBuilding(
     transform.position = building.getSnappedBuildingCenter(request.pos); // Snap
     playerComp.player = request.player;
 
-    building.constructionProgress = 0;
     building.orientation = request.orientation;
     building.updateLandArea(transform.position);
 
@@ -152,46 +154,7 @@ Feet BuildingManager::findVacantPositionAroundBuilding(uint32_t building)
     return pos.centerInFeet();
 }
 
-void BuildingManager::updateInProgressConstructions()
-{
-    for (auto entity : StateManager::getDirtyEntities())
-    {
-        if (m_stateMan->hasComponent<CompBuilding>(entity))
-        {
-            auto [transform, building, info, player, vision] =
-                m_stateMan->getComponents<CompTransform, CompBuilding, CompEntityInfo, CompPlayer,
-                                          CompVision>(entity);
-
-            info.variation = building.getVariationByConstructionProgress();
-
-            if (building.constructionProgress >= 100)
-            {
-                onCompleteBuilding(entity, building, vision, transform, player, info);
-                info.variation = 0;
-            }
-
-            spam("Progress {}, variation {}", building.constructionProgress, info.variation);
-
-            if (building.constructionProgress > 1 && building.isInStaticMap == false)
-            {
-                auto& gameMap = m_stateMan->gameMap();
-                auto& passabilityMap = m_stateMan->getPassabilityMap();
-
-                for (auto& tile : building.landArea.tiles)
-                {
-                    gameMap.addEntity(MapLayerType::STATIC, tile, entity);
-                    gameMap.removeEntity(MapLayerType::ON_GROUND, tile, entity);
-                    passabilityMap.setTileDynamicPassability(
-                        tile, DynamicPassability::BLOCKED_FOR_ANY, player.player->getId());
-                }
-
-                building.isInStaticMap = true;
-            }
-        }
-    }
-}
-
-void BuildingManager::updateInProgressUnitCreations(auto& tick)
+void BuildingManager::updateInProgressUnitCreations(const TickData& tick)
 {
     for (auto it = m_activeFactories.begin(); it != m_activeFactories.end();)
     {
@@ -290,17 +253,7 @@ void BuildingManager::onEntityDeletion(const Event& e)
     auto entity = e.getData<EntityDeleteData>().entity;
     if (entity != entt::null && m_stateMan->hasComponent<CompBuilding>(entity))
     {
-        auto [info, transform, building, playerComp] =
-            m_stateMan->getComponents<CompEntityInfo, CompTransform, CompBuilding, CompPlayer>(
-                entity);
-        info.isDestroyed = true;
-        StateManager::markDirty(entity);
-
-        const auto layer =
-            building.constructionProgress > 0 ? MapLayerType::STATIC : MapLayerType::ON_GROUND;
-
-        m_stateMan->gameMap().removeEntity(layer, building.landArea, entity);
-        playerComp.player->removeOwnership(entity);
+        deleteBuilding(entity);
     }
 }
 
@@ -323,4 +276,171 @@ void BuildingManager::makeBuildingPermanent(uint32_t entity)
     gameMap.addEntity(MapLayerType::ON_GROUND, building.landArea, entity);
 
     playerComp.player->ownEntity(entity);
+}
+
+void BuildingManager::handleBuildingUpdates(const TickData& tick)
+{
+    for (auto entity : StateManager::getDirtyEntities())
+    {
+        if (auto building = m_stateMan->tryGetComponent<CompBuilding>(entity))
+        {
+            handleConstructionProgress(tick, *building, entity);
+            detectDamagedBuildings(tick, *building, entity);
+        }
+    }
+}
+
+void BuildingManager::handleConstructionProgress(const TickData& tick,
+                                                 CompBuilding& building,
+                                                 uint32_t entity)
+{
+    if (building.isConstructed())
+        return;
+
+    auto [transform, info, player, vision] =
+        m_stateMan->getComponents<CompTransform, CompEntityInfo, CompPlayer, CompVision>(entity);
+
+    info.variation = building.getVariationByConstructionProgress();
+    const auto constructionProgress = building.getConstructionProgress();
+
+    spam("Progress {}, variation {}", constructionProgress, info.variation);
+
+    if (constructionProgress >= 100)
+    {
+        info.variation = 0; // Switch to main building variation. TODO: Shouldn't hardcode this
+        building.markAsCompleted();
+
+        onCompleteBuilding(entity, building, vision, transform, player, info);
+    }
+
+    if (constructionProgress > 1 && building.isInStaticMap == false)
+    {
+        auto& gameMap = m_stateMan->gameMap();
+        auto& passabilityMap = m_stateMan->getPassabilityMap();
+
+        for (auto& tile : building.landArea.tiles)
+        {
+            gameMap.addEntity(MapLayerType::STATIC, tile, entity);
+            gameMap.removeEntity(MapLayerType::ON_GROUND, tile, entity);
+            passabilityMap.setTileDynamicPassability(tile, DynamicPassability::BLOCKED_FOR_ANY,
+                                                     player.player->getId());
+        }
+
+        building.isInStaticMap = true;
+    }
+}
+
+// We track damaged buildings in a separate set to avoid doing heavy health checks for all buildings
+// every tick. This is because we want to animate fire for damaged buildings even without the
+// building is marked as dirty.
+//
+void BuildingManager::detectDamagedBuildings(const TickData& tick,
+                                             CompBuilding& building,
+                                             uint32_t entity)
+{
+    auto [transform, info, player, vision, health] =
+        m_stateMan
+            ->getComponents<CompTransform, CompEntityInfo, CompPlayer, CompVision, CompHealth>(
+                entity);
+
+    if (health.health < health.maxHealth.value())
+    {
+        m_damagedBuildings.insert(entity);
+    }
+}
+
+void BuildingManager::handleBuildingDamages(const TickData& tick)
+{
+    for (auto entity : m_damagedBuildings)
+    {
+        if (auto building = m_stateMan->tryGetComponent<CompBuilding>(entity))
+        {
+            handleBuildingDamage(tick, *building, entity);
+        }
+    }
+}
+
+void BuildingManager::handleBuildingDamage(const TickData& tick,
+                                           CompBuilding& building,
+                                           uint32_t entity)
+{
+    if (building.isConstructing())
+        return;
+
+    auto& healthComp = m_stateMan->getComponent<CompHealth>(entity);
+    FlameLevel flameLevel = FlameLevel::SMALL;
+    auto healthPerc = healthComp.health / healthComp.maxHealth.value() * 100.0;
+
+    spdlog::debug("Building health is {}/{}", healthComp.health, healthComp.maxHealth.value());
+
+    if (healthComp.health <= 0)
+    {
+        if (not healthComp.isDead)
+        {
+            spdlog::debug("Building {} destroyed", entity);
+            healthComp.isDead = true;
+            Event event(Event::Type::ENTITY_DELETE, EntityDeleteData{entity});
+            publishEvent(event);
+            return;
+        }
+    }
+    else if (healthPerc < 25)
+    {
+        flameLevel = FlameLevel::LARGE;
+    }
+    else if (healthPerc < 50)
+    {
+        flameLevel = FlameLevel::MEDIUM;
+    }
+    else if (healthPerc < 75)
+    {
+        flameLevel = FlameLevel::SMALL;
+    }
+    else
+    {
+        return; // No fire if health is above 75%
+    }
+
+    if (building.fireEntities.empty())
+    {
+        auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
+
+        for (auto& fireAnchor : building.fireAnchors.value())
+        {
+            auto fire = factory->createEntity(building.fireEntityType);
+            building.fireEntities.push_back(fire);
+        }
+    }
+
+    for (auto fireEntity : building.fireEntities)
+    {
+        auto [fireAnimComp, fireInfo] =
+            m_stateMan->getComponents<CompAnimation, CompEntityInfo>(fireEntity);
+        fireInfo.state = flameLevel;
+        const auto& fireAnim = fireAnimComp.animations[0];
+
+        auto ticksPerFrame = m_settings->getTicksPerSecond() / fireAnim.speed;
+        if (tick.currentTick % (int) ticksPerFrame == 0)
+        {
+            fireAnimComp.frame++;
+            fireAnimComp.frame %= fireAnim.frames;
+
+            // Since the fire frame changed, need to mark the building dirty
+            // to let the GraphicsInstructor to send the instructions to draw fire
+            StateManager::markDirty(entity);
+        }
+    }
+}
+
+void BuildingManager::deleteBuilding(uint32_t entity)
+{
+    auto [info, transform, building, playerComp] =
+        m_stateMan->getComponents<CompEntityInfo, CompTransform, CompBuilding, CompPlayer>(entity);
+    info.isDestroyed = true;
+    StateManager::markDirty(entity);
+
+    m_stateMan->gameMap().removeEntity(building.getMapLayerType(), building.landArea, entity);
+    playerComp.player->removeOwnership(entity);
+
+    m_damagedBuildings.erase(entity);
 }

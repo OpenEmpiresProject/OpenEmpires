@@ -125,6 +125,7 @@ TEST_F(EntityModelLoaderTest, CreateBuilding)
         // Act
         EntityFactory* factory = dynamic_cast<EntityFactory*>(&loader);
         const auto entityType = m_typeReg->getEntityType("mill");
+        const auto fireEntityType = m_typeReg->getEntityType("fire");
         auto entity = factory->createEntity(entityType);
 
         // Assert
@@ -157,6 +158,33 @@ TEST_F(EntityModelLoaderTest, CreateBuilding)
         EXPECT_EQ(constructData.parts.size(), 1);
         EXPECT_EQ(constructData.parts[0].slpId, 237);
 
+        // Validate fire anchors
+        EXPECT_EQ(building.fireAnchors.value().size(), 1);
+        EXPECT_EQ(building.fireAnchors.value()[0], Vec2(65, 55));
+        EXPECT_EQ(building.fireEntityType, fireEntityType);
+
+        GraphicsID fireGid(fireEntityType);
+        {
+            fireGid.variation = 0;
+            fireGid.state = 0; // Small fire
+            auto& fireData = (DRSData&) drsProvider->getData(fireGid);
+            EXPECT_EQ(fireData.parts.size(), 1);
+            EXPECT_EQ(fireData.parts[0].slpId, 424);
+        }
+        {
+            fireGid.variation = 1; // 2nd variation of small fire
+            fireGid.state = 0; // Small fire
+            auto& fireData = (DRSData&) drsProvider->getData(fireGid);
+            EXPECT_EQ(fireData.parts.size(), 1);
+            EXPECT_EQ(fireData.parts[0].slpId, 425);
+        }
+        {
+            fireGid.variation = 0;
+            fireGid.state = 1; // Medium fire
+            auto& fireData = (DRSData&) drsProvider->getData(fireGid);
+            EXPECT_EQ(fireData.parts.size(), 1);
+            EXPECT_EQ(fireData.parts[0].slpId, 427);
+        }
     }
     catch (const py::error_already_set& e)
     {

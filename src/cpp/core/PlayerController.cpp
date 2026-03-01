@@ -359,7 +359,8 @@ BuildingPlacementData PlayerController::createBuildingPlacement(
     spdlog::debug("Creating building placement with orientation {} at {}",
                   buildingOrientationToString(building.orientation), pos.toTile().toString());
 
-    building.constructionProgress = 100; // Treat as a complete building
+    // Start building placement for the player considering it as a completed building
+    building.markAsCompleted();
     StateManager::markDirty(entity);
 
     // building position (hence landarea) will be updated later based on the result of following

@@ -65,6 +65,7 @@ void core::CmdAttack::attack(int deltaTimeMs)
         auto damage = getDamage(targetArmor);
 
         targetHealth.health -= damage;
+        StateManager::markDirty(target);
 
         spdlog::debug("Attacked target {} for {} damage. Target health is now {}/{}", target,
                       damage, targetHealth.health, targetHealth.maxHealth.value());

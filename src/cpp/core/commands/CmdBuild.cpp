@@ -131,7 +131,7 @@ bool CmdBuild::isCloseEnough()
  */
 bool CmdBuild::isComplete()
 {
-    return m_stateMan->getComponent<CompBuilding>(target).constructionProgress == 100;
+    return m_stateMan->getComponent<CompBuilding>(target).getConstructionProgress() >= 100;
 }
 
 /**
@@ -156,10 +156,9 @@ void CmdBuild::build(int deltaTimeMs)
 
     if (roundedContribution != 0)
     {
-        building.constructionProgress += roundedContribution;
-        building.constructionProgress = std::min(building.constructionProgress, 100u);
+        building.constructBy(roundedContribution);
 
-        if (building.constructionProgress % 10 == 0)
+        if (building.getConstructionProgress() % 10 == 0)
             StateManager::markDirty(target);
     }
 }

@@ -194,7 +194,7 @@ void CompBuilding::updateLandArea(const Feet& center)
 
 bool CompBuilding::isConstructed() const
 {
-    return constructionProgress >= 100;
+    return isConstructionCompleted;
 }
 
 bool CompBuilding::acceptResource(uint8_t resourceType) const
@@ -217,5 +217,32 @@ std::vector<uint8_t> CompBuilding::getAcceptedResources() const
 
 bool CompBuilding::isConstructing() const
 {
-    return constructionProgress < 100;
+    return not isConstructionCompleted;
+}
+
+void CompBuilding::updateConstructionProgress(uint32_t progress)
+{
+    constructionProgress = progress;
+}
+
+uint32_t CompBuilding::getConstructionProgress() const
+{
+    return constructionProgress;
+}
+
+void CompBuilding::markAsCompleted()
+{
+    constructionProgress = 100;
+    isConstructionCompleted = true;
+}
+
+core::MapLayerType CompBuilding::getMapLayerType() const
+{
+    return constructionProgress > 0 ? MapLayerType::STATIC : MapLayerType::ON_GROUND;
+}
+
+void CompBuilding::constructBy(uint32_t constructionAmount)
+{
+    constructionProgress += constructionAmount;
+    constructionProgress = std::min(constructionProgress, 100u);
 }

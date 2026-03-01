@@ -33,13 +33,20 @@ class BuildingManager : public EventHandler
     LazyServiceRef<Settings> m_settings;
     LazyServiceRef<EntityTypeRegistry> m_typeRegistry;
     std::map<uint32_t /*building id*/, ActiveFactoryInfo> m_activeFactories;
+    std::set<uint32_t> m_damagedBuildings;
 
   private:
     void onBuildingRequest(const Event& e);
     void onTick(const Event& e);
     void onEntityDeletion(const Event& e);
-    void updateInProgressUnitCreations(auto& tick);
-    void updateInProgressConstructions();
+
+    void deleteBuilding(uint32_t entity);
+    void handleBuildingUpdates(const TickData& tick);
+    void handleBuildingDamages(const TickData& tick);
+    void handleConstructionProgress(const TickData& tick, CompBuilding& building, uint32_t entity);
+    void detectDamagedBuildings(const TickData& tick, CompBuilding& building, uint32_t entity);
+    void handleBuildingDamage(const TickData& tick, CompBuilding& building, uint32_t entity);
+    void updateInProgressUnitCreations(const TickData& tick);
     void onQueueUnit(const Event& e);
     void onUngarrison(const Event& e);
     std::tuple<CompEntityInfo&, CompBuilding&> createBuilding(const BuildingPlacementData& request);

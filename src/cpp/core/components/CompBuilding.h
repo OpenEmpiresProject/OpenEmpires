@@ -24,14 +24,16 @@ class CompBuilding
     Property<bool> connectedConstructionsAllowed;
     Property<BuildingOrientation> defaultOrientation = {BuildingOrientation::NO_ORIENTATION};
     Property<std::map<int, int>> visualVariationByProgress;
+    Property<std::vector<Vec2>> fireAnchors;
+    Property<uint32_t> fireEntityType;
 
   public:
     Property<std::vector<std::string>> acceptedResourceNames;
     // Property<std::string> constructionSiteName;
 
   public:
+    std::vector<uint32_t> fireEntities;
     bool validPlacement = true;
-    uint32_t constructionProgress = 0; // out of 100
     // Lower bound represents the entity variation to be used based on the progress of the
     // construction.
     bool isInStaticMap = false;
@@ -48,6 +50,15 @@ class CompBuilding
     static Rect<float> getLandInFeetRect(const LandArea& area);
     Feet getSnappedBuildingCenter(const Feet& position) const;
     void updateLandArea(const Feet& center);
+    void updateConstructionProgress(uint32_t progress);
+    void constructBy(uint32_t constructionAmount);
+    uint32_t getConstructionProgress() const;
+    void markAsCompleted();
+    MapLayerType getMapLayerType() const;
+
+  private:
+    uint32_t constructionProgress = 0; // out of 100
+    bool isConstructionCompleted = false;
 };
 
 } // namespace core

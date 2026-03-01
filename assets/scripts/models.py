@@ -25,7 +25,8 @@ all_entity_names: List[str] = [
     "control_panel",
     "progress_bar",
     "cursor",
-    "generic_widget"
+    "generic_widget",
+    "fire",
 ]
 
 
@@ -168,6 +169,7 @@ all_buildings: List[Building] = [
         accepted_resources=["food"], 
         health=1000,
         armor={ArmorClass.MELEE: 10},
+        fire_anchors=[Point(x=65,y=55)],
         graphics=Graphic(
             layer=GraphicLayer.ENTITIES,
             variants=[
@@ -271,6 +273,7 @@ all_buildings: List[Building] = [
         construction_site="construction_site_medium",
         health=1000,
         armor={ArmorClass.MELEE: 10},
+        fire_anchors=[Point(x=35,y=65),Point(x=140,y=70)],
         graphics=Graphic(
             layer=GraphicLayer.ENTITIES,
             variants=[
@@ -631,5 +634,19 @@ all_ui_elements: List[UIElement] = [
                         variation_filter={GraphicVariantType.THEME:"default"})]),)
 ]
 
-lists = [all_units, all_natural_resources, all_buildings, all_tilesets, all_ui_elements]
+all_misc = [
+    BuildingFire(
+        name="fire",
+        animations=[
+            Animation(name="fire", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=424, 
+                      variation_filter={GraphicVariantType.STATE:"small", GraphicVariantType.VARIATION:"0"}),
+            Animation(name="fire", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=427, 
+                      variation_filter={GraphicVariantType.STATE:"medium", GraphicVariantType.VARIATION:"0"}),
+            Animation(name="fire", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=429, 
+                      variation_filter={GraphicVariantType.STATE:"large", GraphicVariantType.VARIATION:"0"}),
+            Animation(name="fire", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=431, 
+                      variation_filter={GraphicVariantType.STATE:"huge", GraphicVariantType.VARIATION:"0"}),
+        ],)]
+
+lists = [all_units, all_natural_resources, all_buildings, all_tilesets, all_ui_elements, all_misc]
 all_models = [x for lst in lists for x in lst]

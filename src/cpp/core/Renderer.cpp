@@ -244,6 +244,7 @@ class RendererImpl
     void renderTexture(SDL_FRect& dstRect, CompRendering* rc);
     void renderText(const Vec2& screenPos, const std::string& text, const Color& color);
     void renderGraphicAddons(const Vec2& screenPos, CompRendering* rc);
+    void renderGraphicAddonsAfterParent(const Vec2& screenPos, CompRendering* rc);
     void renderDebugOverlays(const SDL_FRect& dstRect, CompRendering* rc);
     void renderBackground();
     void renderSelectionBox();
@@ -617,30 +618,41 @@ void RendererImpl::updateRenderingComponents()
             entity = it->second;
         }
 
-        auto& rc = m_registry.get<CompRendering>(entity);
+        auto& oldRenderingComp = m_registry.get<CompRendering>(entity);
 
         if (m_graphicsRegistry.hasTexture(*instruction))
         {
-            CompRendering beforeUpdate = rc;
-            static_cast<CompGraphics&>(rc) = *instruction;
+            CompRendering beforeUpdateRendingCompCopy = oldRenderingComp;
+            auto& updatedRenderingComp = oldRenderingComp;
+            static_cast<CompGraphics&>(updatedRenderingComp) = *instruction;
 
-            rc.additionalZOffset = 0;
+            updatedRenderingComp.additionalZOffset = 0;
 
             // Graphic addons on this entity might draw below (screen's Y) the entity. So we need to
             // consider the overall bottom most position as the Z value. Eg: Unit's selection
             // ellipse should draw on top of the below tile
-            for (auto& addon : rc.addons)
+            for (auto& addon : updatedRenderingComp.addons)
             {
                 switch (addon.type)
                 {
                 case GraphicAddon::Type::ISO_CIRCLE:
-                    rc.additionalZOffset = Constants::FEET_PER_TILE + 1;
+                    updatedRenderingComp.additionalZOffset = Constants::FEET_PER_TILE + 1;
+                    break;
+                case GraphicAddon::Type::TEXTURE:
+                    auto& data = addon.getData<GraphicAddon::Texture>();
+                    if (m_graphicsRegistry.hasTexture(data.graphicsId))
+                        data.updateTextureDetails(m_graphicsRegistry);
+                    else
+                    {
+                        spdlog::debug("Loading fire {}", data.graphicsId.toString());
+                        idsNeedToLoad.push_back(data.graphicsId);
+                    }
                     break;
                 }
             }
 
-            rc.updateTextureDetails(m_graphicsRegistry);
-            m_zOrderStrategy->onUpdate(beforeUpdate, rc);
+            updatedRenderingComp.updateTextureDetails(m_graphicsRegistry);
+            m_zOrderStrategy->onUpdate(beforeUpdateRendingCompCopy, updatedRenderingComp);
             ObjectPool<CompGraphics>::release(instruction);
         }
         else
@@ -648,9 +660,25 @@ void RendererImpl::updateRenderingComponents()
             GraphicsID idToLoad = *instruction; // Slicing
             idsNeedToLoad.push_back(idToLoad);
             lazyLoadedInstructions.push_back(instruction);
+
+            for (auto& addon : instruction->addons)
+            {
+                switch (addon.type)
+                {
+                case GraphicAddon::Type::TEXTURE:
+                    auto& data = addon.getData<GraphicAddon::Texture>();
+                    if (m_graphicsRegistry.hasTexture(data.graphicsId))
+                        data.updateTextureDetails(m_graphicsRegistry);
+                    else
+                    {
+                        spdlog::debug("Loading fire {}", data.graphicsId.toString());
+                        idsNeedToLoad.push_back(data.graphicsId);
+                    }
+                    break;
+                }
+            }
         }
     }
-    frameData.clear();
 
     if (idsNeedToLoad.empty() == false)
     {
@@ -661,30 +689,38 @@ void RendererImpl::updateRenderingComponents()
         {
             auto it = m_simulationToRendererEntityIDMapping.find(instruction->entityID);
 
-            auto& rc = m_registry.get<CompRendering>(it->second);
-            CompRendering beforeUpdate = rc;
+            auto& oldRenderingComp = m_registry.get<CompRendering>(it->second);
+            auto& updatedRenderingComp = oldRenderingComp;
 
-            static_cast<CompGraphics&>(rc) = *instruction;
-            rc.additionalZOffset = 0;
+            CompRendering beforeUpdate = oldRenderingComp;
+
+            static_cast<CompGraphics&>(updatedRenderingComp) = *instruction;
+            updatedRenderingComp.additionalZOffset = 0;
 
             // Graphic addons on this entity might draw below (screen's Y) the entity. So we need to
             // consider the overall bottom most position as the Z value. Eg: Unit's selection
             // ellipse should draw on top of the below tile
-            for (auto& addon : rc.addons)
+            for (auto& addon : updatedRenderingComp.addons)
             {
                 switch (addon.type)
                 {
                 case GraphicAddon::Type::ISO_CIRCLE:
-                    rc.additionalZOffset = Constants::FEET_PER_TILE + 1;
+                    updatedRenderingComp.additionalZOffset = Constants::FEET_PER_TILE + 1;
+                    break;
+                case GraphicAddon::Type::TEXTURE:
+                    auto& data = addon.getData<GraphicAddon::Texture>();
+                    if (m_graphicsRegistry.hasTexture(data.graphicsId))
+                        data.updateTextureDetails(m_graphicsRegistry);
                     break;
                 }
             }
-            rc.updateTextureDetails(m_graphicsRegistry);
+            updatedRenderingComp.updateTextureDetails(m_graphicsRegistry);
 
-            m_zOrderStrategy->onUpdate(beforeUpdate, rc);
+            m_zOrderStrategy->onUpdate(beforeUpdate, updatedRenderingComp);
             ObjectPool<CompGraphics>::release(instruction);
         }
     }
+    frameData.clear();
 }
 
 void RendererImpl::renderDebugInfo(FPSCounter& counter)
@@ -758,6 +794,7 @@ void RendererImpl::renderGameEntities()
 
         renderGraphicAddons(anchorAdjustedScreenPos, rc);
         renderTexture(dstRect, rc);
+        renderGraphicAddonsAfterParent(anchorAdjustedScreenPos, rc);
         renderDebugOverlays(dstRect, rc);
     }
 }
@@ -779,6 +816,22 @@ void RendererImpl::renderText(const Vec2& screenPos, const std::string& text, co
     }
 }
 
+template <typename T>
+concept HasOnRenderAfterParent =
+    requires(T& data,
+             const RenderingContext& context,
+             const CompRendering& rc,
+             Alignment alignment,
+             const Margin& margin) { data.onRenderAfterParent(context, rc, alignment, margin); };
+
+template <typename T>
+concept HasOnRender =
+    requires(T& data,
+             const RenderingContext& context,
+             const CompRendering& rc,
+             Alignment alignment,
+             const Margin& margin) { data.onRender(context, rc, alignment, margin); };
+
 void RendererImpl::renderGraphicAddons(const Vec2& screenPos, CompRendering* rc)
 {
     RenderingContext context{
@@ -792,7 +845,31 @@ void RendererImpl::renderGraphicAddons(const Vec2& screenPos, CompRendering* rc)
                 using T = std::decay_t<decltype(data)>;
                 if constexpr (not std::is_same_v<T, std::monostate>)
                 {
-                    data.onRender(context, *rc, addon.alignment, addon.margin);
+                    if constexpr (HasOnRender<T>)
+                    {
+                        data.onRender(context, *rc, addon.alignment, addon.margin);
+                    }
+                }
+            },
+            addon.data);
+    }
+}
+
+void RendererImpl::renderGraphicAddonsAfterParent(const Vec2& screenPos, CompRendering* rc)
+{
+    RenderingContext context{
+        .renderer = m_renderer, .coordinates = m_coordinates, .fontAtlas = m_fontAtlas};
+
+    for (auto& addon : rc->addons)
+    {
+        std::visit(
+            [&](auto& data)
+            {
+                using T = std::decay_t<decltype(data)>;
+
+                if constexpr (HasOnRenderAfterParent<T>)
+                {
+                    data.onRenderAfterParent(context, *rc, addon.alignment, addon.margin);
                 }
             },
             addon.data);
