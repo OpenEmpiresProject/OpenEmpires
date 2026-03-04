@@ -56,7 +56,7 @@ class Graphic(_Constructible):
     variants: List[GraphicVariant]
 
 
-class Animation(_Constructible):
+class AnimationVariant(_Constructible):
     name: str
     frame_count: int = 15
     speed: float = 10
@@ -66,6 +66,10 @@ class Animation(_Constructible):
     variation_filter: Dict[str, str] = {}
     layer: GraphicLayer
 
+
+class Animation(_Constructible):
+    variants: List[AnimationVariant]
+    
 
 # TODO - Rename this module
 class Shortcut(_Constructible):

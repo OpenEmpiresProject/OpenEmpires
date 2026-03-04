@@ -13,7 +13,8 @@ all_models = [
         housing_need=1,
         buildables=[],
         icon=Icon(drs_file="interfac.drs", slp_id=50730, index=16),
-        animations=[]
+        animations=Animation(
+            variants=[])
     ),
     NaturalResource(
         name="gold",

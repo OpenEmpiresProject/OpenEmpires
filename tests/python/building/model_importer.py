@@ -25,14 +25,17 @@ all_models = [
     ),
     BuildingFire(
         name="fire",
-        animations=[
-            Animation(name="fire", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=424, 
-                      variation_filter={GraphicVariantType.STATE:"small", GraphicVariantType.VARIATION:"0"},layer=GraphicLayer.ENTITIES),
-            Animation(name="fire", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=425, 
-                      variation_filter={GraphicVariantType.STATE:"small", GraphicVariantType.VARIATION:"1"},layer=GraphicLayer.ENTITIES),
-            Animation(name="fire", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=427, 
-                      variation_filter={GraphicVariantType.STATE:"medium", GraphicVariantType.VARIATION:"0"},layer=GraphicLayer.ENTITIES),
-        ],)
+        animations=Animation(
+            variants=[
+                AnimationVariant(name="anim_fire", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=424, 
+                          variation_filter={GraphicVariantType.STATE:"small", GraphicVariantType.VARIATION:"0", GraphicVariantType.ACTION:"fire"},layer=GraphicLayer.ENTITY_DECORATOR),
+                AnimationVariant(name="anim_fire", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=425, 
+                          variation_filter={GraphicVariantType.STATE:"small", GraphicVariantType.VARIATION:"1", GraphicVariantType.ACTION:"fire"},layer=GraphicLayer.ENTITY_DECORATOR),
+                AnimationVariant(name="anim_fire", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=427, 
+                          variation_filter={GraphicVariantType.STATE:"medium", GraphicVariantType.VARIATION:"0", GraphicVariantType.ACTION:"fire"},layer=GraphicLayer.ENTITY_DECORATOR),
+            ]
+        )
+    )
 ]
 
 all_entity_names = ["mill", "fire"]

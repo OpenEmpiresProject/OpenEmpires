@@ -124,7 +124,8 @@ void ZOrderStrategyByTiles::onUpdate(const CompRendering& current, CompRendering
     {
         if (update.layer != GraphicLayer::UI)
         {
-            spdlog::error("All non-UI layers must have the position. {}", update.toString());
+            spdlog::error("All non-UI layers must have the position. {}, layer {}",
+                          update.positionInFeet.toString(), (int) update.layer.value());
             return;
         }
         m_uiGraphicsByEntity[update.entityID] = &update;

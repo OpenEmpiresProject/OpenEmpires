@@ -80,6 +80,7 @@ static std::string directionToString(Direction direction)
 
 enum UnitAction
 {
+    ACTION_NONE = 0,
     IDLE = 0,
     MOVE = 1,
     CHOPPING = 2,

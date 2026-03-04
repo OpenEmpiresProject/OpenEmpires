@@ -367,7 +367,8 @@ void BuildingManager::handleBuildingDamage(const TickData& tick,
     if (building.isConstructing())
         return;
 
-    auto [healthComp, info] = m_stateMan->getComponents<CompHealth, CompEntityInfo>(entity);
+    auto [healthComp, info, transform] =
+        m_stateMan->getComponents<CompHealth, CompEntityInfo, CompTransform>(entity);
     FlameLevel flameLevel = FlameLevel::SMALL;
     auto healthPerc = healthComp.health / healthComp.maxHealth.value() * 100.0;
 
@@ -412,11 +413,13 @@ void BuildingManager::handleBuildingDamage(const TickData& tick,
             auto [fireInfo, fireTransform] =
                 m_stateMan->getComponents<CompEntityInfo, CompTransform>(fire);
             info.addChild(fireInfo);
-            // Fire would not have an absolute position, its position is determined by the
-            // building's position + fire anchor
-            //
-            fireTransform.position = Feet::null;
+            // Maintain the same logical position of fire as the building. This is important
+            // since the renderer might be using tile based z-ordering.
+            fireTransform.position = transform.position;
             fireTransform.relativePixelPosition = fireAnchor;
+
+            m_stateMan->gameMap().addEntity(MapLayerType::ENTITY_DECORATOR,
+                                            transform.getTilePosition(), fire);
         }
     }
 
@@ -432,6 +435,7 @@ void BuildingManager::handleBuildingDamage(const TickData& tick,
         {
             fireAnimComp.frame++;
             fireAnimComp.frame %= fireAnim.frames;
+            fireAnimComp.layer = fireAnim.layer;
 
             StateManager::markDirty(fireEntity);
         }
@@ -449,4 +453,11 @@ void BuildingManager::deleteBuilding(uint32_t entity)
     playerComp.player->removeOwnership(entity);
 
     m_damagedBuildings.erase(entity);
+
+    for (auto child : info.getChildEntities())
+    {
+        m_stateMan->gameMap().removeEntity(MapLayerType::ENTITY_DECORATOR,
+                                           transform.getTilePosition(), child);
+        StateManager::markDirty(child);
+    }
 }

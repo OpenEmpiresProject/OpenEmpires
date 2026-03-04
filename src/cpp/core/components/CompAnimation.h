@@ -14,12 +14,13 @@ class CompAnimation
         int frames = 0;
         float speed = 10;
         bool repeatable = false;
+        GraphicLayer layer = GraphicLayer::NONE;
     };
     Property<std::array<ActionAnimation, Constants::MAX_ANIMATIONS>> animations{};
-    Property<GraphicLayer> layer = GraphicLayer::NONE;
 
   public:
     int frame = 0;
+    GraphicLayer layer = GraphicLayer::NONE;
 };
 } // namespace core
 

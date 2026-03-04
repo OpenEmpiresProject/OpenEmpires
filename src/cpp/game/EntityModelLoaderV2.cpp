@@ -32,11 +32,11 @@ int getState(const std::string& name);
 
 struct SingleGraphic;
 struct CompositeGraphic;
-struct Animation;
+struct AnimationVariant;
 DRSData getDRSData(const SingleGraphic& graphicData,
                    const CompositeGraphic& compositeData,
                    core::Ref<DRSInterface> drsInterface);
-DRSData getDRSData(const Animation& animation, core::Ref<DRSInterface> drsInterface);
+DRSData getDRSData(const AnimationVariant& animation, core::Ref<DRSInterface> drsInterface);
 
 template <typename T> static T readValue(py::handle object, const std::string& key)
 {
@@ -165,7 +165,7 @@ struct Graphic
     GraphicLayer layer;
 };
 
-struct Animation
+struct AnimationVariant
 {
     std::string name;
     int frameCount;
@@ -175,6 +175,11 @@ struct Animation
     bool repeatable;
     std::map<std::string, std::string> variationFilter;
     GraphicLayer layer;
+};
+
+struct Animation
+{
+    std::vector<AnimationVariant> variants;
 };
 
 struct Shortcut
@@ -230,21 +235,24 @@ PYBIND11_EMBEDDED_MODULE(graphic_defs, m)
         .def_readonly("variants", &Graphic::variants)
         .def_readonly("layer", &Graphic::layer);
 
-    // TODO : should use NONE layer instead of this hard code
-    py::class_<Animation>(m, "Animation")
+    py::class_<AnimationVariant>(m, "AnimationVariant")
         .def(py::init<std::string, int, float, int, std::string, bool,
                       std::map<std::string, std::string>, GraphicLayer>(),
              py::kw_only(), py::arg("name"), py::arg("frame_count") = 15, py::arg("speed") = 10,
              py::arg("slp_id"), py::arg("drs_file") = "graphics.drs", py::arg("repeatable") = true,
              py::arg("variation_filter") = std::map<std::string, std::string>(), py::arg("layer"))
-        .def_readonly("name", &Animation::name)
-        .def_readonly("frame_count", &Animation::frameCount)
-        .def_readonly("speed", &Animation::speed)
-        .def_readonly("slp_id", &Animation::slpId)
-        .def_readonly("drs_file", &Animation::drsFile)
-        .def_readonly("repeatable", &Animation::repeatable)
-        .def_readonly("variation_filter", &Animation::variationFilter)
-        .def_readonly("layer", &Animation::layer);
+        .def_readonly("name", &AnimationVariant::name)
+        .def_readonly("frame_count", &AnimationVariant::frameCount)
+        .def_readonly("speed", &AnimationVariant::speed)
+        .def_readonly("slp_id", &AnimationVariant::slpId)
+        .def_readonly("drs_file", &AnimationVariant::drsFile)
+        .def_readonly("repeatable", &AnimationVariant::repeatable)
+        .def_readonly("variation_filter", &AnimationVariant::variationFilter)
+        .def_readonly("layer", &AnimationVariant::layer);
+
+    py::class_<Animation>(m, "Animation")
+        .def(py::init<std::vector<AnimationVariant>>(), py::kw_only(), py::arg("variants"))
+        .def_readonly("variants", &Animation::variants);
 
     py::enum_<GraphicLayer>(m, "GraphicLayer")
         .value("NONE", GraphicLayer::NONE)
@@ -677,18 +685,20 @@ void EntityModelLoaderV2::loadUnprogressedFields()
                 debug_assert(compPtr, "Could not find animation component for entity {}",
                              entityName);
 
-                auto animations = pyObj.cast<std::list<Animation>>();
+                auto animation = pyObj.cast<Animation>();
                 float normalizedHeight = 0;
 
                 std::array<CompAnimation::ActionAnimation, Constants::MAX_ANIMATIONS>
                     actionAnimations{};
 
-                // TODO : This is a hack
-                GraphicLayer layer = GraphicLayer::NONE;
-                for (const auto& animation : animations)
+                for (auto& variant : animation.variants)
                 {
-                    layer = animation.layer;
-                    auto drsData = getDRSData(animation, m_drsInterface);
+                    GraphicLayer layer = variant.layer;
+                    debug_assert(layer != GraphicLayer::NONE,
+                                 "Graphics layer is not set for animation {} of entity {}",
+                                 variant.name, entityName);
+
+                    auto drsData = getDRSData(variant, m_drsInterface);
                     if (holder->tryGetComponent<CompUnit>() != nullptr)
                     {
                         drsData.slpLoadMode = SLPLoadMode::DIRECTIONAL_ANIMATIONS;
@@ -700,23 +710,22 @@ void EntityModelLoaderV2::loadUnprogressedFields()
 
                     spdlog::debug(
                         "Entity {} has animation with DRS file {} and SLP id {} for action {}",
-                        entityName, animation.drsFile, animation.slpId, animation.name);
+                        entityName, variant.drsFile, variant.slpId, variant.name);
 
                     auto entityType = typeRegistry->getEntityType(entityName);
-                    // TODO - Support filters
-                    GraphicsID graphicsId = holder->createGraphicsID(animation.variationFilter);
-
-                    if (animation.name != "fire")
-                    {
-                        graphicsId.action = getAction(animation.name);
-                    }
+                    GraphicsID graphicsId = holder->createGraphicsID(variant.variationFilter);
+                    debug_assert(
+                        variant.variationFilter.contains("action"),
+                        "action filter is missing in variation_filter for entity {} animation {}",
+                        entityName, variant.name);
 
                     addData(graphicsId, drsData);
 
                     CompAnimation::ActionAnimation actionAnimation;
-                    actionAnimation.frames = animation.frameCount;
-                    actionAnimation.speed = animation.speed;
-                    actionAnimation.repeatable = animation.repeatable;
+                    actionAnimation.frames = variant.frameCount;
+                    actionAnimation.speed = variant.speed;
+                    actionAnimation.repeatable = variant.repeatable;
+                    actionAnimation.layer = layer;
 
                     actionAnimations[graphicsId.action] = actionAnimation;
 
@@ -730,10 +739,10 @@ void EntityModelLoaderV2::loadUnprogressedFields()
                         normalizedHeight = std::max(height, normalizedHeight);
                     }
                 }
+
                 const auto compGraphic = holder->tryGetComponent<CompGraphics>();
                 PropertyInitializer::set(compGraphic->constantHeight, (int) normalizedHeight);
                 PropertyInitializer::set(compPtr->animations, actionAnimations);
-                PropertyInitializer::set(compPtr->layer, layer);
             }
         }
     }
@@ -756,6 +765,8 @@ core::GraphicsID EntityModelLoaderV2::ComponentHolder::createGraphicsID(
         id.isIcon = filters.at("icon") == "true" ? 1 : 0;
     if (filters.contains("variation"))
         id.variation = std::stoi(filters.at("variation"));
+    if (filters.contains("action"))
+        id.action = getAction(filters.at("action"));
 
     bool foundEntityType = false;
 
@@ -865,7 +876,7 @@ DRSData getDRSData(const SingleGraphic& graphicData,
     return data;
 }
 
-DRSData getDRSData(const Animation& animation, core::Ref<DRSInterface> drsInterface)
+DRSData getDRSData(const AnimationVariant& animation, core::Ref<DRSInterface> drsInterface)
 {
     const std::string resolvedFileName = std::string("assets/") + animation.drsFile;
 
@@ -1044,6 +1055,7 @@ UnitAction getAction(const std::string actionname)
         {"attack", UnitAction::ATTACK},
         {"die", UnitAction::DIE},
         {"decay_corpse", UnitAction::DECAY_CORPSE},
+        {"fire", UnitAction::ACTION_NONE},
     };
 
     return actions.at(actionname);

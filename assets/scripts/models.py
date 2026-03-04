@@ -61,18 +61,19 @@ all_units: List[Unit] = [
                 GraphicVariant(
                     graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50730, frame_index=16),
                     variation_filter={GraphicVariantType.ICON:"true"})]),
-        animations=[
-            Animation(name="idle", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1388, layer=GraphicLayer.ENTITIES),
-            Animation(name="move", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1392, layer=GraphicLayer.ENTITIES),
-            Animation(name="chop", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1434, layer=GraphicLayer.ENTITIES),
-            Animation(name="mine", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1880, layer=GraphicLayer.ENTITIES),
-            Animation(name="carry_lumber", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1883, layer=GraphicLayer.ENTITIES),
-            Animation(name="carry_stone", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1879, layer=GraphicLayer.ENTITIES),
-            Animation(name="carry_gold", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=2218, layer=GraphicLayer.ENTITIES),
-            Animation(name="build", frame_count=15, speed=25, drs_file="graphics.drs", slp_id=1874, layer=GraphicLayer.ENTITIES),
-            Animation(name="die", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1385, repeatable=False, layer=GraphicLayer.ENTITIES),
-            Animation(name="decay_corpse", frame_count=5, speed=0.1, drs_file="graphics.drs", slp_id=1389, repeatable=False, layer=GraphicLayer.ENTITIES),
-        ]
+        animations=Animation(
+            variants=[
+                AnimationVariant(name="anim_idle", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1388, variation_filter={GraphicVariantType.ACTION:"idle"}, layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_move", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1392, variation_filter={GraphicVariantType.ACTION:"move"}, layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_chop", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1434, variation_filter={GraphicVariantType.ACTION:"chop"}, layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_mine", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1880, variation_filter={GraphicVariantType.ACTION:"mine"}, layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_carry_lumber", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1883, variation_filter={GraphicVariantType.ACTION:"carry_lumber"}, layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_carry_stone", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1879, variation_filter={GraphicVariantType.ACTION:"carry_stone"}, layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_carry_gold", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=2218, variation_filter={GraphicVariantType.ACTION:"carry_gold"}, layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_build", frame_count=15, speed=25, drs_file="graphics.drs", slp_id=1874, variation_filter={GraphicVariantType.ACTION:"build"}, layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_die", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1385, variation_filter={GraphicVariantType.ACTION:"die"}, repeatable=False, layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_decay_corpse", frame_count=5, speed=0.1, drs_file="graphics.drs", slp_id=1389, repeatable=False, variation_filter={GraphicVariantType.ACTION:"decay_corpse"}, layer=GraphicLayer.ENTITIES),
+        ])
     ),
     MilitaryUnit(
         name="militia",
@@ -93,12 +94,13 @@ all_units: List[Unit] = [
                 GraphicVariant(
                     graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50730, frame_index=8),
                     variation_filter={GraphicVariantType.ICON:"true"})]),
-        animations=[
-            Animation(name="idle", frame_count=6, speed=15, drs_file="graphics.drs", slp_id=993, layer=GraphicLayer.ENTITIES),
-            Animation(name="move", frame_count=12, speed=15, drs_file="graphics.drs", slp_id=997, layer=GraphicLayer.ENTITIES),
-            Animation(name="attack", frame_count=10, speed=15, drs_file="graphics.drs", slp_id=987, layer=GraphicLayer.ENTITIES),
-            Animation(name="die", frame_count=10, speed=10, drs_file="graphics.drs", slp_id=990, repeatable=False, layer=GraphicLayer.ENTITIES),
-        ]
+        animations=Animation(
+            variants=[
+                AnimationVariant(name="anim_idle", frame_count=6, speed=15, drs_file="graphics.drs", slp_id=993, variation_filter={GraphicVariantType.ACTION:"idle"}, layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_move", frame_count=12, speed=15, drs_file="graphics.drs", slp_id=997, variation_filter={GraphicVariantType.ACTION:"move"}, layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_attack", frame_count=10, speed=15, drs_file="graphics.drs", slp_id=987, variation_filter={GraphicVariantType.ACTION:"attack"}, layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_die", frame_count=10, speed=10, drs_file="graphics.drs", slp_id=990, repeatable=False, variation_filter={GraphicVariantType.ACTION:"die"}, layer=GraphicLayer.ENTITIES),
+        ])
     ),
 ]
 
@@ -637,16 +639,18 @@ all_ui_elements: List[UIElement] = [
 all_misc = [
     BuildingFire(
         name="fire",
-        animations=[
-            Animation(name="fire", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=424, 
-                      variation_filter={GraphicVariantType.STATE:"small", GraphicVariantType.VARIATION:"0"}, layer=GraphicLayer.ENTITY_DECORATOR),
-            Animation(name="fire", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=427, 
-                      variation_filter={GraphicVariantType.STATE:"medium", GraphicVariantType.VARIATION:"0"}, layer=GraphicLayer.ENTITY_DECORATOR),
-            Animation(name="fire", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=429, 
-                      variation_filter={GraphicVariantType.STATE:"large", GraphicVariantType.VARIATION:"0"}, layer=GraphicLayer.ENTITY_DECORATOR),
-            Animation(name="fire", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=431, 
-                      variation_filter={GraphicVariantType.STATE:"huge", GraphicVariantType.VARIATION:"0"}, layer=GraphicLayer.ENTITY_DECORATOR),
-        ],)]
+        animations=Animation(
+            variants=[
+                AnimationVariant(name="anim_fire_small", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=424, 
+                          variation_filter={GraphicVariantType.STATE:"small", GraphicVariantType.VARIATION:"0", GraphicVariantType.ACTION:"fire"}, layer=GraphicLayer.ENTITY_DECORATOR),
+                AnimationVariant(name="anim_fire_medium", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=427, 
+                          variation_filter={GraphicVariantType.STATE:"medium", GraphicVariantType.VARIATION:"0", GraphicVariantType.ACTION:"fire"}, layer=GraphicLayer.ENTITY_DECORATOR),
+                AnimationVariant(name="anim_fire_large", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=429, 
+                          variation_filter={GraphicVariantType.STATE:"large", GraphicVariantType.VARIATION:"0", GraphicVariantType.ACTION:"fire"}, layer=GraphicLayer.ENTITY_DECORATOR),
+                AnimationVariant(name="anim_fire_huge", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=431, 
+                          variation_filter={GraphicVariantType.STATE:"huge", GraphicVariantType.VARIATION:"0", GraphicVariantType.ACTION:"fire"}, layer=GraphicLayer.ENTITY_DECORATOR),
+            ])
+        )]
 
 lists = [all_units, all_natural_resources, all_buildings, all_tilesets, all_ui_elements, all_misc]
 all_models = [x for lst in lists for x in lst]

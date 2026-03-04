@@ -39,7 +39,7 @@ class Vision:
 
 
 class Animated:
-    animations: Optional[List[Animation]]
+    animations: Optional[Animation]
 
 
 class Health:

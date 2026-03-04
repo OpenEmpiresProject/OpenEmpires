@@ -48,6 +48,7 @@ class GraphicVariantType(str, Enum):
     CONSTRUCTION_SITE = "construction_site"
     ICON = "icon"
     VARIATION = "variation"
+    ACTION = "action"
 
 
 class ArmorClass(int, Enum):

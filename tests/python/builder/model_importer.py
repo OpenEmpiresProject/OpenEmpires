@@ -15,16 +15,17 @@ all_models = [
                     Shortcut(name="wood_camp", shortcut="l"),
                     Shortcut(name="mine_camp", shortcut="n")],
         icon=Icon(drs_file="interfac.drs", slp_id=50730, index=16),
-        animations=[
-            Animation(name="idle", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1388,variation_filter={},layer=GraphicLayer.ENTITIES),
-            Animation(name="move", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1392,variation_filter={},layer=GraphicLayer.ENTITIES),
-            Animation(name="chop", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1434,variation_filter={},layer=GraphicLayer.ENTITIES),
-            Animation(name="mine", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1880,variation_filter={},layer=GraphicLayer.ENTITIES),
-            Animation(name="carry_lumber", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1883,variation_filter={},layer=GraphicLayer.ENTITIES),
-            Animation(name="carry_stone", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1879,variation_filter={},layer=GraphicLayer.ENTITIES),
-            Animation(name="carry_gold", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=2218,variation_filter={},layer=GraphicLayer.ENTITIES),
-            Animation(name="build", frame_count=15, speed=25, drs_file="graphics.drs", slp_id=1874,variation_filter={},layer=GraphicLayer.ENTITIES),
-        ]
+        animations=Animation(
+            variants=[
+                AnimationVariant(name="anim_idle", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1388,variation_filter={"action":"idle"},layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_move", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1392,variation_filter={"action":"move"},layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_chop", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1434,variation_filter={"action":"chop"},layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_mine", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1880,variation_filter={"action":"mine"},layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_carry_lumber", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1883,variation_filter={"action":"carry_lumber"},layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_carry_stone", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=1879,variation_filter={"action":"carry_stone"},layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_carry_gold", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=2218,variation_filter={"action":"carry_gold"},layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_build", frame_count=15, speed=25, drs_file="graphics.drs", slp_id=1874,variation_filter={"action":"build"},layer=GraphicLayer.ENTITIES),
+            ])
     )
 ]
 
