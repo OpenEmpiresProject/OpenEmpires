@@ -18,6 +18,8 @@ constexpr MapLayerType getMapLayerType(GraphicLayer graphicsLayer) noexcept
         return MapLayerType::ON_GROUND;
     case GraphicLayer::ENTITIES:
         return MapLayerType::STATIC;
+    case GraphicLayer::ENTITY_DECORATOR:
+        return MapLayerType::ENTITY_DECORATOR;
     }
     return MapLayerType::STATIC;
 }
@@ -32,6 +34,8 @@ constexpr GraphicLayer getGraphicLayer(MapLayerType mapLayerType) noexcept
         return GraphicLayer::ON_GROUND;
     case MapLayerType::STATIC:
         return GraphicLayer::ENTITIES;
+    case MapLayerType::ENTITY_DECORATOR:
+        return GraphicLayer::ENTITY_DECORATOR;
     }
     return GraphicLayer::ENTITIES;
 }

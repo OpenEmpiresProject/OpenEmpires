@@ -367,7 +367,7 @@ void BuildingManager::handleBuildingDamage(const TickData& tick,
     if (building.isConstructing())
         return;
 
-    auto& healthComp = m_stateMan->getComponent<CompHealth>(entity);
+    auto [healthComp, info] = m_stateMan->getComponents<CompHealth, CompEntityInfo>(entity);
     FlameLevel flameLevel = FlameLevel::SMALL;
     auto healthPerc = healthComp.health / healthComp.maxHealth.value() * 100.0;
 
@@ -401,18 +401,26 @@ void BuildingManager::handleBuildingDamage(const TickData& tick,
         return; // No fire if health is above 75%
     }
 
-    if (building.fireEntities.empty())
+    // TODO: So far we only have fire as child entities, hence this works.
+    if (info.getChildEntities().empty())
     {
         auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
         for (auto& fireAnchor : building.fireAnchors.value())
         {
             auto fire = factory->createEntity(building.fireEntityType);
-            building.fireEntities.push_back(fire);
+            auto [fireInfo, fireTransform] =
+                m_stateMan->getComponents<CompEntityInfo, CompTransform>(fire);
+            info.addChild(fireInfo);
+            // Fire would not have an absolute position, its position is determined by the
+            // building's position + fire anchor
+            //
+            fireTransform.position = Feet::null;
+            fireTransform.relativePixelPosition = fireAnchor;
         }
     }
 
-    for (auto fireEntity : building.fireEntities)
+    for (auto fireEntity : info.getChildEntities())
     {
         auto [fireAnimComp, fireInfo] =
             m_stateMan->getComponents<CompAnimation, CompEntityInfo>(fireEntity);
@@ -425,9 +433,7 @@ void BuildingManager::handleBuildingDamage(const TickData& tick,
             fireAnimComp.frame++;
             fireAnimComp.frame %= fireAnim.frames;
 
-            // Since the fire frame changed, need to mark the building dirty
-            // to let the GraphicsInstructor to send the instructions to draw fire
-            StateManager::markDirty(entity);
+            StateManager::markDirty(fireEntity);
         }
     }
 }

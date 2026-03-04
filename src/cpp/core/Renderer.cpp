@@ -609,7 +609,9 @@ void RendererImpl::updateRenderingComponents()
         auto it = m_simulationToRendererEntityIDMapping.find(instruction->entityID);
         if (it == m_simulationToRendererEntityIDMapping.end())
         {
-            entity = m_registry.create();
+            entity = m_registry.create(instruction->entityID);
+            debug_assert(entity == instruction->entityID,
+                         "Entity ID mismatch between simulation and renderer");
             m_registry.emplace_or_replace<CompRendering>(entity, CompRendering());
             m_simulationToRendererEntityIDMapping.emplace(instruction->entityID, entity);
         }
@@ -782,8 +784,32 @@ void RendererImpl::renderGameEntities()
 
         if (rc->positionInFeet.isNull() == false)
         {
+            /**
+             *   Calculating final screen position has a few components.
+             *  - Component 1: Base position in screen units. Basically the raw position of the
+             *    entity in the screen
+             *  - Component 2: Texture anchor. In order to draw the texture, shift left/up by the
+             *    anchor amount. Then texture's base point (eg: bottom center for units) will be at
+             *    the entity's position in the world.
+             *  - Component 3: relativePixelPosition. Some entities have an additional pixel offset
+             *    to shift the texture by relative to parent's texture left-top corner.
+             *    Since the shift can happen at any direction, this is treated as a addition.
+             *    And this is applicable only if the entity has a parent.
+             *  - Component 4: Parent's texture position (after anchor adjustment).
+             **/
             screenpos = m_coordinates.feetToScreenUnits(rc->positionInFeet);
             anchorAdjustedScreenPos = screenpos - rc->anchor;
+
+            if (rc->parentEntityId != entt::null and not rc->relativePixelPosition.isNull())
+            {
+                CompRendering& parentComp = m_registry.get<CompRendering>(rc->parentEntityId);
+                auto parentScreenpos = m_coordinates.feetToScreenUnits(parentComp.positionInFeet);
+                auto anchorAdjustedParentScreenPos = parentScreenpos - parentComp.anchor;
+
+                auto screenPosRelativeToParent =
+                    anchorAdjustedParentScreenPos + rc->relativePixelPosition;
+                anchorAdjustedScreenPos = screenPosRelativeToParent - rc->anchor;
+            }
 
             if (m_showFogOfWar && fogOfWar.isExplored(rc->positionInFeet.toTile()) == false)
                 continue;

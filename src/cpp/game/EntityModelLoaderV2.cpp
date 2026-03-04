@@ -174,6 +174,7 @@ struct Animation
     std::string drsFile;
     bool repeatable;
     std::map<std::string, std::string> variationFilter;
+    GraphicLayer layer;
 };
 
 struct Shortcut
@@ -229,25 +230,28 @@ PYBIND11_EMBEDDED_MODULE(graphic_defs, m)
         .def_readonly("variants", &Graphic::variants)
         .def_readonly("layer", &Graphic::layer);
 
+    // TODO : should use NONE layer instead of this hard code
     py::class_<Animation>(m, "Animation")
         .def(py::init<std::string, int, float, int, std::string, bool,
-                      std::map<std::string, std::string>>(),
+                      std::map<std::string, std::string>, GraphicLayer>(),
              py::kw_only(), py::arg("name"), py::arg("frame_count") = 15, py::arg("speed") = 10,
              py::arg("slp_id"), py::arg("drs_file") = "graphics.drs", py::arg("repeatable") = true,
-             py::arg("variation_filter") = std::map<std::string, std::string>())
+             py::arg("variation_filter") = std::map<std::string, std::string>(), py::arg("layer"))
         .def_readonly("name", &Animation::name)
         .def_readonly("frame_count", &Animation::frameCount)
         .def_readonly("speed", &Animation::speed)
         .def_readonly("slp_id", &Animation::slpId)
         .def_readonly("drs_file", &Animation::drsFile)
         .def_readonly("repeatable", &Animation::repeatable)
-        .def_readonly("variation_filter", &Animation::variationFilter);
+        .def_readonly("variation_filter", &Animation::variationFilter)
+        .def_readonly("layer", &Animation::layer);
 
     py::enum_<GraphicLayer>(m, "GraphicLayer")
         .value("NONE", GraphicLayer::NONE)
         .value("GROUND", GraphicLayer::GROUND)
         .value("ON_GROUND", GraphicLayer::ON_GROUND)
         .value("ENTITIES", GraphicLayer::ENTITIES)
+        .value("ENTITY_DECORATOR", GraphicLayer::ENTITY_DECORATOR)
         .value("SKY", GraphicLayer::SKY)
         .value("UI", GraphicLayer::UI)
         .export_values();
@@ -679,8 +683,11 @@ void EntityModelLoaderV2::loadUnprogressedFields()
                 std::array<CompAnimation::ActionAnimation, Constants::MAX_ANIMATIONS>
                     actionAnimations{};
 
+                // TODO : This is a hack
+                GraphicLayer layer = GraphicLayer::NONE;
                 for (const auto& animation : animations)
                 {
+                    layer = animation.layer;
                     auto drsData = getDRSData(animation, m_drsInterface);
                     if (holder->tryGetComponent<CompUnit>() != nullptr)
                     {
@@ -726,6 +733,7 @@ void EntityModelLoaderV2::loadUnprogressedFields()
                 const auto compGraphic = holder->tryGetComponent<CompGraphics>();
                 PropertyInitializer::set(compGraphic->constantHeight, (int) normalizedHeight);
                 PropertyInitializer::set(compPtr->animations, actionAnimations);
+                PropertyInitializer::set(compPtr->layer, layer);
             }
         }
     }

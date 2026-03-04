@@ -26,7 +26,9 @@ class CompTransform
 
   public:
     Feet position{0, 0}; // Position in feet
-    int rotation = 0;    // Rotation in degrees from feet North (0 degrees is up)
+    Vec2 relativePixelPosition{
+        0, 0};        // Relative to parent, either this or above position can exist at a time
+    int rotation = 0; // Rotation in degrees from feet North (0 degrees is up)
     int goalRadiusSquared = 150 * 150;
     int goalRadius = 150;
     int selectionBoxWidth = 15;

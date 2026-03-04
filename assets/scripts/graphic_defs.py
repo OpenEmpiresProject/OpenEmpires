@@ -46,8 +46,9 @@ class GraphicLayer(IntEnum):
     GROUND = 0
     ON_GROUND = 1
     ENTITIES = 2
-    SKY = 3
-    UI = 4
+    ENTITY_DECORATOR = 3
+    SKY = 4
+    UI = 5
 
 
 class Graphic(_Constructible):
@@ -63,6 +64,7 @@ class Animation(_Constructible):
     slp_id: int
     repeatable: bool = True
     variation_filter: Dict[str, str] = {}
+    layer: GraphicLayer
 
 
 # TODO - Rename this module

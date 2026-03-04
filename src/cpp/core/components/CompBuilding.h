@@ -32,7 +32,6 @@ class CompBuilding
     // Property<std::string> constructionSiteName;
 
   public:
-    std::vector<uint32_t> fireEntities;
     bool validPlacement = true;
     // Lower bound represents the entity variation to be used based on the progress of the
     // construction.

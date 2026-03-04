@@ -18,9 +18,9 @@ all_models = [
         graphics=Graphic(
             layer=GraphicLayer.ENTITIES, variants=[]),
         animations=[
-            Animation(name="idle", frame_count=6, speed=15, drs_file="graphics.drs", slp_id=993),
-            Animation(name="move", frame_count=12, slp_id=997),
-            Animation(name="decay_corpse", frame_count=5, speed=0.1, drs_file="graphics.drs", slp_id=1389, repeatable=False),
+            Animation(name="idle", frame_count=6, speed=15, drs_file="graphics.drs", slp_id=993,variation_filter={},layer=GraphicLayer.ENTITIES),
+            Animation(name="move", frame_count=12, slp_id=997,variation_filter={},layer=GraphicLayer.ENTITIES),
+            Animation(name="decay_corpse", frame_count=5, speed=0.1, drs_file="graphics.drs", slp_id=1389, repeatable=False,variation_filter={},layer=GraphicLayer.ENTITIES),
         ]
     )
 ]

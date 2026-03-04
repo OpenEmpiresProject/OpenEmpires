@@ -16,6 +16,7 @@ class CompAnimation
         bool repeatable = false;
     };
     Property<std::array<ActionAnimation, Constants::MAX_ANIMATIONS>> animations{};
+    Property<GraphicLayer> layer = GraphicLayer::NONE;
 
   public:
     int frame = 0;

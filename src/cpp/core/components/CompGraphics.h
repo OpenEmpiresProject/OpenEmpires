@@ -37,20 +37,6 @@ struct DebugOverlay
     uint32_t circlePixelRadius = 20;
 };
 
-enum class GraphicLayer
-{
-    NONE = -1,
-    GROUND,
-    ON_GROUND,
-    ENTITIES,
-    SKY,
-    UI
-};
-
-inline constexpr std::array<GraphicLayer, 5> g_graphicLayersOrder{
-    GraphicLayer::GROUND, GraphicLayer::ON_GROUND, GraphicLayer::ENTITIES, GraphicLayer::SKY,
-    GraphicLayer::UI};
-
 // Component will be owned by the Simulator
 class CompGraphics : public GraphicsID
 {
@@ -60,8 +46,10 @@ class CompGraphics : public GraphicsID
 
   public:
     uint32_t entityID = entt::null;
+    uint32_t parentEntityId = entt::null;
     Feet positionInFeet = Feet::null;
     Vec2 positionInScreenUnits;
+    Vec2 relativePixelPosition = Vec2::zero; // Relative to parent
     std::vector<DebugOverlay> debugOverlays;
     std::vector<GraphicAddon> addons;
     Color shading;

@@ -5,6 +5,7 @@
 #include "Vec2Base.h"
 #include "utils/Constants.h"
 
+#include <array>
 #include <bitset>
 #include <cstdint>
 #include <memory>
@@ -244,6 +245,7 @@ enum class MapLayerType
     ON_GROUND, // walkable decorators/items on the ground
     STATIC,    // doesn't move, not walkable
     UNITS,
+    ENTITY_DECORATOR,
     // Add more layers here
 
     MAX_LAYERS
@@ -284,6 +286,23 @@ enum FlameLevel
     LARGE = 2,
     HUGE = 3,
 };
+
+enum class GraphicLayer
+{
+    NONE = -1,
+    GROUND,
+    ON_GROUND,
+    ENTITIES,
+    ENTITY_DECORATOR,
+    SKY,
+    UI
+    // When new graphic layers are added here, ensure to order them accordingly in
+    // g_graphicLayersOrder
+};
+
+inline constexpr std::array<GraphicLayer, 6> g_graphicLayersOrder{
+    GraphicLayer::GROUND,           GraphicLayer::ON_GROUND, GraphicLayer::ENTITIES,
+    GraphicLayer::ENTITY_DECORATOR, GraphicLayer::SKY,       GraphicLayer::UI};
 
 template <typename T> constexpr int toInt(const T& t) noexcept
 {

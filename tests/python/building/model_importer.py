@@ -27,11 +27,11 @@ all_models = [
         name="fire",
         animations=[
             Animation(name="fire", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=424, 
-                      variation_filter={GraphicVariantType.STATE:"small", GraphicVariantType.VARIATION:"0"}),
+                      variation_filter={GraphicVariantType.STATE:"small", GraphicVariantType.VARIATION:"0"},layer=GraphicLayer.ENTITIES),
             Animation(name="fire", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=425, 
-                      variation_filter={GraphicVariantType.STATE:"small", GraphicVariantType.VARIATION:"1"}),
+                      variation_filter={GraphicVariantType.STATE:"small", GraphicVariantType.VARIATION:"1"},layer=GraphicLayer.ENTITIES),
             Animation(name="fire", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=427, 
-                      variation_filter={GraphicVariantType.STATE:"medium", GraphicVariantType.VARIATION:"0"}),
+                      variation_filter={GraphicVariantType.STATE:"medium", GraphicVariantType.VARIATION:"0"},layer=GraphicLayer.ENTITIES),
         ],)
 ]
 

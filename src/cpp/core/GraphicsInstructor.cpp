@@ -106,6 +106,17 @@ void GraphicsInstructor::updateGraphicComponents()
         gc.bypass = false;
         gc.state = entityInfo.state;
 
+        auto parent = entityInfo.getParentEntityId();
+        if (parent != entt::null)
+        {
+            auto [parentTransform, parentInfo] =
+                m_stateManager->getComponents<CompTransform, CompEntityInfo>(parent);
+            gc.relativePixelPosition = transform.relativePixelPosition;
+            gc.isEnabled = gc.isEnabled && parentInfo.isEnabled;
+            gc.isDestroyed = gc.isDestroyed || parentInfo.isDestroyed;
+            gc.parentEntityId = parent;
+        }
+
         if (m_stateManager->hasComponent<CompSelectible>(entity))
         {
             auto& select = m_stateManager->getComponent<CompSelectible>(entity);
@@ -133,6 +144,7 @@ void GraphicsInstructor::updateGraphicComponents()
         {
             auto& animation = m_stateManager->getComponent<CompAnimation>(entity);
             gc.frame = animation.frame;
+            gc.layer = animation.layer;
         }
 
         if (m_stateManager->hasComponent<CompAction>(entity))
@@ -153,34 +165,6 @@ void GraphicsInstructor::updateGraphicComponents()
 
             gc.landArea = building.landArea;
             gc.isConstructing = int(not building.isConstructed());
-
-            if (auto healthComp = m_stateManager->tryGetComponent<CompHealth>(entity))
-            {
-                if (healthComp->getHealthPercentage() < 75)
-                {
-                    int fireIndex = 0;
-                    for (auto fireEntity : building.fireEntities)
-                    {
-                        auto [fireAnimComp, fireInfo] =
-                            m_stateManager->getComponents<CompAnimation, CompEntityInfo>(
-                                fireEntity);
-
-                        GraphicAddon::Texture fireTexture;
-                        fireTexture.graphicsId.entityType = fireInfo.entityType;
-                        fireTexture.graphicsId.frame = fireAnimComp.frame;
-                        fireTexture.graphicsId.state = fireInfo.state;
-                        fireTexture.offset = building.fireAnchors.value().empty()
-                                                 ? Vec2{0, 0}
-                                                 : building.fireAnchors[fireIndex];
-                        GraphicAddon addon;
-                        addon.type = GraphicAddon::Type::TEXTURE;
-                        addon.data = fireTexture;
-                        gc.addons.push_back(addon);
-
-                        ++fireIndex;
-                    }
-                }
-            }
         }
 
         if (m_stateManager->hasComponent<CompUIElement>(entity))
