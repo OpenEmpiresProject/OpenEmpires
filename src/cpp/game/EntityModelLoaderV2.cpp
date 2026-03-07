@@ -450,6 +450,18 @@ void EntityModelLoaderV2::postProcessing()
             if (auto info = std::get_if<CompEntityInfo>(&componentVar))
             {
                 m_componentsByEntityType[info->entityType] = compHolder;
+
+#ifndef NDEBUG
+                if (typeRegistry->getEntityType("default_tileset") == info->entityType)
+                {
+                    auto graphics = compHolder->tryGetComponent<CompGraphics>();
+                    DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, core::Color::GREY,
+                                         Alignment::BOTTOM_CENTER};
+                    overlay.customPos1 = Alignment::CENTER_LEFT;
+                    overlay.customPos2 = Alignment::CENTER_RIGHT;
+                    graphics->debugOverlays.push_back(overlay);
+                }
+#endif
             }
 
             if (auto selectible = std::get_if<CompSelectible>(&componentVar))
@@ -509,6 +521,20 @@ void EntityModelLoaderV2::postProcessing()
                 auto info = compHolder->tryGetComponent<CompEntityInfo>();
                 typeRegistry->registerUnitType(info->entityType);
                 typeRegistry->registerUnitTypeHousingNeed(info->entityType, unit->housingNeed);
+
+#ifndef NDEBUG
+                auto graphics = compHolder->tryGetComponent<CompGraphics>();
+                graphics->debugOverlays.push_back({DebugOverlay::Type::ARROW, core::Color::GREEN,
+                                                   Alignment::BOTTOM_CENTER, Alignment::CENTER});
+                graphics->debugOverlays.push_back({DebugOverlay::Type::ARROW, core::Color::RED,
+                                                   Alignment::BOTTOM_CENTER, Alignment::CENTER});
+                graphics->debugOverlays.push_back({DebugOverlay::Type::ARROW, core::Color::BLUE,
+                                                   Alignment::BOTTOM_CENTER, Alignment::CENTER});
+                graphics->debugOverlays.push_back({DebugOverlay::Type::ARROW, core::Color::YELLOW,
+                                                   Alignment::BOTTOM_CENTER, Alignment::CENTER});
+                graphics->debugOverlays.push_back({DebugOverlay::Type::ARROW, core::Color::BLACK,
+                                                   Alignment::BOTTOM_CENTER, Alignment::CENTER});
+#endif
             }
 
             if (auto armor = std::get_if<CompArmor>(&componentVar))

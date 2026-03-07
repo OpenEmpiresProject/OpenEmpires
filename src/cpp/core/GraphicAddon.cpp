@@ -25,38 +25,8 @@ Vec2 getAnchorAdjustedScreenPos(const CompRendering& comp, const Coordinates& co
 namespace core
 {
 struct FontAtlas;
-
-void GraphicAddon::Texture::onRenderAfterParent(const RenderingContext& context,
-                                                const CompRendering& comp,
-                                                Alignment alignment,
-                                                const Margin& margin)
-{
-    Vec2 anchorAdjustedScreenPos = getAnchorAdjustedScreenPos(comp, context.coordinates);
-    anchorAdjustedScreenPos += offset - anchor; // Apply texture offset
-    SDL_FRect dstRect = {anchorAdjustedScreenPos.x, anchorAdjustedScreenPos.y, srcRect.w,
-                         srcRect.h};
-
-    if (dstRect.w > 0 && dstRect.h > 0 && texture != nullptr)
-    {
-        // TODO: Still the shading color comes from parent component
-        SDL_SetTextureColorMod(texture, comp.shading.r, comp.shading.g, comp.shading.b);
-        SDL_RenderTextureRotated(context.renderer, texture, &(srcRect), &dstRect, 0, nullptr, flip);
-    }
-}
-
-void GraphicAddon::Texture::updateTextureDetails(const GraphicsRegistry& graphicsRegistry)
-{
-    // spdlog::debug("Updating fire graphic {}", graphicsId.toString());
-
-    auto& entry = graphicsRegistry.getTexture(graphicsId);
-    updated = true;
-    texture = entry.image;
-    anchor = entry.anchor;
-    srcRect = *(entry.srcRect);
-    flip = entry.flip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
-}
-
 } // namespace core
+
 extern void renderCirlceInIsometric(SDL_Renderer* renderer,
                                     Sint16 cx,
                                     Sint16 cy,

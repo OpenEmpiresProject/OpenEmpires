@@ -31,7 +31,6 @@ struct GraphicAddon
         RHOMBUS,
         TEXT,
         HEALTH_BAR,
-        TEXTURE
     };
 
     struct IsoCircle
@@ -89,26 +88,7 @@ struct GraphicAddon
                       const Margin& margin);
     };
 
-    struct Texture
-    {
-        GraphicsID graphicsId;
-        Vec2 offset; // This will override alignment if provided
-        bool updated = false;
-
-        // Following are auto populated by updateTextureDetails
-        SDL_Texture* texture = nullptr;
-        Vec2 anchor = {0, 0}; // Anchor position in pixels
-        SDL_FlipMode flip = SDL_FLIP_NONE;
-        SDL_FRect srcRect; // Source rectangle for the texture
-
-        void onRenderAfterParent(const RenderingContext& context,
-                                 const CompRendering& comp,
-                                 Alignment alignment,
-                                 const Margin& margin);
-        void updateTextureDetails(const GraphicsRegistry& graphicsRegistry);
-    };
-
-    using Data = std::variant<std::monostate, IsoCircle, Square, Rhombus, Text, HealthBar, Texture>;
+    using Data = std::variant<std::monostate, IsoCircle, Square, Rhombus, Text, HealthBar>;
 
     Type type = Type::NONE;
     Data data = std::monostate{};

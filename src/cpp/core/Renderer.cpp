@@ -305,7 +305,6 @@ class RendererImpl
 
     GraphicsID m_currentCursor;
 
-    std::unordered_map<uint32_t, uint32_t> m_simulationToRendererEntityIDMapping;
     entt::basic_registry<uint32_t> m_registry;
 };
 } // namespace core
@@ -605,19 +604,13 @@ void RendererImpl::updateRenderingComponents()
 
     for (const auto& instruction : frameData)
     {
-        uint32_t entity = entt::null;
-        auto it = m_simulationToRendererEntityIDMapping.find(instruction->entityID);
-        if (it == m_simulationToRendererEntityIDMapping.end())
+        uint32_t entity = instruction->entityID;
+        if (not m_registry.all_of<CompRendering>(instruction->entityID))
         {
             entity = m_registry.create(instruction->entityID);
             debug_assert(entity == instruction->entityID,
                          "Entity ID mismatch between simulation and renderer");
             m_registry.emplace_or_replace<CompRendering>(entity, CompRendering());
-            m_simulationToRendererEntityIDMapping.emplace(instruction->entityID, entity);
-        }
-        else
-        {
-            entity = it->second;
         }
 
         auto& oldRenderingComp = m_registry.get<CompRendering>(entity);
@@ -640,16 +633,6 @@ void RendererImpl::updateRenderingComponents()
                 case GraphicAddon::Type::ISO_CIRCLE:
                     updatedRenderingComp.additionalZOffset = Constants::FEET_PER_TILE + 1;
                     break;
-                case GraphicAddon::Type::TEXTURE:
-                    auto& data = addon.getData<GraphicAddon::Texture>();
-                    if (m_graphicsRegistry.hasTexture(data.graphicsId))
-                        data.updateTextureDetails(m_graphicsRegistry);
-                    else
-                    {
-                        spdlog::debug("Loading fire {}", data.graphicsId.toString());
-                        idsNeedToLoad.push_back(data.graphicsId);
-                    }
-                    break;
                 }
             }
 
@@ -662,23 +645,6 @@ void RendererImpl::updateRenderingComponents()
             GraphicsID idToLoad = *instruction; // Slicing
             idsNeedToLoad.push_back(idToLoad);
             lazyLoadedInstructions.push_back(instruction);
-
-            for (auto& addon : instruction->addons)
-            {
-                switch (addon.type)
-                {
-                case GraphicAddon::Type::TEXTURE:
-                    auto& data = addon.getData<GraphicAddon::Texture>();
-                    if (m_graphicsRegistry.hasTexture(data.graphicsId))
-                        data.updateTextureDetails(m_graphicsRegistry);
-                    else
-                    {
-                        spdlog::debug("Loading fire {}", data.graphicsId.toString());
-                        idsNeedToLoad.push_back(data.graphicsId);
-                    }
-                    break;
-                }
-            }
         }
     }
 
@@ -689,9 +655,7 @@ void RendererImpl::updateRenderingComponents()
                                       idsNeedToLoad);
         for (auto& instruction : lazyLoadedInstructions)
         {
-            auto it = m_simulationToRendererEntityIDMapping.find(instruction->entityID);
-
-            auto& oldRenderingComp = m_registry.get<CompRendering>(it->second);
+            auto& oldRenderingComp = m_registry.get<CompRendering>(instruction->entityID);
             auto& updatedRenderingComp = oldRenderingComp;
 
             CompRendering beforeUpdate = oldRenderingComp;
@@ -708,11 +672,6 @@ void RendererImpl::updateRenderingComponents()
                 {
                 case GraphicAddon::Type::ISO_CIRCLE:
                     updatedRenderingComp.additionalZOffset = Constants::FEET_PER_TILE + 1;
-                    break;
-                case GraphicAddon::Type::TEXTURE:
-                    auto& data = addon.getData<GraphicAddon::Texture>();
-                    if (m_graphicsRegistry.hasTexture(data.graphicsId))
-                        data.updateTextureDetails(m_graphicsRegistry);
                     break;
                 }
             }
