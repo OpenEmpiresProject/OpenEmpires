@@ -15,6 +15,7 @@
 #include "GraphicsRegistry.h"
 #include "HUDUpdater.h"
 #include "LogLevelController.h"
+#include "PathService.h"
 #include "PlayerController.h"
 #include "PlayerFactory.h"
 #include "Renderer.h"
@@ -101,6 +102,9 @@ class Game
 
         auto resourceManager = std::make_shared<ResourceManager>();
         core::ServiceRegistry::getInstance().registerService(resourceManager);
+
+        auto pathService = std::make_shared<core::PathService>();
+        core::ServiceRegistry::getInstance().registerService(pathService);
 
         auto entityTypeRegistry = std::make_shared<core::EntityTypeRegistry>();
         core::ServiceRegistry::getInstance().registerService(entityTypeRegistry);

@@ -1,5 +1,6 @@
 #include "PathFinderAStar.h"
 
+#include "Path.h"
 #include "Tile.h"
 #include "logging/Logger.h"
 
@@ -39,8 +40,8 @@ bool isWalkable(const PassabilityMap& map, Ref<Player> player, const Tile& from,
     if (from.x != to.x && from.y != to.y)
     {
         auto diff = to - from;
-        auto corner1 = Tile(from.x, from.y + diff.y);
-        auto corner2 = Tile(from.x + diff.x, from.y);
+        Tile corner1(from.x, from.y + diff.y);
+        Tile corner2(from.x + diff.x, from.y);
 
         // Diagonal movement is not allowed if the adjacent tiles are not walkable
         if (isBlocked(map, player, corner1) || isBlocked(map, player, corner2))
@@ -56,9 +57,9 @@ std::vector<Tile> getNeighbors(const Tile& pos)
             {pos.x + 1, pos.y - 1}, {pos.x - 1, pos.y + 1}};
 }
 
-Path reconstructPath(const std::unordered_map<Tile, Tile>& cameFrom, Tile current)
+std::vector<Feet> reconstructPath(const std::unordered_map<Tile, Tile>& cameFrom, Tile current)
 {
-    Path path;
+    std::vector<Feet> path;
     while (cameFrom.contains(current))
     {
         path.push_back(current.centerInFeet());
@@ -69,10 +70,10 @@ Path reconstructPath(const std::unordered_map<Tile, Tile>& cameFrom, Tile curren
     return path;
 }
 
-Path PathFinderAStar::findPath(const PassabilityMap& map,
-                               Ref<Player> player,
-                               const Feet& start,
-                               const Feet& goal)
+std::vector<Feet> PathFinderAStar::findPath(const PassabilityMap& map,
+                                            Ref<Player> player,
+                                            const Feet& start,
+                                            const Feet& goal)
 {
     using PQNode = std::pair<int, Tile>; // cost, position
     std::priority_queue<PQNode, std::vector<PQNode>, std::greater<>> open;

@@ -59,7 +59,7 @@ bool TileMap::isOccupied(MapLayerType layerType, const Tile& pos) const
     }
     else [[unlikely]]
     {
-        spdlog::error("Invalid grid position: ({}, {})", pos.x, pos.y);
+        spdlog::error("Invalid grid position: ({}, {}) to check occupancy", pos.x, pos.y);
         return false;
     }
 }
@@ -81,7 +81,7 @@ bool TileMap::isOccupiedByAnother(MapLayerType layerType, const Tile& pos, uint3
     }
     else [[unlikely]]
     {
-        spdlog::error("Invalid grid position: ({}, {})", pos.x, pos.y);
+        spdlog::error("Invalid grid position: ({}, {}) to check occupancy", pos.x, pos.y);
         return false;
     }
 }
@@ -210,7 +210,7 @@ uint32_t TileMap::getEntity(MapLayerType layerType, const Tile& pos) const
     }
     else [[unlikely]]
     {
-        spdlog::error("Invalid grid position: ({}, {})", pos.x, pos.y);
+        spdlog::error("Invalid grid position: ({}, {}) to get entity", pos.x, pos.y);
         return entt::null;
     }
 }
@@ -227,7 +227,7 @@ const std::set<uint32_t>& TileMap::getEntities(MapLayerType layerType, const Til
     }
     else [[unlikely]]
     {
-        spdlog::error("Invalid grid position: ({}, {})", pos.x, pos.y);
+        spdlog::error("Invalid grid position: ({}, {}) to get entities", pos.x, pos.y);
         return empty;
     }
 }
@@ -235,8 +235,8 @@ const std::set<uint32_t>& TileMap::getEntities(MapLayerType layerType, const Til
 bool TileMap::intersectsStaticObstacle(const Feet& start, const Feet& end) const
 {
     float distance = start.distance(end);
-    int numSteps =
-        static_cast<int>(distance / (Constants::FEET_PER_TILE * 0.25f)); // Sample every ¼ tile
+    auto numSteps =
+        static_cast<int>(distance / (Constants::FEET_PER_TILE * 0.25f)); // Sample every 1/4 tile
 
     if (numSteps <= 0)
         return false;

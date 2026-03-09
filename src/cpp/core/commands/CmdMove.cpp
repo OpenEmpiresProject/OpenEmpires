@@ -70,14 +70,31 @@ void CmdMove::onQueue()
 
     if (not targetPos.isNull())
     {
-        m_path = findPath(targetPos);
-        refinePath();
-        if (m_path.empty() == false)
-            m_nextIntermediateGoal = m_path.front();
+        m_path = m_pathService->findPath(m_components->transform.position, targetPos,
+                                         m_components->player.player);
+        if (m_path.getWaypoints().empty() == false)
+            m_nextIntermediateGoal = m_path.getWaypoints().front();
         else
             m_nextIntermediateGoal = Feet::null;
 
 #ifndef NDEBUG
+        for (auto& pos : m_path.getWaypoints())
+        {
+            auto tileEntity = m_stateMan->gameMap().getEntity(MapLayerType::GROUND, pos.toTile());
+            auto& graphics = m_stateMan->getComponent<CompGraphics>(tileEntity);
+
+            if (not graphics.debugOverlays.empty())
+            {
+                graphics.debugOverlays.clear();
+                DebugOverlay filledCircle;
+                filledCircle.type = DebugOverlay::Type::CIRCLE;
+                filledCircle.color = Color::GREEN;
+                filledCircle.absolutePosition = pos;
+                graphics.debugOverlays.push_back(filledCircle);
+                StateManager::markDirty(tileEntity);
+            }
+        }
+
         auto tileEntity = m_stateMan->gameMap().getEntity(MapLayerType::GROUND, targetPos.toTile());
         auto& graphics = m_stateMan->getComponent<CompGraphics>(tileEntity);
 
@@ -171,7 +188,9 @@ bool CmdMove::move(int deltaTimeMs)
         return true;
     }
 
-    if (!m_path.empty())
+    auto& waypoints = m_path.getWaypoints();
+
+    if (!waypoints.empty())
     {
         debug_assert(m_nextIntermediateGoal != Feet::null, "Next intermediate target must be set");
 
@@ -180,14 +199,13 @@ bool CmdMove::move(int deltaTimeMs)
         {
             spdlog::debug("Next hop {} reached", m_nextIntermediateGoal.toString());
 
-            if (m_path.empty() == false && m_path.front() == m_nextIntermediateGoal)
+            if (waypoints.empty() == false && waypoints.front() == m_nextIntermediateGoal)
             {
-                m_path.pop_front();
+                waypoints.pop_front();
             }
 
-            refinePath();
-            if (m_path.empty() == false)
-                m_nextIntermediateGoal = m_path.front();
+            if (waypoints.empty() == false)
+                m_nextIntermediateGoal = waypoints.front();
             else
                 m_nextIntermediateGoal = Feet::null;
         }
@@ -234,7 +252,7 @@ bool CmdMove::move(int deltaTimeMs)
             setPosition(newPos);
         }
     }
-    return m_path.empty();
+    return waypoints.empty();
 }
 
 /**
@@ -273,8 +291,6 @@ void CmdMove::setPosition(const Feet& newPosFeet)
 
         publishEvent(Event::Type::UNIT_TILE_MOVEMENT,
                      UnitTileMovementData{m_entityID, newTile, m_components->transform.position});
-
-        refinePath();
     }
     m_components->transform.position = newPosFeet;
 }
@@ -290,104 +306,8 @@ void CmdMove::setPosition(const Feet& newPosFeet)
  */
 bool CmdMove::hasLineOfSight(const Feet& target) const
 {
-    return m_stateMan->gameMap().intersectsStaticObstacle(m_components->transform.position,
-                                                          target) == false;
-}
-
-/**
- * @brief Refines the current movement path by removing waypoints that are directly visible.
- *
- * This method iterates through the waypoints in the path and checks if each waypoint
- * is in line of sight using hasLineOfSight(). If a waypoint is visible, it is considered
- * for removal.
- * All waypoints up to (but not including) the last visible waypoint are removed
- * from the front of the path.
- *
- * If the path is empty or contains fewer than two waypoints, no refinement is performed.
- */
-void CmdMove::refinePath()
-{
-    if (m_path.empty() || m_path.size() < 2)
-    {
-        spam("Either path is empty or has less than 2 points. Nothing to refine");
-        return;
-    }
-    int pointsToRemove = -1;
-
-    for (auto& waypoint : m_path)
-    {
-        if (hasLineOfSight(waypoint))
-        {
-            spam("Waypoint {} is in line of sight, consdered to remove", waypoint.toString());
-            pointsToRemove++;
-        }
-        else
-        {
-            spam("Waypoint {} is NOT in line of sight", waypoint.toString());
-            break;
-        }
-    }
-
-    spam("Removing {} waypoints", pointsToRemove);
-
-    for (int i = 0; i < pointsToRemove && !m_path.empty(); i++)
-    {
-        spam("Removing waypoint {}", m_path.front().toString());
-        m_path.pop_front();
-    }
-}
-
-/**
- * @brief Finds a path from the uint's current position to the specified end position.
- *
- * This function uses the game's pathfinding system to compute a path for the given unit
- * from its current position to the target position specified by endPosInFeet. If a path is found,
- * it returns a list of positions (in Feet) representing the path, including the end position.
- * If no path is found, it logs an error and returns an empty list.
- *
- * @param endPosInFeet The target position to move to, in Feet.
- * @param entity The entity for which the path is being found.
- * @return std::list<Feet> The computed path as a list of Feet positions, or an empty list if no
- * path is found.
- */
-std::list<Feet> CmdMove::findPath(const Feet& endPosInFeet)
-{
-    const Tile startPos = m_components->transform.position.toTile();
-    const auto endPos = endPosInFeet.toTile();
-
-    const auto& passabilityMap = m_stateMan->getPassabilityMap();
-    auto player = m_components->player.player;
-    const std::vector<Feet> newPath = m_stateMan->getPathFinder()->findPath(
-        passabilityMap, player, m_components->transform.position, endPosInFeet);
-
-    if (newPath.empty())
-    {
-        spdlog::error("No path found from {} to {}", startPos.toString(), endPos.toString());
-    }
-    else
-    {
-        // for (Feet node : newPath)
-        // {
-        //     // map.map[node.x][node.y] = 2;
-        //     auto entity = map.getEntity(MapLayerType::GROUND, node.toTile());
-        //     if (entity != entt::null)
-        //     {
-        //         // TODO: Should avoid manipulating CompGraphics directly
-        //         auto [dirty, gc] =
-        //             ServiceRegistry::getInstance().getService<GameState>()->getComponents<CompDirty,
-        //             CompGraphics>(entity);
-        //         gc.debugOverlays.push_back({DebugOverlay::Type::FILLED_CIRCLE, Color::BLUE,
-        //                                     DebugOverlay::FixedPosition::CENTER});
-        //         dirty.markDirty(entity);
-        //     }
-        // }
-
-        std::list<Feet> pathList(newPath.begin(), newPath.end());
-        pathList.push_back(endPosInFeet);
-
-        return pathList;
-    }
-    return std::list<Feet>();
+    return m_pathService->canTraverseDirectly(m_components->transform.position, target,
+                                              m_components->player.player);
 }
 
 constexpr int square(int n)
@@ -432,6 +352,9 @@ Feet CmdMove::resolveCollision()
         for (int y = searchStartTile.y; y <= searchEndTile.y; y++)
         {
             Tile gridPos{x, y};
+            if (not gameMap.isValidPos(gridPos))
+                continue;
+
             auto& entities = gameMap.getEntities(MapLayerType::UNITS, gridPos);
 
             for (auto e : entities)
@@ -580,7 +503,7 @@ uint32_t CmdMove::intersectsUnits(uint32_t self,
         Feet point = start + step * static_cast<float>(i);
         Tile tile = point.toTile();
 
-        if (gameMap.isOccupied(MapLayerType::UNITS, tile))
+        if (gameMap.isValidPos(tile) and gameMap.isOccupied(MapLayerType::UNITS, tile))
         {
             auto& otherUnits = gameMap.getEntities(MapLayerType::UNITS, tile);
             for (auto otherUnit : otherUnits)

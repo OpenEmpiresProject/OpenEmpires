@@ -55,7 +55,7 @@ TEST_F(PathFinderAStarTest, FindPath_StraightLine)
 {
     Feet start = Tile(0, 0).toFeet();
     Feet goal = Tile(4, 0).toFeet();
-    Path path = pathFinder.findPath(map, player, start, goal);
+    std::vector<Feet> path = pathFinder.findPath(map, player, start, goal);
 
     ASSERT_FALSE(path.empty());
     EXPECT_EQ(path.front().toTile(), start.toTile());
@@ -66,7 +66,7 @@ TEST_F(PathFinderAStarTest, FindPath_AroundObstacle)
 {
     Feet start = Tile(0, 0).toFeet();
     Feet goal = Tile(4, 0).toFeet();
-    Path path = pathFinder.findPath(map, player, start, goal);
+    std::vector<Feet> path = pathFinder.findPath(map, player, start, goal);
 
     ASSERT_FALSE(path.empty());
     EXPECT_EQ(path.front().toTile(), Tile(0, 0));
@@ -77,7 +77,7 @@ TEST_F(PathFinderAStarTest, FindPath_AroundObstacle)
     {
         auto tile = pos.toTile();
         EXPECT_TRUE(map.isPassableFor(tile, player->getId()))
-            << "Path crosses a blocked tile at " << tile.x << ", " << tile.y;
+            << "std::vector<Feet> crosses a blocked tile at " << tile.x << ", " << tile.y;
     }
 }
 
@@ -96,7 +96,7 @@ TEST_F(PathFinderAStarTest, FindPath_CornersBlocked)
 
     Feet start = Tile(2, 2).toFeet(); // inside the block
     Feet goal = Tile(4, 4).toFeet();  // outside the block
-    Path path = pathFinder.findPath(map, player, start, goal);
+    std::vector<Feet> path = pathFinder.findPath(map, player, start, goal);
 
     EXPECT_EQ(path.size(), 1); // no path found, just the starting pos
 }
@@ -115,7 +115,7 @@ TEST_F(PathFinderAStarTest, FindPath_OnlyOneCornerBlocked)
 
     Feet start = Tile(0, 0).toFeet();
     Feet goal = Tile(4, 4).toFeet();
-    Path path = pathFinder.findPath(map, player, start, goal);
+    std::vector<Feet> path = pathFinder.findPath(map, player, start, goal);
 
     ASSERT_TRUE(path.size() > 1);
 }
@@ -134,7 +134,7 @@ TEST_F(PathFinderAStarTest, FindPath_StraightLinesUnblocked)
 
     Feet start = Tile(2, 2).toFeet();
     Feet goal = Tile(4, 4).toFeet();
-    Path path = pathFinder.findPath(map, player, start, goal);
+    std::vector<Feet> path = pathFinder.findPath(map, player, start, goal);
 
     ASSERT_FALSE(path.empty());
 }
@@ -148,7 +148,7 @@ TEST_F(PathFinderAStarTest, FindPath_NoPathAvailable)
 
     Feet start = Tile(0, 0).toFeet();
     Feet goal = Tile(4, 4).toFeet();
-    Path path = pathFinder.findPath(map, player, start, goal);
+    std::vector<Feet> path = pathFinder.findPath(map, player, start, goal);
 
     EXPECT_TRUE(path.size() > 1);                          // Closer to target
     EXPECT_NE(path[path.size() - 1].toTile(), Tile(4, 4)); // but couldn't reach target
@@ -158,7 +158,7 @@ TEST_F(PathFinderAStarTest, FindPath_StartEqualsGoal)
 {
     Feet start = Tile(2, 2).toFeet();
     Feet goal = Tile(2, 2).toFeet();
-    Path path = pathFinder.findPath(map, player, start, goal);
+    std::vector<Feet> path = pathFinder.findPath(map, player, start, goal);
 
     ASSERT_EQ(path.size(), 1);
     EXPECT_EQ(path.front().toTile(), start.toTile());
@@ -175,7 +175,7 @@ TEST_F(PathFinderAStarTest, FindPath_LargeMap_StraightLine)
 
     Feet start = Tile(0, 0).toFeet();
     Feet goal = Tile(49, 0).toFeet();
-    Path path = pathFinder.findPath(map, player, start, goal);
+    std::vector<Feet> path = pathFinder.findPath(map, player, start, goal);
 
     ASSERT_FALSE(path.empty());
     EXPECT_EQ(path.front().toTile(), start.toTile());
@@ -199,7 +199,7 @@ TEST_F(PathFinderAStarTest, FindPath_LargeMap_WithObstacles)
 
     Feet start = Tile(0, 49).toFeet();
     Feet goal = Tile(49, 0).toFeet();
-    Path path = pathFinder.findPath(map, player, start, goal);
+    std::vector<Feet> path = pathFinder.findPath(map, player, start, goal);
 
     ASSERT_FALSE(path.empty());
     EXPECT_EQ(path.front().toTile(), start.toTile());
@@ -210,7 +210,7 @@ TEST_F(PathFinderAStarTest, FindPath_LargeMap_WithObstacles)
     {
         auto tile = pos.toTile();
         EXPECT_TRUE(map.isPassableFor(tile, player->getId()))
-            << "Path crosses a blocked tile at " << tile.x << ", " << tile.y;
+            << "std::vector<Feet> crosses a blocked tile at " << tile.x << ", " << tile.y;
     }
 }
 
@@ -230,9 +230,9 @@ TEST_F(PathFinderAStarTest, FindPath_LargeMap_TargetBlocked)
 
     Feet start = Tile(0, 0).toFeet();
     Feet goal = Tile(49, 49).toFeet();
-    Path path = pathFinder.findPath(map, player, start, goal);
+    std::vector<Feet> path = pathFinder.findPath(map, player, start, goal);
 
-    EXPECT_TRUE(path.size() > 40);                           // Path got closer to the target
+    EXPECT_TRUE(path.size() > 40);                           // std::vector<Feet> got closer to the target
     EXPECT_NE(path[path.size() - 1].toTile(), Tile(49, 49)); // but not exactly the target
 }
 
@@ -246,7 +246,7 @@ TEST_F(PathFinderAStarTest, FindPath_LargeMap_StartEqualsGoal)
 
     Feet start = Tile(25, 25).toFeet();
     Feet goal = Tile(25, 25).toFeet();
-    Path path = pathFinder.findPath(map, player, start, goal);
+    std::vector<Feet> path = pathFinder.findPath(map, player, start, goal);
 
     ASSERT_EQ(path.size(), 1);
     EXPECT_EQ(path.front().toTile(), start.toTile());

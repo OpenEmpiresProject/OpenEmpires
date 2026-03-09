@@ -99,8 +99,11 @@ void DemoWorldCreator::createTree(uint32_t x, uint32_t y)
     info.variation = variation;
 
     auto& map = m_stateMan->gameMap();
+    auto& passabilityMap = m_stateMan->getPassabilityMap();
+    Tile tilePos(x, y);
 
-    map.addEntity(MapLayerType::STATIC, Tile(x, y), tree);
+    map.addEntity(MapLayerType::STATIC, tilePos, tree);
+    passabilityMap.setTileDynamicPassability(tilePos, DynamicPassability::BLOCKED_FOR_ANY);
 
     // Add shadow
     //     auto shadow = factory->createEntity(EntityTypes::ET_TREE,
@@ -125,7 +128,11 @@ void DemoWorldCreator::createStoneOrGold(uint32_t entityType, uint32_t x, uint32
     transform.position = Feet(x * 256 + 128, y * 256 + 128);
     info.variation = rand() % 7;
 
-    m_stateMan->gameMap().addEntity(MapLayerType::STATIC, Tile(x, y), entity);
+    Tile tilePos(x, y);
+
+    m_stateMan->gameMap().addEntity(MapLayerType::STATIC, tilePos, entity);
+    m_stateMan->getPassabilityMap().setTileDynamicPassability(tilePos,
+                                                              DynamicPassability::BLOCKED_FOR_ANY);
 }
 
 void DemoWorldCreator::createVillager(Ref<core::Player> player, const Tile& tilePos)

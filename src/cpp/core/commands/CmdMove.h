@@ -2,6 +2,8 @@
 #define CMDMOVE_H
 
 #include "Feet.h"
+#include "Path.h"
+#include "PathService.h"
 #include "commands/Command.h"
 #include "utils/LazyServiceRef.h"
 
@@ -26,9 +28,10 @@ class CmdMove : public Command
     UnitAction actionOverride = UnitAction::MOVE;
 
   private:
-    std::list<Feet> m_path;
+    Path m_path;
     LazyServiceRef<Coordinates> m_coordinates;
     LazyServiceRef<Settings> m_settings;
+    LazyServiceRef<PathService> m_pathService;
     Feet m_nextIntermediateGoal = Feet::null;
 
   private:
@@ -42,13 +45,11 @@ class CmdMove : public Command
     void animate(int deltaTimeMs, int currentTick);
 
     bool move(int deltaTimeMs);
-    std::list<Feet> findPath(const Feet& endPosInFeet);
     Feet resolveCollision();
     Feet avoidCollision();
     double distancePointToSegment(const Feet& p0, const Feet& p1, const Feet& q) const;
     void setPosition(const Feet& newPosFeet);
     bool hasLineOfSight(const Feet& target) const;
-    void refinePath();
     uint32_t intersectsUnits(uint32_t self,
                              CompTransform& transform,
                              const Feet& start,

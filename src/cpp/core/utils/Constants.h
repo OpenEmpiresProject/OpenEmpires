@@ -37,6 +37,8 @@ class Constants
     static const int MAX_PLAYERS = 20;
 
     static const int NATURE_PLAYER_ID = 0;
+    // If the destination is within this distance, no pathfinding will be done
+    static const int MAX_DIRECT_PATH_DISTANCE_IN_TILES = 10;
 };
 } // namespace core
 
