@@ -187,8 +187,6 @@ bool CmdMove::move(int deltaTimeMs)
     {
         const auto& nextWaypoint = m_path.nextWaypoint();
 
-        debug_assert(nextWaypoint != Feet::null, "Next intermediate target must be set");
-
         if (m_components->transform.position.distanceSquared(nextWaypoint) <
             m_components->transform.goalRadiusSquared)
         {
