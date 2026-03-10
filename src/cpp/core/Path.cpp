@@ -24,3 +24,25 @@ std::list<core::Feet>& Path::getWaypoints()
 {
     return waypoints;
 }
+
+bool Path::isEmpty() const
+{
+    return waypoints.empty();
+}
+
+const core::Feet& Path::nextWaypoint() const
+{
+    if (waypoints.empty())
+    {
+        return Feet::null;
+    }
+    return waypoints.front();
+}
+
+void Path::removeNextWaypoint()
+{
+    if (!waypoints.empty())
+    {
+        waypoints.pop_front();
+    }
+}

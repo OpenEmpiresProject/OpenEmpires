@@ -72,11 +72,6 @@ void CmdMove::onQueue()
     {
         m_path = m_pathService->findPath(m_components->transform.position, targetPos,
                                          m_components->player.player);
-        if (m_path.getWaypoints().empty() == false)
-            m_nextIntermediateGoal = m_path.getWaypoints().front();
-        else
-            m_nextIntermediateGoal = Feet::null;
-
 #ifndef NDEBUG
         for (auto& pos : m_path.getWaypoints())
         {
@@ -188,30 +183,21 @@ bool CmdMove::move(int deltaTimeMs)
         return true;
     }
 
-    auto& waypoints = m_path.getWaypoints();
-
-    if (!waypoints.empty())
+    if (!m_path.isEmpty())
     {
-        debug_assert(m_nextIntermediateGoal != Feet::null, "Next intermediate target must be set");
+        const auto& nextWaypoint = m_path.nextWaypoint();
 
-        if (m_components->transform.position.distanceSquared(m_nextIntermediateGoal) <
+        debug_assert(nextWaypoint != Feet::null, "Next intermediate target must be set");
+
+        if (m_components->transform.position.distanceSquared(nextWaypoint) <
             m_components->transform.goalRadiusSquared)
         {
-            spdlog::debug("Next hop {} reached", m_nextIntermediateGoal.toString());
-
-            if (waypoints.empty() == false && waypoints.front() == m_nextIntermediateGoal)
-            {
-                waypoints.pop_front();
-            }
-
-            if (waypoints.empty() == false)
-                m_nextIntermediateGoal = waypoints.front();
-            else
-                m_nextIntermediateGoal = Feet::null;
+            spdlog::debug("Next hop {} reached", nextWaypoint.toString());
+            m_path.removeNextWaypoint();
         }
         else
         {
-            const auto desiredDirection = m_nextIntermediateGoal - m_components->transform.position;
+            const auto desiredDirection = nextWaypoint - m_components->transform.position;
             const auto separationForce = resolveCollision();
             const auto avoidanceForce = avoidCollision();
 
@@ -252,7 +238,7 @@ bool CmdMove::move(int deltaTimeMs)
             setPosition(newPos);
         }
     }
-    return waypoints.empty();
+    return m_path.isEmpty();
 }
 
 /**

@@ -15,6 +15,9 @@ class Path
     Path();
     Path(const std::vector<Feet>& waypoints);
     ~Path();
+    bool isEmpty() const;
+    const Feet& nextWaypoint() const;
+    void removeNextWaypoint();
     std::list<Feet>& getWaypoints();
     const std::list<Feet>& getWaypoints() const;
 

@@ -32,7 +32,6 @@ class CmdMove : public Command
     LazyServiceRef<Coordinates> m_coordinates;
     LazyServiceRef<Settings> m_settings;
     LazyServiceRef<PathService> m_pathService;
-    Feet m_nextIntermediateGoal = Feet::null;
 
   private:
     void onStart() override;
