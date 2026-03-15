@@ -898,14 +898,31 @@ void RendererImpl::renderDebugOverlays(const SDL_FRect& dstRect, CompRendering* 
     {
         for (auto& overlay : rc->debugOverlays)
         {
+            if (not overlay.enabled)
+                continue;
+
             auto pos = convertAlignmentToPosition(overlay.anchor, dstRect);
 
             switch (overlay.type)
             {
             case DebugOverlay::Type::CIRCLE:
-                ellipseRGBA(m_renderer, pos.x, pos.y, 30, 15, 255, 0, 0,
-                            255); // green circle
-                break;
+            {
+                if (overlay.absolutePosition.isNull() == false)
+                {
+                    auto screenPos = m_coordinates.feetToScreenUnits(overlay.absolutePosition);
+                    ellipseRGBA(m_renderer, screenPos.x, screenPos.y, overlay.circlePixelRadius,
+                                overlay.circlePixelRadius / 2, overlay.color.r, overlay.color.g,
+                                overlay.color.b, overlay.color.a);
+                }
+                else
+                {
+                    ellipseRGBA(m_renderer, pos.x, pos.y, overlay.circlePixelRadius,
+                                overlay.circlePixelRadius / 2, overlay.color.r, overlay.color.g,
+                                overlay.color.b, overlay.color.a);
+                }
+            }
+
+            break;
             case DebugOverlay::Type::FILLED_CIRCLE:
             {
                 if (overlay.absolutePosition.isNull() == false)

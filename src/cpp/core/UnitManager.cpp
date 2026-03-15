@@ -78,6 +78,7 @@ void UnitManager::onCreateUnit(const Event& e)
 void UnitManager::onTick(const Event& e)
 {
     handleHealths();
+    buildDensityGrid();
 }
 
 void UnitManager::handleHealths()
@@ -112,4 +113,19 @@ void UnitManager::handleHealths()
             }
         }
     }
+}
+
+void UnitManager::buildDensityGrid()
+{
+    auto& densityGrid = m_stateMan->getDensityGrid();
+    m_stateMan->getDensityGrid().clear();
+
+    m_stateMan->getEntities<CompUnit, CompTransform, CompEntityInfo>().each(
+        [&](uint32_t entity, CompUnit& unit, CompTransform& transform, CompEntityInfo& info)
+        {
+            if (not info.isDestroyed)
+            {
+                densityGrid.incrementDensity(transform.position);
+            }
+        });
 }

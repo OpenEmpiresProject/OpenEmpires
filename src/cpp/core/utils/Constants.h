@@ -39,6 +39,9 @@ class Constants
     static const int NATURE_PLAYER_ID = 0;
     // If the destination is within this distance, no pathfinding will be done
     static const int MAX_DIRECT_PATH_DISTANCE_IN_TILES = 10;
+
+    // There will be DENSITY_GRID_RESOLUTION*DENSITY_GRID_RESOLUTION density grid cells per tile.
+    static const int DENSITY_GRID_RESOLUTION = 4;
 };
 } // namespace core
 

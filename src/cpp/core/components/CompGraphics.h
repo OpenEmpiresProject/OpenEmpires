@@ -35,6 +35,7 @@ struct DebugOverlay
     Feet absolutePosition = Feet::null; // Doesn't honour anchor
     Feet rhombusCorners[4];
     uint32_t circlePixelRadius = 20;
+    bool enabled = true;
 };
 
 // Component will be owned by the Simulator

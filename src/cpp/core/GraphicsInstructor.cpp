@@ -138,6 +138,14 @@ void GraphicsInstructor::updateGraphicComponents()
             {
                 gc.addons.clear();
             }
+
+            if (m_stateManager->hasComponent<CompUnit>(entity))
+            {
+                for (auto& overlay : gc.debugOverlays)
+                {
+                    overlay.enabled = select.isSelected;
+                }
+            }
         }
 
         if (m_stateManager->hasComponent<CompAnimation>(entity))

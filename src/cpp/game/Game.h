@@ -6,6 +6,7 @@
 #include "Coordinates.h"
 #include "CursorManager.h"
 #include "DRSGraphicsLoader.h"
+#include "DebugHelper.h"
 #include "DemoWorldCreator.h"
 #include "EntityModelLoaderV2.h"
 #include "EntityTypeRegistry.h"
@@ -166,6 +167,7 @@ class Game
         auto logController = std::make_shared<core::LogLevelController>();
         auto visionSystem = std::make_shared<core::VisionSystem>();
         auto specialBuildingManager = std::make_shared<game::SpecialBuildingManager>();
+        auto debugHelper = std::make_shared<game::DebugHelper>();
 
         if (params.eventHandler)
             eventLoop->registerListener(params.eventHandler);
@@ -185,6 +187,7 @@ class Game
         eventLoop->registerListener(std::move(visionSystem));
         eventLoop->registerListener(std::move(specialBuildingManager));
         eventLoop->registerListener(params.worldCreator);
+        eventLoop->registerListener(std::move(debugHelper));
 
         core::SubSystemRegistry::getInstance().registerSubSystem("Renderer", std::move(renderer));
         core::SubSystemRegistry::getInstance().registerSubSystem("EventLoop", std::move(eventLoop));

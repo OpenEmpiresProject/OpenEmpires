@@ -31,6 +31,8 @@ void StateManager::init()
     auto settings = ServiceRegistry::getInstance().getService<Settings>();
     const auto& size = settings->getWorldSizeInTiles();
     m_gameMap.init(size.width, size.height);
+    m_densityGrid.init(size.width * Constants::DENSITY_GRID_RESOLUTION,
+                       size.height * Constants::DENSITY_GRID_RESOLUTION);
     m_passabilityMap.init(size.width, size.height);
 }
 

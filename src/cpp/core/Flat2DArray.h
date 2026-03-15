@@ -53,6 +53,12 @@ template <typename T> class Flat2DArray
         m_data[y * m_width + x] = value;
     }
 
+    // Using int to allow negative values for easier bounds checking
+    bool isValidPos(int x, int y) const
+    {
+        return x >= 0 and x < m_width and y >= 0 and y < m_height;
+    }
+
     // Unchecked access (fast)
     T& operator()(size_t x, size_t y)
     {

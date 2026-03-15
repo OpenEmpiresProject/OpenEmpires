@@ -73,36 +73,36 @@ void CmdMove::onQueue()
         m_path = m_pathService->findPath(m_components->transform.position, targetPos,
                                          m_components->player.player);
 #ifndef NDEBUG
-        for (auto& pos : m_path.getWaypoints())
-        {
-            auto tileEntity = m_stateMan->gameMap().getEntity(MapLayerType::GROUND, pos.toTile());
-            auto& graphics = m_stateMan->getComponent<CompGraphics>(tileEntity);
+        // for (auto& pos : m_path.getWaypoints())
+        //{
+        //     auto tileEntity = m_stateMan->gameMap().getEntity(MapLayerType::GROUND,
+        //     pos.toTile()); auto& graphics = m_stateMan->getComponent<CompGraphics>(tileEntity);
 
-            if (not graphics.debugOverlays.empty())
-            {
-                graphics.debugOverlays.clear();
-                DebugOverlay filledCircle;
-                filledCircle.type = DebugOverlay::Type::CIRCLE;
-                filledCircle.color = Color::GREEN;
-                filledCircle.absolutePosition = pos;
-                graphics.debugOverlays.push_back(filledCircle);
-                StateManager::markDirty(tileEntity);
-            }
-        }
+        //    if (not graphics.debugOverlays.empty())
+        //    {
+        //        //graphics.debugOverlays.clear();
+        //        DebugOverlay filledCircle;
+        //        filledCircle.type = DebugOverlay::Type::CIRCLE;
+        //        filledCircle.color = Color::GREEN;
+        //        filledCircle.absolutePosition = pos;
+        //        graphics.debugOverlays.push_back(filledCircle);
+        //        StateManager::markDirty(tileEntity);
+        //    }
+        //}
 
-        auto tileEntity = m_stateMan->gameMap().getEntity(MapLayerType::GROUND, targetPos.toTile());
-        auto& graphics = m_stateMan->getComponent<CompGraphics>(tileEntity);
+        // auto tileEntity = m_stateMan->gameMap().getEntity(MapLayerType::GROUND,
+        // targetPos.toTile()); auto& graphics = m_stateMan->getComponent<CompGraphics>(tileEntity);
 
-        if (not graphics.debugOverlays.empty())
-        {
-            graphics.debugOverlays.clear();
-            DebugOverlay filledCircle;
-            filledCircle.type = DebugOverlay::Type::FILLED_CIRCLE;
-            filledCircle.color = Color::RED;
-            filledCircle.absolutePosition = targetPos;
-            graphics.debugOverlays.push_back(filledCircle);
-            StateManager::markDirty(tileEntity);
-        }
+        // if (not graphics.debugOverlays.empty())
+        //{
+        //     //graphics.debugOverlays.clear();
+        //     DebugOverlay filledCircle;
+        //     filledCircle.type = DebugOverlay::Type::FILLED_CIRCLE;
+        //     filledCircle.color = Color::RED;
+        //     filledCircle.absolutePosition = targetPos;
+        //     graphics.debugOverlays.push_back(filledCircle);
+        //     StateManager::markDirty(tileEntity);
+        // }
 #endif
     }
     else
@@ -196,30 +196,22 @@ bool CmdMove::move(int deltaTimeMs)
         else
         {
             const auto desiredDirection = nextWaypoint - m_components->transform.position;
-            const auto separationForce = resolveCollision();
-            const auto avoidanceForce = avoidCollision();
-
-            Feet finalDir = desiredDirection + separationForce + avoidanceForce;
+            Feet finalDir = avoidCollision(deltaTimeMs);
 
 #ifndef NDEBUG
             auto& debugOverlays = m_stateMan->getComponent<CompGraphics>(m_entityID).debugOverlays;
 
             if (not debugOverlays.empty())
             {
-                if (separationForce != Feet(0, 0))
-                    debugOverlays[1].arrowEnd = m_coordinates->feetToScreenUnits(
-                        (m_components->transform.position + (separationForce)));
-                else
-                    debugOverlays[1].arrowEnd = Vec2::zero;
+                debugOverlays[0].arrowEnd = m_coordinates->feetToScreenUnits(
+                    (m_components->transform.position + (finalDir * 200)));
 
-                if (avoidanceForce != Feet(0, 0))
-                    debugOverlays[2].arrowEnd = m_coordinates->feetToScreenUnits(
-                        (m_components->transform.position + (avoidanceForce)));
-                else
-                    debugOverlays[2].arrowEnd = Vec2::zero;
-
-                debugOverlays[4].arrowEnd = m_coordinates->feetToScreenUnits(
-                    (m_components->transform.position + (finalDir)));
+                auto tileFeetDiagonal =
+                    std::sqrt(2 * Constants::FEET_PER_TILE * Constants::FEET_PER_TILE);
+                auto circleFeetRadius = m_pathService->LOOKAHEAD_COLLISION_RADIUS_MULTIPLIER *
+                                        m_components->transform.collisionRadius;
+                debugOverlays[1].circlePixelRadius =
+                    circleFeetRadius * Constants::TILE_PIXEL_WIDTH / tileFeetDiagonal;
             }
 
 #endif
@@ -257,17 +249,6 @@ void CmdMove::setPosition(const Feet& newPosFeet)
     const auto oldTile = m_components->transform.position.toTile();
     const auto newTile = newPosFeet.toTile();
 
-#ifndef NDEBUG
-    auto& debugOverlays = m_stateMan->getComponent<CompGraphics>(m_entityID).debugOverlays;
-    if (not debugOverlays.empty())
-    {
-        m_stateMan->getComponent<CompGraphics>(m_entityID).debugOverlays[0].arrowEnd =
-            m_coordinates->feetToScreenUnits(
-                (newPosFeet + (m_components->transform.getVelocityVector() * 2)));
-    }
-
-#endif
-
     if (oldTile != newTile)
     {
         m_stateMan->gameMap().removeEntity(MapLayerType::UNITS, oldTile, m_entityID);
@@ -294,124 +275,19 @@ bool CmdMove::hasLineOfSight(const Feet& target) const
                                               m_components->player.player);
 }
 
-constexpr int square(int n)
+Feet CmdMove::avoidCollision(int deltaTimeMs)
 {
-    return n * n;
-}
+    if (m_path.isEmpty())
+        return Feet::zero;
 
-/**
- * @brief Resolves collisions for the unit by checking static and dynamic obstacles.
- *
- * This function first checks if the target tile is statically occupied and returns zero avoidance
- * if blocked (i.e. can't avoid). Then, it searches the surrounding tiles for dynamic entities
- * (units) that may cause a collision. For each detected collision, it calculates a repulsion
- * direction and accumulates avoidance vectors. The final avoidance vector is scaled and returned to
- * help the unit avoid overlapping with others.
- *
- * @param transform The transform component of the unit, containing position and collision radius.
- * @return Feet The average avoidance vector to resolve detected collisions.
- */
-Feet CmdMove::resolveCollision()
-{
-    // Static collision resolution
-    const auto newTilePos = m_components->transform.position.toTile();
-    auto& gameMap = m_stateMan->gameMap();
-    Feet totalAvoidance{0, 0};
+    const auto& nextWaypoint = m_path.nextWaypoint();
+    auto preferredDir = nextWaypoint - m_components->transform.position;
+    auto deltaTimeS = (double) deltaTimeMs / 1000.0;
+    const auto& currPos = m_components->transform.position;
+    const auto& collisionRadius = m_components->transform.collisionRadius;
 
-    if (gameMap.isOccupied(MapLayerType::STATIC, newTilePos))
-    {
-        spdlog::debug("Collision resolution. Tile {} is occupied", newTilePos.toString());
-        // Can't resolve collision, target is blocked.
-        return totalAvoidance;
-    }
-
-    // Dynamic collision resolution
-    const Tile searchStartTile = newTilePos - Tile(1, 1);
-    const Tile searchEndTile = newTilePos + Tile(1, 1);
-
-    bool hasCollision = false;
-
-    for (int x = searchStartTile.x; x <= searchEndTile.x; x++)
-    {
-        for (int y = searchStartTile.y; y <= searchEndTile.y; y++)
-        {
-            Tile gridPos{x, y};
-            if (not gameMap.isValidPos(gridPos))
-                continue;
-
-            auto& entities = gameMap.getEntities(MapLayerType::UNITS, gridPos);
-
-            for (auto e : entities)
-            {
-                if (e == entt::null || e == m_entityID)
-                    continue;
-
-                auto& otherTransform = m_stateMan->getComponent<CompTransform>(e);
-                Feet toOther = otherTransform.position - m_components->transform.position;
-
-                float distSq = toOther.lengthSquared();
-                float minDistSq = square(m_components->transform.collisionRadius +
-                                         otherTransform.collisionRadius);
-
-                if (distSq < minDistSq && distSq > 0.0001f)
-                {
-                    hasCollision = true;
-
-                    Feet repulsionDir = -toOther;
-                    repulsionDir = repulsionDir.normalized();
-                    totalAvoidance += repulsionDir;
-                }
-            }
-        }
-    }
-    Feet averagePush = totalAvoidance * 2;
-
-    return averagePush;
-}
-
-/**
- * Calculates an avoidance force to prevent collision with nearby units.
- *
- * This function casts a ray in the direction of the unit's velocity to detect potential collisions
- * with other units within half the unit's line of sight. If a collision is detected, it computes
- * a force vector to steer the unit away from the other entity, based on their relative positions
- * and collision radii.
- *
- * @param transform The transform component of the current unit, containing position and velocity.
- * @return A Feet vector representing the avoidance force. Returns (0, 0) if no collision is
- * detected.
- */
-Feet CmdMove::avoidCollision()
-{
-    auto dir = m_components->transform.getVelocityVector().normalized();
-
-    auto rayEnd = m_components->transform.position + (dir * (m_components->vision.lineOfSight / 2));
-    auto unitToAvoid = intersectsUnits(m_entityID, m_components->transform,
-                                       m_components->transform.position, rayEnd);
-
-#ifndef NDEBUG
-    auto& debugOverlays = m_stateMan->getComponent<CompGraphics>(m_entityID).debugOverlays;
-    if (not debugOverlays.empty())
-    {
-        m_stateMan->getComponent<CompGraphics>(m_entityID).debugOverlays[3].arrowEnd =
-            m_coordinates->feetToScreenUnits(rayEnd);
-    }
-
-#endif
-
-    if (unitToAvoid != entt::null)
-    {
-        spam("Posible collision with entity {}", unitToAvoid);
-        auto& otherTransform = m_stateMan->getComponent<CompTransform>(unitToAvoid);
-
-        Feet dir = otherTransform.position - m_components->transform.position;
-        auto forward = dir.normalized();
-        Feet left(-forward.y, forward.x);
-
-        Feet avoidanceForce = left * (otherTransform.collisionRadius * 10);
-        return avoidanceForce;
-    }
-    return {0, 0};
+    return m_pathService->getBestAvoidanceDirectionVector(currPos, preferredDir, collisionRadius,
+                                                          m_entityID);
 }
 
 /**

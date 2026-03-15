@@ -4,6 +4,7 @@
 #include "Player.h"
 #include "ServiceRegistry.h"
 #include "StateManager.h"
+#include "components/CompTransform.h"
 #include "logging/Logger.h"
 
 using namespace core;
@@ -107,4 +108,117 @@ bool PathService::canTraverseDirectly(const Feet& from, const Feet& to, Ref<Play
             return false;
     }
     return true; // Clear line
+}
+
+Feet PathService::getBestAvoidanceDirectionVector(const Feet& currentPos,
+                                                  const Feet& preferredVector,
+                                                  int collisionRadius,
+                                                  uint32_t entity)
+{
+    float bestScore = std::numeric_limits<float>::lowest();
+
+    auto preferredDir = preferredVector.normalized();
+    Feet bestDirection = preferredDir;
+    auto& densityGrid = m_stateMan->getDensityGrid();
+
+    auto candidateDirections =
+        generateCandidateDirections(preferredDir, NUMBER_OF_CANDIDATE_DIRECTIONS);
+
+    for (auto& candidateDir : candidateDirections)
+    {
+        // Making side ways be able to win. Otherwise goalScore will be always zero and final
+        // score can never be more than zero for side ways.
+        float goalScore = (candidateDir.dot(preferredDir) + 1) * 0.5f * GOAL_SCORE_WEIGHT;
+
+        // If the goal score alone less than previous best score, no need to check any other
+        // directions.
+        if (goalScore <= bestScore)
+            return bestDirection;
+
+        Feet predicatedPos =
+            currentPos + candidateDir * (collisionRadius * LOOKAHEAD_COLLISION_RADIUS_MULTIPLIER);
+
+        auto density = densityGrid.getDensitySaturated(predicatedPos);
+
+        // Making low density much less important, while high density still matters.
+        auto densityScore = density * density * DENSITY_PENALTY_WEIGHT;
+
+        auto separationPenalty = getSeparationPenalty(predicatedPos, entity, collisionRadius);
+
+        auto score = goalScore - densityScore - separationPenalty;
+
+        if (score > bestScore)
+        {
+            bestScore = score;
+            bestDirection = candidateDir;
+        }
+    }
+    return bestDirection;
+}
+
+std::vector<core::Feet> PathService::generateCandidateDirections(const Feet& desiredDir,
+                                                                 int numSamples)
+{
+    std::vector<Feet> candidates;
+
+    Feet forward = desiredDir.normalized();
+    candidates.push_back(forward); // always include the desired direction
+
+    // angle step for samples around desiredDir
+    float angleStep = 360.0f / (float) numSamples;
+
+    for (int i = 1; i <= numSamples; ++i)
+    {
+        float angle = i * angleStep;
+        candidates.push_back(forward.rotated(angle));
+    }
+    return candidates;
+}
+
+float PathService::getSeparationPenalty(const Feet& pos,
+                                        uint32_t unitEntity,
+                                        int unitCollisionRadius)
+{
+    Tile center = pos.toTile();
+    const Tile searchStartTile = center - Tile(1, 1);
+    const Tile searchEndTile = center + Tile(1, 1);
+
+    auto& gameMap = m_stateMan->gameMap();
+
+    float separationPenalty = 0.0f;
+
+    for (int x = searchStartTile.x; x <= searchEndTile.x; x++)
+    {
+        for (int y = searchStartTile.y; y <= searchEndTile.y; y++)
+        {
+            Tile gridPos{x, y};
+            if (not gameMap.isValidPos(gridPos))
+                continue;
+
+            auto& entities = gameMap.getEntities(MapLayerType::UNITS, gridPos);
+
+            for (auto e : entities)
+            {
+                if (e == entt::null || e == unitEntity)
+                    continue;
+
+                auto& otherTransform = m_stateMan->getComponent<CompTransform>(e);
+                Feet toOther = otherTransform.position - pos;
+
+                float distSq = toOther.lengthSquared();
+
+                float separationRadius = (unitCollisionRadius + otherTransform.collisionRadius);
+                float separationRadiusSq = separationRadius * separationRadius;
+
+                if (distSq < separationRadiusSq)
+                {
+                    float dist = std::sqrt(distSq);
+                    float overlap = separationRadius - dist;
+
+                    separationPenalty += overlap;
+                }
+            }
+        }
+    }
+    return separationPenalty;
 }

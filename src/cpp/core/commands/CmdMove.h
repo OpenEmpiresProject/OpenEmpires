@@ -44,8 +44,7 @@ class CmdMove : public Command
     void animate(int deltaTimeMs, int currentTick);
 
     bool move(int deltaTimeMs);
-    Feet resolveCollision();
-    Feet avoidCollision();
+    Feet avoidCollision(int deltaTimeMs);
     double distancePointToSegment(const Feet& p0, const Feet& p1, const Feet& q) const;
     void setPosition(const Feet& newPosFeet);
     bool hasLineOfSight(const Feet& target) const;

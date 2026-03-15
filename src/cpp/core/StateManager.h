@@ -2,6 +2,7 @@
 #define GAMESTATE_H
 
 #include "Coordinates.h"
+#include "DensityGrid.h"
 #include "PassabilityMap.h"
 #include "TileMap.h"
 #include "utils/LazyServiceRef.h"
@@ -63,7 +64,6 @@ class StateManager
         return m_registry.get<T...>(entity);
     }
 
-    // write a function get all entities with all given components
     template <typename... T> auto getEntities()
     {
         return m_registry.view<T...>();
@@ -79,6 +79,11 @@ class StateManager
     TileMap& gameMap()
     {
         return m_gameMap;
+    }
+
+    DensityGrid& getDensityGrid()
+    {
+        return m_densityGrid;
     }
 
     PassabilityMap& getPassabilityMap()
@@ -113,6 +118,7 @@ class StateManager
     Ref<PathFinderBase> m_pathFinder;
     std::vector<uint32_t> m_entitiesToDestroy;
     LazyServiceRef<Coordinates> m_coordinates;
+    DensityGrid m_densityGrid;
 
     inline static std::set<uint32_t> g_dirtyEntities;
 };

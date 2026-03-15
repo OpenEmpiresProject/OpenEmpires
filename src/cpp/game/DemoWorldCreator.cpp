@@ -333,7 +333,8 @@ void DemoWorldCreator::createTile(uint32_t x, uint32_t y, EntityTypes entityType
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
 
     auto entity = factory->createEntity(entityType);
-    auto [transform, info] = m_stateMan->getComponents<CompTransform, CompEntityInfo>(entity);
+    auto [transform, info, graphics] =
+        m_stateMan->getComponents<CompTransform, CompEntityInfo, CompGraphics>(entity);
 
     int tc = 10;
     // Convet our top corner based coordinate to left corner based coordinate
@@ -346,6 +347,50 @@ void DemoWorldCreator::createTile(uint32_t x, uint32_t y, EntityTypes entityType
     info.variation = tileVariation;
 
     m_stateMan->gameMap().addEntity(MapLayerType::GROUND, Tile(x, y), entity);
+
+#ifndef NDEBUG
+
+    // Add density-grid overlays: divide tile into DENSITY_GRID_RESOLUTION^2 cells
+    // and add a small filled rhombus for each cell. The renderer will interpret
+    // these rhombus corners relative to the entity; here we provide feet offsets
+    // centered on the tile.
+    //
+    // One tile = Constants::FEET_PER_TILE feet. Sub-cell size in feet:
+    constexpr int RES = Constants::DENSITY_GRID_RESOLUTION;
+    const int subCellFeetSize = Constants::FEET_PER_TILE / RES;
+
+    for (int iy = 0; iy < RES; ++iy)
+    {
+        for (int ix = 0; ix < RES; ++ix)
+        {
+            // center of this sub-cell relative to tile center
+            int cx = transform.position.x + ix * subCellFeetSize;
+            int cy = transform.position.y + iy * subCellFeetSize;
+
+            DebugOverlay cellOverlay;
+            cellOverlay.type = DebugOverlay::Type::FILLED_RHOMBUS;
+            cellOverlay.color = core::Color::RED;
+            cellOverlay.anchor = Alignment::CENTER;
+
+            // rhombus corners in feet relative to the entity/tile center:
+            // top, right, bottom, left
+            cellOverlay.rhombusCorners[0] = Feet(cx, cy);                   // top
+            cellOverlay.rhombusCorners[1] = Feet(cx + subCellFeetSize, cy); // right
+            cellOverlay.rhombusCorners[2] =
+                Feet(cx + subCellFeetSize, cy + subCellFeetSize);           // left
+            cellOverlay.rhombusCorners[3] = Feet(cx, cy + subCellFeetSize); // bottom
+
+            cellOverlay.enabled = false;
+            graphics.debugOverlays.push_back(cellOverlay);
+        }
+    }
+
+    DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, core::Color::GREY, Alignment::BOTTOM_CENTER};
+    overlay.customPos1 = Alignment::CENTER_LEFT;
+    overlay.customPos2 = Alignment::CENTER_RIGHT;
+    graphics.debugOverlays.push_back(overlay);
+
+#endif
 }
 
 void DemoWorldCreator::createHUD()

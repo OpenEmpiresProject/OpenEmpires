@@ -21,6 +21,7 @@ class UnitManager : public EventHandler
 
   private:
     void handleHealths();
+    void buildDensityGrid();
     LazyServiceRef<StateManager> m_stateMan;
     Ref<Player> m_nature;
 };

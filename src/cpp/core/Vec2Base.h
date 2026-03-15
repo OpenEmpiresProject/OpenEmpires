@@ -8,6 +8,7 @@
 #include <functional>
 #include <iostream>
 #include <limits>
+#include <numbers>
 #include <type_traits>
 #include <utility>
 
@@ -203,6 +204,17 @@ template <typename T, typename Tag> class Vec2Base
             x = xLimit;
         if (y > yLimit)
             y = yLimit;
+    }
+
+    Vec2Base rotated(float angleDegrees) noexcept
+    {
+        float angleRad = angleDegrees * std::numbers::pi / 180.0f;
+        float cosA = std::cos(angleRad);
+        float sinA = std::sin(angleRad);
+        float newX = x * cosA - y * sinA;
+        float newY = x * sinA + y * cosA;
+
+        return Vec2Base(static_cast<T>(newX), static_cast<T>(newY));
     }
 };
 
