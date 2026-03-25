@@ -10,6 +10,7 @@
 #include "commands/CmdGarrison.h"
 #include "commands/CmdGatherResource.h"
 #include "commands/CmdMove.h"
+#include "commands/CmdMoveInFormation.h"
 #include "components/CompBuilder.h"
 #include "components/CompBuilding.h"
 #include "components/CompEntityInfo.h"
@@ -51,28 +52,43 @@ void PlayerController::resolveAction(const Vec2& screenPos)
     auto result = m_stateMan->whatIsAt(screenPos);
     auto target = result.entity;
     auto layer = result.layer;
+    bool move = target == entt::null;
     bool gatherable = m_stateMan->hasComponent<CompResource>(target);
     bool construction = m_stateMan->hasComponent<CompBuilding>(target);
     auto targetOwner = m_stateMan->tryGetComponent<CompPlayer>(target);
     bool isGarrisonInProgress = m_garrisonOperationInProgress;
     bool canAttack = targetOwner and (not m_player->isSame(targetOwner->player)) and
                      (not m_player->isAlly(targetOwner->player));
+    auto worldPos = m_coordinates->screenUnitsToFeet(screenPos);
+
+    if (move or canAttack)
+    {
+        createOrUpdateFormation(worldPos);
+    }
 
     for (auto entity : m_currentEntitySelection.selection.selectedEntities)
     {
-        if (target == entt::null)
+        if (move)
         {
             // Nothing at destination, probably request to move
             // TODO: Ensure target is within the map
             // TODO: Ensure we have control over this unit
 
-            if (m_stateMan->hasComponent<CompUnit>(entity))
+            if (auto compUnit = m_stateMan->tryGetComponent<CompUnit>(entity))
             {
-                auto worldPos = m_coordinates->screenUnitsToFeet(screenPos);
-                auto cmd = ObjectPool<CmdMove>::acquire();
-                cmd->targetPos = worldPos;
+                if (compUnit->formationSlot.isValid())
+                {
+                    auto cmd = ObjectPool<CmdMoveInFormation>::acquire();
 
-                publishEvent(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, entity});
+                    publishEvent(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, entity});
+                }
+                else
+                {
+                    auto cmd = ObjectPool<CmdMove>::acquire();
+                    cmd->target.emplace(worldPos, Target::Type::POSITION);
+
+                    publishEvent(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, entity});
+                }
             }
         }
         else if (gatherable)
@@ -720,6 +736,7 @@ void PlayerController::handleClickToSelect(const Vec2& screenPos)
     // FIXME: Doesn't work for units
     if (result.entity != entt::null)
     {
+        spdlog::info("Entity {} is selected", result.entity);
         selectHomogeneousEntities({result.entity});
     }
     else
@@ -760,6 +777,11 @@ void PlayerController::updateSelection(const EntitySelectionData& newSelection)
         StateManager::markDirty(entity);
     }
     m_currentEntitySelection = newSelection;
+    m_formationContentIsDirty = true;
+    if (m_unnamedFormation)
+    {
+        m_unnamedFormation->giveUpControl();
+    }
 }
 
 void PlayerController::getAllOverlappingEntities(const Vec2& startScreenPos,
@@ -836,4 +858,48 @@ void PlayerController::changePlacementOrientation(BuildingPlacementData& placeme
     auto feet = m_coordinates->screenUnitsToFeet(m_currentMouseScreenPos);
     validateAndSnapBuildingToTile(placement, feet);
     StateManager::markDirty(placement.entity);
+}
+
+void PlayerController::createOrUpdateFormation(const Feet& targetPos)
+{
+    if (m_formationContentIsDirty)
+    {
+        if (m_currentEntitySelection.selection.selectedEntities.size() > 1)
+        {
+            spdlog::debug("Creating unit formation for {} entities",
+                          m_currentEntitySelection.selection.selectedEntities.size());
+            m_unnamedFormation =
+                m_pathService->createFormation(m_currentEntitySelection.selection.selectedEntities,
+                                               DEFAULT_FORMATION_TYPE, targetPos);
+            m_unnamedFormation->setControllingPlayer(m_player);
+            m_unnamedFormation->updateTarget(targetPos);
+
+            for (auto& slot : m_unnamedFormation->getSlots())
+            {
+                auto& unitGraphics = m_stateMan->getComponent<CompGraphics>(slot.getEntityId());
+
+                unitGraphics.debugOverlays[2].enabled = true;
+                unitGraphics.debugOverlays[2].color = Color::BLUE;
+                unitGraphics.debugOverlays[2].circlePixelRadius = 20;
+                unitGraphics.debugOverlays[2].absolutePosition =
+                    m_unnamedFormation->getAnchor() + slot.offsetFromAnchor;
+            }
+            publishEvent(Event::Type::UNIT_FORMATION_COMMAND_MOVE,
+                         UnitFormationData{m_unnamedFormation});
+            return;
+        }
+        else if (m_currentEntitySelection.selection.selectedEntities.size() == 1)
+        {
+            auto entity = m_currentEntitySelection.selection.selectedEntities[0];
+            auto& unit = m_stateMan->getComponent<CompUnit>(entity);
+            unit.formationSlot = FormationSlot(); // Clear formation slot since it is single unit
+                                                  // selection, which means no formation
+        }
+        m_formationContentIsDirty = false;
+    }
+    else
+    {
+        if (m_unnamedFormation != nullptr)
+            m_unnamedFormation->updateTarget(targetPos);
+    }
 }

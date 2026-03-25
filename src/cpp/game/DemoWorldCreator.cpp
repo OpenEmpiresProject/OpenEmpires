@@ -73,9 +73,15 @@ void DemoWorldCreator::create()
     createMiningCluster(getResourceType("stone"), 30, 30, 4);
     createMiningCluster(getResourceType("gold"), 20, 30, 4);
     auto players = createPlayers();
-    createVillager(players[0], Tile(20, 20));
-    createVillager(players[1], Tile(25, 25));
+    // createVillager(players[0], Tile(20, 20));
+    createVillager(players[1], Tile(25, 28));
     createMilitia(players[0], Tile(20, 25));
+    createMilitia(players[0], Tile(21, 21));
+    createMilitia(players[0], Tile(23, 24));
+    createMilitia(players[0], Tile(23, 23));
+    createMilitia(players[0], Tile(25, 25));
+    createMilitia(players[0], Tile(25, 26));
+    createMilitia(players[0], Tile(23, 27));
     registerVillagerActions();
     createHUD();
 

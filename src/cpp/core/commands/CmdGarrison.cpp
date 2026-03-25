@@ -73,7 +73,7 @@ void CmdGarrison::moveCloser(std::list<Command*>& subCommands)
     spdlog::debug("Target {} at {} is not close enough to build, moving...", target,
                   targetPosition.toString());
     auto moveCmd = ObjectPool<CmdMove>::acquire();
-    moveCmd->targetEntity = target;
+    moveCmd->target.emplace(target);
     moveCmd->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
     subCommands.push_back(moveCmd);
 }

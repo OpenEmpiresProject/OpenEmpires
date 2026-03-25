@@ -21,7 +21,7 @@ class ProximityChecker
             auto rect = building.getLandInFeetRect();
 
             auto unitPos = unitTransform.position;
-            auto unitRadiusSq = unitTransform.goalRadiusSquared;
+            auto unitRadiusSq = unitTransform.goalRadiusSquared * 0.0625f; // 1/4
 
             return overlaps(unitPos, unitRadiusSq, rect);
         }
@@ -51,6 +51,11 @@ class ProximityChecker
     static bool isInProximity(const CompTransform& unitTransform, const Feet& targetpos)
     {
         return unitTransform.position.distanceSquared(targetpos) < unitTransform.goalRadiusSquared;
+    }
+
+    static bool isInProximity(const Feet& pos, const Feet& targetpos, int goalRadius)
+    {
+        return pos.distanceSquared(targetpos) < goalRadius;
     }
 
   private:

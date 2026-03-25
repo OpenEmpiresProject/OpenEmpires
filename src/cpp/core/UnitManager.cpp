@@ -2,9 +2,11 @@
 
 #include "Coordinates.h"
 #include "EntityFactory.h"
+#include "Event.h"
 #include "PlayerFactory.h"
 #include "commands/CmdDie.h"
 #include "components/CompEntityInfo.h"
+#include "components/CompGraphics.h"
 #include "components/CompHealth.h"
 #include "components/CompPlayer.h"
 #include "components/CompSelectible.h"
@@ -19,6 +21,9 @@ UnitManager::UnitManager()
     registerCallback(Event::Type::UNIT_CREATION_FINISHED, this, &UnitManager::onCreateUnit);
     registerCallback(Event::Type::UNIT_TILE_MOVEMENT, this, &UnitManager::onUnitTileMovement);
     registerCallback(Event::Type::TICK, this, &UnitManager::onTick);
+    registerCallback(Event::Type::UNIT_FORMATION_COMMAND_MOVE, this,
+                     &UnitManager::onUnitFormationMove);
+    registerCallback(Event::Type::UNIT_FORMATION_DELETE, this, &UnitManager::onUnitFormationDelete);
 }
 
 void UnitManager::onUnitTileMovement(const Event& e)
@@ -77,8 +82,11 @@ void UnitManager::onCreateUnit(const Event& e)
 
 void UnitManager::onTick(const Event& e)
 {
+    auto& tickData = e.getData<TickData>();
+
     handleHealths();
     buildDensityGrid();
+    handleFormations(tickData.deltaTimeMs);
 }
 
 void UnitManager::handleHealths()
@@ -128,4 +136,60 @@ void UnitManager::buildDensityGrid()
                 densityGrid.incrementDensity(transform.position);
             }
         });
+}
+
+void UnitManager::onUnitFormationMove(const Event& e)
+{
+    auto formation = e.getData<UnitFormationData>().formation;
+    m_formations.insert(formation);
+}
+
+void UnitManager::onUnitFormationDelete(const Event& e)
+{
+    auto formation = e.getData<UnitFormationData>().formation;
+
+    m_formations.erase(formation);
+}
+
+void UnitManager::handleFormations(int deltaTimeMs)
+{
+    for (auto it = m_formations.begin(); it != m_formations.end();)
+    {
+        auto& formation = *it;
+
+        if (formation->getState() == FormationState::REACHED)
+        {
+            if (formation->getControllingPlayer() == nullptr) // no actively tracked
+            {
+                spdlog::debug("Formation is not actively tracked by a player, no need to manage it "
+                              "any longer");
+                it = m_formations.erase(it);
+                continue;
+            }
+        }
+        else
+        {
+            auto preAnchor = formation->getAnchor();
+            formation->move(deltaTimeMs);
+
+            /*           spdlog::debug("Formation anchor moved from {} to {}", preAnchor.toString(),
+                                                formation->getAnchor().toString());*/
+
+            for (auto& slot : formation->getSlots())
+            {
+                auto& unitGraphics = m_stateMan->getComponent<CompGraphics>(slot.getEntityId());
+
+                unitGraphics.debugOverlays[2].enabled = true;
+                unitGraphics.debugOverlays[2].color = Color::BLUE;
+                unitGraphics.debugOverlays[2].circlePixelRadius = 20;
+                unitGraphics.debugOverlays[2].absolutePosition =
+                    formation->getAnchor() + slot.offsetFromAnchor;
+            }
+        }
+
+        ++it;
+    }
+    for (auto formation : m_formations)
+    {
+    }
 }

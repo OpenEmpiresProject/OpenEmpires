@@ -180,7 +180,7 @@ void CmdBuild::moveCloser(std::list<Command*>& subCommands)
     spdlog::debug("Target {} at {} (tile {}) is not close enough to build, moving...", target,
                   targetPosition.toString(), targetPosition.toTile().toString());
     auto moveCmd = ObjectPool<CmdMove>::acquire();
-    moveCmd->targetEntity = target;
+    moveCmd->target.emplace(target);
     moveCmd->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
     subCommands.push_back(moveCmd);
 }

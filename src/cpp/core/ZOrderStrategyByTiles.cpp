@@ -143,8 +143,6 @@ const std::vector<core::CompRendering*>& ZOrderStrategyByTiles::zOrder(
         processLayer(mapLayer, coordinates);
     processUILayer();
 
-    spam("Number of tiles processed in this frame is {}", m_numberOfTilesProcessed);
-
     return consolidateAllLayers();
 }
 

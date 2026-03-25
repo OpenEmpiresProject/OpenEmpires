@@ -157,7 +157,7 @@ void GameAPI::commandToMove(uint32_t unit, const Feet& target)
     auto eventPublisher = static_pointer_cast<EventPublisher>(eventLoop);
 
     auto cmd = ObjectPool<CmdMove>::acquire();
-    cmd->targetPos = target;
+    cmd->target.emplace(target, Target::Type::POSITION);
     Event event(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, unit});
 
     eventPublisher->publish(event);

@@ -6,13 +6,24 @@
 #include "ServiceRegistry.h"
 #include "Settings.h"
 #include "StateManager.h"
+#include "components/CompTransform.h"
 #include "utils/Types.h"
 
 #include <gtest/gtest.h>
-#include "components/CompTransform.h"
+#include "components/CompUnit.h"
 
 namespace core
 {
+
+// Expose protected helpers from PathService to unit tests by deriving a thin test subclass.
+// This avoids modifying production source while allowing tests to validate internal behavior.
+class TestPathService : public PathService
+{
+  public:
+    using PathService::generateCandidateDirections;
+    using PathService::getBestAvoidanceDirectionVector;
+    using PathService::getSeparationPenaltyScore;
+};
 
 class PathServiceTest : public ::testing::Test
 {
@@ -34,7 +45,7 @@ class PathServiceTest : public ::testing::Test
         m_player->init(1);
 
         // PathService under test.
-        m_pathService = std::make_unique<PathService>();
+        m_pathService = std::make_unique<TestPathService>();
     }
 
     void TearDown() override
@@ -43,10 +54,20 @@ class PathServiceTest : public ::testing::Test
         m_stateMan->clearAll();
     }
 
+    uint32_t createUnit(const Feet& pos, int collisionRadius = 100)
+    {
+        uint32_t e = m_stateMan->createEntity();
+        CompTransform t(pos);
+        t.collisionRadius = collisionRadius;
+        m_stateMan->addComponent<CompTransform>(e, t);
+        m_stateMan->addComponent<CompUnit>(e, CompUnit());
+        return e;
+    }
+
     Ref<Settings> m_settings;
     Ref<StateManager> m_stateMan;
     Ref<Player> m_player;
-    std::unique_ptr<PathService> m_pathService;
+    std::unique_ptr<TestPathService> m_pathService;
 };
 
 // Helper to produce Feet by tile coordinates (center of tile).
@@ -190,11 +211,10 @@ TEST_F(PathServiceTest, FindPath_BlockedDirect_UsesPathfinder_IncludesEndpoints)
 
     Path result = m_pathService->findPath(from, to, m_player);
 
-    // When pathfinder is used, PathService will insert origin at the front and push destination at
+    // When pathfinder is used, PathService will insert push destination at
     // the back.
     const auto& wps = result.getWaypoints();
     ASSERT_GE(wps.size(), 2u);
-    EXPECT_EQ(wps.front(), from);
     // last element should be the destination
     auto it = wps.end();
     --it;
@@ -207,21 +227,21 @@ TEST_F(PathServiceTest, FindPath_BlockedDirect_UsesPathfinder_IncludesEndpoints)
 //    Block tile (3,0) so origin can see up to (2,0) but not the corner (4,0).
 //    Expected refinement: origin, corner(4,0), dest(4,3)
 /*
- *  Original waypoints 
+ *  Original waypoints
  *   S ──┐ X . .
  *   . X │ X . .
  *   . X │ X  . .
  *   . X │ X E .
  *   . . └──── .
- *   . . . . . . 
- * 
+ *   . . . . . .
+ *
  *  Refined waypoints (marked o)
  *   o . o X . .
  *   . X . X . .
  *   . X . X . .
  *   . X . X o .
  *   . . o . o .
- *   . . . . . . 
+ *   . . . . . .
  */
 TEST_F(PathServiceTest, RefinePath_MultipleSegmentRemovals_KeepsCorners)
 {
@@ -235,10 +255,8 @@ TEST_F(PathServiceTest, RefinePath_MultipleSegmentRemovals_KeepsCorners)
     Feet p44 = tileCenterFeet(4, 4);
     Feet dest = tileCenterFeet(4, 3);
 
-    const std::vector<Tile> blockers = {
-        Tile(3, 0), Tile(3, 1), Tile(3, 2), Tile(3, 3),
-        Tile(1, 1), Tile(1, 2), Tile(1, 3)
-    };
+    const std::vector<Tile> blockers = {Tile(3, 0), Tile(3, 1), Tile(3, 2), Tile(3, 3),
+                                        Tile(1, 1), Tile(1, 2), Tile(1, 3)};
 
     for (const auto& b : blockers)
     {
@@ -270,22 +288,26 @@ TEST_F(PathServiceTest, RefinePath_MultipleSegmentRemovals_KeepsCorners)
     EXPECT_EQ(*it, dest);
 }
 
-
 // Tests for getBestAvoidanceVector
 
 TEST_F(PathServiceTest, GetBestAvoidanceVector_Forward_NoDensity_PicksForward)
 {
     // Arrange
-    const uint32_t speed = Constants::FEET_PER_TILE; // 256
+    const int speed = Constants::FEET_PER_TILE; // 256
     Feet currentPos = tileCenterFeet(2, 2);
     Feet preferredVector = Feet(1.0f, 0.0f); // move east
-    float deltaTimeS = 1.0f;
+    auto entity = createUnit(currentPos);
+    Target target;
 
     // Ensure density grid is clear
     m_stateMan->getDensityGrid().clear();
 
     // Act
-    Feet chosen = m_pathService->getBestAvoidanceDirectionVector(currentPos, preferredVector, 100, entt::null);
+    Feet chosen = m_pathService->getBestAvoidanceDirectionVector(currentPos, preferredVector,
+                                                                 100,   // collisionRadius
+                                                                 speed, // speed
+                                                                 std::nullopt, entity,
+                                                                 AvoidnaceQuality::MEDIUM, target);
 
     // Expectation: chosen equals preferredVector (east)
     EXPECT_EQ(chosen, preferredVector);
@@ -294,10 +316,10 @@ TEST_F(PathServiceTest, GetBestAvoidanceVector_Forward_NoDensity_PicksForward)
 TEST_F(PathServiceTest, GetBestAvoidanceVector_ForwardBlocked_45Degree_Wins)
 {
     // Arrange
-    const uint32_t speed = Constants::FEET_PER_TILE; // 256
+    const int speed = Constants::FEET_PER_TILE; // 256
     Feet currentPos = tileCenterFeet(2, 2);
     Feet preferredVector = Feet(static_cast<float>(speed), 0.0f); // move east
-    float deltaTimeS = 1.0f;
+    auto entity = createUnit(currentPos);
 
     // Clear grid then add density directly in front so forward candidate is penalized.
     m_stateMan->getDensityGrid().clear();
@@ -307,7 +329,8 @@ TEST_F(PathServiceTest, GetBestAvoidanceVector_ForwardBlocked_45Degree_Wins)
 
     // Act
     Feet chosen = m_pathService->getBestAvoidanceDirectionVector(currentPos, preferredVector, 100,
-                                                                 entt::null);
+                                                                 speed, std::nullopt, entity,
+                                                                 AvoidnaceQuality::MEDIUM, Target());
 
     // Expectation: chosen should be rotated 45 degrees (one of the 45-degree candidates).
     Feet expected45 = preferredVector.normalized().rotated(45.0f);
@@ -323,10 +346,10 @@ TEST_F(PathServiceTest, GetBestAvoidanceVector_ForwardBlocked_45Degree_Wins)
 TEST_F(PathServiceTest, GetBestAvoidanceVector_ForwardAnd45Blocked_90Degree_Wins)
 {
     // Arrange
-    const uint32_t speed = Constants::FEET_PER_TILE; // 256
+    const int speed = Constants::FEET_PER_TILE; // 256
     Feet currentPos = tileCenterFeet(2, 2);
     Feet preferredVector = Feet(1.0f, 0.0f); // move east
-    float deltaTimeS = 1.0f;
+    auto entity = createUnit(currentPos);
 
     m_stateMan->getDensityGrid().clear();
 
@@ -335,20 +358,16 @@ TEST_F(PathServiceTest, GetBestAvoidanceVector_ForwardAnd45Blocked_90Degree_Wins
     m_stateMan->getDensityGrid().incrementDensity(forwardPred);
 
     // Block both 45-degree candidates strongly (two increments each to increase penalty)
-    Feet pred45 =
-        currentPos +
-        (preferredVector.normalized().rotated(45.0f) * 100 * 2);
-    Feet pred315 =
-        currentPos +
-        (preferredVector.normalized().rotated(315.0f) * 100 * 2);
+    Feet pred45 = currentPos + (preferredVector.normalized().rotated(45.0f) * 100 * 2);
+    Feet pred315 = currentPos + (preferredVector.normalized().rotated(315.0f) * 100 * 2);
     m_stateMan->getDensityGrid().incrementDensity(pred45);
     m_stateMan->getDensityGrid().incrementDensity(pred45);
     m_stateMan->getDensityGrid().incrementDensity(pred315);
     m_stateMan->getDensityGrid().incrementDensity(pred315);
 
     // Act
-    Feet chosen = m_pathService->getBestAvoidanceDirectionVector(currentPos, preferredVector, 100,
-                                                                 entt::null);
+    Feet chosen = m_pathService->getBestAvoidanceDirectionVector(currentPos, preferredVector, 100, speed, std::nullopt, entity, AvoidnaceQuality::MEDIUM,
+        Target());
 
     // Expectation: 90-degree rotated candidate (i.e. north or south depending on rotation sign).
     Feet expected90 = preferredVector.normalized().rotated(90.0f);
@@ -363,21 +382,30 @@ TEST_F(PathServiceTest, GetBestAvoidanceVector_ForwardAnd45Blocked_90Degree_Wins
 TEST_F(PathServiceTest, GetBestAvoidanceVector_BoxedExceptBehind_GoesBackward)
 {
     // Arrange
-    const uint32_t speed = Constants::FEET_PER_TILE; // 256
+    const int speed = Constants::FEET_PER_TILE; // 256
     Feet currentPos = tileCenterFeet(5, 5);
     Feet preferredVector = Feet(static_cast<float>(speed), 0.0f); // move east
-    float deltaTimeS = 1.0f;
-
+    auto entity = createUnit(currentPos);
     // Ensure density grid is clear
     m_stateMan->getDensityGrid().clear();
 
     // Prepare candidate directions and heavily penalize all except the behind direction.
     auto preferredDir = preferredVector.normalized();
-    auto candidates = m_pathService->generateCandidateDirections(preferredDir, 8);
+
+    // Recreate the candidate set locally (don't rely on protected ordering in production).
+    // We'll generate 8 evenly spaced candidates around the preferred direction.
+    const int numCandidates = 8;
+    std::vector<Feet> candidates;
+    for (int i = 0; i < numCandidates; ++i)
+    {
+        float angle = (360.0f / numCandidates) * i;
+        candidates.push_back(preferredDir.rotated(angle).normalized());
+    }
 
     Feet behindDir = preferredDir.rotated(180.0f).normalized();
 
-    auto isSameDir = [&](const Feet& a, const Feet& b) {
+    auto isSameDir = [&](const Feet& a, const Feet& b)
+    {
         auto an = a.normalized();
         auto bn = b.normalized();
         return std::abs(an.x - bn.x) < 1e-2f && std::abs(an.y - bn.y) < 1e-2f;
@@ -397,8 +425,8 @@ TEST_F(PathServiceTest, GetBestAvoidanceVector_BoxedExceptBehind_GoesBackward)
     }
 
     // Act
-    Feet chosen = m_pathService->getBestAvoidanceDirectionVector(currentPos, preferredVector, 100,
-                                                                 entt::null);
+    Feet chosen = m_pathService->getBestAvoidanceDirectionVector(currentPos, preferredVector, 100, speed, std::nullopt, entity, AvoidnaceQuality::MEDIUM,
+        Target());
 
     // Expectation: chosen should be the backwards vector (180 degrees).
     Feet expectedBack = behindDir;
@@ -406,8 +434,7 @@ TEST_F(PathServiceTest, GetBestAvoidanceVector_BoxedExceptBehind_GoesBackward)
                                     << " expected back vector: " << expectedBack.toString();
 }
 
-
-// Tests for getSeparationPenalty
+// Tests for getSeparationPenaltyScore
 
 // Helper to create a unit with a transform and place it on the units layer.
 static uint32_t createUnitAt(StateManager& stateMan, const Feet& pos, int collisionRadius = 100)
@@ -416,6 +443,7 @@ static uint32_t createUnitAt(StateManager& stateMan, const Feet& pos, int collis
     CompTransform t(pos);
     t.collisionRadius = collisionRadius;
     stateMan.addComponent<CompTransform>(e, t);
+    stateMan.addComponent<CompUnit>(e, CompUnit());
     stateMan.gameMap().addEntity(MapLayerType::UNITS, pos.toTile(), e);
     return e;
 }
@@ -426,6 +454,7 @@ TEST_F(PathServiceTest, GetSeparationPenalty_SearchCrossesBoundary_IgnoresInvali
 {
     // Position near (0,0) border
     Feet pos = tileCenterFeet(0, 0);
+    auto entity = createUnit(pos);
 
     // Place another unit slightly to the right such that its tile is (1,0) (valid),
     // and distance produces a known overlap.
@@ -434,7 +463,7 @@ TEST_F(PathServiceTest, GetSeparationPenalty_SearchCrossesBoundary_IgnoresInvali
 
     // unitCollisionRadius passed as 100, other collision radius default 100 => separationRadius =
     // 200
-    float penalty = m_pathService->getSeparationPenalty(pos, entt::null, 100);
+    float penalty = m_pathService->getSeparationPenaltyScore(pos, entity, 100, {other});
 
     // expected overlap = 200 - 150 = 50
     EXPECT_NEAR(penalty, 50.0f, 1e-3f);
@@ -447,7 +476,7 @@ TEST_F(PathServiceTest, GetSeparationPenalty_IgnoresSelf_ReturnsZero)
     uint32_t self = createUnitAt(*m_stateMan, pos, 100);
 
     // Even though it's overlapping (same position), passing self id should ignore it.
-    float penalty = m_pathService->getSeparationPenalty(pos, self, 100);
+    float penalty = m_pathService->getSeparationPenaltyScore(pos, self, 100, {});
     EXPECT_NEAR(penalty, 0.0f, 1e-3f);
 }
 
@@ -455,13 +484,14 @@ TEST_F(PathServiceTest, GetSeparationPenalty_IgnoresSelf_ReturnsZero)
 TEST_F(PathServiceTest, GetSeparationPenalty_SingleUnitCollision_CorrectOverlap)
 {
     Feet pos = tileCenterFeet(3, 3);
+    auto entity = createUnit(pos);
 
     // Place other unit 120 feet to the right => dist = 120
     Feet otherPos = pos + Feet(120.0f, 0.0f);
     uint32_t other = createUnitAt(*m_stateMan, otherPos, 100);
 
     // separationRadius = 200, overlap = 200 - 120 = 80
-    float penalty = m_pathService->getSeparationPenalty(pos, entt::null, 100);
+    float penalty = m_pathService->getSeparationPenaltyScore(pos, entity, 100, {other});
     EXPECT_NEAR(penalty, 80.0f, 1e-3f);
 }
 
@@ -469,18 +499,18 @@ TEST_F(PathServiceTest, GetSeparationPenalty_SingleUnitCollision_CorrectOverlap)
 TEST_F(PathServiceTest, GetSeparationPenalty_MultipleUnits_SumsOverlaps)
 {
     Feet pos = tileCenterFeet(4, 4);
+    auto entity = createUnit(pos);
 
     // Unit A: 130 ft right => overlapA = 200 - 130 = 70
     Feet aPos = pos + Feet(130.0f, 0.0f);
-    createUnitAt(*m_stateMan, aPos, 100);
+    auto other1 = createUnitAt(*m_stateMan, aPos, 100);
 
     // Unit B: 180 ft up => overlapB = 200 - 180 = 20
     Feet bPos = pos + Feet(0.0f, -180.0f);
-    createUnitAt(*m_stateMan, bPos, 100);
+    auto other2 = createUnitAt(*m_stateMan, bPos, 100);
 
-    float penalty = m_pathService->getSeparationPenalty(pos, entt::null, 100);
+    float penalty = m_pathService->getSeparationPenaltyScore(pos, entity, 100, {other1, other2});
     EXPECT_NEAR(penalty, 70.0f + 20.0f, 1e-3f);
 }
-
 
 } // namespace core

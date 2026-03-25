@@ -45,70 +45,93 @@ void CmdMove::onStart()
  */
 void CmdMove::onQueue()
 {
-    if (targetEntity != entt::null && m_stateMan->hasComponent<CompBuilding>(targetEntity))
+    if (target.has_value())
     {
-        auto& building = m_stateMan->getComponent<CompBuilding>(targetEntity);
-        auto rect = building.getLandInFeetRect();
+        // Enrich the target position
+        if (target->entity.has_value())
+        {
+            auto targetEntity = target->entity.value();
+            if (auto building = m_stateMan->tryGetComponent<CompBuilding>(targetEntity))
+            {
+                auto rect = building->getLandInFeetRect();
 
-        targetPos =
-            findClosestEdgeOfStaticEntity(targetEntity, m_components->transform.position, rect);
-    }
-    else if (targetEntity != entt::null && m_stateMan->hasComponent<CompResource>(targetEntity))
-    {
-        auto [resource, transform] =
-            m_stateMan->getComponents<CompResource, CompTransform>(targetEntity);
-        auto rect = resource.getLandInFeetRect(transform.position);
+                auto targetPos = m_pathService->findClosestVacantPosAroundLand(
+                    m_entityID, m_components->transform.position, building->landArea);
 
-        targetPos =
-            findClosestEdgeOfStaticEntity(targetEntity, m_components->transform.position, rect);
-    }
-    else if (targetEntity != entt::null)
-    {
-        auto& targetTransform = m_stateMan->getComponent<CompTransform>(targetEntity);
-        targetPos = targetTransform.position;
-    }
+                target.emplace(targetPos, Target::Type::BUILDING, targetEntity);
+            }
+            else if (m_stateMan->hasComponent<CompResource>(targetEntity))
+            {
+                auto [resource, transform] =
+                    m_stateMan->getComponents<CompResource, CompTransform>(targetEntity);
+                auto rect = resource.getLandInFeetRect(transform.position);
 
-    if (not targetPos.isNull())
-    {
-        m_path = m_pathService->findPath(m_components->transform.position, targetPos,
-                                         m_components->player.player);
-#ifndef NDEBUG
-        // for (auto& pos : m_path.getWaypoints())
-        //{
-        //     auto tileEntity = m_stateMan->gameMap().getEntity(MapLayerType::GROUND,
-        //     pos.toTile()); auto& graphics = m_stateMan->getComponent<CompGraphics>(tileEntity);
+                LandArea area;
+                area.tiles.push_back(transform.position.toTile());
+                auto targetPos = m_pathService->findClosestVacantPosAroundLand(
+                    m_entityID, m_components->transform.position, area);
 
-        //    if (not graphics.debugOverlays.empty())
-        //    {
-        //        //graphics.debugOverlays.clear();
-        //        DebugOverlay filledCircle;
-        //        filledCircle.type = DebugOverlay::Type::CIRCLE;
-        //        filledCircle.color = Color::GREEN;
-        //        filledCircle.absolutePosition = pos;
-        //        graphics.debugOverlays.push_back(filledCircle);
-        //        StateManager::markDirty(tileEntity);
-        //    }
-        //}
-
-        // auto tileEntity = m_stateMan->gameMap().getEntity(MapLayerType::GROUND,
-        // targetPos.toTile()); auto& graphics = m_stateMan->getComponent<CompGraphics>(tileEntity);
-
-        // if (not graphics.debugOverlays.empty())
-        //{
-        //     //graphics.debugOverlays.clear();
-        //     DebugOverlay filledCircle;
-        //     filledCircle.type = DebugOverlay::Type::FILLED_CIRCLE;
-        //     filledCircle.color = Color::RED;
-        //     filledCircle.absolutePosition = targetPos;
-        //     graphics.debugOverlays.push_back(filledCircle);
-        //     StateManager::markDirty(tileEntity);
-        // }
-#endif
+                target.emplace(targetPos, Target::Type::RESOURCE, targetEntity);
+            }
+            else if (m_stateMan->hasComponent<CompUnit>(targetEntity))
+            {
+                auto& targetTransform = m_stateMan->getComponent<CompTransform>(targetEntity);
+                auto targetPos = targetTransform.position;
+                target.emplace(targetPos, Target::Type::UNIT, targetEntity);
+            }
+            else
+            {
+                spdlog::warn("Unknown target type of entity {} for unit {}", targetEntity,
+                             m_entityID);
+            }
+        }
     }
     else
     {
-        spdlog::error("Target entity {}'s position could not be determined", targetEntity);
+        spdlog::error("Target is not set for the unit {} to move", m_entityID);
+        return;
     }
+
+    if (not target->isValid())
+    {
+        spdlog::warn("Target position could not be derrived for unit {} to move", m_entityID);
+        return;
+    }
+
+    m_path = m_pathService->findPath(m_components->transform.position, target->pos,
+                                     m_components->player.player);
+#ifndef NDEBUG
+    // for (auto& pos : m_path.getWaypoints())
+    //{
+    //     auto tileEntity = m_stateMan->gameMap().getEntity(MapLayerType::GROUND,
+    //     pos.toTile()); auto& graphics = m_stateMan->getComponent<CompGraphics>(tileEntity);
+
+    //    if (not graphics.debugOverlays.empty())
+    //    {
+    //        //graphics.debugOverlays.clear();
+    //        DebugOverlay filledCircle;
+    //        filledCircle.type = DebugOverlay::Type::CIRCLE;
+    //        filledCircle.color = Color::GREEN;
+    //        filledCircle.absolutePosition = pos;
+    //        graphics.debugOverlays.push_back(filledCircle);
+    //        StateManager::markDirty(tileEntity);
+    //    }
+    //}
+
+    // auto tileEntity = m_stateMan->gameMap().getEntity(MapLayerType::GROUND,
+    // targetPos.toTile()); auto& graphics = m_stateMan->getComponent<CompGraphics>(tileEntity);
+
+    // if (not graphics.debugOverlays.empty())
+    //{
+    //     //graphics.debugOverlays.clear();
+    //     DebugOverlay filledCircle;
+    //     filledCircle.type = DebugOverlay::Type::FILLED_CIRCLE;
+    //     filledCircle.color = Color::RED;
+    //     filledCircle.absolutePosition = targetPos;
+    //     graphics.debugOverlays.push_back(filledCircle);
+    //     StateManager::markDirty(tileEntity);
+    // }
+#endif
 }
 
 /**
@@ -124,16 +147,11 @@ void CmdMove::onQueue()
  */
 bool CmdMove::onExecute(int deltaTimeMs, int currentTick, std::list<Command*>& subCommands)
 {
-    if (targetPos.isNull() == false) [[likely]]
-    {
-        animate(deltaTimeMs, currentTick);
-        return move(deltaTimeMs);
-    }
-    else [[unlikely]]
-    {
-        spdlog::error("Target pos {} is not properly set to move.", targetPos.toString());
+    if (not target.has_value() or not target->isValid()) [[unlikely]]
         return true;
-    }
+
+    animate(deltaTimeMs, currentTick);
+    return move(deltaTimeMs);
 }
 
 std::string CmdMove::toString() const
@@ -148,6 +166,9 @@ void CmdMove::destroy()
 
 void CmdMove::animate(int deltaTimeMs, int currentTick)
 {
+    if (m_dontAnimate)
+        return;
+
     m_components->action.action = actionOverride;
     const auto& actionAnimation = m_components->animation.animations[m_components->action.action];
 
@@ -159,6 +180,11 @@ void CmdMove::animate(int deltaTimeMs, int currentTick)
         m_components->animation.frame++;
         m_components->animation.frame %= actionAnimation.frames;
     }
+}
+
+inline Feet lerp(const Feet& a, const Feet& b, float t)
+{
+    return a + (b - a) * t;
 }
 
 /**
@@ -179,24 +205,65 @@ bool CmdMove::move(int deltaTimeMs)
 {
     if (isTargetCloseEnough())
     {
-        spdlog::debug("Target is reached, move command is completed");
+        spdlog::debug("Unit {} reached target, move command is completed", m_entityID);
+
+        auto& unitGraphics = m_stateMan->getComponent<CompGraphics>(m_entityID);
         return true;
+    }
+    else
+    {
+        if (m_path.isEmpty())
+            spdlog::warn("Target is not close enough yet there is no path for unit {}", m_entityID);
     }
 
     if (!m_path.isEmpty())
     {
         const auto& nextWaypoint = m_path.nextWaypoint();
 
-        if (m_components->transform.position.distanceSquared(nextWaypoint) <
-            m_components->transform.goalRadiusSquared)
+        if (isPositionCloseEnough(nextWaypoint))
         {
-            spdlog::debug("Next hop {} reached", nextWaypoint.toString());
+            spdlog::debug("Unit {} reached next hop {}", m_entityID, nextWaypoint.toString());
             m_path.removeNextWaypoint();
         }
         else
         {
-            const auto desiredDirection = nextWaypoint - m_components->transform.position;
             Feet finalDir = avoidCollision(deltaTimeMs);
+            finalDir = finalDir.normalized();
+            m_dontAnimate = false;
+
+            if (finalDir.dot(m_previousBestDirection) < 0.0f) // Direction flipped
+            {
+                m_directionFlipDurationMs += deltaTimeMs;
+                m_numberOfDirectionFlips++;
+
+                if (m_numberOfDirectionFlips >= DIRECTION_FLIP_THRESHOLD)
+                {
+                    if (m_numberOfDirectionFlips == DIRECTION_FLIP_THRESHOLD)
+                    {
+                        spdlog::debug("Too many direction flips; {} waiting to settle down",
+                                      m_entityID);
+                    }
+
+                    if (m_directionFlipDurationMs < DIRECTION_FLIP_WAIT_TIME_MS)
+                    {
+                        m_dontAnimate = true;
+                        return false;
+                    }
+                    else
+                    {
+                        spdlog::debug("{} resuming the movement after being stationary",
+                                      m_entityID);
+                        m_numberOfDirectionFlips = 0;
+                        m_directionFlipDurationMs = 0;
+                    }
+                }
+            }
+            else // Suggestion is either perpendicular or same direction
+            {
+                m_numberOfDirectionFlips = 0;
+                m_directionFlipDurationMs = 0;
+            }
+            m_previousBestDirection = finalDir;
 
 #ifndef NDEBUG
             auto& debugOverlays = m_stateMan->getComponent<CompGraphics>(m_entityID).debugOverlays;
@@ -208,16 +275,12 @@ bool CmdMove::move(int deltaTimeMs)
 
                 auto tileFeetDiagonal =
                     std::sqrt(2 * Constants::FEET_PER_TILE * Constants::FEET_PER_TILE);
-                auto circleFeetRadius = m_pathService->LOOKAHEAD_COLLISION_RADIUS_MULTIPLIER *
-                                        m_components->transform.collisionRadius;
+                auto circleFeetRadius = m_components->transform.collisionRadius;
                 debugOverlays[1].circlePixelRadius =
                     circleFeetRadius * Constants::TILE_PIXEL_WIDTH / tileFeetDiagonal;
             }
 
 #endif
-
-            finalDir = finalDir.normalized();
-
             auto timeS = (double) deltaTimeMs / 1000.0;
 
             const auto newPos =
@@ -285,9 +348,25 @@ Feet CmdMove::avoidCollision(int deltaTimeMs)
     auto deltaTimeS = (double) deltaTimeMs / 1000.0;
     const auto& currPos = m_components->transform.position;
     const auto& collisionRadius = m_components->transform.collisionRadius;
+    auto speed = m_components->transform.speed;
+    float lookaheadDuration = 1.0f;
+
+    auto quality = AvoidnaceQuality::MEDIUM;
+
+    if (target->type == Target::Type::UNIT)
+    {
+        auto possibleDistanceCanTravel = speed * lookaheadDuration * m_settings->getGameSpeed();
+        auto distance = m_components->transform.position.distance(target->pos);
+        if ((distance - possibleDistanceCanTravel) < (collisionRadius * 2))
+        {
+            quality = AvoidnaceQuality::HIGH;
+            lookaheadDuration = 0.5f;
+        }
+    }
 
     return m_pathService->getBestAvoidanceDirectionVector(currPos, preferredDir, collisionRadius,
-                                                          m_entityID);
+                                                          speed, lookaheadDuration, m_entityID,
+                                                          quality, target.value());
 }
 
 /**
@@ -508,18 +587,23 @@ bool CmdMove::overlaps(const Feet& unitPos, float radiusSq, const Feet& targetPo
  */
 bool CmdMove::isTargetCloseEnough() const
 {
-    if (targetEntity != entt::null)
+    if (target->entity.has_value())
     {
-        return ProximityChecker::isInProximity(m_components->transform, targetEntity,
+        return ProximityChecker::isInProximity(m_components->transform, target->entity.value(),
                                                m_stateMan.getRef());
     }
     else
     {
-        return ProximityChecker::isInProximity(m_components->transform, targetPos);
+        return ProximityChecker::isInProximity(m_components->transform, target->pos);
     }
 }
 
 core::Command* CmdMove::clone()
 {
     return ObjectPool<CmdMove>::acquire(*this);
+}
+
+bool CmdMove::isPositionCloseEnough(const Feet& pos) const
+{
+    return m_components->transform.isCloseEnough(pos);
 }

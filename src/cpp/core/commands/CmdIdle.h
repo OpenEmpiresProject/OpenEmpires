@@ -8,6 +8,8 @@
 #include "logging/Logger.h"
 #include "utils/ObjectPool.h"
 
+#include <random>
+
 namespace core
 {
 class CmdIdle : public Command
@@ -31,6 +33,19 @@ class CmdIdle : public Command
         // constructed before having ability to set it up properly (since idle is the default
         // command).
         setEntityID(m_entityID);
+
+        // To break the synchronicity of units, start with a random frame. Otherwise, units
+        // created in a single frame will animated synchronously, which doesn't look good.
+        //
+        m_components->action.action = UnitAction::IDLE;
+        const auto& actionAnimation = m_components->animation.animations[UnitAction::IDLE];
+
+        std::random_device rd;  // seed
+        std::mt19937 gen(rd()); // Mersenne Twister engine
+        std::uniform_int_distribution<> dist(0, actionAnimation.frames - 1);
+        int randomFrame = dist(gen);
+
+        m_components->animation.frame = randomFrame;
     }
 
     void onQueue() override

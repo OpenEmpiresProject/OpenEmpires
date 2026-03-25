@@ -1,6 +1,7 @@
 #ifndef EVENT_H
 #define EVENT_H
 
+#include "BaseUnitFormation.h"
 #include "EntitySelection.h"
 #include "Feet.h"
 #include "Player.h"
@@ -152,6 +153,11 @@ struct CorpseData
     uint32_t entity = entt::null;
 };
 
+struct UnitFormationData
+{
+    Ref<BaseUnitFormation> formation;
+};
+
 struct Event
 {
     enum class Type
@@ -177,6 +183,8 @@ struct Event
         WITHIN_LINE_OF_SIGHT, // Use LineOfSightData
         OUT_OF_LINE_OF_SIGHT, // Use LineOfSightData
         COMMAND_REQUEST,
+        UNIT_FORMATION_DELETE,
+        UNIT_FORMATION_COMMAND_MOVE,
         UNGARRISON_REQUEST,
         GARRISON_REQUEST,
         MAX_TYPE_MARKER,
@@ -200,6 +208,7 @@ struct Event
                               BuildingConstructedData,
                               LineOfSightData,
                               BuildingPlacementData,
+                              UnitFormationData,
                               CorpseData>;
 
     const Type type = Type::NONE;

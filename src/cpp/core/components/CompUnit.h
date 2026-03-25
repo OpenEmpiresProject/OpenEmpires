@@ -1,6 +1,7 @@
 #ifndef COMPUNIT_H
 #define COMPUNIT_H
 
+#include "BaseUnitFormation.h"
 #include "Property.h"
 #include "commands/Command.h"
 
@@ -22,6 +23,7 @@ class CompUnit
 
     CommandQueueType commandQueue;
     bool isGarrisoned = false;
+    FormationSlot formationSlot;
 
     void onCreate(uint32_t entity)
     {

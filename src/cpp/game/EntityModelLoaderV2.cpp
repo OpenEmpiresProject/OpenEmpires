@@ -516,6 +516,8 @@ void EntityModelLoaderV2::postProcessing()
                                                    Alignment::BOTTOM_CENTER, Alignment::CENTER});
                 graphics->debugOverlays.push_back({DebugOverlay::Type::CIRCLE, core::Color::YELLOW,
                                                    Alignment::BOTTOM_CENTER, Alignment::CENTER});
+                graphics->debugOverlays.push_back({DebugOverlay::Type::CIRCLE, core::Color::YELLOW,
+                                                   Alignment::BOTTOM_CENTER, Alignment::CENTER});
 #endif
             }
 

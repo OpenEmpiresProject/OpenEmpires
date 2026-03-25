@@ -206,7 +206,7 @@ template <typename T, typename Tag> class Vec2Base
             y = yLimit;
     }
 
-    Vec2Base rotated(float angleDegrees) noexcept
+    Vec2Base rotated(float angleDegrees) const noexcept
     {
         float angleRad = angleDegrees * std::numbers::pi / 180.0f;
         float cosA = std::cos(angleRad);

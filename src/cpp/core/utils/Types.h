@@ -301,6 +301,11 @@ enum class GraphicLayer
     // g_graphicLayersOrder
 };
 
+enum class UnitFormationType
+{
+    LINE_FORMATION,
+};
+
 inline constexpr std::array<GraphicLayer, 6> g_graphicLayersOrder{
     GraphicLayer::GROUND,           GraphicLayer::ON_GROUND, GraphicLayer::ENTITIES,
     GraphicLayer::ENTITY_DECORATOR, GraphicLayer::SKY,       GraphicLayer::UI};

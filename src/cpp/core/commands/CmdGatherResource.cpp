@@ -151,7 +151,7 @@ void core::CmdGatherResource::moveCloser(std::list<Command*>& subCommands)
     spdlog::debug("Target {} at {} is not close enough to gather, moving...", target,
                   m_targetPosition.toString());
     auto moveCmd = ObjectPool<CmdMove>::acquire();
-    moveCmd->targetEntity = target;
+    moveCmd->target.emplace(target);
     moveCmd->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
     subCommands.push_back(moveCmd);
 }

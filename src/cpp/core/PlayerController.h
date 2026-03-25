@@ -3,6 +3,7 @@
 
 #include "EntitySelection.h"
 #include "EventHandler.h"
+#include "PathService.h"
 #include "ShortcutResolver.h"
 #include "utils/Types.h"
 
@@ -26,6 +27,7 @@ class PlayerController : public EventHandler
     bool m_fowEnabled = true;
     LazyServiceRef<StateManager> m_stateMan;
     LazyServiceRef<Coordinates> m_coordinates;
+    LazyServiceRef<PathService> m_pathService;
     Vec2 m_currentMouseScreenPos;
 
     // Building placement related
@@ -43,6 +45,11 @@ class PlayerController : public EventHandler
     Vec2 m_selectionStartPosScreenUnits;
     bool m_isSelectionBoxInProgress = false;
     EntitySelectionData m_currentEntitySelection;
+
+    // Unit formations related
+    const UnitFormationType DEFAULT_FORMATION_TYPE = UnitFormationType::LINE_FORMATION;
+    Ref<BaseUnitFormation> m_unnamedFormation; // There can be only 1 temporary groups
+    bool m_formationContentIsDirty = false;
 
   private:
     // Event callbacks
@@ -88,6 +95,9 @@ class PlayerController : public EventHandler
                                    const Vec2& endScreenPos,
                                    std::vector<uint32_t>& entitiesToAddToSelection);
     void onUnitSelection(const Event& e);
+
+    // Formation related
+    void createOrUpdateFormation(const Feet& targetPos);
 };
 } // namespace core
 

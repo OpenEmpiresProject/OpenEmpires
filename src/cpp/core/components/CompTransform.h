@@ -60,6 +60,16 @@ class CompTransform
         return {dx * speed, dy * speed};
     }
 
+    void faceAtDirection(const Feet& direction)
+    {
+        rotation = static_cast<int>(std::atan2(direction.x, -direction.y) * 180 / std::numbers::pi);
+
+        if (rotation < 0)
+        {
+            rotation += 360.0;
+        }
+    }
+
     void face(const Feet& target)
     {
         // Calculate the angle to face the target position
@@ -117,6 +127,11 @@ class CompTransform
     {
         return {static_cast<int>(position.x / Constants::FEET_PER_TILE),
                 static_cast<int>(position.y / Constants::FEET_PER_TILE)};
+    }
+
+    bool isCloseEnough(const Feet& target) const
+    {
+        return position.distanceSquared(target) <= (goalRadiusSquared * 0.0625f);
     }
 };
 } // namespace core
