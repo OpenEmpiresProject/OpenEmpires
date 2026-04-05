@@ -24,7 +24,6 @@ class CmdGarrison : public Command
     bool isComplete();
     void garrison();
     void moveCloser(std::list<Command*>& subCommands);
-    static bool overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& buildingRect);
 };
 } // namespace core
 

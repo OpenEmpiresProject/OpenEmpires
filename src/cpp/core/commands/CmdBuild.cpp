@@ -14,6 +14,7 @@
 #include "components/CompTransform.h"
 #include "debug.h"
 #include "logging/Logger.h"
+#include "utils/Maths.h"
 #include "utils/ObjectPool.h"
 
 #include <algorithm>
@@ -114,11 +115,10 @@ bool CmdBuild::isCloseEnough()
 
     auto& building = m_stateMan->getComponent<CompBuilding>(target);
     auto rect = building.getLandInFeetRect();
-
     auto unitPos = m_components->transform.position;
     auto unitRadius = m_components->transform.collisionRadius;
 
-    return overlaps(unitPos, unitRadius * unitRadius, rect);
+    return maths::isOverlapping(unitPos, unitRadius, rect);
 }
 
 /**
@@ -183,36 +183,6 @@ void CmdBuild::moveCloser(std::list<Command*>& subCommands)
     moveCmd->target.emplace(target);
     moveCmd->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
     subCommands.push_back(moveCmd);
-}
-
-/**
- * @brief Checks if a circular area around a unit overlaps with a rectangular building area.
- *
- * This function determines whether a circle, defined by the unit's position (`unitPos`)
- * and a squared radius (`radiusSq`), intersects or touches the rectangle specified by
- * `buildingRect`. It calculates the closest point on the rectangle to the unit's position,
- * then checks if the distance between this point and the unit's position is less than or
- * equal to the circle's radius.
- *
- * @param unitPos The position of the unit (center of the circle).
- * @param radiusSq The squared radius of the unit's area.
- * @param buildingRect The rectangle representing the building's area.
- * @return true if the circle overlaps or touches the rectangle, false otherwise.
- */
-bool CmdBuild::overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& buildingRect)
-{
-    float xMin = buildingRect.x;
-    float xMax = buildingRect.x + buildingRect.w;
-    float yMin = buildingRect.y;
-    float yMax = buildingRect.y + buildingRect.h;
-
-    float closestX = std::clamp(unitPos.x, xMin, xMax);
-    float closestY = std::clamp(unitPos.y, yMin, yMax);
-
-    float dx = unitPos.x - closestX;
-    float dy = unitPos.y - closestY;
-
-    return (dx * dx + dy * dy) <= radiusSq;
 }
 
 bool CmdBuild::lookForAnotherSiteToBuild(std::list<Command*>& newCommands)

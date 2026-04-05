@@ -11,6 +11,7 @@
 #include "components/CompUnit.h"
 #include "debug.h"
 #include "logging/Logger.h"
+#include "utils/Maths.h"
 #include "utils/ObjectPool.h"
 
 using namespace core;
@@ -52,11 +53,10 @@ bool CmdGarrison::isCloseEnough()
 
     auto& building = m_stateMan->getComponent<CompBuilding>(target);
     auto rect = building.getLandInFeetRect();
-
     auto unitPos = m_components->transform.position;
     auto unitRadius = m_components->transform.collisionRadius;
 
-    return overlaps(unitPos, unitRadius * unitRadius, rect);
+    return maths::isOverlapping(unitPos, unitRadius, rect);
 }
 
 bool CmdGarrison::isComplete()
@@ -76,22 +76,6 @@ void CmdGarrison::moveCloser(std::list<Command*>& subCommands)
     moveCmd->target.emplace(target);
     moveCmd->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
     subCommands.push_back(moveCmd);
-}
-
-bool CmdGarrison::overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& buildingRect)
-{
-    float xMin = buildingRect.x;
-    float xMax = buildingRect.x + buildingRect.w;
-    float yMin = buildingRect.y;
-    float yMax = buildingRect.y + buildingRect.h;
-
-    float closestX = std::clamp(unitPos.x, xMin, xMax);
-    float closestY = std::clamp(unitPos.y, yMin, yMax);
-
-    float dx = unitPos.x - closestX;
-    float dy = unitPos.y - closestY;
-
-    return (dx * dx + dy * dy) <= radiusSq;
 }
 
 void CmdGarrison::garrison()
