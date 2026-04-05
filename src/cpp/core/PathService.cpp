@@ -319,7 +319,7 @@ core::Feet PathService::getBestAvoidanceDirectionVector(const Feet& currentPos,
     spam("{}, preferred dir {}, best dir {}", entity, preferredDir.toString(),
          bestDirection.toString());
 
-    return bestDirection;
+    return bestDirection.normalized();
 }
 
 float PathService::getGeometricAvoidanceScore(const Feet& pos,

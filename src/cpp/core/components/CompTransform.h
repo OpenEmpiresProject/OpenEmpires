@@ -29,8 +29,6 @@ class CompTransform
     Vec2 relativePixelPosition{
         0, 0};        // Relative to parent, either this or above position can exist at a time
     int rotation = 0; // Rotation in degrees from feet North (0 degrees is up)
-    int goalRadiusSquared = 150 * 150;
-    int goalRadius = 150;
     int selectionBoxWidth = 15;
     int selectionBoxHeight = 30;
     int collisionRadius = 100; // TODO: not every entity would be circular
@@ -127,11 +125,6 @@ class CompTransform
     {
         return {static_cast<int>(position.x / Constants::FEET_PER_TILE),
                 static_cast<int>(position.y / Constants::FEET_PER_TILE)};
-    }
-
-    bool isCloseEnough(const Feet& target) const
-    {
-        return position.distanceSquared(target) <= (goalRadiusSquared * 0.0625f);
     }
 };
 } // namespace core

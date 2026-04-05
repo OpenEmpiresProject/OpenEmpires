@@ -137,13 +137,9 @@ Feet CmdMoveInFormation::getTargetPos() const
     return m_components->transform.position;
 }
 
-core::Feet CmdMoveInFormation::avoidCollision(int deltaTimeMs)
+core::Feet CmdMoveInFormation::avoidCollision(int deltaTimeMs, const Feet& goalPos)
 {
-    if (m_path.isEmpty())
-        return Feet::zero;
-
-    const auto& nextWaypoint = m_path.nextWaypoint();
-    auto preferredDir = nextWaypoint - m_components->transform.position;
+    auto preferredDir = goalPos - m_components->transform.position;
     auto deltaTimeS = (double) deltaTimeMs / 1000.0;
     const auto& currPos = m_components->transform.position;
     auto speed = m_components->transform.speed;
@@ -155,19 +151,6 @@ core::Feet CmdMoveInFormation::avoidCollision(int deltaTimeMs)
     return m_pathService->getBestAvoidanceDirectionVector(
         currPos, preferredDir, GOAL_RADIUS_OVERRIDE, speed, lookAheadDuration, m_entityID,
         AvoidnaceQuality::HIGH, target.value());
-}
-
-bool CmdMoveInFormation::isTargetCloseEnough() const
-{
-    size_t waypointCount = m_path.getWaypoints().size();
-    if (waypointCount == 0)
-        return true;
-    if (waypointCount > 1) // Path is not fully followed yet
-        return false;
-
-    const auto& nextWaypoint = m_path.nextWaypoint();
-    return ProximityChecker::isInProximity(m_components->transform.position, nextWaypoint,
-                                           GOAL_RADIUS_OVERRIDE * GOAL_RADIUS_OVERRIDE);
 }
 
 bool CmdMoveInFormation::isPositionCloseEnough(const Feet& pos) const

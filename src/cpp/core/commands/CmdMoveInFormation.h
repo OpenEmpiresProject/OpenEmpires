@@ -19,8 +19,7 @@ class CmdMoveInFormation : public CmdMove
     void destroy() override;
     bool move(int deltaTimeMs, const Feet& target);
     Feet getTargetPos() const;
-    Feet avoidCollision(int deltaTimeMs) override;
-    bool isTargetCloseEnough() const override;
+    Feet avoidCollision(int deltaTimeMs, const Feet& goalPos) override;
     bool isPositionCloseEnough(const Feet& pos) const override;
 
     const int SLOT_REACHABLE_THRESHOLD_SQUARED =

@@ -53,8 +53,6 @@ void CmdMove::onQueue()
             auto targetEntity = target->entity.value();
             if (auto building = m_stateMan->tryGetComponent<CompBuilding>(targetEntity))
             {
-                auto rect = building->getLandInFeetRect();
-
                 auto targetPos = m_pathService->findClosestVacantPosAroundLand(
                     m_entityID, m_components->transform.position, building->landArea);
 
@@ -64,7 +62,6 @@ void CmdMove::onQueue()
             {
                 auto [resource, transform] =
                     m_stateMan->getComponents<CompResource, CompTransform>(targetEntity);
-                auto rect = resource.getLandInFeetRect(transform.position);
 
                 LandArea area;
                 area.tiles.push_back(transform.position.toTile());
@@ -100,6 +97,13 @@ void CmdMove::onQueue()
 
     m_path = m_pathService->findPath(m_components->transform.position, target->pos,
                                      m_components->player.player);
+
+    if (m_path.isEmpty())
+    {
+        spdlog::warn("Couldn't find path from {} to {} for unit",
+                     m_components->transform.position.toString(), target->pos.toString(),
+                     m_entityID);
+    }
 #ifndef NDEBUG
     // for (auto& pos : m_path.getWaypoints())
     //{
@@ -182,11 +186,6 @@ void CmdMove::animate(int deltaTimeMs, int currentTick)
     }
 }
 
-inline Feet lerp(const Feet& a, const Feet& b, float t)
-{
-    return a + (b - a) * t;
-}
-
 /**
  * @brief Moves the unit towards its target position, handling path following and collision
  * avoidance.
@@ -203,92 +202,24 @@ inline Feet lerp(const Feet& a, const Feet& b, float t)
  */
 bool CmdMove::move(int deltaTimeMs)
 {
-    if (isTargetCloseEnough())
-    {
-        spdlog::debug("Unit {} reached target, move command is completed", m_entityID);
-
-        auto& unitGraphics = m_stateMan->getComponent<CompGraphics>(m_entityID);
-        return true;
-    }
-    else
-    {
-        if (m_path.isEmpty())
-            spdlog::warn("Target is not close enough yet there is no path for unit {}", m_entityID);
-    }
-
-    if (!m_path.isEmpty())
+    if (!m_path.isEmpty()) [[likely]]
     {
         const auto& nextWaypoint = m_path.nextWaypoint();
 
         if (isPositionCloseEnough(nextWaypoint))
         {
-            spdlog::debug("Unit {} reached next hop {}", m_entityID, nextWaypoint.toString());
+            spam("Unit {} reached next hop {}", m_entityID, nextWaypoint.toString());
             m_path.removeNextWaypoint();
         }
         else
         {
-            Feet finalDir = avoidCollision(deltaTimeMs);
-            finalDir = finalDir.normalized();
-            m_dontAnimate = false;
-
-            if (finalDir.dot(m_previousBestDirection) < 0.0f) // Direction flipped
+            Feet finalDir = avoidCollision(deltaTimeMs, nextWaypoint);
+            auto isIdle = stayIdleIfSeemsStuck(deltaTimeMs, finalDir);
+            if (not isIdle)
             {
-                m_directionFlipDurationMs += deltaTimeMs;
-                m_numberOfDirectionFlips++;
-
-                if (m_numberOfDirectionFlips >= DIRECTION_FLIP_THRESHOLD)
-                {
-                    if (m_numberOfDirectionFlips == DIRECTION_FLIP_THRESHOLD)
-                    {
-                        spdlog::debug("Too many direction flips; {} waiting to settle down",
-                                      m_entityID);
-                    }
-
-                    if (m_directionFlipDurationMs < DIRECTION_FLIP_WAIT_TIME_MS)
-                    {
-                        m_dontAnimate = true;
-                        return false;
-                    }
-                    else
-                    {
-                        spdlog::debug("{} resuming the movement after being stationary",
-                                      m_entityID);
-                        m_numberOfDirectionFlips = 0;
-                        m_directionFlipDurationMs = 0;
-                    }
-                }
+                updateDebugOverlays(finalDir);
+                updateUnitPosition(deltaTimeMs, finalDir);
             }
-            else // Suggestion is either perpendicular or same direction
-            {
-                m_numberOfDirectionFlips = 0;
-                m_directionFlipDurationMs = 0;
-            }
-            m_previousBestDirection = finalDir;
-
-#ifndef NDEBUG
-            auto& debugOverlays = m_stateMan->getComponent<CompGraphics>(m_entityID).debugOverlays;
-
-            if (not debugOverlays.empty())
-            {
-                debugOverlays[0].arrowEnd = m_coordinates->feetToScreenUnits(
-                    (m_components->transform.position + (finalDir * 200)));
-
-                auto tileFeetDiagonal =
-                    std::sqrt(2 * Constants::FEET_PER_TILE * Constants::FEET_PER_TILE);
-                auto circleFeetRadius = m_components->transform.collisionRadius;
-                debugOverlays[1].circlePixelRadius =
-                    circleFeetRadius * Constants::TILE_PIXEL_WIDTH / tileFeetDiagonal;
-            }
-
-#endif
-            auto timeS = (double) deltaTimeMs / 1000.0;
-
-            const auto newPos =
-                m_components->transform.position +
-                (finalDir * (m_components->transform.speed * timeS * m_settings->getGameSpeed()));
-            m_components->transform.face(newPos);
-
-            setPosition(newPos);
         }
     }
     return m_path.isEmpty();
@@ -307,10 +238,17 @@ bool CmdMove::move(int deltaTimeMs)
  * velocity.
  * @param newPosFeet The new position for the entity, specified in feet.
  */
-void CmdMove::setPosition(const Feet& newPosFeet)
+void CmdMove::updateUnitPosition(int deltaTimeMs, const Feet& forwardDir)
 {
+    auto timeS = (double) deltaTimeMs / 1000.0;
+
+    const Feet newPos =
+        m_components->transform.position +
+        (forwardDir * (m_components->transform.speed * timeS * m_settings->getGameSpeed()));
+    m_components->transform.face(newPos);
+
     const auto oldTile = m_components->transform.position.toTile();
-    const auto newTile = newPosFeet.toTile();
+    const auto newTile = newPos.toTile();
 
     if (oldTile != newTile)
     {
@@ -320,31 +258,12 @@ void CmdMove::setPosition(const Feet& newPosFeet)
         publishEvent(Event::Type::UNIT_TILE_MOVEMENT,
                      UnitTileMovementData{m_entityID, newTile, m_components->transform.position});
     }
-    m_components->transform.position = newPosFeet;
+    m_components->transform.position = newPos;
 }
 
-/**
- * @brief Determines if there is a clear line of sight from the unit to the target position.
- *
- * This function checks whether the path from the unit's current position to the specified target
- * position is unobstructed by any static obstacles on the game map.
- *
- * @param target The target position to check line of sight to.
- * @return true if there are no static obstacles between the entity and the target; false otherwise.
- */
-bool CmdMove::hasLineOfSight(const Feet& target) const
+Feet CmdMove::avoidCollision(int deltaTimeMs, const Feet& goalPos)
 {
-    return m_pathService->canTraverseDirectly(m_components->transform.position, target,
-                                              m_components->player.player);
-}
-
-Feet CmdMove::avoidCollision(int deltaTimeMs)
-{
-    if (m_path.isEmpty())
-        return Feet::zero;
-
-    const auto& nextWaypoint = m_path.nextWaypoint();
-    auto preferredDir = nextWaypoint - m_components->transform.position;
+    auto preferredDir = goalPos - m_components->transform.position;
     auto deltaTimeS = (double) deltaTimeMs / 1000.0;
     const auto& currPos = m_components->transform.position;
     const auto& collisionRadius = m_components->transform.collisionRadius;
@@ -369,235 +288,6 @@ Feet CmdMove::avoidCollision(int deltaTimeMs)
                                                           quality, target.value());
 }
 
-/**
- * Calculates the shortest distance from a point `q` to a line segment defined by points `p0` and
- * `p1`.
- *
- * If the segment is degenerate (i.e., `p0` and `p1` are the same), returns the distance from `q` to
- * `p0`. Otherwise, projects `q` onto the segment and returns the distance from `q` to the closest
- * point on the segment.
- *
- * @param p0 The starting point of the segment.
- * @param p1 The ending point of the segment.
- * @param q  The point from which the distance to the segment is measured.
- * @return   The shortest distance from `q` to the segment `[p0, p1]`.
- */
-double CmdMove::distancePointToSegment(const Feet& p0, const Feet& p1, const Feet& q) const
-{
-    const Feet v = p1 - p0;
-    const Feet w = q - p0;
-
-    const double lenSq = v.lengthSquared();
-    if (lenSq == 0.0)
-    {
-        // Degenerate segment (start == end)
-        return (q - p0).length();
-    }
-
-    const double t = std::clamp(w.dot(v) / lenSq, 0.0, 1.0);
-    const auto vx = (double) (v.x) * t;
-    const auto vy = (double) (v.y) * t;
-
-    const Feet projection = p0 + Feet(vx, vy);
-
-    spam("Start {}, end {}, q {}, projection {}", p0.toString(), p1.toString(), q.toString(),
-         projection.toString());
-
-    return (q - projection).length();
-}
-
-/**
- * Checks if the movement from `start` to `end` intersects with any units on the map,
- * excluding the unit identified by `self`.
- *
- * The function samples points along the movement path at intervals of ¼ tile and checks
- * for collisions with other units based on their collision radii.
- *
- * @param self The entity ID of the moving unit (to be excluded from collision checks).
- * @param transform The transform component of the moving unit, containing position and collision
- * radius.
- * @param start The starting position of the movement (in feet).
- * @param end The ending position of the movement (in feet).
- * @return The entity ID of the first unit intersected, or `entt::null` if no collision occurs.
- */
-uint32_t CmdMove::intersectsUnits(uint32_t self,
-                                  CompTransform& transform,
-                                  const Feet& start,
-                                  const Feet& end) const
-{
-    auto& gameMap = m_stateMan->gameMap();
-
-    float distance = start.distance(end);
-    int numSteps =
-        static_cast<int>(distance / (Constants::FEET_PER_TILE * 0.25f)); // Sample every ¼ tile
-
-    if (numSteps <= 0)
-        return false;
-
-    Feet step = (end - start) / static_cast<float>(numSteps);
-
-    for (int i = 0; i <= numSteps; ++i)
-    {
-        // TODO: Optimize this to avoid duplicated tile check
-        Feet point = start + step * static_cast<float>(i);
-        Tile tile = point.toTile();
-
-        if (gameMap.isValidPos(tile) and gameMap.isOccupied(MapLayerType::UNITS, tile))
-        {
-            auto& otherUnits = gameMap.getEntities(MapLayerType::UNITS, tile);
-            for (auto otherUnit : otherUnits)
-            {
-                if (otherUnit != entt::null && otherUnit != self)
-                {
-                    auto& otherTransform = m_stateMan->getComponent<CompTransform>(otherUnit);
-                    double d = distancePointToSegment(start, end, otherTransform.position);
-                    auto totalRadius = transform.collisionRadius + otherTransform.collisionRadius;
-
-                    spam("Checking collision with entity {} at distance {}, LOS {}, projected "
-                         "distance {}",
-                         otherUnit, (otherTransform.position - start).length(),
-                         (start - end).length(), d);
-
-                    if (d <= totalRadius)
-                    {
-                        return otherUnit;
-                    }
-                }
-            }
-        }
-    }
-    return entt::null; // Clear line
-}
-
-/**
- * @brief Checks if a line segment intersects with a circle.
- *
- * Given two endpoints of a line segment (p1 and p2), the center of a circle, and its radius,
- * this function determines whether the segment intersects the circle.
- *
- * @param p1 The starting point of the line segment.
- * @param p2 The ending point of the line segment.
- * @param center The center of the circle.
- * @param radius The radius of the circle.
- * @return true if the line segment intersects the circle, false otherwise.
- */
-bool CmdMove::lineIntersectsCircle(const Vec2& p1,
-                                   const Vec2& p2,
-                                   const Vec2& center,
-                                   float radius) const
-{
-    // Vector from p1 to p2
-    const Vec2 d = p2 - p1;
-    // Vector from p1 to circle center
-    const Vec2 f = p1 - center;
-
-    const float a = d.dot(d);
-    const float b = 2 * f.dot(d);
-    const float c = f.dot(f) - radius * radius;
-
-    float discriminant = b * b - 4 * a * c;
-    if (discriminant < 0)
-    {
-        // No intersection
-        return false;
-    }
-
-    discriminant = std::sqrt(discriminant);
-    const float t1 = (-b - discriminant) / (2 * a);
-    const float t2 = (-b + discriminant) / (2 * a);
-
-    // Check if either t is in [0, 1] → segment intersects circle
-    return (t1 >= 0 && t1 <= 1) || (t2 >= 0 && t2 <= 1);
-}
-
-/**
- * @brief Finds the closest edge point of a static entity's bounding rectangle to a given position.
- *
- * This function computes the point on the edge of the specified static entity's rectangular area
- * (defined by `land`) that is closest to the provided position (`fromPos`). The result is clamped
- * within the bounds of the rectangle, effectively projecting the position onto the nearest edge.
- *
- * @param staticEntity The identifier of the static entity whose edge is being queried.
- * @param fromPos The position from which to find the closest edge point.
- * @param land The bounding rectangle of the static entity.
- * @return Feet The closest point on the edge of the rectangle to `fromPos`.
- */
-Feet CmdMove::findClosestEdgeOfStaticEntity(uint32_t staticEntity,
-                                            const Feet& fromPos,
-                                            const Rect<float>& land) const
-{
-    const float xMin = land.x;
-    const float xMax = land.x + land.w;
-    const float yMin = land.y;
-    const float yMax = land.y + land.h;
-
-    const float closestX = std::clamp(fromPos.x, xMin, xMax);
-    const float closestY = std::clamp(fromPos.y, yMin, yMax);
-
-    return {closestX, closestY};
-}
-
-/**
- * @brief Checks if a circular area around a unit overlaps with a rectangular building area.
- *
- * This function determines whether a circle, defined by the unit's position (`unitPos`)
- * and a squared radius (`radiusSq`), overlaps with a rectangle (`buildingRect`).
- * It calculates the closest point on the rectangle to the unit and checks if the distance
- * from the unit to this point is less than or equal to the circle's radius.
- *
- * @param unitPos The position of the unit as a Feet object.
- * @param radiusSq The squared radius of the unit's circular area.
- * @param buildingRect The rectangle representing the building area.
- * @return true if the circular area overlaps with the rectangle, false otherwise.
- */
-bool CmdMove::overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& buildingRect) const
-{
-    const float xMin = buildingRect.x;
-    const float xMax = buildingRect.x + buildingRect.w;
-    const float yMin = buildingRect.y;
-    const float yMax = buildingRect.y + buildingRect.h;
-
-    const float closestX = std::clamp(unitPos.x, xMin, xMax);
-    const float closestY = std::clamp(unitPos.y, yMin, yMax);
-
-    const float dx = unitPos.x - closestX;
-    const float dy = unitPos.y - closestY;
-
-    return (dx * dx + dy * dy) <= radiusSq;
-}
-
-bool CmdMove::overlaps(const Feet& unitPos, float radiusSq, const Feet& targetPos) const
-{
-    const float dx = unitPos.x - targetPos.x;
-    const float dy = unitPos.y - targetPos.y;
-
-    return (dx * dx + dy * dy) <= radiusSq;
-}
-
-/**
- * @brief Checks if the target is close enough to the unit.
- *
- * This function determines whether the unit has reached its target.
- * If the target is another entity, it checks if the entity's position and goal radius
- * overlap with the target entity's building land rectangle.
- * If the target is a position, it checks if the squared distance to the target position
- * is less than the entity's goal radius squared.
- *
- * @return true if the target is close enough; false otherwise.
- */
-bool CmdMove::isTargetCloseEnough() const
-{
-    if (target->entity.has_value())
-    {
-        return ProximityChecker::isInProximity(m_components->transform, target->entity.value(),
-                                               m_stateMan.getRef());
-    }
-    else
-    {
-        return ProximityChecker::isInProximity(m_components->transform, target->pos);
-    }
-}
-
 core::Command* CmdMove::clone()
 {
     return ObjectPool<CmdMove>::acquire(*this);
@@ -605,5 +295,68 @@ core::Command* CmdMove::clone()
 
 bool CmdMove::isPositionCloseEnough(const Feet& pos) const
 {
-    return m_components->transform.isCloseEnough(pos);
+    // For movement to be precise, we use reduced collision radius
+
+    auto distanceSq = m_components->transform.position.distanceSquared(pos);
+    auto collisionRadius = m_components->transform.collisionRadius / 4;
+
+    return distanceSq < (collisionRadius * collisionRadius);
+}
+
+bool CmdMove::stayIdleIfSeemsStuck(int deltaTimeMs, const Feet& forwardDir)
+{
+    m_dontAnimate = false;
+
+    if (forwardDir.dot(m_previousBestDirection) < 0.0f) // Direction flipped
+    {
+        m_directionFlipDurationMs += deltaTimeMs;
+        m_numberOfDirectionFlips++;
+
+        if (m_numberOfDirectionFlips >= DIRECTION_FLIP_THRESHOLD)
+        {
+            if (m_numberOfDirectionFlips == DIRECTION_FLIP_THRESHOLD)
+            {
+                spdlog::debug("Too many direction flips; {} waiting to settle down", m_entityID);
+            }
+
+            if (m_directionFlipDurationMs < DIRECTION_FLIP_WAIT_TIME_MS)
+            {
+                m_dontAnimate = true;
+                return true;
+            }
+            else
+            {
+                spdlog::debug("{} resuming the movement after being stationary", m_entityID);
+                m_numberOfDirectionFlips = 0;
+                m_directionFlipDurationMs = 0;
+            }
+        }
+    }
+    else // Suggestion is either perpendicular or same direction
+    {
+        m_numberOfDirectionFlips = 0;
+        m_directionFlipDurationMs = 0;
+    }
+    m_previousBestDirection = forwardDir;
+    return false;
+}
+
+void CmdMove::updateDebugOverlays(const Feet& forwardDirection)
+{
+
+#ifndef NDEBUG
+    auto& debugOverlays = m_stateMan->getComponent<CompGraphics>(m_entityID).debugOverlays;
+
+    if (not debugOverlays.empty())
+    {
+        debugOverlays[0].arrowEnd = m_coordinates->feetToScreenUnits(
+            (m_components->transform.position + (forwardDirection * 200)));
+
+        auto tileFeetDiagonal = std::sqrt(2 * Constants::FEET_PER_TILE * Constants::FEET_PER_TILE);
+        auto circleFeetRadius = m_components->transform.collisionRadius;
+        debugOverlays[1].circlePixelRadius =
+            circleFeetRadius * Constants::TILE_PIXEL_WIDTH / tileFeetDiagonal;
+    }
+
+#endif
 }

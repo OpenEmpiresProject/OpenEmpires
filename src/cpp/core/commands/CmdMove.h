@@ -30,8 +30,7 @@ class CmdMove : public Command
   protected:
     void animate(int deltaTimeMs, int currentTick);
     bool move(int deltaTimeMs);
-    virtual Feet avoidCollision(int deltaTimeMs);
-    virtual bool isTargetCloseEnough() const;
+    virtual Feet avoidCollision(int deltaTimeMs, const Feet& goalPos);
     virtual bool isPositionCloseEnough(const Feet& pos) const;
 
     Path m_path;
@@ -55,22 +54,9 @@ class CmdMove : public Command
     Command* clone() override;
     void destroy() override;
 
-    double distancePointToSegment(const Feet& p0, const Feet& p1, const Feet& q) const;
-    void setPosition(const Feet& newPosFeet);
-    bool hasLineOfSight(const Feet& target) const;
-    uint32_t intersectsUnits(uint32_t self,
-                             CompTransform& transform,
-                             const Feet& start,
-                             const Feet& end) const;
-    bool lineIntersectsCircle(const Vec2& p1,
-                              const Vec2& p2,
-                              const Vec2& center,
-                              float radius) const;
-    Feet findClosestEdgeOfStaticEntity(uint32_t staticEntity,
-                                       const Feet& fromPos,
-                                       const Rect<float>& land) const;
-    bool overlaps(const Feet& unitPos, float radiusSq, const Rect<float>& buildingRect) const;
-    bool overlaps(const Feet& unitPos, float radiusSq, const Feet& targetPos) const;
+    void updateUnitPosition(int deltaTimeMs, const Feet& forwardDir);
+    bool stayIdleIfSeemsStuck(int deltaTimeMs, const Feet& forwardDir);
+    void updateDebugOverlays(const Feet& forwardDirection);
 };
 } // namespace core
 

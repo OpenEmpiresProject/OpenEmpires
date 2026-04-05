@@ -116,9 +116,9 @@ bool CmdBuild::isCloseEnough()
     auto rect = building.getLandInFeetRect();
 
     auto unitPos = m_components->transform.position;
-    auto unitRadiusSq = m_components->transform.goalRadiusSquared;
+    auto unitRadius = m_components->transform.collisionRadius;
 
-    return overlaps(unitPos, unitRadiusSq, rect);
+    return overlaps(unitPos, unitRadius * unitRadius, rect);
 }
 
 /**
