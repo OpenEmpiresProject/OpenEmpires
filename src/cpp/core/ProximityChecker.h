@@ -19,11 +19,10 @@ class ProximityChecker
         if (stateMan->hasComponent<CompBuilding>(targetEntity))
         {
             auto& building = stateMan->getComponent<CompBuilding>(targetEntity);
-            auto rect = building.getLandInFeetRect();
             auto unitPos = unitTransform.position;
             auto unitRadius = unitTransform.collisionRadius;
 
-            return maths::isOverlapping(unitPos, unitRadius, rect);
+            return building.isOverlapping(unitPos, unitRadius);
         }
         else if (stateMan->hasComponent<CompResource>(targetEntity))
         {

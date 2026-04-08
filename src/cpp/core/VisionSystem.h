@@ -25,6 +25,10 @@ class VisionSystem : public TileMapListner,
     void onTick(const Event& e);
     void onTrackingRequest(const Event& e);
 
+    static bool isWithinBuildingLineOfSight(const LandArea& landArea,
+                                            uint32_t lineOfSight,
+                                            const Feet& pointToCheck);
+
     struct Target
     {
         uint32_t entity = entt::null;

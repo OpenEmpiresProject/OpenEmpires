@@ -141,11 +141,10 @@ class CmdDropResource : public Command
         if (m_dropOffEntity != entt::null)
         {
             auto& building = m_stateMan->getComponent<CompBuilding>(m_dropOffEntity);
-            auto rect = building.getLandInFeetRect();
             auto unitPos = m_components->transform.position;
             auto unitRadius = m_components->transform.collisionRadius;
 
-            return maths::isOverlapping(unitPos, unitRadius, rect);
+            return building.isOverlapping(unitPos, unitRadius);
         }
         return false;
     }

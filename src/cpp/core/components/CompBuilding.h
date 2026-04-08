@@ -45,8 +45,6 @@ class CompBuilding
     bool isConstructed() const;
     bool isConstructing() const;
     int getVariationByConstructionProgress() const;
-    Rect<float> getLandInFeetRect() const;
-    static Rect<float> getLandInFeetRect(const LandArea& area);
     Feet getSnappedBuildingCenter(const Feet& position) const;
     void updateLandArea(const Feet& center);
     void updateConstructionProgress(uint32_t progress);
@@ -54,6 +52,7 @@ class CompBuilding
     uint32_t getConstructionProgress() const;
     void markAsCompleted();
     MapLayerType getMapLayerType() const;
+    bool isOverlapping(const Feet& point, float radius) const;
 
   private:
     uint32_t constructionProgress = 0; // out of 100

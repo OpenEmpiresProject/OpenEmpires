@@ -1,5 +1,7 @@
 #include "CompBuilding.h"
 
+#include "utils/Maths.h"
+
 using namespace core;
 
 int CompBuilding::getVariationByConstructionProgress() const
@@ -9,41 +11,6 @@ int CompBuilding::getVariationByConstructionProgress() const
 
     auto it = visualVariationByProgress.value().lower_bound(constructionProgress);
     return it->second;
-}
-
-// Compute bounding box from landArea tiles using tile centers to ensure full-tile coverage.
-Rect<float> CompBuilding::getLandInFeetRect() const
-{
-    return getLandInFeetRect(landArea);
-}
-
-core::Rect<float> CompBuilding::getLandInFeetRect(const LandArea& area)
-{
-    debug_assert(not area.tiles.empty(), "Land area is empty for building");
-
-    float minCx = std::numeric_limits<float>::infinity();
-    float maxCx = -std::numeric_limits<float>::infinity();
-    float minCy = std::numeric_limits<float>::infinity();
-    float maxCy = -std::numeric_limits<float>::infinity();
-
-    // Calculate bounding centers
-    for (const auto& t : area.tiles)
-    {
-        Feet c = t.centerInFeet();
-        minCx = std::min(minCx, c.x);
-        maxCx = std::max(maxCx, c.x);
-        minCy = std::min(minCy, c.y);
-        maxCy = std::max(maxCy, c.y);
-    }
-
-    const float halfTile = static_cast<float>(Constants::FEET_PER_TILE) / 2.0f;
-
-    float left = minCx - halfTile;
-    float top = minCy - halfTile;
-    float width = (maxCx - minCx) + static_cast<float>(Constants::FEET_PER_TILE);
-    float height = (maxCy - minCy) + static_cast<float>(Constants::FEET_PER_TILE);
-
-    return Rect<float>(left, top, width, height);
 }
 
 int roundToNearestTileCenter(float x)
@@ -245,4 +212,25 @@ void CompBuilding::constructBy(uint32_t constructionAmount)
 {
     constructionProgress += constructionAmount;
     constructionProgress = std::min(constructionProgress, 100u);
+}
+
+bool CompBuilding::isOverlapping(const Feet& point, float radius) const
+{
+    debug_assert(not landArea.tiles.empty(), "Land area is empty for building");
+
+    const float halfTile = static_cast<float>(Constants::FEET_PER_TILE) / 2.0f;
+
+    for (const auto& t : landArea.tiles)
+    {
+        Feet c = t.centerInFeet();
+
+        float left = c.x - halfTile;
+        float top = c.y - halfTile;
+
+        Rect<float> rect(left, top, Constants::FEET_PER_TILE, Constants::FEET_PER_TILE);
+
+        if (maths::isOverlapping(point, radius, rect))
+            return true;
+    }
+    return false;
 }

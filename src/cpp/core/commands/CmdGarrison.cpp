@@ -52,11 +52,10 @@ bool CmdGarrison::isCloseEnough()
     debug_assert(target != entt::null, "Proposed entity to build is null");
 
     auto& building = m_stateMan->getComponent<CompBuilding>(target);
-    auto rect = building.getLandInFeetRect();
     auto unitPos = m_components->transform.position;
     auto unitRadius = m_components->transform.collisionRadius;
 
-    return maths::isOverlapping(unitPos, unitRadius, rect);
+    return building.isOverlapping(unitPos, unitRadius);
 }
 
 bool CmdGarrison::isComplete()

@@ -4,6 +4,7 @@
 #include "components/CompTransform.h"
 #include "debug.h"
 #include "logging/Logger.h"
+#include "utils/Maths.h"
 
 using namespace core;
 
@@ -23,57 +24,6 @@ uint32_t getCompositeId(uint32_t tracker, uint32_t target)
     return tracker * Constants::MAX_ENTITIES + target;
 }
 
-bool isInLOSRoundedSquare(const Feet& p, const Rect<float>& b, float LOS)
-{
-    // Expanded LOS rectangle
-    float left = b.x - LOS;
-    float right = b.x + b.w + LOS;
-    float top = b.y - LOS;
-    float bottom = b.y + b.h + LOS;
-
-    // Quick reject
-    if (p.x < left || p.x > right || p.y < top || p.y > bottom)
-        return false;
-
-    // Axis-aligned inner rectangle (straight LOS zones)
-    // If point is horizontally aligned with building
-    if (p.x >= b.x && p.x <= b.x + b.w)
-        return true;
-
-    // If point is vertically aligned with building
-    if (p.y >= b.y && p.y <= b.y + b.h)
-        return true;
-
-    // Corner checks: quarter circles of radius LOS
-    auto sq = [](float v) { return v * v; };
-
-    // top-left
-    float dx = p.x - b.x;
-    float dy = p.y - b.y;
-    if (dx < 0 && dy < 0 && sq(dx) + sq(dy) <= LOS * LOS)
-        return true;
-
-    // top-right
-    dx = p.x - (b.x + b.w);
-    dy = p.y - b.y;
-    if (dx > 0 && dy < 0 && sq(dx) + sq(dy) <= LOS * LOS)
-        return true;
-
-    // bottom-left
-    dx = p.x - b.x;
-    dy = p.y - (b.y + b.h);
-    if (dx < 0 && dy > 0 && sq(dx) + sq(dy) <= LOS * LOS)
-        return true;
-
-    // bottom-right
-    dx = p.x - (b.x + b.w);
-    dy = p.y - (b.y + b.h);
-    if (dx > 0 && dy > 0 && sq(dx) + sq(dy) <= LOS * LOS)
-        return true;
-
-    return false;
-}
-
 bool VisionSystem::isInLOS(const Tracking& trackerData, const Target& target)
 {
     CompVision& vision = trackerData.trackerVision;
@@ -90,10 +40,9 @@ bool VisionSystem::isInLOS(const Tracking& trackerData, const Target& target)
     {
         CompTransform& targetTransform = target.transform;
         CompVision& trackerVision = trackerData.trackerVision;
-        auto cornersRect = CompBuilding::getLandInFeetRect(trackerData.trackingRequest.landArea);
 
-        return isInLOSRoundedSquare(targetTransform.position, cornersRect,
-                                    trackerVision.lineOfSight);
+        return isWithinBuildingLineOfSight(trackerData.trackingRequest.landArea,
+                                           trackerVision.lineOfSight, targetTransform.position);
     }
     return false;
 }
@@ -252,4 +201,25 @@ VisionSystem::Target::Target(uint32_t entity, Ref<StateManager> stateMan)
     : entity(entity), info(stateMan->getComponent<CompEntityInfo>(entity)),
       transform(stateMan->getComponent<CompTransform>(entity))
 {
+}
+
+bool VisionSystem::isWithinBuildingLineOfSight(const LandArea& landArea,
+                                               uint32_t lineOfSight,
+                                               const Feet& pointToCheck)
+{
+    const float halfTile = static_cast<float>(Constants::FEET_PER_TILE) / 2.0f;
+
+    for (const auto& t : landArea.tiles)
+    {
+        Feet c = t.centerInFeet();
+
+        float left = c.x - halfTile;
+        float top = c.y - halfTile;
+
+        Rect<float> rect(left, top, Constants::FEET_PER_TILE, Constants::FEET_PER_TILE);
+
+        if (maths::isOverlapping(rect, lineOfSight, pointToCheck))
+            return true;
+    }
+    return false;
 }
