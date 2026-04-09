@@ -1,10 +1,12 @@
 #include "commands/CmdAttack.h"
 
 #include "ProximityChecker.h"
+#include "components/CompUnit.h"
 
 void core::CmdAttack::onStart()
 {
     timeSinceLastAttackMs = 0;
+    m_components->unit.formationSlot = FormationSlot();
 }
 
 void core::CmdAttack::onQueue()

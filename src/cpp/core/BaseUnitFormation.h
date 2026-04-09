@@ -41,6 +41,7 @@ enum class FormationState
 {
     MOVING,
     REACHED,
+    CANCELLED,
 };
 
 class BaseUnitFormation
@@ -64,6 +65,7 @@ class BaseUnitFormation
     void giveUpControl();
     void updateTarget(const Feet& target);
     bool move(int deltaTimeMs);
+    void removeSlotFromFormation(FormationSlot& slot);
 
   protected:
     std::vector<FormationSlot> m_slots;
@@ -80,7 +82,6 @@ class BaseUnitFormation
 
     const int GOAL_RADIUS_SQ = 10000;
 
-    void removeSlotFromFormation(FormationSlot& slot);
     void removeAllSlots();
     bool isTargetCloseEnough() const;
 };

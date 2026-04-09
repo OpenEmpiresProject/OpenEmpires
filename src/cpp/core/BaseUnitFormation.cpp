@@ -53,6 +53,14 @@ const std::vector<core::FormationSlot>& BaseUnitFormation::getSlots() const
 
 void BaseUnitFormation::removeSlotFromFormation(FormationSlot& slot)
 {
+    for (auto it = m_slots.begin(); it != m_slots.end(); ++it)
+    {
+        if (it->getEntityId() == slot.getEntityId())
+        {
+            m_slots.erase(it);
+            break;
+        }
+    }
     slot.removeFromFormation();
 }
 

@@ -49,7 +49,6 @@ class PlayerController : public EventHandler
     // Unit formations related
     const UnitFormationType DEFAULT_FORMATION_TYPE = UnitFormationType::LINE_FORMATION;
     Ref<BaseUnitFormation> m_unnamedFormation; // There can be only 1 temporary groups
-    bool m_formationContentIsDirty = false;
 
   private:
     // Event callbacks

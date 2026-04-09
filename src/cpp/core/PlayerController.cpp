@@ -777,10 +777,10 @@ void PlayerController::updateSelection(const EntitySelectionData& newSelection)
         StateManager::markDirty(entity);
     }
     m_currentEntitySelection = newSelection;
-    m_formationContentIsDirty = true;
     if (m_unnamedFormation)
     {
         m_unnamedFormation->giveUpControl();
+        m_unnamedFormation = nullptr;
     }
 }
 
@@ -862,44 +862,28 @@ void PlayerController::changePlacementOrientation(BuildingPlacementData& placeme
 
 void PlayerController::createOrUpdateFormation(const Feet& targetPos)
 {
-    if (m_formationContentIsDirty)
+    if (m_currentEntitySelection.selection.selectedEntities.size() > 1)
     {
-        if (m_currentEntitySelection.selection.selectedEntities.size() > 1)
-        {
-            spdlog::debug("Creating unit formation for {} entities",
-                          m_currentEntitySelection.selection.selectedEntities.size());
-            m_unnamedFormation =
-                m_pathService->createFormation(m_currentEntitySelection.selection.selectedEntities,
-                                               DEFAULT_FORMATION_TYPE, targetPos);
-            m_unnamedFormation->setControllingPlayer(m_player);
-            m_unnamedFormation->updateTarget(targetPos);
+        spdlog::debug("Creating unit formation for {} entities",
+                      m_currentEntitySelection.selection.selectedEntities.size());
 
-            for (auto& slot : m_unnamedFormation->getSlots())
-            {
-                auto& unitGraphics = m_stateMan->getComponent<CompGraphics>(slot.getEntityId());
-
-                unitGraphics.debugOverlays[2].enabled = true;
-                unitGraphics.debugOverlays[2].color = Color::BLUE;
-                unitGraphics.debugOverlays[2].circlePixelRadius = 20;
-                unitGraphics.debugOverlays[2].absolutePosition =
-                    m_unnamedFormation->getAnchor() + slot.offsetFromAnchor;
-            }
-            publishEvent(Event::Type::UNIT_FORMATION_COMMAND_MOVE,
-                         UnitFormationData{m_unnamedFormation});
-            return;
-        }
-        else if (m_currentEntitySelection.selection.selectedEntities.size() == 1)
+        if (m_unnamedFormation)
         {
-            auto entity = m_currentEntitySelection.selection.selectedEntities[0];
-            auto& unit = m_stateMan->getComponent<CompUnit>(entity);
-            unit.formationSlot = FormationSlot(); // Clear formation slot since it is single unit
-                                                  // selection, which means no formation
+            m_pathService->deleteFormation(m_unnamedFormation);
         }
-        m_formationContentIsDirty = false;
+        m_unnamedFormation = m_pathService->createFormation(
+            m_currentEntitySelection.selection.selectedEntities, DEFAULT_FORMATION_TYPE, targetPos);
+        m_unnamedFormation->setControllingPlayer(m_player);
+        m_unnamedFormation->updateTarget(targetPos);
+
+        publishEvent(Event::Type::UNIT_FORMATION_COMMAND_MOVE,
+                     UnitFormationData{m_unnamedFormation});
     }
-    else
+    else if (m_currentEntitySelection.selection.selectedEntities.size() == 1)
     {
-        if (m_unnamedFormation != nullptr)
-            m_unnamedFormation->updateTarget(targetPos);
+        auto entity = m_currentEntitySelection.selection.selectedEntities[0];
+        auto& unit = m_stateMan->getComponent<CompUnit>(entity);
+        unit.formationSlot = FormationSlot(); // Clear formation slot since it is single unit
+                                              // selection, which means no formation
     }
 }

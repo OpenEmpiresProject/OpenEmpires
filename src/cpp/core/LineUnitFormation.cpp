@@ -141,6 +141,7 @@ void LineUnitFormation::move(const Feet& newPos)
 void LineUnitFormation::deleteFormation()
 {
     BaseUnitFormation::removeAllSlots();
+    m_state = FormationState::CANCELLED;
 }
 
 bool LineUnitFormation::isInsideFormation(const Feet& point) const

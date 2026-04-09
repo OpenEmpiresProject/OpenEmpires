@@ -45,6 +45,8 @@ void CmdMove::onStart()
  */
 void CmdMove::onQueue()
 {
+    m_components->unit.formationSlot = FormationSlot();
+
     if (target.has_value())
     {
         // Enrich the target position

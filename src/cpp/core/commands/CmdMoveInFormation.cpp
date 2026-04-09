@@ -112,8 +112,8 @@ bool CmdMoveInFormation::move(int deltaTimeMs, const Feet& target)
             m_components->unit.formationSlot.getFormation()->getForward();
         m_components->transform.faceAtDirection(formationForward);
 
-        spdlog::debug("Unit {} reached formation slot at {}", m_entityID,
-                      m_components->transform.position.toString());
+        spam("Unit {} reached formation slot at {}", m_entityID,
+             m_components->transform.position.toString());
     }
 
     // Slot can be temporarily reached, but if the formation is still MOVING, we cannot

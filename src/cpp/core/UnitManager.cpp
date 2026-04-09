@@ -157,34 +157,43 @@ void UnitManager::handleFormations(int deltaTimeMs)
     {
         auto& formation = *it;
 
-        if (formation->getState() == FormationState::REACHED)
+        // Formation is done
+        if (formation->getState() == FormationState::REACHED or
+            formation->getState() == FormationState::CANCELLED or formation->getSlots().empty())
         {
-            if (formation->getControllingPlayer() == nullptr) // no actively tracked
-            {
-                spdlog::debug("Formation is not actively tracked by a player, no need to manage it "
-                              "any longer");
-                it = m_formations.erase(it);
-                continue;
-            }
+            it = m_formations.erase(it);
+            continue;
         }
-        else
+
+        auto preAnchor = formation->getAnchor();
+        formation->move(deltaTimeMs);
+
+        std::list<FormationSlot> invalidSlots;
+
+        for (auto& slot : formation->getSlots())
         {
-            auto preAnchor = formation->getAnchor();
-            formation->move(deltaTimeMs);
+            auto [unitGraphics, unitComp] =
+                m_stateMan->getComponents<CompGraphics, CompUnit>(slot.getEntityId());
 
-            /*           spdlog::debug("Formation anchor moved from {} to {}", preAnchor.toString(),
-                                                formation->getAnchor().toString());*/
-
-            for (auto& slot : formation->getSlots())
+            // If somehow the unit's formation slot was invalidated (from unit's perspective)
+            // it is UnitManager's responsibility untrack it.
+            if (not unitComp.formationSlot.isValid() or
+                unitComp.formationSlot.getFormation() != formation)
             {
-                auto& unitGraphics = m_stateMan->getComponent<CompGraphics>(slot.getEntityId());
-
-                unitGraphics.debugOverlays[2].enabled = true;
-                unitGraphics.debugOverlays[2].color = Color::BLUE;
-                unitGraphics.debugOverlays[2].circlePixelRadius = 20;
-                unitGraphics.debugOverlays[2].absolutePosition =
-                    formation->getAnchor() + slot.offsetFromAnchor;
+                invalidSlots.push_back(slot);
+                unitGraphics.debugOverlays[2].enabled = false;
+                break;
             }
+            unitGraphics.debugOverlays[2].enabled = true;
+            unitGraphics.debugOverlays[2].color = Color::BLUE;
+            unitGraphics.debugOverlays[2].circlePixelRadius = 20;
+            unitGraphics.debugOverlays[2].absolutePosition =
+                formation->getAnchor() + slot.offsetFromAnchor;
+        }
+
+        for (auto& slot : invalidSlots)
+        {
+            formation->removeSlotFromFormation(slot);
         }
 
         ++it;
