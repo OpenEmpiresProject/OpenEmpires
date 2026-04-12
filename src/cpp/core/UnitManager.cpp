@@ -26,23 +26,30 @@ UnitManager::UnitManager()
     registerCallback(Event::Type::UNIT_FORMATION_DELETE, this, &UnitManager::onUnitFormationDelete);
 }
 
-void UnitManager::onUnitTileMovement(const Event& e)
+bool UnitManager::onUnitTileMovement(const Event& e)
 {
     auto& data = e.getData<UnitTileMovementData>();
     auto [player, unit, vision] =
         m_stateMan->getComponents<CompPlayer, CompUnit, CompVision>(data.unit);
 
     player.player->getFogOfWar()->markAsExplored(data.positionFeet, vision.lineOfSight);
+    return false;
 }
 
-void UnitManager::onEntityDeletion(const Event& e)
+bool UnitManager::onEntityDeletion(const Event& e)
 {
     auto entity = e.getData<EntityDeleteData>().entity;
     if (entity != entt::null && m_stateMan->hasComponent<CompUnit>(entity))
     {
-        auto [info, transform, playerComp] =
-            m_stateMan->getComponents<CompEntityInfo, CompTransform, CompPlayer>(entity);
+        spdlog::debug("Deleting unit {}", entity);
+
+        auto [info, transform, playerComp, unit] =
+            m_stateMan->getComponents<CompEntityInfo, CompTransform, CompPlayer, CompUnit>(entity);
         info.isDestroyed = true;
+        while (not unit.commandQueue.empty())
+        {
+            unit.commandQueue.pop();
+        }
         StateManager::markDirty(entity);
         m_stateMan->gameMap().removeEntity(MapLayerType::UNITS, transform.position.toTile(),
                                            entity);
@@ -51,9 +58,10 @@ void UnitManager::onEntityDeletion(const Event& e)
                                            entity);
         playerComp.player->removeOwnership(entity);
     }
+    return false;
 }
 
-void UnitManager::onCreateUnit(const Event& e)
+bool UnitManager::onCreateUnit(const Event& e)
 {
     auto& data = e.getData<UnitCreationData>();
 
@@ -78,15 +86,17 @@ void UnitManager::onCreateUnit(const Event& e)
     playerComp.player->ownEntity(unit);
 
     data.player->getFogOfWar()->markAsExplored(transform.position, vision.lineOfSight);
+    return false;
 }
 
-void UnitManager::onTick(const Event& e)
+bool UnitManager::onTick(const Event& e)
 {
     auto& tickData = e.getData<TickData>();
 
     handleHealths();
     buildDensityGrid();
     handleFormations(tickData.deltaTimeMs);
+    return false;
 }
 
 void UnitManager::handleHealths()
@@ -138,17 +148,19 @@ void UnitManager::buildDensityGrid()
         });
 }
 
-void UnitManager::onUnitFormationMove(const Event& e)
+bool UnitManager::onUnitFormationMove(const Event& e)
 {
     auto formation = e.getData<UnitFormationData>().formation;
     m_formations.insert(formation);
+    return false;
 }
 
-void UnitManager::onUnitFormationDelete(const Event& e)
+bool UnitManager::onUnitFormationDelete(const Event& e)
 {
     auto formation = e.getData<UnitFormationData>().formation;
 
     m_formations.erase(formation);
+    return false;
 }
 
 void UnitManager::handleFormations(int deltaTimeMs)

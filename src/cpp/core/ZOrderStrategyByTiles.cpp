@@ -115,6 +115,8 @@ void ZOrderStrategyByTiles::onUpdate(const CompRendering& current, CompRendering
         {
             if (current.entityID != entt::null)
             {
+                // TODO: This will result in always removing and adding entities
+                // could optimize this.
                 m_gameMap.removeEntity(layer, currentLand, current.entityID);
             }
             m_gameMap.addEntity(layer, updateLand, update.entityID);

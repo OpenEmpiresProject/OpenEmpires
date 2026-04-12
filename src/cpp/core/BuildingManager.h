@@ -36,9 +36,9 @@ class BuildingManager : public EventHandler
     std::set<uint32_t> m_damagedBuildings;
 
   private:
-    void onBuildingRequest(const Event& e);
-    void onTick(const Event& e);
-    void onEntityDeletion(const Event& e);
+    bool onBuildingRequest(const Event& e);
+    bool onTick(const Event& e);
+    bool onEntityDeletion(const Event& e);
 
     void deleteBuilding(uint32_t entity);
     void handleBuildingUpdates(const TickData& tick);
@@ -47,8 +47,8 @@ class BuildingManager : public EventHandler
     void detectDamagedBuildings(const TickData& tick, CompBuilding& building, uint32_t entity);
     void handleBuildingDamage(const TickData& tick, CompBuilding& building, uint32_t entity);
     void updateInProgressUnitCreations(const TickData& tick);
-    void onQueueUnit(const Event& e);
-    void onUngarrison(const Event& e);
+    bool onQueueUnit(const Event& e);
+    bool onUngarrison(const Event& e);
     std::tuple<CompEntityInfo&, CompBuilding&> createBuilding(const BuildingPlacementData& request);
     void makeBuildingPermanent(uint32_t entity);
     void onCompleteBuilding(uint32_t entity,

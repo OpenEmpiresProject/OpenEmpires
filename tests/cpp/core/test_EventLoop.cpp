@@ -13,9 +13,10 @@ namespace core
 class MockEventLoopListener : public EventHandler
 {
   public:
-    void onEvent(const Event& e) override
+    bool onEvent(const Event& e) override
     {
         callCount++;
+        return false;
     }
     void onInit(EventLoop& eventLoop) {};
     void onExit() {};

@@ -12,9 +12,10 @@ IntegTestTickAssist::~IntegTestTickAssist()
 {
 }
 
-void IntegTestTickAssist::onTick(const core::Event& e)
+bool IntegTestTickAssist::onTick(const core::Event& e)
 {
     std::lock_guard lock(m_syncMutex);
+    return false;
 }
 
 void IntegTestTickAssist::aquireLock()

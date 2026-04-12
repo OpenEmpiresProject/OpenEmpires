@@ -19,11 +19,12 @@ ResourceManager::~ResourceManager()
 {
 }
 
-void ResourceManager::onEvent(const Event& e)
+bool ResourceManager::onEvent(const Event& e)
 {
+    return false;
 }
 
-void ResourceManager::onTick(const Event& e)
+bool ResourceManager::onTick(const Event& e)
 {
     auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     for (auto entity : StateManager::getDirtyEntities())
@@ -70,4 +71,5 @@ void ResourceManager::onTick(const Event& e)
             }
         }
     }
+    return false;
 }

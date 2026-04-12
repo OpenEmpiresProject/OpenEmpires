@@ -20,8 +20,8 @@ class UIManager : public EventHandler
     }
 
   private:
-    void onEvent(const Event& e) override;
-    void onTick(const Event& e);
+    bool onEvent(const Event& e) override;
+    bool onTick(const Event& e);
 
     std::vector<Ref<ui::Window>> m_windows;
 };

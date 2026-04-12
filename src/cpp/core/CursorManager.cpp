@@ -22,10 +22,11 @@ CursorManager::CursorManager()
     registerCallback(Event::Type::GARRISON_REQUEST, this, &CursorManager::onGarrisonRequest);
 }
 
-void CursorManager::onMouseMove(const Event& e)
+bool CursorManager::onMouseMove(const Event& e)
 {
     auto& data = e.getData<MouseMoveData>();
     m_currentCursorPosition = data.screenPos;
+    return false;
 }
 
 void CursorManager::onInit(EventLoop& eventLoop)
@@ -45,17 +46,19 @@ void CursorManager::onInit(EventLoop& eventLoop)
     StateManager::markDirty(m_cursorEntityId);
 }
 
-void CursorManager::onBuildingPlacementStarted(const Event& e)
+bool CursorManager::onBuildingPlacementStarted(const Event& e)
 {
     setCursor(CursorType::BUILD);
     m_buildingPlacementInProgress = true;
+    return false;
 }
 
-void CursorManager::onBuildingPlacementEnded(const Event& e)
+bool CursorManager::onBuildingPlacementEnded(const Event& e)
 {
     setCursor(CursorType::DEFAULT_INGAME);
 
     m_buildingPlacementInProgress = false;
+    return false;
 }
 
 /*
@@ -67,7 +70,7 @@ void CursorManager::onBuildingPlacementEnded(const Event& e)
  *      1) cursor changes when it is on the move
  *      2) cursor changes within a tile
  */
-void CursorManager::onTick(const Event& e)
+bool CursorManager::onTick(const Event& e)
 {
     auto movement = m_currentCursorPosition.distanceSquared(m_lastCursorPosition);
     m_lastCursorPosition = m_currentCursorPosition;
@@ -77,7 +80,7 @@ void CursorManager::onTick(const Event& e)
     {
         // Cursor is still in the same tile, so no point of changing the cursor
         if (m_cursorMovedAcrossTiles == false)
-            return;
+            return false;
 
         m_cursorMovedAcrossTiles = false;
 
@@ -85,7 +88,7 @@ void CursorManager::onTick(const Event& e)
         // without waiting for cursor movement
 
         if (m_buildingPlacementInProgress or m_garrisonInprogress)
-            return;
+            return false;
 
         if (m_currentEntitySelectionData.selection.selectedEntities.empty() == false and
             m_currentEntitySelectionData.type == EntitySelectionData::Type::UNIT)
@@ -99,7 +102,7 @@ void CursorManager::onTick(const Event& e)
                     (not inputBasedPlayer->isAlly(targetPlayer->player)))
                 {
                     setCursor(CursorType::ATTACK);
-                    return;
+                    return false;
                 }
 
                 for (auto entity : m_currentEntitySelectionData.selection.selectedEntities)
@@ -107,7 +110,7 @@ void CursorManager::onTick(const Event& e)
                     if (m_stateMan->hasComponent<CompBuilder>(entity))
                     {
                         setCursor(CursorType::ASSIGN_TASK);
-                        return;
+                        return false;
                     }
                 }
             }
@@ -125,19 +128,22 @@ void CursorManager::onTick(const Event& e)
             m_cursorMovedAcrossTiles = true;
         }
     }
+    return false;
 }
 
-void CursorManager::onEntitySelection(const Event& e)
+bool CursorManager::onEntitySelection(const Event& e)
 {
     m_currentEntitySelectionData = e.getData<EntitySelectionData>();
+    return false;
 }
 
-void CursorManager::onGarrisonRequest(const Event& e)
+bool CursorManager::onGarrisonRequest(const Event& e)
 {
     auto& data = e.getData<GarrisonData>();
     m_garrisonInprogress = data.inprogress;
 
     setCursor(m_garrisonInprogress ? CursorType::GARRISON : CursorType::DEFAULT_INGAME);
+    return false;
 }
 
 void CursorManager::setCursor(const CursorType& type)

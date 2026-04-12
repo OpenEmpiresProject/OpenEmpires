@@ -20,7 +20,7 @@ class HUDUpdater : public core::EventHandler
     ~HUDUpdater() = default;
 
   private:
-    void onTick(const core::Event& e);
+    bool onTick(const core::Event& e);
 
   private:
     void updateUIElementReferences();
@@ -48,7 +48,7 @@ class HUDUpdater : public core::EventHandler
             spdlog::error("Could not find {} element", text);
         }
     }
-    void onUnitSelection(const core::Event& e);
+    bool onUnitSelection(const core::Event& e);
 
   private:
     core::Ref<core::ui::Label> m_woodLabel;

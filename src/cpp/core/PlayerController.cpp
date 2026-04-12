@@ -139,7 +139,7 @@ void PlayerController::createUnit(uint32_t entityType, const EntitySelection& se
 //  Event callbacks
 //=================================================================================================
 
-void PlayerController::onKeyUp(const Event& e)
+bool PlayerController::onKeyUp(const Event& e)
 {
     ScopedDiagnosticContext scoped("P", m_player->getId());
 
@@ -195,9 +195,10 @@ void PlayerController::onKeyUp(const Event& e)
             }
         }
     }
+    return false;
 }
 
-void PlayerController::onMouseButtonUp(const Event& e)
+bool PlayerController::onMouseButtonUp(const Event& e)
 {
     ScopedDiagnosticContext scoped("P", m_player->getId());
 
@@ -233,9 +234,10 @@ void PlayerController::onMouseButtonUp(const Event& e)
         resolveAction(mousePos);
     }
     concludeGarrison();
+    return false;
 }
 
-void PlayerController::onMouseButtonDown(const Event& e)
+bool PlayerController::onMouseButtonDown(const Event& e)
 {
     ScopedDiagnosticContext scoped("P", m_player->getId());
 
@@ -265,9 +267,10 @@ void PlayerController::onMouseButtonDown(const Event& e)
             m_selectionStartPosScreenUnits = clickData.screenPosition;
         }
     }
+    return false;
 }
 
-void PlayerController::onMouseMove(const Event& e)
+bool PlayerController::onMouseMove(const Event& e)
 {
     ScopedDiagnosticContext scoped("P", m_player->getId());
 
@@ -277,7 +280,7 @@ void PlayerController::onMouseMove(const Event& e)
     // All the remaining tasks are tile based, therefore, if the mouse hasn't moved
     // out of the previous tile, then no need to continue
     if (feet.toTile() == m_lastMouseTile)
-        return;
+        return false;
     m_lastMouseTile = feet.toTile();
 
     if (m_seriesConstructionInitiated && m_currentBuildingPlacements.empty() == false)
@@ -303,12 +306,13 @@ void PlayerController::onMouseMove(const Event& e)
             validateAndSnapBuildingToTile(placement->second, feet);
         }
     }
+    return false;
 }
 
 // Building was approved by the BuildingManager, time to assign the currently
 // selected villagers (TODO: validate) to build it.
 //
-void PlayerController::onBuildingApproved(const Event& e)
+bool PlayerController::onBuildingApproved(const Event& e)
 {
     ScopedDiagnosticContext scoped("P", m_player->getId());
 
@@ -327,6 +331,7 @@ void PlayerController::onBuildingApproved(const Event& e)
             }
         }
     }
+    return false;
 }
 
 //=================================================================================================
@@ -759,11 +764,12 @@ void PlayerController::completeSelectionBox(const Vec2& startScreenPos, const Ve
     decouple selection and other selection-based activities (such as movements). Additionally
     it allows integ tests to control unit selection easily using events.
  */
-void PlayerController::onUnitSelection(const Event& e)
+bool PlayerController::onUnitSelection(const Event& e)
 {
     DiagnosticContext::getInstance().put("P", m_player->getId());
 
     updateSelection(e.getData<EntitySelectionData>());
+    return false;
 }
 
 void PlayerController::updateSelection(const EntitySelectionData& newSelection)

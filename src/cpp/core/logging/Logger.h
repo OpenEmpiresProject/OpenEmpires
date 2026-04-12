@@ -28,7 +28,7 @@ namespace core
 {
 static void initLogger(const std::string& filename)
 {
-    std::string pattern = "[%T][%l][%y]:%x %v";
+    std::string pattern = "[%H:%M:%S.%e][%l][%y]:%x %v";
     auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_st>();
     consoleSink->set_level(spdlog::level::trace);
     auto consoleCustomFormatter = spdlog::details::make_unique<spdlog::pattern_formatter>();

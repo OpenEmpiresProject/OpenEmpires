@@ -10,8 +10,8 @@ class CommandCenter : public EventHandler
   public:
     CommandCenter();
 
-    void onTick(const Event& e);
-    void onCommandRequest(const Event& e);
+    bool onTick(const Event& e);
+    bool onCommandRequest(const Event& e);
 };
 } // namespace core
 

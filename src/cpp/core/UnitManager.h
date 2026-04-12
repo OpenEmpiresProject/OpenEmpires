@@ -16,12 +16,12 @@ class UnitManager : public EventHandler
     UnitManager();
 
   private:
-    void onTick(const Event& e);
-    void onEntityDeletion(const Event& e);
-    void onCreateUnit(const Event& e);
-    void onUnitTileMovement(const Event& e);
-    void onUnitFormationMove(const Event& e);
-    void onUnitFormationDelete(const Event& e);
+    bool onTick(const Event& e);
+    bool onEntityDeletion(const Event& e);
+    bool onCreateUnit(const Event& e);
+    bool onUnitTileMovement(const Event& e);
+    bool onUnitFormationMove(const Event& e);
+    bool onUnitFormationDelete(const Event& e);
 
   private:
     void handleHealths();

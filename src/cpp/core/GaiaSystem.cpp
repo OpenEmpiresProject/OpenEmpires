@@ -12,6 +12,7 @@ GaiaSystem::~GaiaSystem()
     // destructor
 }
 
-void GaiaSystem::onCorpseRequest(const Event& e)
+bool GaiaSystem::onCorpseRequest(const Event& e)
 {
+    return false;
 }

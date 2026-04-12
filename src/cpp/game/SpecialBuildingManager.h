@@ -11,9 +11,9 @@ class SpecialBuildingManager : public core::EventHandler
     ~SpecialBuildingManager();
 
   private:
-    void onEnterLOS(const core::Event& e);
-    void onExitLOS(const core::Event& e);
-    void onBuildingConstructed(const core::Event& e);
+    bool onEnterLOS(const core::Event& e);
+    bool onExitLOS(const core::Event& e);
+    bool onBuildingConstructed(const core::Event& e);
     void onInit(core::EventLoop& eventLoop) override;
 
     void lookupEntityTypes();

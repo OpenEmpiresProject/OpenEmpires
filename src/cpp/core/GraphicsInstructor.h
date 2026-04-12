@@ -19,7 +19,10 @@ class GraphicsInstructor : public EventHandler
     GraphicsInstructor(ThreadSynchronizer<FrameData>& synchronizer);
 
   private:
-    void onTick(const Event& e);
+    bool onTick(const Event& e);
+    bool onMouseMove(const Event& e);
+    bool onMouseButtonUp(const Event& e);
+    bool onMouseButtonDown(const Event& e);
 
     void onTickStart();
     void onTickEnd();

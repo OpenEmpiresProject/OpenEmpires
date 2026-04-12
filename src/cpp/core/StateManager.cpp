@@ -45,6 +45,13 @@ void core::StateManager::destroyAllPendingEntities()
     m_entitiesToDestroy.clear();
 }
 
+extern std::atomic<bool> g_renderingRunning;
+
+bool StateManager::isRendererReady() const
+{
+    return g_renderingRunning.load(std::memory_order_acquire);
+}
+
 void StateManager::clearDirtyEntities()
 {
     g_dirtyEntities.clear();

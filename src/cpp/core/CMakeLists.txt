@@ -3,6 +3,7 @@ find_package(SDL3_image CONFIG REQUIRED)
 find_package(SDL3_ttf CONFIG REQUIRED)
 find_package(EnTT CONFIG REQUIRED)
 find_package(pybind11 CONFIG REQUIRED)
+find_package(imgui CONFIG REQUIRED)
 
 include(FetchContent)
 
@@ -31,4 +32,5 @@ target_link_libraries(core PUBLIC
     $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image-shared>,SDL3_image::SDL3_image-shared,SDL3_image::SDL3_image-static>
     sdl3_gfx
     pybind11::embed
+    imgui::imgui
 )

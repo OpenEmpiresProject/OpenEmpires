@@ -12,9 +12,11 @@ class DebugHelper : public core::EventHandler
     ~DebugHelper();
 
   private:
-    void onTick(const core::Event& e);
+    bool onTick(const core::Event& e);
+    bool onKeyUp(const core::Event& e);
 
     core::LazyServiceRef<core::StateManager> m_stateMan;
+    bool m_showDebugDetails = false;
 };
 } // namespace game
 

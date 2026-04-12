@@ -24,20 +24,22 @@ SpecialBuildingManager::~SpecialBuildingManager()
     // destructor
 }
 
-void SpecialBuildingManager::onEnterLOS(const core::Event& e)
+bool SpecialBuildingManager::onEnterLOS(const core::Event& e)
 {
     const auto& data = e.getData<LineOfSightData>();
 
     if (isAGate(data.tracker))
         tryOpeningGateFor(data.tracker, data.target, true);
+    return false;
 }
 
-void SpecialBuildingManager::onExitLOS(const core::Event& e)
+bool SpecialBuildingManager::onExitLOS(const core::Event& e)
 {
     const auto& data = e.getData<LineOfSightData>();
 
     if (isAGate(data.tracker))
         tryOpeningGateFor(data.tracker, data.target, false);
+    return false;
 }
 
 void SpecialBuildingManager::onInit(core::EventLoop& eventLoop)
@@ -54,7 +56,7 @@ void SpecialBuildingManager::lookupEntityTypes()
     }
 }
 
-void SpecialBuildingManager::onBuildingConstructed(const core::Event& e)
+bool SpecialBuildingManager::onBuildingConstructed(const core::Event& e)
 {
     const BuildingConstructedData& data = e.getData<BuildingConstructedData>();
     if (data.entityType == m_gateEntityType)
@@ -65,6 +67,7 @@ void SpecialBuildingManager::onBuildingConstructed(const core::Event& e)
 
         updatePassabilityForGate(data.entity, false);
     }
+    return false;
 }
 
 void SpecialBuildingManager::updatePassabilityForGate(uint32_t gateEntity, bool gateIsOpen)

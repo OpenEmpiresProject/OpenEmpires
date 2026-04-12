@@ -108,7 +108,7 @@ void VisionSystem::onInit(EventLoop& eventLoop)
     m_trackersTileMap.init(tileMap.width, tileMap.height);
 }
 
-void VisionSystem::onTick(const Event& e)
+bool VisionSystem::onTick(const Event& e)
 {
     for (const auto& [tracker, tracking] : m_possibleTargetsByTracker)
     {
@@ -145,9 +145,10 @@ void VisionSystem::onTick(const Event& e)
             }
         }
     }
+    return false;
 }
 
-void VisionSystem::onTrackingRequest(const Event& e)
+bool VisionSystem::onTrackingRequest(const Event& e)
 {
     const auto& data = e.getData<TrackingRequestData>();
 
@@ -195,6 +196,7 @@ void VisionSystem::onTrackingRequest(const Event& e)
         spdlog::error("Request to enable tracking with activeTracking disabled for entity {}",
                       data.entity);
     }
+    return false;
 }
 
 VisionSystem::Target::Target(uint32_t entity, Ref<StateManager> stateMan)

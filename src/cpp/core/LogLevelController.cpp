@@ -11,7 +11,7 @@ LogLevelController::LogLevelController()
     registerCallback(Event::Type::KEY_UP, this, &LogLevelController::onKeyUp);
 }
 
-void LogLevelController::onKeyUp(const Event& e)
+bool LogLevelController::onKeyUp(const Event& e)
 {
     SDL_Scancode scancode = static_cast<SDL_Scancode>(e.getData<KeyboardData>().keyCode);
 
@@ -27,4 +27,5 @@ void LogLevelController::onKeyUp(const Event& e)
             spdlog::default_logger()->set_level(spdlog::level::debug);
         }
     }
+    return false;
 }

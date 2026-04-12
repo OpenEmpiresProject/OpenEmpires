@@ -7,6 +7,7 @@
 #include "CursorManager.h"
 #include "DRSGraphicsLoader.h"
 #include "DebugHelper.h"
+#include "DebugWindow.h"
 #include "DemoWorldCreator.h"
 #include "EntityModelLoaderV2.h"
 #include "EntityTypeRegistry.h"
@@ -168,12 +169,15 @@ class Game
         auto visionSystem = std::make_shared<core::VisionSystem>();
         auto specialBuildingManager = std::make_shared<game::SpecialBuildingManager>();
         auto debugHelper = std::make_shared<game::DebugHelper>();
+        auto debugWindow = std::make_shared<core::DebugWindow>();
 
         if (params.eventHandler)
             eventLoop->registerListener(params.eventHandler);
 
         core::ServiceRegistry::getInstance().registerService(params.worldCreator);
 
+        // Order matters for DebugWindow.
+        eventLoop->registerListener(std::move(debugWindow));
         eventLoop->registerListener(std::move(simulator));
         eventLoop->registerListener(std::move(cc));
         eventLoop->registerListener(std::move(uiManager));

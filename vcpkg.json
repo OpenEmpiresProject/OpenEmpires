@@ -1,12 +1,26 @@
 {
   "dependencies": [
+    "entt",
     "gtest",
+    {
+      "name": "imgui",
+      "features": [
+        "sdl3-binding",
+        "sdl3-renderer-binding"
+      ]
+    },
+    "pybind11",
+    "readerwriterqueue",
     "sdl3",
     "sdl3-image",
     "sdl3-ttf",
-    "entt",
-    "spdlog",
-    "readerwriterqueue",
-    "pybind11"
+    "spdlog"
+  ],
+  "overrides": [
+    {
+      "$comment": "From imgui 1.92 due to font and texture update, multithreading is not possible. https://github.com/ocornut/imgui/issues/8597",
+      "name": "imgui",
+      "version": "1.91.9"
+    }
   ]
 }

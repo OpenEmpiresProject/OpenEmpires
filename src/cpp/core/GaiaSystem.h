@@ -11,7 +11,7 @@ class GaiaSystem : public EventHandler
     ~GaiaSystem();
 
   private:
-    void onCorpseRequest(const Event& e);
+    bool onCorpseRequest(const Event& e);
 };
 } // namespace core
 

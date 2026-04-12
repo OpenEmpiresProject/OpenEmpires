@@ -47,6 +47,8 @@ using namespace core;
 using namespace std::chrono;
 using namespace std;
 
+std::atomic<bool> g_renderingRunning = false;
+
 namespace core
 {
 struct FontAtlas
@@ -234,6 +236,7 @@ class RendererImpl
     void initSDL();
     void threadEntry();
     void renderingLoop();
+    void renderImGui();
     void cleanup();
     bool handleEvents();
     void updateRenderingComponents();
@@ -307,6 +310,18 @@ class RendererImpl
 
     entt::basic_registry<uint32_t> m_registry;
 };
+
+void RendererImpl::renderImGui()
+{
+    auto& frame = m_synchronizer.getReceiverFrameData();
+
+    if (frame.imGuiData.DrawData.Valid)
+    {
+        auto drawDataPtr = &frame.imGuiData.DrawData;
+        ImGui_ImplSDLRenderer3_RenderDrawData(drawDataPtr, m_renderer);
+    }
+}
+
 } // namespace core
 
 RendererImpl::RendererImpl(std::stop_source* stopSource,
@@ -354,6 +369,7 @@ void RendererImpl::init()
 
 void RendererImpl::shutdown()
 {
+    m_isReady = false;
     m_running = false;
     if (m_renderThread.joinable())
     {
@@ -404,6 +420,24 @@ void RendererImpl::initSDL()
 
     m_sdlInitCV.notify_all();
     spdlog::info("SDL initialized successfully");
+
+    // ImGui setups
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+    ImGui::StyleColorsDark();
+
+    float main_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes(main_scale);
+
+    ImGui_ImplSDL3_InitForSDLRenderer(m_window, m_renderer);
+    ImGui_ImplSDLRenderer3_Init(m_renderer);
+
+    g_renderingRunning.store(true, std::memory_order_release);
 }
 
 bool RendererImpl::isReady() const
@@ -447,6 +481,7 @@ void RendererImpl::renderingLoop()
         renderSelectionBox();
         renderCursor();
         renderDebugInfo(fpsCounter);
+        renderImGui();
 
         SDL_RenderPresent(m_renderer);
 
@@ -473,6 +508,13 @@ void RendererImpl::renderingLoop()
     }
 
     spdlog::info("Shutting down renderer...");
+
+    m_isReady = false;
+    g_renderingRunning.store(false, std::memory_order_release);
+
+    ImGui_ImplSDLRenderer3_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
+    ImGui::DestroyContext();
 
     SDL_DestroyWindow(m_window);
     SDL_Quit();
@@ -1065,9 +1107,10 @@ void RendererImpl::generateTicks()
 void RendererImpl::onTick()
 {
     handleViewportMovement();
-    m_synchronizer.getReceiverFrameData().viewportPositionInPixels =
-        m_coordinates.getViewportPositionInPixels();
+    auto& framedata = m_synchronizer.getReceiverFrameData();
+    framedata.viewportPositionInPixels = m_coordinates.getViewportPositionInPixels();
 }
+
 void RendererImpl::handleViewportMovement()
 {
     auto keyStates = SDL_GetKeyboardState(nullptr);

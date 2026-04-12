@@ -9,6 +9,7 @@ using namespace core;
 DebugHelper::DebugHelper()
 {
     registerCallback(Event::Type::TICK, this, &DebugHelper::onTick);
+    registerCallback(Event::Type::KEY_UP, this, &DebugHelper::onKeyUp);
 }
 
 DebugHelper::~DebugHelper()
@@ -16,9 +17,11 @@ DebugHelper::~DebugHelper()
     // destructor
 }
 
-void DebugHelper::onTick(const core::Event& e)
+bool DebugHelper::onTick(const core::Event& e)
 {
 #ifndef NDEBUG
+    if (not m_showDebugDetails)
+        return false;
 
     auto& densityGrid = m_stateMan->getDensityGrid();
     auto& gameMap = m_stateMan->gameMap();
@@ -90,4 +93,14 @@ void DebugHelper::onTick(const core::Event& e)
     }
 
 #endif
+    return false;
+}
+
+bool DebugHelper::onKeyUp(const core::Event& e)
+{
+    if (e.getData<KeyboardData>().keyCode == SDL_SCANCODE_9)
+    {
+        m_showDebugDetails != m_showDebugDetails;
+    }
+    return false;
 }

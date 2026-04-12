@@ -12,8 +12,8 @@ class ResourceManager : public core::EventHandler
     ~ResourceManager();
 
   private:
-    void onEvent(const core::Event& e) override;
-    void onTick(const core::Event& e);
+    bool onEvent(const core::Event& e) override;
+    bool onTick(const core::Event& e);
 };
 
 } // namespace game

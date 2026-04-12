@@ -28,11 +28,12 @@ BuildingManager::BuildingManager()
     registerCallback(Event::Type::ENTITY_DELETE, this, &BuildingManager::onEntityDeletion);
 }
 
-void BuildingManager::onTick(const Event& e)
+bool BuildingManager::onTick(const Event& e)
 {
     handleBuildingUpdates(e.getData<TickData>());
     handleBuildingDamages(e.getData<TickData>());
     updateInProgressUnitCreations(e.getData<TickData>());
+    return false;
 }
 
 void BuildingManager::onCompleteBuilding(uint32_t entity,
@@ -62,7 +63,7 @@ void BuildingManager::onCompleteBuilding(uint32_t entity,
     }
 }
 
-void BuildingManager::onBuildingRequest(const Event& e)
+bool BuildingManager::onBuildingRequest(const Event& e)
 {
     auto data = e.getData<BuildingPlacementData>();
     auto [info, building] = createBuilding(data);
@@ -78,6 +79,7 @@ void BuildingManager::onBuildingRequest(const Event& e)
     {
         spdlog::debug("Cannot place the building. Ignoring the request {}", data.toString());
     }
+    return false;
 }
 
 std::tuple<CompEntityInfo&, CompBuilding&> BuildingManager::createBuilding(
@@ -102,7 +104,7 @@ std::tuple<CompEntityInfo&, CompBuilding&> BuildingManager::createBuilding(
     return {info, building};
 }
 
-void BuildingManager::onQueueUnit(const Event& e)
+bool BuildingManager::onQueueUnit(const Event& e)
 {
     auto& data = e.getData<UnitQueueData>();
     spdlog::debug("On queuing unit {} for building {}", data.entityType, data.building);
@@ -113,6 +115,7 @@ void BuildingManager::onQueueUnit(const Event& e)
 
     ActiveFactoryInfo info{.factory = factory, .building = data.building, .player = data.player};
     m_activeFactories.emplace(data.building, info);
+    return false;
 }
 
 Feet BuildingManager::findVacantPositionAroundBuilding(uint32_t building)
@@ -229,7 +232,7 @@ void BuildingManager::updateInProgressUnitCreations(const TickData& tick)
     }
 }
 
-void BuildingManager::onUngarrison(const Event& e)
+bool BuildingManager::onUngarrison(const Event& e)
 {
     auto& data = e.getData<UngarrisonData>();
 
@@ -246,15 +249,17 @@ void BuildingManager::onUngarrison(const Event& e)
         }
         garrisonBuilding->garrisonedUnits.clear();
     }
+    return false;
 }
 
-void BuildingManager::onEntityDeletion(const Event& e)
+bool BuildingManager::onEntityDeletion(const Event& e)
 {
     auto entity = e.getData<EntityDeleteData>().entity;
     if (entity != entt::null && m_stateMan->hasComponent<CompBuilding>(entity))
     {
         deleteBuilding(entity);
     }
+    return false;
 }
 
 bool BuildingManager::isBuildingRequestValid(const CompBuilding& building) const

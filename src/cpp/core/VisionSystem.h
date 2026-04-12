@@ -22,8 +22,8 @@ class VisionSystem : public TileMapListner,
     void onEntityEnter(uint32_t entity, const Tile& tile, MapLayerType layer) override;
     void onEntityExit(uint32_t entity, const Tile& tile, MapLayerType layer) override;
     void onInit(EventLoop& eventLoop) override;
-    void onTick(const Event& e);
-    void onTrackingRequest(const Event& e);
+    bool onTick(const Event& e);
+    bool onTrackingRequest(const Event& e);
 
     static bool isWithinBuildingLineOfSight(const LandArea& landArea,
                                             uint32_t lineOfSight,

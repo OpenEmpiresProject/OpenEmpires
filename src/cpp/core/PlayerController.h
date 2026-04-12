@@ -52,11 +52,11 @@ class PlayerController : public EventHandler
 
   private:
     // Event callbacks
-    void onKeyUp(const Event& e);
-    void onMouseButtonUp(const Event& e);
-    void onMouseButtonDown(const Event& e);
-    void onMouseMove(const Event& e);
-    void onBuildingApproved(const Event& e);
+    bool onKeyUp(const Event& e);
+    bool onMouseButtonUp(const Event& e);
+    bool onMouseButtonDown(const Event& e);
+    bool onMouseMove(const Event& e);
+    bool onBuildingApproved(const Event& e);
 
     void resolveAction(const Vec2& screenPos);
     void createUnit(uint32_t entityType, const EntitySelection& selectedBuildings);
@@ -93,7 +93,7 @@ class PlayerController : public EventHandler
     void getAllOverlappingEntities(const Vec2& startScreenPos,
                                    const Vec2& endScreenPos,
                                    std::vector<uint32_t>& entitiesToAddToSelection);
-    void onUnitSelection(const Event& e);
+    bool onUnitSelection(const Event& e);
 
     // Formation related
     void createOrUpdateFormation(const Feet& targetPos);

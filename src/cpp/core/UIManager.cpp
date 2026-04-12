@@ -13,18 +13,20 @@ void UIManager::registerWindow(Ref<ui::Window> window)
     m_windows.push_back(window);
 }
 
-void UIManager::onEvent(const Event& e)
+bool UIManager::onEvent(const Event& e)
 {
     for (auto window : m_windows)
     {
         window->feedInput(e);
     }
+    return false;
 }
 
-void UIManager::onTick(const Event& e)
+bool UIManager::onTick(const Event& e)
 {
     for (auto window : m_windows)
     {
         window->updateGraphicCommand();
     }
+    return false;
 }

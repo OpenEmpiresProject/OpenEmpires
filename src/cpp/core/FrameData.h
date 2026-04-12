@@ -4,6 +4,7 @@
 #include "Feet.h"
 #include "FogOfWar.h"
 #include "GraphicsRegistry.h"
+#include "ImGuiHelper.h"
 
 #include <vector>
 
@@ -19,6 +20,7 @@ struct FrameData
     // Therefore, it is totally acceptable to copy FogOfWar.
     FogOfWar fogOfWar;             // Simulator to Renderer
     GraphicsID cursor;             // Simulator to Renderer
+    ImDrawDataSnapshot imGuiData;  // Simulator to Renderer
     Vec2 viewportPositionInPixels; // Renderer to simulator
 };
 } // namespace core

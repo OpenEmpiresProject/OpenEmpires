@@ -2,6 +2,7 @@
 
 #include "Coordinates.h"
 #include "Event.h"
+#include "ImGuiHelper.h"
 #include "PlayerController.h"
 #include "ServiceRegistry.h"
 #include "StateManager.h"
@@ -33,22 +34,23 @@ GraphicsInstructor::GraphicsInstructor(ThreadSynchronizer<FrameData>& synchroniz
     registerCallback(Event::Type::TICK, this, &GraphicsInstructor::onTick);
 }
 
-void GraphicsInstructor::onTick(const Event& e)
+bool GraphicsInstructor::onTick(const Event& e)
 {
     onTickStart();
     updateGraphicComponents();
     sendGraphicsInstructions();
     onTickEnd();
+    return false;
 }
 
 void GraphicsInstructor::onTickStart()
 {
     // Read and send data
     auto player = m_playerController->getPlayer();
-    m_synchronizer.getSenderFrameData().fogOfWar = *(player->getFogOfWar().get());
-    m_synchronizer.getSenderFrameData().frameNumber = m_frameCount;
-    m_coordinates->setViewportPositionInPixels(
-        m_synchronizer.getSenderFrameData().viewportPositionInPixels);
+    auto& frameData = m_synchronizer.getSenderFrameData();
+    frameData.fogOfWar = *(player->getFogOfWar().get());
+    frameData.frameNumber = m_frameCount;
+    m_coordinates->setViewportPositionInPixels(frameData.viewportPositionInPixels);
 
     if (!m_initialized)
     {
@@ -58,6 +60,11 @@ void GraphicsInstructor::onTickStart()
             .each([this](uint32_t entity, CompEntityInfo& dirty)
                   { StateManager::markDirty(entity); });
         m_initialized = true;
+    }
+
+    if (m_stateManager->isRendererReady() and ImGui::GetDrawData())
+    {
+        frameData.imGuiData.SnapUsingSwap(ImGui::GetDrawData(), ImGui::GetTime());
     }
 }
 

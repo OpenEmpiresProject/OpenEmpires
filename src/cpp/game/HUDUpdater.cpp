@@ -19,15 +19,16 @@ HUDUpdater::HUDUpdater()
     registerCallback(Event::Type::TICK, this, &HUDUpdater::onTick);
 }
 
-void HUDUpdater::onTick(const Event& e)
+bool HUDUpdater::onTick(const Event& e)
 {
     updateUIElementReferences();
     updateResourcePanel();
     updateProgressBar();
     updateGarrisonedUnits();
+    return false;
 }
 
-void HUDUpdater::onUnitSelection(const Event& e)
+bool HUDUpdater::onUnitSelection(const Event& e)
 {
     m_selectedIcon->setVisible(false);
     m_selectedName->setVisible(false);
@@ -58,6 +59,7 @@ void HUDUpdater::onUnitSelection(const Event& e)
         }
         break;
     }
+    return false;
 }
 
 void HUDUpdater::updateProgressBar()

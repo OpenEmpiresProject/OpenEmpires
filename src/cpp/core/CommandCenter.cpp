@@ -14,7 +14,7 @@ CommandCenter::CommandCenter()
     registerCallback(Event::Type::COMMAND_REQUEST, this, &CommandCenter::onCommandRequest);
 }
 
-void CommandCenter::onCommandRequest(const Event& e)
+bool CommandCenter::onCommandRequest(const Event& e)
 {
     auto data = e.getData<CommandRequestData>();
     if (data.command->getPriority() == -1)
@@ -40,9 +40,10 @@ void CommandCenter::onCommandRequest(const Event& e)
     }
     unit.commandQueue.push(data.command);
     data.command->onQueue();
+    return false;
 }
 
-void CommandCenter::onTick(const Event& e)
+bool CommandCenter::onTick(const Event& e)
 {
     std::list<Command*> newCommands;
     ServiceRegistry::getInstance().getService<StateManager>()->getEntities<CompUnit>().each(
@@ -105,4 +106,5 @@ void CommandCenter::onTick(const Event& e)
                 }
             }
         });
+    return false;
 }
