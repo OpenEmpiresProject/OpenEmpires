@@ -28,9 +28,6 @@ jobs:
 
       - name: Push to badges branch
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-      
           # Create clean temp dir
           mkdir badges_dir
           cp badge.json badges_dir/
@@ -39,6 +36,10 @@ jobs:
       
           git init
           git checkout -b badges
+
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+    
           git add badge.json
           git commit -m "Update LOC badge"
       
