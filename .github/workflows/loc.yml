@@ -26,21 +26,21 @@ jobs:
           TOTAL=$(jq '.SUM.code' loc.json)
           echo "{\"schemaVersion\":1,\"label\":\"LOC\",\"message\":\"$TOTAL\",\"color\":\"blue\"}" > badge.json
 
-      # 👇 Push to separate branch
       - name: Push to badges branch
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
       
-          # Create clean orphan branch
-          git checkout --orphan badges
+          # Create clean temp dir
+          mkdir badges_dir
+          cp badge.json badges_dir/
       
-          # Remove tracked files (ignore errors)
-          git rm -rf . || true
+          cd badges_dir
       
-          # Copy badge.json back (IMPORTANT)
-          cp $GITHUB_WORKSPACE/badge.json .
-      
+          git init
+          git checkout -b badges
           git add badge.json
-          git commit -m "Update LOC badge" || echo "No changes"
+          git commit -m "Update LOC badge"
+      
+          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git push origin badges --force
