@@ -4,9 +4,17 @@
   <img src="doc/images/logo.png" alt="OpenEmpires Logo" width="300"/>
 </p>
 
-# openEmpires
+<p align="center">
+    <img src="https://img.shields.io/github/languages/top/OpenEmpiresProject/OpenEmpires" />
+    <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/OpenEmpiresProject/OpenEmpires/badges/badge.json" />
+    <img src="https://img.shields.io/github/v/release/OpenEmpiresProject/OpenEmpires" />
+    <img src="https://img.shields.io/github/last-commit/OpenEmpiresProject/OpenEmpires" />
+    <a href="https://discord.gg/zTGvvhVm">
+        <img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white" />
+    </a>
+</p>
 
-openEmpires is a cross-platform clone of Age of Empires 2, designed to provide a similar gameplay experience while allowing for modern enhancements and modifications. This project is built using C++ for the game logic and Python for entity definitions.
+OpenEmpires is a cross-platform clone of Age of Empires 2, designed to provide a similar gameplay experience while allowing for modern enhancements and modifications. This project is built using C++ for the game logic and Python for entity definitions.
 
 ![](doc/images/screenshot-v0.3.1.png)
 
