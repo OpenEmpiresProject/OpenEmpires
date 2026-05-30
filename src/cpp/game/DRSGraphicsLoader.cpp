@@ -133,7 +133,7 @@ class GraphicsLoaderFromDRSImpl
             if (!surf)
                 continue;
 
-            // 🔄 Reversed anchor: subtract anchor instead of add
+            // Reversed anchor: subtract anchor instead of add
             int left = pivotX - anchors[i].x;
             int top = pivotY - anchors[i].y;
             int right = left + surf->w;
@@ -202,12 +202,13 @@ class GraphicsLoaderFromDRSImpl
                              bool isCursor,
                              bool flip,
                              const GraphicsID& id,
+                             std::optional<int> variation,
                              SLPLoadMode loadMode)
     {
         loadSurfaces(atlasGenerator, renderer, surfaces, id.entityType, clipRect, id.action,
                      id.playerId, frames, anchors, graphicsRegistry, isCursor, id.orientation, flip,
                      id.state, id.isConstructing, id.uiElementType, id.isShadow, id.isIcon,
-                     loadMode);
+                     variation, loadMode);
     }
 
     static void loadSurfaces(AtlasGenerator& atlasGenerator,
@@ -228,6 +229,7 @@ class GraphicsLoaderFromDRSImpl
                              int uiElementType,
                              int isShadow,
                              int isIcon,
+                             std::optional<int> variation,
                              SLPLoadMode loadMode)
     {
         std::vector<SDL_Rect> srcRects;
@@ -322,7 +324,7 @@ class GraphicsLoaderFromDRSImpl
                     id.direction = static_cast<uint64_t>(Direction::NORTH);
                 }
             }
-            else if (loadMode == SLPLoadMode::VARIATIONS)
+            else if (loadMode == SLPLoadMode::AUTO_VARIATIONS)
             {
                 for (size_t i = 0; i < 1024; i++)
                 {
@@ -333,6 +335,19 @@ class GraphicsLoaderFromDRSImpl
                     }
                 }
             }
+            else if (loadMode == SLPLoadMode::EXPLICIT_VARIATIONS)
+            {
+                if (variation.has_value())
+                {
+                    id.variation = variation.value();
+                }
+                else
+                {
+                    spdlog::error(
+                        "Variation is not provided for EXPLICIT_VARIATIONS mode for id {}",
+                        id.toShortString());
+                }
+            }
             else if (loadMode == SLPLoadMode::ICON)
             {
                 // Icons are stored under the same entity type with flag isIcon is set. Therefore,
@@ -341,6 +356,8 @@ class GraphicsLoaderFromDRSImpl
 
             SDL_FRect* srcRectF = new SDL_FRect{(float) srcRect.x, (float) srcRect.y,
                                                 (float) srcRect.w, (float) srcRect.h};
+
+            spdlog::debug("Registering texture for ID {}", id.toShortString());
 
             Texture entry{atlasTexture, srcRectF, anchor, imageSize, flip, cursor};
             graphicsRegistry.registerTexture(id, entry);
@@ -358,7 +375,8 @@ class GraphicsLoaderFromDRSImpl
                                         int isConstructing,
                                         int uiElementType,
                                         int isShadow,
-                                        int isIcon)
+                                        int isIcon,
+                                        std::optional<int> variation)
     {
         std::vector<SDL_Surface*> surfaces;
         std::vector<Vec2> anchors;
@@ -399,7 +417,7 @@ class GraphicsLoaderFromDRSImpl
         loadSurfaces(atlasGenerator, renderer, mergedSurfaceVec, baseId.entityType,
                      drsData.clipRect, baseId.action, baseId.playerId, frames, newAnchors,
                      graphicsRegistry, false, orientation, flip, state, isConstructing,
-                     uiElementType, isShadow, isIcon, drsData.slpLoadMode);
+                     uiElementType, isShadow, isIcon, variation, drsData.slpLoadMode);
     }
 
     static void loadSLPWithAllFrames(shared_ptr<DRSFile> drs,
@@ -419,6 +437,7 @@ class GraphicsLoaderFromDRSImpl
                                      int uiElementType,
                                      int isShadow,
                                      int isIcon,
+                                     std::optional<int> variation,
                                      SLPLoadMode loadMode)
     {
         auto slp = drs->getSLPFile(slpId);
@@ -443,7 +462,7 @@ class GraphicsLoaderFromDRSImpl
 
         loadSurfaces(atlasGenerator, renderer, surfaces, entityType, clipRect, action, playerId,
                      frames, anchors, graphicsRegistry, false, orientation, flip, state,
-                     isConstructing, uiElementType, isShadow, isIcon, loadMode);
+                     isConstructing, uiElementType, isShadow, isIcon, variation, loadMode);
     }
 
     static bool isTextureFlippingNeededEntity(int entityType)
@@ -517,14 +536,28 @@ void DRSGraphicsLoader::loadGraphics(SDL_Renderer& renderer,
     std::set<GraphicsID> uniqueBaseIds;
     for (auto& id : idsToLoad)
     {
-        auto baseId = id.getBaseId();
-        uniqueBaseIds.insert(baseId);
+        if (dataProvider->hasData(id))
+        {
+            uniqueBaseIds.insert(id);
+        }
+        else
+        {
+            auto baseId = id.getBaseId();
+            uniqueBaseIds.insert(baseId);
+        }
     }
 
     for (auto& id : uniqueBaseIds)
     {
         auto baseId = id;
         baseId.playerId = 0;
+
+        if (not dataProvider->hasData(baseId))
+        {
+            spdlog::error("Failed to load graphics for base graphic ID {}. Check models.py",
+                          baseId.toString());
+            continue;
+        }
 
         auto& drsData = (DRSData&) dataProvider->getData(baseId);
 
@@ -538,7 +571,7 @@ void DRSGraphicsLoader::loadGraphics(SDL_Renderer& renderer,
                     drsData.parts[0].drsFile, drsData.parts[0].slpId, id.entityType, id.action,
                     id.playerId, renderer, graphicsRegistry, atlasGenerator, drsData.clipRect,
                     drsData.flip, baseId.orientation, drsData.parts[0].frameIndex, id.state,
-                    id.isConstructing, id.uiElementType, id.isShadow, id.isIcon,
+                    id.isConstructing, id.uiElementType, id.isShadow, id.isIcon, id.variation,
                     drsData.slpLoadMode);
             }
         }
@@ -547,7 +580,7 @@ void DRSGraphicsLoader::loadGraphics(SDL_Renderer& renderer,
             GraphicsLoaderFromDRSImpl::loadSLPWithMergingParts(
                 drsData, id, renderer, graphicsRegistry, atlasGenerator, drsData.flip,
                 baseId.orientation, id.state, id.isConstructing, id.uiElementType, id.isShadow,
-                id.isIcon);
+                id.isIcon, id.variation);
         }
     }
     GraphicsLoaderFromDRSImpl::adjustDirections(graphicsRegistry);

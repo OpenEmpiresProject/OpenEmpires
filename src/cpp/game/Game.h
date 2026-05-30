@@ -16,10 +16,11 @@
 #include "GraphicsInstructor.h"
 #include "GraphicsRegistry.h"
 #include "HUDUpdater.h"
+#include "HumanController.h"
 #include "LogLevelController.h"
 #include "PathService.h"
-#include "PlayerController.h"
 #include "PlayerFactory.h"
+#include "ProjectileManager.h"
 #include "Renderer.h"
 #include "ResourceManager.h"
 #include "ServiceRegistry.h"
@@ -99,7 +100,7 @@ class Game
         auto playerManager = std::make_shared<core::PlayerFactory>();
         core::ServiceRegistry::getInstance().registerService(playerManager);
 
-        auto playerController = std::make_shared<core::PlayerController>();
+        auto playerController = std::make_shared<core::HumanController>();
         core::ServiceRegistry::getInstance().registerService(playerController);
 
         auto resourceManager = std::make_shared<ResourceManager>();
@@ -170,6 +171,7 @@ class Game
         auto specialBuildingManager = std::make_shared<game::SpecialBuildingManager>();
         auto debugHelper = std::make_shared<game::DebugHelper>();
         auto debugWindow = std::make_shared<core::DebugWindow>();
+        auto projectileMan = std::make_shared<core::ProjectileManager>();
 
         if (params.eventHandler)
             eventLoop->registerListener(params.eventHandler);
@@ -192,6 +194,7 @@ class Game
         eventLoop->registerListener(std::move(specialBuildingManager));
         eventLoop->registerListener(params.worldCreator);
         eventLoop->registerListener(std::move(debugHelper));
+        eventLoop->registerListener(std::move(projectileMan));
 
         core::SubSystemRegistry::getInstance().registerSubSystem("Renderer", std::move(renderer));
         core::SubSystemRegistry::getInstance().registerSubSystem("EventLoop", std::move(eventLoop));

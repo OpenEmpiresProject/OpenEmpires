@@ -608,8 +608,21 @@ py::object EntityModelLoaderV2::loadModelImporterModule()
     try
     {
         py::module_ sys = py::module_::import("sys");
-        py::list path = sys.attr("path");
-        path.insert(0, m_scriptDir);
+        py::list paths = sys.attr("path");
+        paths.insert(0, m_scriptDir);
+
+        // TODO: Need a better resource loading mechanism than this
+        for (auto path : g_sysPaths)
+        {
+            paths.insert(0, path);
+        }
+
+        spdlog::info("Python sys.path for loading importer module:");
+
+        for (auto item : paths)
+        {
+            spdlog::info("  {}", item.cast<std::string>());
+        }
 
         return py::module_::import(m_importerModule.c_str());
     }
@@ -662,9 +675,13 @@ void EntityModelLoaderV2::loadUnprogressedFields()
                         {
                             drsData.slpLoadMode = SLPLoadMode::ICON;
                         }
+                        else if (variant.variationFilter.contains("variation"))
+                        {
+                            drsData.slpLoadMode = SLPLoadMode::EXPLICIT_VARIATIONS;
+                        }
                         else
                         {
-                            drsData.slpLoadMode = SLPLoadMode::VARIATIONS;
+                            drsData.slpLoadMode = SLPLoadMode::AUTO_VARIATIONS;
                         }
 
                         auto graphicsId = holder->createGraphicsID(variant.variationFilter);
@@ -724,10 +741,17 @@ void EntityModelLoaderV2::loadUnprogressedFields()
 
                     auto entityType = typeRegistry->getEntityType(entityName);
                     GraphicsID graphicsId = holder->createGraphicsID(variant.variationFilter);
-                    debug_assert(
-                        variant.variationFilter.contains("action"),
-                        "action filter is missing in variation_filter for entity {} animation {}",
-                        entityName, variant.name);
+
+                    // This is a unreasonable warning as system should be flexible enough to
+                    // have animations without action.
+                    // TODO - CompAnimation::animations should be storing generic animations
+                    // not only against actions.
+                    if (not variant.variationFilter.contains("action"))
+                    {
+                        spdlog::warn("action filter is missing in variation_filter for entity {} "
+                                     "animation {}",
+                                     entityName, variant.name);
+                    }
 
                     addData(graphicsId, drsData);
 
@@ -861,6 +885,8 @@ void EntityModelLoaderV2::addData(const core::GraphicsID& id, const Data& data)
     }
 }
 
+std::list<std::string> game::EntityModelLoaderV2::g_sysPaths;
+
 //////////////////////////////////////////////////////////////////////////
 /// Global helper functions
 //////////////////////////////////////////////////////////////////////////
@@ -902,6 +928,13 @@ DRSData getDRSData(const AnimationVariant& animation, core::Ref<DRSInterface> dr
 
 void validatePython()
 {
+    {
+        py::module_ os = py::module_::import("os");
+        std::string cwd = os.attr("getcwd")().cast<std::string>();
+
+        spdlog::info("Python cwd: {}", cwd);
+    }
+
     py::module_ sys = py::module_::import("sys");
 
     auto paths = sys.attr("path");
@@ -1149,4 +1182,50 @@ std::vector<float> getMultiplierPerClass(const std::any& value)
         values[cls] = val;
     }
     return values;
+}
+
+ProjectileDamageMode getProjectileDamageMode(const std::any& value)
+{
+    auto pyObj = std::any_cast<py::object>(value);
+    auto valueInt = pyObj.cast<int>();
+
+    if (valueInt == (int) ProjectileDamageMode::ON_HIT)
+    {
+        return ProjectileDamageMode::ON_HIT;
+    }
+    else if (valueInt == (int) ProjectileDamageMode::AREA_OF_EFFECT)
+    {
+        return ProjectileDamageMode::AREA_OF_EFFECT;
+    }
+    else if (valueInt == (int) ProjectileDamageMode::PASS_THROUGH)
+    {
+        return ProjectileDamageMode::PASS_THROUGH;
+    }
+    throw std::runtime_error("Unknown projectile damage mode");
+}
+
+core::ProjectileProperties getProjectile(const std::any& value)
+{
+    auto pyObj = std::any_cast<py::object>(value);
+    py::object attackObj = pyObj.attr("attack");
+    auto attacks = getAttackOrArmorPerClass(attackObj);
+    py::object attackMulObj = pyObj.attr("attack_multiplier");
+    auto attackMultipliers = getMultiplierPerClass(attackMulObj);
+    auto accuracy = pyObj.attr("accuracy").cast<float>();
+    auto reloadTimeS = pyObj.attr("reload_time").cast<float>();
+
+    return ProjectileProperties(attacks, attackMultipliers, accuracy, reloadTimeS);
+}
+
+std::vector<core::ProjectileProperties> getProjectilesList(const std::any& value)
+{
+    auto pyObj = std::any_cast<py::object>(value);
+    py::list projectileObjList = pyObj.cast<py::list>();
+
+    std::vector<ProjectileProperties> projectiles;
+    for (py::handle item : projectileObjList)
+    {
+        projectiles.push_back(getProjectile(py::reinterpret_borrow<py::object>(item)));
+    }
+    return projectiles;
 }

@@ -26,6 +26,13 @@ class CmdMove : public Command
   public:
     std::optional<Target> target;
     UnitAction actionOverride = UnitAction::MOVE;
+    // TODO: This should be deprecated in favour of Target's arrival
+    // evaluator capability now.
+    // Move command relies on externally provided collision radius
+    // instead of using any built-int unit radius to support custom
+    // stopping distances. Will be used in situations like ranged
+    // attacks.
+    float collisionRadius = std::numeric_limits<float>::max();
 
   protected:
     void animate(int deltaTimeMs, int currentTick);

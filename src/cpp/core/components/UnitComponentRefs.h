@@ -1,6 +1,8 @@
 #ifndef UNITCOMPONENTREFS_H
 #define UNITCOMPONENTREFS_H
 
+#include "CompMeleeAttack.h"
+#include "CompRangeAttack.h"
 #include "CompVision.h"
 #include "StateManager.h"
 
@@ -16,7 +18,6 @@ class CompPlayer;
 class CompTransform;
 class CompUnit;
 class CompVision;
-class CompAttack;
 
 class UnitComponentRefs
 {
@@ -28,7 +29,8 @@ class UnitComponentRefs
     CompTransform& transform;
     CompUnit& unit;
     CompVision& vision;
-    CompAttack& attack;
+    CompMeleeAttack& meleeAttack;
+    CompRangeAttack& rangeAttack;
 
     UnitComponentRefs(Ref<StateManager> stateMan, uint32_t entityID);
 
@@ -39,8 +41,18 @@ class UnitComponentRefs
                                  CompPlayer&,
                                  CompTransform&,
                                  CompUnit&,
-                                 CompVision&,
-                                 CompAttack&> components);
+                                 CompVision&> components,
+                      CompMeleeAttack& attack,
+                      CompRangeAttack& rangeAttack);
+
+    /*
+     *   meleeAttack and rangeAttack are conditional, unlikely that a unit
+     *   would have both. Yet this class should make command implementation
+     *   easier by providing direct access to attack components. Hence,
+     *   pointing to dummies when not available.
+     */
+    CompMeleeAttack m_dummyAttack;
+    CompRangeAttack m_dummyRangeAttack;
 };
 } // namespace core
 

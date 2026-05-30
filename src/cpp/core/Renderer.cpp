@@ -801,6 +801,8 @@ void RendererImpl::renderGameEntities()
             screenpos = m_coordinates.feetToScreenUnits(rc->positionInFeet);
             anchorAdjustedScreenPos = screenpos - rc->anchor;
 
+            // TODO: This should be moved outside of positionInFeet null check since this is
+            // independent of that.
             if (rc->parentEntityId != entt::null and not rc->relativePixelPosition.isNull())
             {
                 CompRendering& parentComp = m_registry.get<CompRendering>(rc->parentEntityId);
@@ -810,6 +812,10 @@ void RendererImpl::renderGameEntities()
                 auto screenPosRelativeToParent =
                     anchorAdjustedParentScreenPos + rc->relativePixelPosition;
                 anchorAdjustedScreenPos = screenPosRelativeToParent - rc->anchor;
+            }
+            else if (not rc->selfRelativePixelPosition.isNull())
+            {
+                anchorAdjustedScreenPos += rc->selfRelativePixelPosition;
             }
 
             if (m_showFogOfWar && fogOfWar.isExplored(rc->positionInFeet.toTile()) == false)

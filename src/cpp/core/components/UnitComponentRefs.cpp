@@ -2,7 +2,6 @@
 
 #include "CompAction.h"
 #include "CompAnimation.h"
-#include "CompAttack.h"
 #include "CompEntityInfo.h"
 #include "CompGraphics.h"
 #include "CompPlayer.h"
@@ -17,12 +16,13 @@ UnitComponentRefs::UnitComponentRefs(std::tuple<CompAction&,
                                                 CompPlayer&,
                                                 CompTransform&,
                                                 CompUnit&,
-                                                CompVision&,
-                                                CompAttack&> components)
+                                                CompVision&> components,
+                                     CompMeleeAttack& attack,
+                                     CompRangeAttack& rangeAttack)
     : action{std::get<0>(components)}, animation{std::get<1>(components)},
       entityInfo{std::get<2>(components)}, player{std::get<3>(components)},
       transform{std::get<4>(components)}, unit{std::get<5>(components)},
-      vision{std::get<6>(components)}, attack{std::get<7>(components)}
+      vision{std::get<6>(components)}, meleeAttack(attack), rangeAttack(rangeAttack)
 {
 }
 
@@ -33,7 +33,12 @@ UnitComponentRefs::UnitComponentRefs(Ref<StateManager> stateMan, uint32_t entity
                                                 CompPlayer,
                                                 CompTransform,
                                                 CompUnit,
-                                                CompVision,
-                                                CompAttack>(entityID))
+                                                CompVision>(entityID),
+                        (stateMan->hasComponent<CompMeleeAttack>(entityID)
+                             ? stateMan->getComponent<CompMeleeAttack>(entityID)
+                             : m_dummyAttack),
+                        (stateMan->hasComponent<CompRangeAttack>(entityID)
+                             ? stateMan->getComponent<CompRangeAttack>(entityID)
+                             : m_dummyRangeAttack))
 {
 }

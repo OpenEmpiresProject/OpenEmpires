@@ -5,7 +5,7 @@
 
 #include <gtest/gtest.h>
 
-#include "commands/CmdAttack.h"
+#include "commands/CmdMeleeAttack.h"
 #include "components/CompAction.h"
 #include "components/CompAnimation.h"
 #include "components/CompArmor.h"
@@ -19,12 +19,12 @@ using game::ArmorClass;
 
 namespace core
 {
-class CmdAttackExposed : public CmdAttack
+class CmdAttackExposed : public CmdMeleeAttack
 {
 public:
     float getDamage(const CompArmor& target) const
     {
-        return CmdAttack::getDamage(target);
+        return CmdMeleeAttack::getDamage(target);
     }
 };
 
@@ -48,10 +48,10 @@ class CmdAttackTest : public ::testing::Test, public core::PropertyInitializer
         m_stateMan->addComponent<CompUnit>(m_entity, CompUnit());
         m_stateMan->addComponent<CompVision>(m_entity, CompVision());
 
-        // Add CompAttack (will be configured by each test individually)
-        m_stateMan->addComponent<CompAttack>(m_entity, CompAttack());
+        // Add CompMeleeAttack (will be configured by each test individually)
+        m_stateMan->addComponent<CompMeleeAttack>(m_entity, CompMeleeAttack());
 
-        // Create CmdAttack instance and initialize so m_components points to entity components
+        // Create CmdMeleeAttack instance and initialize so m_components points to entity components
         m_cmd = std::make_unique<CmdAttackExposed>();
         m_cmd->setEntityID(m_entity);
         m_cmd->init();
@@ -66,13 +66,13 @@ class CmdAttackTest : public ::testing::Test, public core::PropertyInitializer
     // Helpers to configure attack/armor properties
     void setAttackPerClass(const std::vector<int>& attacks)
     {
-        auto& compAttack = m_stateMan->getComponent<CompAttack>(m_entity);
+        auto& compAttack = m_stateMan->getComponent<CompMeleeAttack>(m_entity);
         PropertyInitializer::set<std::vector<int>>(compAttack.attackPerClass, attacks);
     }
 
     void setAttackMultiplierPerClass(const std::vector<float>& mults)
     {
-        auto& compAttack = m_stateMan->getComponent<CompAttack>(m_entity);
+        auto& compAttack = m_stateMan->getComponent<CompMeleeAttack>(m_entity);
         PropertyInitializer::set<std::vector<float>>(compAttack.attackMultiplierPerClass, mults);
     }
 

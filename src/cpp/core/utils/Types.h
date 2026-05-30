@@ -306,6 +306,21 @@ enum class UnitFormationType
     LINE_FORMATION,
 };
 
+enum class ProjectileDamageMode
+{
+    ON_HIT = 0,
+    AREA_OF_EFFECT,
+    PASS_THROUGH
+};
+
+struct ProjectileProperties
+{
+    std::vector<int> attackPerClass;
+    std::vector<float> attackMultiplierPerClass;
+    float accuracy;
+    float reloadTimeS;
+};
+
 inline constexpr std::array<GraphicLayer, 6> g_graphicLayersOrder{
     GraphicLayer::GROUND,           GraphicLayer::ON_GROUND, GraphicLayer::ENTITIES,
     GraphicLayer::ENTITY_DECORATOR, GraphicLayer::SKY,       GraphicLayer::UI};

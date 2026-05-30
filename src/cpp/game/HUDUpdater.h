@@ -4,7 +4,7 @@
 #include "EntitySelection.h"
 #include "EntityTypeRegistry.h"
 #include "EventHandler.h"
-#include "PlayerController.h"
+#include "HumanController.h"
 #include "ServiceRegistry.h"
 #include "UI.h"
 #include "UIManager.h"
@@ -68,7 +68,7 @@ class HUDUpdater : public core::EventHandler
     core::Ref<core::ui::Label>
         m_garrisonedUnitIcons[core::Constants::ABSOLUTE_MAX_UNIT_GARRISON_SIZE];
     core::EntitySelection m_currentSelection;
-    core::LazyServiceRef<core::PlayerController> m_playerController;
+    core::LazyServiceRef<core::HumanController> m_playerController;
     core::Ref<core::ui::Widget> m_creationInProgressGroup;
     core::Ref<core::ui::Widget> m_creationQueueGroup;
     core::Ref<core::ui::Widget> m_garrisonedUnitsGroup;

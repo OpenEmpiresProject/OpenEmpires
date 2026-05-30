@@ -58,7 +58,7 @@ class Armor:
     damage_resistance: float = 0.0 # Between 0 and 1
 
 
-class Unit(Vision, Model, Selectable, Animated, Health, Attack, Armor):
+class Unit(Vision, Model, Selectable, Animated, Health, Armor):
     moving_speed: int
     housing_need: int
     unit_type: UnitType
@@ -99,7 +99,6 @@ class Building(Vision, Model, Selectable, Health, Armor, Animated):
     fire_anchors: Optional[List[Point]]
 
 
-
 class CompoSiteGraphicBuilding(Building):
     graphics: Graphic
 
@@ -131,6 +130,35 @@ class UIElement(_Constructible, Model):
     graphics: Graphic
 
 
+
+class ProjectileDamageMode(IntEnum):
+    ON_HIT = 0
+    AREA_OF_EFFECT = 1
+    PASS_THROUGH = 2
+
+
+class ProjectileProperties(_Constructible):
+    attack: Dict[int, int] # Per class
+    attack_multiplier: Dict[int, float] # Per class
+    accuracy: float # 0 to 1
+    reload_time: float # s
+
+
+class RangeAttack:
+    primary_projectile: ProjectileProperties
+    secondary_projectiles: Optional[List[ProjectileProperties]]
+    damage_mode: ProjectileDamageMode
+    projectile_speed: int
+    projectile_entity_type: str
+    attack_range: int
+    projectile_release_frame: int # index, from zero
+    projectile_release_height: int # in pixels, from foot
+
+
+class Projectile(_Constructible, Model):
+    graphics: Graphic
+
+
 def get_all_core_defs():
     return {Rect.__name__: Rect,
             Point.__name__: Point,
@@ -151,4 +179,7 @@ def get_all_core_defs():
             UnitFactory.__name__: UnitFactory,
             Housing.__name__: Housing,
             TileSet.__name__: TileSet,
-            UIElement.__name__: UIElement}
+            UIElement.__name__: UIElement,
+            ProjectileProperties.__name__: ProjectileProperties,
+            RangeAttack.__name__: RangeAttack,
+            Projectile.__name__: Projectile}

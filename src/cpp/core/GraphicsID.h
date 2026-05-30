@@ -18,7 +18,7 @@ class GraphicsID
         {
             uint64_t entityType : 15;    // 32,768 values
             uint64_t action : 10;        // 1,024 values
-            uint64_t frame : 5;          // 32 values
+            uint64_t frame : 6;          // 64 values
             uint64_t direction : 4;      // 16 values
             uint64_t variation : 10;     // 1,024 values
             uint64_t playerId : 4;       // 16 values
@@ -30,7 +30,7 @@ class GraphicsID
             uint64_t uiElementType : 9;  // 512 values
             uint64_t isShadow : 1;       // 2 values (a bool)
             uint64_t isIcon : 1;         // 2 values (a bool)
-            uint64_t reserved : 46;
+            uint64_t reserved : 45;
         };
         struct
         {

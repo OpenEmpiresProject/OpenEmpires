@@ -4,7 +4,7 @@
 #include "EntityFactory.h"
 #include "EntityTypeRegistry.h"
 #include "GameTypes.h"
-#include "PlayerController.h"
+#include "HumanController.h"
 #include "PlayerFactory.h"
 #include "Renderer.h"
 #include "ServiceRegistry.h"
@@ -74,14 +74,17 @@ void DemoWorldCreator::create()
     createMiningCluster(getResourceType("gold"), 20, 30, 4);
     auto players = createPlayers();
     // createVillager(players[0], Tile(20, 20));
-    createVillager(players[1], Tile(25, 28));
-    createMilitia(players[0], Tile(20, 25));
-    createMilitia(players[0], Tile(21, 21));
-    createMilitia(players[0], Tile(23, 24));
-    createMilitia(players[0], Tile(23, 23));
-    createMilitia(players[0], Tile(25, 25));
-    createMilitia(players[0], Tile(25, 26));
-    createMilitia(players[0], Tile(23, 27));
+    createVillager(players[1], Tile(24, 22));
+    createVillager(players[1], Tile(25, 21));
+    createMilitaryUnit("militia", players[0], Tile(20, 25));
+    createMilitaryUnit("militia", players[0], Tile(21, 21));
+    //     createMilitaryUnit("militia", players[0], Tile(23, 24));
+    //     createMilitaryUnit("militia", players[0], Tile(23, 23));
+    //     createMilitaryUnit("militia", players[0], Tile(25, 25));
+    //     createMilitaryUnit("militia", players[0], Tile(25, 26));
+    //     createMilitaryUnit("militia", players[0], Tile(23, 27));
+    createMilitaryUnit("archer", players[0], Tile(21, 25));
+    createMilitaryUnit("archer", players[0], Tile(21, 17));
     registerVillagerActions();
     createHUD();
 
@@ -151,7 +154,7 @@ void DemoWorldCreator::createVillager(Ref<core::Player> player, const Tile& tile
         stateMan->getComponents<CompTransform, CompUnit, CompSelectible, CompPlayer, CompVision>(
             villager);
 
-    transform.position = Feet(tilePos.x * 256 + 128, tilePos.x * 256 + 50);
+    transform.position = tilePos.centerInFeet();
     transform.face(Direction::SOUTH);
     selectible.selectionIndicator = {GraphicAddon::Type::ISO_CIRCLE,
                                      GraphicAddon::IsoCircle{10, Vec2(0, 0)}};
@@ -163,18 +166,20 @@ void DemoWorldCreator::createVillager(Ref<core::Player> player, const Tile& tile
     player->getFogOfWar()->markAsExplored(transform.position, vision.lineOfSight);
 }
 
-void DemoWorldCreator::createMilitia(core::Ref<core::Player> player, const core::Tile& pos)
+void DemoWorldCreator::createMilitaryUnit(const std::string& type,
+                                          core::Ref<core::Player> player,
+                                          const core::Tile& pos)
 {
     auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
     auto factory = ServiceRegistry::getInstance().getService<EntityFactory>();
     auto typeReg = ServiceRegistry::getInstance().getService<EntityTypeRegistry>();
 
-    auto villager = factory->createEntity(typeReg->getEntityType("militia"));
+    auto villager = factory->createEntity(typeReg->getEntityType(type));
     auto [transform, unit, selectible, playerComp, vision] =
         stateMan->getComponents<CompTransform, CompUnit, CompSelectible, CompPlayer, CompVision>(
             villager);
 
-    transform.position = pos.toFeet();
+    transform.position = pos.centerInFeet();
     transform.face(Direction::SOUTH);
     selectible.selectionIndicator = {GraphicAddon::Type::ISO_CIRCLE,
                                      GraphicAddon::IsoCircle{10, Vec2(0, 0)}};
@@ -617,7 +622,7 @@ std::vector<Ref<Player>> DemoWorldCreator::createPlayers()
     auto nature = playerManager->createPlayer(Constants::NATURE_PLAYER_ID);
     auto player = playerManager->createPlayer();
     auto player2 = playerManager->createPlayer();
-    auto playercontroller = ServiceRegistry::getInstance().getService<PlayerController>();
+    auto playercontroller = ServiceRegistry::getInstance().getService<HumanController>();
     playercontroller->setPlayer(player);
 
     player->setAllegiance(player2, Allegiance::ENEMY);

@@ -5,7 +5,7 @@
 #include "EntityTypeRegistry.h"
 #include "EventHandler.h"
 #include "GraphicsRegistry.h"
-#include "PlayerController.h"
+#include "HumanController.h"
 #include "Property.h"
 #include "components/CompCursor.h"
 #include "utils/LazyServiceRef.h"
@@ -23,7 +23,7 @@ class CursorManager : public EventHandler, public PropertyInitializer
     LazyServiceRef<StateManager> m_stateMan;
     LazyServiceRef<Coordinates> m_coordinates;
     LazyServiceRef<EntityTypeRegistry> m_registry;
-    LazyServiceRef<PlayerController> m_inputPlayerController;
+    LazyServiceRef<HumanController> m_inputPlayerController;
     uint32_t m_cursorEntityId = entt::null;
     CompCursor* m_cursorComp = nullptr;
     bool m_buildingPlacementInProgress = false;

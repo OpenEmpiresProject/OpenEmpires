@@ -16,11 +16,18 @@ class ProximityChecker
                               uint32_t targetEntity,
                               Ref<StateManager> stateMan)
     {
+        return isInProximity(unitTransform.position, unitTransform.collisionRadius, targetEntity,
+                             stateMan);
+    }
+
+    static bool isInProximity(const Feet& unitPos,
+                              float unitRadius,
+                              uint32_t targetEntity,
+                              Ref<StateManager> stateMan)
+    {
         if (stateMan->hasComponent<CompBuilding>(targetEntity))
         {
             auto& building = stateMan->getComponent<CompBuilding>(targetEntity);
-            auto unitPos = unitTransform.position;
-            auto unitRadius = unitTransform.collisionRadius;
 
             return building.isOverlapping(unitPos, unitRadius);
         }
@@ -29,17 +36,12 @@ class ProximityChecker
             auto [transform, resource] =
                 stateMan->getComponents<CompTransform, CompResource>(targetEntity);
             auto rect = resource.getLandInFeetRect(transform.position);
-            auto unitPos = unitTransform.position;
-            auto unitRadius = unitTransform.collisionRadius;
 
             return maths::isOverlapping(unitPos, unitRadius, rect);
         }
         else if (stateMan->hasComponent<CompSelectible>(targetEntity))
         {
             auto& targetTransform = stateMan->getComponent<CompTransform>(targetEntity);
-
-            auto unitPos = unitTransform.position;
-            auto unitRadius = unitTransform.collisionRadius;
 
             return maths::isOverlapping(unitPos, unitRadius, targetTransform.position);
         }

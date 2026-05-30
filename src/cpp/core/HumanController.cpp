@@ -1,4 +1,4 @@
-#include "PlayerController.h"
+#include "HumanController.h"
 
 #include "EntityFactory.h"
 #include "Player.h"
@@ -27,27 +27,27 @@
 
 using namespace core;
 
-PlayerController::PlayerController()
+HumanController::HumanController()
 {
-    registerCallback(Event::Type::KEY_UP, this, &PlayerController::onKeyUp);
-    registerCallback(Event::Type::MOUSE_BTN_UP, this, &PlayerController::onMouseButtonUp);
-    registerCallback(Event::Type::MOUSE_MOVE, this, &PlayerController::onMouseMove);
-    registerCallback(Event::Type::BUILDING_CREATED, this, &PlayerController::onBuildingApproved);
-    registerCallback(Event::Type::MOUSE_BTN_DOWN, this, &PlayerController::onMouseButtonDown);
-    registerCallback(Event::Type::ENTITY_SELECTION, this, &PlayerController::onUnitSelection);
+    registerCallback(Event::Type::KEY_UP, this, &HumanController::onKeyUp);
+    registerCallback(Event::Type::MOUSE_BTN_UP, this, &HumanController::onMouseButtonUp);
+    registerCallback(Event::Type::MOUSE_MOVE, this, &HumanController::onMouseMove);
+    registerCallback(Event::Type::BUILDING_CREATED, this, &HumanController::onBuildingApproved);
+    registerCallback(Event::Type::MOUSE_BTN_DOWN, this, &HumanController::onMouseButtonDown);
+    registerCallback(Event::Type::ENTITY_SELECTION, this, &HumanController::onUnitSelection);
 }
 
-void PlayerController::setPlayer(Ref<Player> player)
+void HumanController::setPlayer(Ref<Player> player)
 {
     m_player = player;
 }
 
-Ref<Player> PlayerController::getPlayer() const
+Ref<Player> HumanController::getPlayer() const
 {
     return m_player;
 }
 
-void PlayerController::resolveAction(const Vec2& screenPos)
+void HumanController::resolveAction(const Vec2& screenPos)
 {
     auto result = m_stateMan->whatIsAt(screenPos);
     auto target = result.entity;
@@ -79,12 +79,13 @@ void PlayerController::resolveAction(const Vec2& screenPos)
                 if (compUnit->formationSlot.isValid())
                 {
                     auto cmd = ObjectPool<CmdMoveInFormation>::acquire();
-
                     publishEvent(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, entity});
                 }
                 else
                 {
+                    auto& transform = m_stateMan->getComponent<CompTransform>(entity);
                     auto cmd = ObjectPool<CmdMove>::acquire();
+                    cmd->collisionRadius = transform.collisionRadius;
                     cmd->target.emplace(worldPos, Target::Type::POSITION);
 
                     publishEvent(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, entity});
@@ -124,7 +125,7 @@ void PlayerController::resolveAction(const Vec2& screenPos)
     }
 }
 
-void PlayerController::createUnit(uint32_t entityType, const EntitySelection& selectedBuildings)
+void HumanController::createUnit(uint32_t entityType, const EntitySelection& selectedBuildings)
 {
     spdlog::debug("Request to create unit type {}", entityType);
 
@@ -139,7 +140,7 @@ void PlayerController::createUnit(uint32_t entityType, const EntitySelection& se
 //  Event callbacks
 //=================================================================================================
 
-bool PlayerController::onKeyUp(const Event& e)
+bool HumanController::onKeyUp(const Event& e)
 {
     ScopedDiagnosticContext scoped("P", m_player->getId());
 
@@ -198,7 +199,7 @@ bool PlayerController::onKeyUp(const Event& e)
     return false;
 }
 
-bool PlayerController::onMouseButtonUp(const Event& e)
+bool HumanController::onMouseButtonUp(const Event& e)
 {
     ScopedDiagnosticContext scoped("P", m_player->getId());
 
@@ -237,7 +238,7 @@ bool PlayerController::onMouseButtonUp(const Event& e)
     return false;
 }
 
-bool PlayerController::onMouseButtonDown(const Event& e)
+bool HumanController::onMouseButtonDown(const Event& e)
 {
     ScopedDiagnosticContext scoped("P", m_player->getId());
 
@@ -270,7 +271,7 @@ bool PlayerController::onMouseButtonDown(const Event& e)
     return false;
 }
 
-bool PlayerController::onMouseMove(const Event& e)
+bool HumanController::onMouseMove(const Event& e)
 {
     ScopedDiagnosticContext scoped("P", m_player->getId());
 
@@ -312,7 +313,7 @@ bool PlayerController::onMouseMove(const Event& e)
 // Building was approved by the BuildingManager, time to assign the currently
 // selected villagers (TODO: validate) to build it.
 //
-bool PlayerController::onBuildingApproved(const Event& e)
+bool HumanController::onBuildingApproved(const Event& e)
 {
     ScopedDiagnosticContext scoped("P", m_player->getId());
 
@@ -338,7 +339,7 @@ bool PlayerController::onBuildingApproved(const Event& e)
 //  Building placement related
 //=================================================================================================
 
-void PlayerController::startBuildingPlacement(uint32_t buildingType)
+void HumanController::startBuildingPlacement(uint32_t buildingType)
 {
     auto worldPos = m_coordinates->screenUnitsToFeet(m_currentMouseScreenPos);
 
@@ -358,7 +359,7 @@ void PlayerController::startBuildingPlacement(uint32_t buildingType)
  *       2. Validate and snap building to the tile
  *       3. Create building placement data and track
  */
-BuildingPlacementData PlayerController::createBuildingPlacement(
+BuildingPlacementData HumanController::createBuildingPlacement(
     uint32_t buildingType, const Feet& pos, const BuildingOrientation& orientation)
 {
     uint32_t entity = getOrCreateBuildingEntity(buildingType);
@@ -447,7 +448,7 @@ BuildingPlacementData PlayerController::createBuildingPlacement(
  *   Creating an entity is relatively expensive, therefore, this will try recycle
  *   an entity from pool.
  */
-uint32_t PlayerController::getOrCreateBuildingEntity(uint32_t buildingType)
+uint32_t HumanController::getOrCreateBuildingEntity(uint32_t buildingType)
 {
     uint32_t entity = entt::null;
 
@@ -465,7 +466,7 @@ uint32_t PlayerController::getOrCreateBuildingEntity(uint32_t buildingType)
     return entity;
 }
 
-void PlayerController::removeAllExistingBuildingPlacements()
+void HumanController::removeAllExistingBuildingPlacements()
 {
     for (const auto& it : m_currentBuildingPlacements)
     {
@@ -479,7 +480,7 @@ void PlayerController::removeAllExistingBuildingPlacements()
     m_currentBuildingPlacements.clear();
 }
 
-void PlayerController::createConnectedBuildingPlacements(
+void HumanController::createConnectedBuildingPlacements(
     const std::list<TilePosWithOrientation>& connectedBuildings, uint32_t buildingType)
 {
     for (auto& connectedBuilding : connectedBuildings)
@@ -489,8 +490,8 @@ void PlayerController::createConnectedBuildingPlacements(
     }
 }
 
-void PlayerController::validateAndSnapBuildingToTile(BuildingPlacementData& placement,
-                                                     const Feet& pos)
+void HumanController::validateAndSnapBuildingToTile(BuildingPlacementData& placement,
+                                                    const Feet& pos)
 {
     auto [transform, building] =
         m_stateMan->getComponents<CompTransform, CompBuilding>(placement.entity);
@@ -535,7 +536,7 @@ void PlayerController::validateAndSnapBuildingToTile(BuildingPlacementData& plac
 #endif
 }
 
-void PlayerController::confirmBuildingPlacement(const BuildingPlacementData& placement) const
+void HumanController::confirmBuildingPlacement(const BuildingPlacementData& placement) const
 {
     auto [building, transform, player, info] =
         m_stateMan->getComponents<CompBuilding, CompTransform, CompPlayer, CompEntityInfo>(
@@ -551,7 +552,7 @@ void PlayerController::confirmBuildingPlacement(const BuildingPlacementData& pla
 }
 
 // Careful when calling this inside a m_currentBuildingPlacements loop
-void PlayerController::concludeBuildingPlacement(uint32_t placementId)
+void HumanController::concludeBuildingPlacement(uint32_t placementId)
 {
     if (m_currentBuildingPlacements.contains(placementId))
     {
@@ -567,7 +568,7 @@ void PlayerController::concludeBuildingPlacement(uint32_t placementId)
     }
 }
 
-void PlayerController::concludeAllBuildingPlacements()
+void HumanController::concludeAllBuildingPlacements()
 {
     for (auto it = m_currentBuildingPlacements.begin(); it != m_currentBuildingPlacements.end();)
     {
@@ -580,7 +581,7 @@ void PlayerController::concludeAllBuildingPlacements()
 //  Garrison related
 // =================================================================================================
 
-void PlayerController::initiateGarrison()
+void HumanController::initiateGarrison()
 {
     spdlog::debug("Garrison initiated");
     m_garrisonOperationInProgress = true;
@@ -588,7 +589,7 @@ void PlayerController::initiateGarrison()
                  GarrisonData{.player = m_player, .inprogress = true});
 }
 
-void PlayerController::initiateUngarrison()
+void HumanController::initiateUngarrison()
 {
     if (m_currentEntitySelection.type == EntitySelectionData::Type::BUILDING &&
         m_currentEntitySelection.selection.selectedEntities.empty() == false)
@@ -599,7 +600,7 @@ void PlayerController::initiateUngarrison()
     }
 }
 
-void PlayerController::concludeGarrison()
+void HumanController::concludeGarrison()
 {
     if (m_garrisonOperationInProgress)
     {
@@ -609,7 +610,7 @@ void PlayerController::concludeGarrison()
     }
 }
 
-void PlayerController::tryCompleteGarrison(uint32_t unitId, uint32_t targetBuildingEntityId)
+void HumanController::tryCompleteGarrison(uint32_t unitId, uint32_t targetBuildingEntityId)
 {
     auto garrison = m_stateMan->tryGetComponent<CompGarrison>(targetBuildingEntityId);
     if (garrison != nullptr && m_currentEntitySelection.type == EntitySelectionData::Type::UNIT)
@@ -629,7 +630,7 @@ void PlayerController::tryCompleteGarrison(uint32_t unitId, uint32_t targetBuild
 //  Selection related
 // =================================================================================================
 
-void PlayerController::selectEntities(const Vec2& screenPos)
+void HumanController::selectEntities(const Vec2& screenPos)
 {
     // Invalidate in-progress selection if mouse hasn't moved much. Essentially, avoiding
     // tiny selection boxes. Which will result in treating this as a click-to-select.
@@ -664,7 +665,7 @@ void PlayerController::selectEntities(const Vec2& screenPos)
  *   all requested entities since it ensures selection is homogeneous. eg: units and
  *   buildings cannot be in the same selection.
  */
-void PlayerController::selectHomogeneousEntities(const std::vector<uint32_t>& selectedEntities)
+void HumanController::selectHomogeneousEntities(const std::vector<uint32_t>& selectedEntities)
 {
     bool containsUnits = false;
     bool containsBuildings = false;
@@ -734,7 +735,7 @@ void PlayerController::selectHomogeneousEntities(const std::vector<uint32_t>& se
                  EntitySelectionData{.type = selectionType, .selection = selection});
 }
 
-void PlayerController::handleClickToSelect(const Vec2& screenPos)
+void HumanController::handleClickToSelect(const Vec2& screenPos)
 {
     auto result = m_stateMan->whatIsAt(screenPos);
 
@@ -750,7 +751,7 @@ void PlayerController::handleClickToSelect(const Vec2& screenPos)
     }
 }
 
-void PlayerController::completeSelectionBox(const Vec2& startScreenPos, const Vec2& endScreenPos)
+void HumanController::completeSelectionBox(const Vec2& startScreenPos, const Vec2& endScreenPos)
 {
     // FIXME: Doing multiple drag selection seems to break the selection logic
     std::vector<uint32_t> overlappingEntities;
@@ -764,7 +765,7 @@ void PlayerController::completeSelectionBox(const Vec2& startScreenPos, const Ve
     decouple selection and other selection-based activities (such as movements). Additionally
     it allows integ tests to control unit selection easily using events.
  */
-bool PlayerController::onUnitSelection(const Event& e)
+bool HumanController::onUnitSelection(const Event& e)
 {
     DiagnosticContext::getInstance().put("P", m_player->getId());
 
@@ -772,7 +773,7 @@ bool PlayerController::onUnitSelection(const Event& e)
     return false;
 }
 
-void PlayerController::updateSelection(const EntitySelectionData& newSelection)
+void HumanController::updateSelection(const EntitySelectionData& newSelection)
 {
     // Clear any existing selections
     for (auto& entity : m_currentEntitySelection.selection.selectedEntities)
@@ -790,9 +791,9 @@ void PlayerController::updateSelection(const EntitySelectionData& newSelection)
     }
 }
 
-void PlayerController::getAllOverlappingEntities(const Vec2& startScreenPos,
-                                                 const Vec2& endScreenPos,
-                                                 std::vector<uint32_t>& entitiesToAddToSelection)
+void HumanController::getAllOverlappingEntities(const Vec2& startScreenPos,
+                                                const Vec2& endScreenPos,
+                                                std::vector<uint32_t>& entitiesToAddToSelection)
 {
     int selectionLeft = std::min(startScreenPos.x, endScreenPos.x);
     int selectionRight = std::max(startScreenPos.x, endScreenPos.x);
@@ -831,7 +832,7 @@ void PlayerController::getAllOverlappingEntities(const Vec2& startScreenPos,
         });
 }
 
-void PlayerController::rotateCurrentPlacement()
+void HumanController::rotateCurrentPlacement()
 {
     if (m_currentBuildingPlacements.size() == 1)
     {
@@ -855,8 +856,8 @@ void PlayerController::rotateCurrentPlacement()
     }
 }
 
-void PlayerController::changePlacementOrientation(BuildingPlacementData& placement,
-                                                  BuildingOrientation orientation)
+void HumanController::changePlacementOrientation(BuildingPlacementData& placement,
+                                                 BuildingOrientation orientation)
 {
     placement.orientation = orientation;
     auto& building = m_stateMan->getComponent<CompBuilding>(placement.entity);
@@ -866,7 +867,7 @@ void PlayerController::changePlacementOrientation(BuildingPlacementData& placeme
     StateManager::markDirty(placement.entity);
 }
 
-void PlayerController::createOrUpdateFormation(const Feet& targetPos)
+void HumanController::createOrUpdateFormation(const Feet& targetPos)
 {
     if (m_currentEntitySelection.selection.selectedEntities.size() > 1)
     {

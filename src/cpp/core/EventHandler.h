@@ -51,7 +51,7 @@ class EventHandler
 
   private:
     using CallbackFn = std::function<bool(const Event&)>;
-    static constexpr size_t MAX_EVENT_TYPES = static_cast<size_t>(Event::Type::MAX_TYPE_MARKER);
+    static constexpr size_t MAX_EVENT_TYPES = static_cast<size_t>(Event::Type::MAX_EVENT_TYPES);
     std::array<CallbackFn, MAX_EVENT_TYPES> m_callbacksTable;
 };
 } // namespace core

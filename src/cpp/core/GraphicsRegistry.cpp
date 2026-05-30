@@ -13,7 +13,7 @@ void GraphicsRegistry::registerTexture(const GraphicsID& graphicID, const Textur
     auto it = m_textureMap.find(graphicID);
     if (it != m_textureMap.end())
     {
-        spdlog::warn("Texture ID already exists, updating: {}", graphicID.toString());
+        spdlog::warn("Texture already exists, overriding. ID {}", graphicID.toShortString());
         it->second = entry;
     }
     else
@@ -37,12 +37,14 @@ const Texture& GraphicsRegistry::getTexture(const GraphicsID& graphicID) const
     auto it = m_textureMap.find(graphicID);
     if (it == m_textureMap.end())
     {
-        spdlog::error("Graphic ID not found in registry: {}. Following are existing IDs",
+        spdlog::error("Failed to find texture for Graphic ID in the registry: {}.",
                       graphicID.toString());
+
+        spdlog::warn("Existing textures in the registry are following;");
 
         for (auto& e : m_textureMap)
         {
-            spdlog::error("{}", e.first.toString());
+            spdlog::warn("{}", e.first.toString());
         }
 
         throw std::runtime_error("Graphic ID not found in registry:" + graphicID.toString());

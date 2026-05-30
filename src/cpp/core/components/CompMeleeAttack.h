@@ -7,7 +7,7 @@
 
 namespace core
 {
-class CompAttack
+class CompMeleeAttack
 {
   public:
     Property<std::vector<int>> attackPerClass;

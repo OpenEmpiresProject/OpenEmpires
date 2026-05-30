@@ -49,9 +49,12 @@ class DemoWorldCreator : public WorldCreator, public core::PropertyInitializer
     void createMiningCluster(uint32_t entityType, uint32_t xHint, uint32_t yHint, uint8_t amount);
     void createStoneOrGold(uint32_t entityType, uint32_t x, uint32_t y);
     void createVillager(core::Ref<core::Player> player, const core::Tile& pos);
-    void createMilitia(core::Ref<core::Player> player, const core::Tile& pos);
+    void createMilitaryUnit(const std::string& type,
+                            core::Ref<core::Player> player,
+                            const core::Tile& pos);
 
     core::LazyServiceRef<core::StateManager> m_stateMan;
+    core::LazyServiceRef<core::Coordinates> m_coordinates;
     bool m_isReady = false;
 
   private:

@@ -325,7 +325,7 @@ TEST_F(EntityModelLoaderTest, CreateUnit)
         auto& graphicComp = m_stateMan->getComponent<CompGraphics>(militia);
         auto& selectible = m_stateMan->getComponent<CompSelectible>(militia);
         auto& transform = m_stateMan->getComponent<CompTransform>(militia);
-        auto& attack = m_stateMan->getComponent<CompAttack>(militia);
+        auto& attack = m_stateMan->getComponent<CompMeleeAttack>(militia);
         auto& health = m_stateMan->getComponent<CompHealth>(militia);
         auto& armor = m_stateMan->getComponent<CompArmor>(militia);
 
@@ -669,6 +669,53 @@ TEST_F(EntityModelLoaderTest, CreateUIElement)
 
         EXPECT_EQ(uiComp.uiElementType.value(), (int) UIElementTypes::RESOURCE_PANEL);
         EXPECT_EQ(info.entityType.value(), (int) EntityTypes::ET_UI_ELEMENT);
+    }
+    catch (const py::error_already_set& e)
+    {
+        FAIL() << e.what();
+    }
+}
+
+
+TEST_F(EntityModelLoaderTest, RangeUnit)
+{
+    try
+    {
+        // Arrange
+        Ref<DummyDRSInterface> dummyDRS =
+            std::dynamic_pointer_cast<DummyDRSInterface>(m_drsInterface);
+        dummyDRS->boundingBoxToReturn = Rect<int>(0, 0, 32, 32);
+
+        EntityModelLoaderV2 loader(m_baseScriptDir, "archer.model_importer", m_drsInterface);
+        loader.init();
+
+        // Act
+        auto factory = dynamic_cast<EntityFactory*>(&loader);
+        auto archer = factory->createEntity(m_typeReg->getEntityType("archer"));
+
+        // Assert
+        auto& rangeAttack = m_stateMan->getComponent<CompRangeAttack>(archer);
+
+        auto& primaryProjectile = rangeAttack.primaryProjectile.value();
+        auto& secondaryProjectiles = rangeAttack.secondaryProjectiles.value();
+
+        EXPECT_EQ(rangeAttack.damageMode.value(), ProjectileDamageMode::ON_HIT);
+        EXPECT_EQ(rangeAttack.projectileEntityType, m_typeReg->getEntityType("projectile"));
+        EXPECT_EQ(rangeAttack.attackRange, 256*4);
+
+        EXPECT_EQ(primaryProjectile.attackPerClass[(int) ArmorClass::INFANTRY], 0);
+        EXPECT_EQ(primaryProjectile.attackPerClass[(int) ArmorClass::MELEE], 10);
+        EXPECT_EQ(primaryProjectile.attackPerClass[(int) ArmorClass::PIERCE], 5);
+        EXPECT_FLOAT_EQ(primaryProjectile.attackMultiplierPerClass[(int) ArmorClass::INFANTRY], 1);
+        EXPECT_FLOAT_EQ(primaryProjectile.attackMultiplierPerClass[(int) ArmorClass::MELEE], 1.5);
+        EXPECT_FLOAT_EQ(primaryProjectile.attackMultiplierPerClass[(int) ArmorClass::PIERCE], 0.5);
+        EXPECT_FLOAT_EQ(primaryProjectile.accuracy, 1);
+        EXPECT_FLOAT_EQ(primaryProjectile.reloadTimeS, 1);
+
+        EXPECT_EQ(secondaryProjectiles[0].attackPerClass[(int) ArmorClass::MELEE], 5);
+        EXPECT_EQ(secondaryProjectiles[0].attackPerClass[(int) ArmorClass::PIERCE], 2);
+        EXPECT_FLOAT_EQ(secondaryProjectiles[0].accuracy, 0.8);
+        EXPECT_FLOAT_EQ(secondaryProjectiles[0].reloadTimeS, 2);
     }
     catch (const py::error_already_set& e)
     {

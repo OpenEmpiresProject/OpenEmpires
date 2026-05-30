@@ -1,24 +1,15 @@
-#ifndef CMDBUILD_H
-#define CMDBUILD_H
+#ifndef CORE_CMDRANGEATTACK_H
+#define CORE_CMDRANGEATTACK_H
 
-#include "commands/Command.h"
+#include "Command.h"
+#include "EntityFactory.h"
 
 namespace core
 {
-class Settings;
-class PathService;
-class Feet;
-template <typename T> class Rect;
-
-class CmdBuild : public Command
+class CmdRangeAttack : public Command
 {
   public:
     uint32_t target = entt::null;
-
-  private:
-    float m_constructionContribution = 0;
-    LazyServiceRef<Settings> m_settings;
-    LazyServiceRef<PathService> m_pathService;
 
   private:
     void onStart() override;
@@ -27,14 +18,18 @@ class CmdBuild : public Command
     std::string toString() const override;
     Command* clone() override;
     void destroy() override;
+
+    void attack(int deltaTimeMs);
     void animate(int deltaTimeMs, int currentTick);
     bool isCloseEnough();
     bool isComplete();
-    void build(int deltaTimeMs);
     void moveCloser(std::list<Command*>& newCommands);
-    bool lookForAnotherSiteToBuild(std::list<Command*>& newCommands);
-    bool lookForResourceToGather(std::list<Command*>& newCommands);
+
+    int timeSinceLastAnimationEndMs = 0;
+    bool createProjectile = false;
+
+    LazyServiceRef<EntityFactory> m_entityFactory;
 };
 } // namespace core
 
-#endif
+#endif // CORE_CMDRANGEATTACK_H

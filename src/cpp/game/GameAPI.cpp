@@ -6,7 +6,7 @@
 #include "EventLoop.h"
 #include "EventPublisher.h"
 #include "GameTypes.h"
-#include "PlayerController.h"
+#include "HumanController.h"
 #include "PlayerFactory.h"
 #include "Renderer.h"
 #include "ServiceRegistry.h"
@@ -20,6 +20,7 @@
 #include "components/CompBuilder.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
+#include "components/CompHealth.h"
 #include "components/CompPlayer.h"
 #include "components/CompRendering.h"
 #include "components/CompResourceGatherer.h"
@@ -72,7 +73,7 @@ Ref<Player> GameAPI::getPrimaryPlayer()
 {
     ScopedSynchronizer sync(m_sync);
 
-    auto controller = ServiceRegistry::getInstance().getService<PlayerController>();
+    auto controller = ServiceRegistry::getInstance().getService<HumanController>();
     return controller->getPlayer();
 }
 
@@ -156,7 +157,11 @@ void GameAPI::commandToMove(uint32_t unit, const Feet& target)
     auto eventLoop = static_pointer_cast<EventLoop>(subSys);
     auto eventPublisher = static_pointer_cast<EventPublisher>(eventLoop);
 
+    auto stateMan = ServiceRegistry::getInstance().getService<StateManager>();
+    auto& transform = stateMan->getComponent<CompTransform>(unit);
+
     auto cmd = ObjectPool<CmdMove>::acquire();
+    cmd->collisionRadius = transform.collisionRadius;
     cmd->target.emplace(target, Target::Type::POSITION);
     Event event(Event::Type::COMMAND_REQUEST, CommandRequestData{cmd, unit});
 

@@ -1,24 +1,25 @@
-#ifndef CMDBUILD_H
-#define CMDBUILD_H
+#ifndef CMDATTACK_H
+#define CMDATTACK_H
 
+#include "CmdMove.h"
 #include "commands/Command.h"
+#include "components/CompAction.h"
+#include "components/CompAnimation.h"
+#include "components/CompArmor.h"
+#include "components/CompHealth.h"
+#include "components/CompMeleeAttack.h"
+#include "components/CompTransform.h"
+#include "utils/ObjectPool.h"
 
 namespace core
 {
-class Settings;
-class PathService;
-class Feet;
-template <typename T> class Rect;
-
-class CmdBuild : public Command
+class CmdMeleeAttack : public Command
 {
   public:
     uint32_t target = entt::null;
 
-  private:
-    float m_constructionContribution = 0;
-    LazyServiceRef<Settings> m_settings;
-    LazyServiceRef<PathService> m_pathService;
+  protected:
+    float getDamage(const CompArmor& target) const;
 
   private:
     void onStart() override;
@@ -27,14 +28,17 @@ class CmdBuild : public Command
     std::string toString() const override;
     Command* clone() override;
     void destroy() override;
+
+    void attack(int deltaTimeMs);
     void animate(int deltaTimeMs, int currentTick);
     bool isCloseEnough();
     bool isComplete();
-    void build(int deltaTimeMs);
     void moveCloser(std::list<Command*>& newCommands);
-    bool lookForAnotherSiteToBuild(std::list<Command*>& newCommands);
-    bool lookForResourceToGather(std::list<Command*>& newCommands);
+
+  private:
+    int timeSinceLastAttackMs = 0;
 };
+
 } // namespace core
 
 #endif

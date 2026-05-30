@@ -2,8 +2,8 @@
 
 #include "Coordinates.h"
 #include "Event.h"
+#include "HumanController.h"
 #include "ImGuiHelper.h"
-#include "PlayerController.h"
 #include "ServiceRegistry.h"
 #include "StateManager.h"
 #include "components/CompAction.h"
@@ -14,6 +14,7 @@
 #include "components/CompGraphics.h"
 #include "components/CompHealth.h"
 #include "components/CompPlayer.h"
+#include "components/CompProjectile.h"
 #include "components/CompResource.h"
 #include "components/CompSelectible.h"
 #include "components/CompTransform.h"
@@ -226,6 +227,37 @@ void GraphicsInstructor::updateGraphicComponents()
             // frame data directly.
             gc.bypass = true;
             m_synchronizer.getSenderFrameData().cursor = cursorComp->cursor;
+        }
+
+        if (auto projectile = m_stateManager->tryGetComponent<CompProjectile>(entity))
+        {
+            // Always does the projectile position and angle calculation, but this is
+            // first time point, so cannot really calculate the correct angle without
+            // the previous position.
+            gc.isEnabled = not projectile->previousPixelPos.isNull();
+
+            // Calculate projectile height in feet, convert to pixel height and use
+            // self relative offset to draw it.
+            auto pixelsPerFoot =
+                (float) Constants::TILE_PIXEL_HEIGHT / (2 * Constants::FEET_PER_TILE);
+            auto arcHeight = projectile->getHeight(transform.position);
+            auto arcHeightInPixels = arcHeight * pixelsPerFoot;
+            arcHeightInPixels += projectile->releaseHeight;
+            gc.selfRelativePixelPosition = Vec2(0, -1 * arcHeightInPixels);
+
+            // Calculate projectile visual angle (from -Y pixel direction) to deduce
+            // the variation number.
+            auto pixelPos =
+                m_coordinates->feetToPixels(transform.position) + gc.selfRelativePixelPosition;
+            auto angleDegrees = projectile->calculateVisualAngle(pixelPos);
+            if (angleDegrees < 0)
+            {
+                angleDegrees += 360;
+            }
+
+            // TODO: Should not hard code the number of projectile frames. This will
+            // work only for arrows.
+            gc.variation = (angleDegrees / 360) * 71;
         }
     }
 }

@@ -541,8 +541,8 @@ core::Feet PathService::findClosestVacantPosAroundLand(uint32_t forUnit,
 
     int closestDistanceSq = std::numeric_limits<int>::max();
     Tile closestTile = Tile::null;
-    Tile neighboredTo = Tile::null;
 
+    // TODO: Could optimize this to a void the brute force
     for (auto& tile : land.tiles)
     {
         for (auto& offset : surroundingOffsets)
@@ -559,25 +559,38 @@ core::Feet PathService::findClosestVacantPosAroundLand(uint32_t forUnit,
                 {
                     closestDistanceSq = distanceSq;
                     closestTile = surrounding;
-                    neighboredTo = tile;
                 }
             }
         }
     }
 
-    if (closestTile == Tile::null || neighboredTo == Tile::null)
+    if (closestTile == Tile::null)
     {
-        // fallback: maybe return fromPos or closest land tile center
+        // fall back
         return fromPos;
     }
 
-    // Get the final position which is just close enough to the building
-    Feet directionToNeighbor = neighboredTo.centerInFeet() - closestTile.centerInFeet();
-    float distance = directionToNeighbor.length() + 0.01f;
-    directionToNeighbor = directionToNeighbor.normalized();
-    float distanceToAdjust = distance * 0.45f; // Very closer to the boundary
+    /*
+     *   Now we have the closest surrounding tile to the fromPos. But we need
+     *   to find the closest edge of the land area.
+     *   Iterate through all land tiles and find the closest land tile, then
+     *   calculate the Feet position just outside (45% towards the land) that
+     *   land tile.
+     */
 
-    Feet vacantPos = closestTile.centerInFeet() + (directionToNeighbor * distanceToAdjust);
+    int closestTileDistanceSq = std::numeric_limits<int>::max();
+    Tile closestLandTile = Tile::null;
 
-    return vacantPos;
+    for (auto& tile : land.tiles)
+    {
+        int distanceSq = closestTile.distanceSquared(tile);
+        if (distanceSq < closestTileDistanceSq)
+        {
+            closestLandTile = tile;
+            closestTileDistanceSq = distanceSq;
+        }
+    }
+
+    Feet directionToLandTile = closestLandTile.centerInFeet() - closestTile.centerInFeet();
+    return closestTile.centerInFeet() + (directionToLandTile * 0.45f);
 }

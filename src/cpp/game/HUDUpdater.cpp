@@ -2,7 +2,7 @@
 
 #include "GameTypes.h"
 #include "GraphicsRegistry.h"
-#include "PlayerController.h"
+#include "HumanController.h"
 #include "PlayerFactory.h"
 #include "components/CompBuilding.h"
 #include "components/CompEntityInfo.h"

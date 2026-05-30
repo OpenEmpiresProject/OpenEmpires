@@ -16,7 +16,11 @@ class House(Constructible, Building, Housing):
     pass
 
 
-class Villager(Constructible, Unit, Builder, Gatherer):
+class MeleeUnit(Constructible, Unit, Attack):
+    pass
+
+
+class Villager(Constructible, Unit, Attack, Builder, Gatherer):
     pass
 
 
@@ -32,7 +36,7 @@ class Gate(Constructible, Building):
     pass
 
 
-class MilitaryUnit(Constructible, Unit):
+class RangeUnit(Constructible, Unit, RangeAttack):
     pass
 
 

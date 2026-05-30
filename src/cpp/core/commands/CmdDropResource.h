@@ -119,6 +119,7 @@ class CmdDropResource : public Command
             spdlog::debug("Target {} at {} is not close enough to drop-off, moving...",
                           m_dropOffEntity, dropOff.position.toString());
             auto moveCmd = ObjectPool<CmdMove>::acquire();
+            moveCmd->collisionRadius = m_components->transform.collisionRadius;
             moveCmd->target.emplace(m_dropOffEntity);
             moveCmd->actionOverride = m_gatherer->getCarryingAction(resourceType);
             moveCmd->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);

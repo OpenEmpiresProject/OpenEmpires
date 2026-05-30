@@ -2,6 +2,7 @@
 
 #include "CmdGatherResource.h"
 #include "Feet.h"
+#include "PathService.h"
 #include "Rect.h"
 #include "Settings.h"
 #include "StateManager.h"
@@ -174,12 +175,23 @@ void CmdBuild::moveCloser(std::list<Command*>& subCommands)
 {
     debug_assert(target != entt::null, "Proposed entity to build is null");
 
-    const auto& targetPosition = m_stateMan->getComponent<CompTransform>(target).position;
+    auto [targetTransform, targetBuilding] =
+        m_stateMan->getComponents<CompTransform, CompBuilding>(target);
 
-    spdlog::debug("Target {} at {} (tile {}) is not close enough to build, moving...", target,
-                  targetPosition.toString(), targetPosition.toTile().toString());
+    const auto& targetPosition = targetTransform.position;
+
+    spdlog::debug("Target {} at {} (tile {}) is not close enough to build from {}, moving...", target,
+                  targetPosition.toString(), targetPosition.toTile().toString(), m_components->transform.position.toString());
     auto moveCmd = ObjectPool<CmdMove>::acquire();
-    moveCmd->target.emplace(target);
+    moveCmd->collisionRadius = m_components->transform.collisionRadius;
+
+    auto targetPos = m_pathService->findClosestVacantPosAroundLand(
+        m_entityID, m_components->transform.position, targetBuilding.landArea);
+
+    Target targetData(targetPos, Target::Type::BUILDING);
+    targetData.arrivalEvaluator = [this](const Feet&) { return this->isCloseEnough(); };
+
+    moveCmd->target.emplace(targetData);
     moveCmd->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
     subCommands.push_back(moveCmd);
 }

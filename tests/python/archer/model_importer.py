@@ -1,18 +1,28 @@
 from game_model_defs import *
 
 all_models = [
-	MeleeUnit(
-        name="militia",
-        display_name="Militia",
-        unit_type = UnitType.INFANTRY,
+	RangeUnit(
+        name="archer",
+        display_name="Archer",
+        unit_type = UnitType.ARCHER,
         line_of_sight=256*5,
         moving_speed=256,
         housing_need=1,
         health=100,
         damage_resistance=0.1,
-        attack_rate=2,
-        attack={ArmorClass.MELEE: 10, ArmorClass.PIERCE: 5},
-        attack_multiplier={ArmorClass.MELEE: 1.5, ArmorClass.PIERCE: 0.5},
+        primary_projectile=ProjectileProperties(
+            attack={ArmorClass.MELEE: 10, ArmorClass.PIERCE: 5},
+            attack_multiplier={ArmorClass.MELEE: 1.5, ArmorClass.PIERCE: 0.5},
+            accuracy=1,
+            reload_time=1),
+        secondary_projectiles=[ProjectileProperties(
+            attack={ArmorClass.MELEE: 5, ArmorClass.PIERCE: 2},
+            attack_multiplier={ArmorClass.MELEE: 1.5, ArmorClass.PIERCE: 0.5},
+            accuracy=0.8,
+            reload_time=2)],
+        projectile_entity_type="projectile",
+        damage_mode=ProjectileDamageMode.ON_HIT,
+        attack_range=256*4,
         armor={ArmorClass.MELEE: 20, ArmorClass.PIERCE: 25},
         icon=Icon(drs_file="interfac.drs", slp_id=50730, index=8),
         graphics=Graphic(
@@ -27,7 +37,7 @@ all_models = [
     )
 ]
 
-all_entity_names = ["militia"]
+all_entity_names = ["archer", "projectile"]
 
 def validate_all():
     return True

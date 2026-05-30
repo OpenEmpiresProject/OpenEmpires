@@ -4,7 +4,7 @@
 #include "EntityFactory.h"
 #include "EntityTypeRegistry.h"
 #include "GameTypes.h"
-#include "PlayerController.h"
+#include "HumanController.h"
 #include "PlayerFactory.h"
 #include "Renderer.h"
 #include "ServiceRegistry.h"

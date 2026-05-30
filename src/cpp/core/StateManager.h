@@ -97,6 +97,10 @@ class StateManager
         MapLayerType layer = MapLayerType::MAX_LAYERS;
     };
 
+    std::list<uint32_t> getUnitsAround(const Feet& pos,
+                                       std::optional<uint32_t> excludeEntity1,
+                                       std::optional<uint32_t> excludeEntity2) const;
+
     TileMapQueryResult whatIsAt(const Vec2& screenPos);
 
     bool canPlaceBuildingAt(const CompBuilding& building, bool& outOfMap);

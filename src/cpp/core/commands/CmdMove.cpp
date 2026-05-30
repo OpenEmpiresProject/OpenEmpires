@@ -53,14 +53,8 @@ void CmdMove::onQueue()
         if (target->entity.has_value())
         {
             auto targetEntity = target->entity.value();
-            if (auto building = m_stateMan->tryGetComponent<CompBuilding>(targetEntity))
-            {
-                auto targetPos = m_pathService->findClosestVacantPosAroundLand(
-                    m_entityID, m_components->transform.position, building->landArea);
 
-                target.emplace(targetPos, Target::Type::BUILDING, targetEntity);
-            }
-            else if (m_stateMan->hasComponent<CompResource>(targetEntity))
+            if (m_stateMan->hasComponent<CompResource>(targetEntity))
             {
                 auto [resource, transform] =
                     m_stateMan->getComponents<CompResource, CompTransform>(targetEntity);
@@ -77,11 +71,6 @@ void CmdMove::onQueue()
                 auto& targetTransform = m_stateMan->getComponent<CompTransform>(targetEntity);
                 auto targetPos = targetTransform.position;
                 target.emplace(targetPos, Target::Type::UNIT, targetEntity);
-            }
-            else
-            {
-                spdlog::warn("Unknown target type of entity {} for unit {}", targetEntity,
-                             m_entityID);
             }
         }
     }
@@ -297,10 +286,13 @@ core::Command* CmdMove::clone()
 
 bool CmdMove::isPositionCloseEnough(const Feet& pos) const
 {
+    if (target->arrivalEvaluator.has_value())
+    {
+        return target->arrivalEvaluator.value()(pos);
+    }
     // For movement to be precise, we use reduced collision radius
 
     auto distanceSq = m_components->transform.position.distanceSquared(pos);
-    auto collisionRadius = m_components->transform.collisionRadius / 4;
 
     return distanceSq < (collisionRadius * collisionRadius);
 }

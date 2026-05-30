@@ -3,6 +3,10 @@ from typing import Type, Any, Tuple, get_origin, get_args, Union
 from pydantic import BaseModel, ValidationError, create_model, Field
 from models import *
 
+##########################################################
+# Do not use unicode for prints in python. It makes gtest
+# to crash when run from visual studio with integ tests
+##########################################################
 
 def resolve_type_recursively(type_annotation: Type) -> Type:
     """
@@ -116,11 +120,11 @@ def validate_entity(entity_instance) -> int:
     data_to_validate = entity_instance.__dict__
     try:
         DynamicSchema.model_validate(data_to_validate)
-        print(f"[✓] Validation successful for {entity_instance.name if hasattr(entity_instance, 'name') else entity_cls}")
+        print(f"Validation successful for {entity_instance.name if hasattr(entity_instance, 'name') else entity_cls}")
         return 0
     
     except ValidationError as e:
-        print(f"[✗] Validation failed for {entity_instance.name if hasattr(entity_instance, 'name') else entity_cls}:")
+        print(f"Validation failed for {entity_instance.name if hasattr(entity_instance, 'name') else entity_cls}:")
         for err in e.errors():
             parts_str = [str(part) for part in err['loc']]
             print(f"\tField: {'.'.join(parts_str)}, Error: {err['msg']}")
@@ -146,9 +150,9 @@ def validate_all() -> bool:
     errors_count += validate_entity_list(all_ui_elements)
 
     if errors_count:
-        print(f"\n❌ Validation completed with {errors_count} error(s).")
+        print(f"\nValidation completed with {errors_count} error(s).")
     else:
-        print(f"\n✅ Validation completed successfully without any errors.")
+        print(f"\nValidation completed successfully without any errors.")
 
     return errors_count == 0
     

@@ -1,133 +1,66 @@
-#include "commands/CmdAttack.h"
+#include "CmdAttack.h"
 
-#include "ProximityChecker.h"
-#include "components/CompUnit.h"
+#include "CmdMeleeAttack.h"
+#include "CmdRangeAttack.h"
+#include "debug.h"
 
-void core::CmdAttack::onStart()
+using namespace core;
+
+void CmdAttack::onQueue()
 {
-    timeSinceLastAttackMs = 0;
-    m_components->unit.formationSlot = FormationSlot();
-}
-
-void core::CmdAttack::onQueue()
-{
-    // TODO: Reset frame to zero (since this is a new command)
-}
-
-bool core::CmdAttack::onExecute(int deltaTimeMs, int currentTick, std::list<Command*>& subCommands)
-{
-    if (isCloseEnough())
+    if (m_stateMan->hasComponent<CompMeleeAttack>(m_entityID))
     {
-        animate(deltaTimeMs, currentTick);
-        attack(deltaTimeMs);
+        auto cmd = ObjectPool<CmdMeleeAttack>::acquire();
+        cmd->target = target;
+        m_attackCommand = cmd;
+    }
+    else if (m_stateMan->hasComponent<CompRangeAttack>(m_entityID))
+    {
+        auto cmd = ObjectPool<CmdRangeAttack>::acquire();
+        cmd->target = target;
+        m_attackCommand = cmd;
     }
     else
     {
-        moveCloser(subCommands);
+        debug_assert(false,
+                     "Attack command is valid only on either melee or range units. {} is neither",
+                     m_entityID);
     }
-
-    bool isCompleted = isComplete();
-    if (isCompleted)
-    {
-        /*if (not lookForAnotherToAttack(subCommands))
-        {
-            lookForAnotherToAttack(subCommands);
-        }*/
-    }
-
-    return isCompleted;
+    m_attackCommand->setEntityID(m_entityID);
+    m_attackCommand->init();
+    m_attackCommand->setPriority(getPriority());
+    m_attackCommand->onQueue();
 }
 
-std::string core::CmdAttack::toString() const
+void CmdAttack::onStart()
 {
-    return "attack";
+    m_attackCommand->onStart();
 }
 
-core::Command* core::CmdAttack::clone()
+bool CmdAttack::onExecute(int deltaTimeMs, int currentTick, std::list<Command*>& subCommands)
+{
+    return m_attackCommand->onExecute(deltaTimeMs, currentTick, subCommands);
+}
+
+std::string CmdAttack::toString() const
+{
+    return m_attackCommand->toString();
+}
+
+core::Command* CmdAttack::clone()
 {
     return ObjectPool<CmdAttack>::acquire(*this);
 }
 
-void core::CmdAttack::destroy()
+void CmdAttack::destroy()
 {
     ObjectPool<CmdAttack>::release(this);
-}
-
-void core::CmdAttack::attack(int deltaTimeMs)
-{
-    const auto reloadTimeMs =
-        1000.0f / (m_components->attack.attackRate * m_settings->getGameSpeed());
-    timeSinceLastAttackMs += deltaTimeMs;
-
-    if (timeSinceLastAttackMs >= reloadTimeMs)
+    if (m_stateMan->hasComponent<CompMeleeAttack>(m_entityID))
     {
-        timeSinceLastAttackMs = 0;
-
-        auto [targetArmor, targetHealth] = m_stateMan->getComponents<CompArmor, CompHealth>(target);
-        auto damage = getDamage(targetArmor);
-
-        targetHealth.health -= damage;
-        StateManager::markDirty(target);
-
-        spdlog::debug("Attacked target {} for {} damage. Target health is now {}/{}", target,
-                      damage, targetHealth.health, targetHealth.maxHealth.value());
+        ObjectPool<CmdMeleeAttack>::release((CmdMeleeAttack*) m_attackCommand);
     }
-}
-
-void core::CmdAttack::animate(int deltaTimeMs, int currentTick)
-{
-    m_components->action.action = UnitAction::ATTACK;
-    auto& actionAnimation = m_components->animation.animations[m_components->action.action];
-
-    auto ticksPerFrame =
-        int(m_settings->getTicksPerSecond() / (actionAnimation.speed * m_settings->getGameSpeed()));
-    if (currentTick % ticksPerFrame == 0)
+    else if (m_stateMan->hasComponent<CompRangeAttack>(m_entityID))
     {
-        StateManager::markDirty(m_entityID);
-        m_components->animation.frame++;
-        m_components->animation.frame %= actionAnimation.frames; // Attacking is repeatable
+        ObjectPool<CmdRangeAttack>::release((CmdRangeAttack*) m_attackCommand);
     }
-}
-
-bool core::CmdAttack::isCloseEnough()
-{
-    debug_assert(target != entt::null, "Proposed entity to attack is null");
-
-    return ProximityChecker::isInProximity(m_components->transform, target, m_stateMan.getRef());
-}
-
-bool core::CmdAttack::isComplete()
-{
-    // TODO - Perhaps there are other conditions for completion, such as target being destroyed
-    // or no longer valid (e.g. out of LOS)
-    auto& targetHealth = m_stateMan->getComponent<CompHealth>(target);
-    return targetHealth.health <= 0;
-}
-
-void core::CmdAttack::moveCloser(std::list<Command*>& newCommands)
-{
-    debug_assert(target != entt::null, "Proposed entity to attack is null");
-
-    const auto& targetPosition = m_stateMan->getComponent<CompTransform>(target).position;
-
-    spdlog::debug("Target {} at {} (tile {}) is not close enough to build, moving...", target,
-                  targetPosition.toString(), targetPosition.toTile().toString());
-    auto moveCmd = ObjectPool<CmdMove>::acquire();
-    moveCmd->target.emplace(target);
-    moveCmd->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
-    newCommands.push_back(moveCmd);
-}
-
-float core::CmdAttack::getDamage(const CompArmor& target) const
-{
-    float totalDamage = 0.0f;
-    for (size_t i = 0; i < m_components->attack.attackPerClass.value().size(); ++i)
-    {
-        auto multipliedAttack = m_components->attack.attackPerClass[i] *
-                                m_components->attack.attackMultiplierPerClass[i];
-        auto damage = std::max(0.0f, multipliedAttack - target.armorPerClass[i]);
-        totalDamage += damage;
-    }
-    totalDamage = std::max(1.0f, totalDamage * (1.0f - target.damageResistance.value()));
-    return totalDamage;
 }

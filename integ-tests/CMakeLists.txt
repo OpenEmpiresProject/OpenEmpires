@@ -13,6 +13,12 @@ set_target_properties(openEmpiresIntegTests PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
 )
 
+# Need this to make integ test find python scripts when run via visual
+# studio's Test Explorer due to working directory changes.
+target_compile_definitions(openEmpiresIntegTests PRIVATE
+    PYTHON_MODEL_DIR="${CMAKE_SOURCE_DIR}/assets/scripts"
+)
+
 target_link_libraries(openEmpiresIntegTests PRIVATE game core GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
 
 # Include directories for the C++ source files

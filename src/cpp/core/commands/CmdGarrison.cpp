@@ -69,9 +69,10 @@ void CmdGarrison::moveCloser(std::list<Command*>& subCommands)
 
     const auto& targetPosition = m_stateMan->getComponent<CompTransform>(target).position;
 
-    spdlog::debug("Target {} at {} is not close enough to build, moving...", target,
+    spdlog::debug("Target {} at {} is not close enough to garrison, moving...", target,
                   targetPosition.toString());
     auto moveCmd = ObjectPool<CmdMove>::acquire();
+    moveCmd->collisionRadius = m_components->transform.collisionRadius;
     moveCmd->target.emplace(target);
     moveCmd->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
     subCommands.push_back(moveCmd);

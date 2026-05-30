@@ -158,6 +158,16 @@ struct UnitFormationData
     Ref<BaseUnitFormation> formation;
 };
 
+struct ProjectileData
+{
+    uint32_t projectileEntity = entt::null;
+    Feet originPos = Feet::null;
+    Feet targetPos = Feet::null;
+    ProjectileProperties properties;
+    int speed = 0;
+    int releaseHeight = 0;
+};
+
 struct Event
 {
     enum class Type
@@ -187,8 +197,11 @@ struct Event
         UNIT_FORMATION_COMMAND_MOVE,
         UNGARRISON_REQUEST,
         GARRISON_REQUEST,
-        MAX_TYPE_MARKER,
         CORPSE_REQUEST,
+        PROJECTILE_CREATED, // Use ProjectileData
+
+        // Add new events before this
+        MAX_EVENT_TYPES,
     };
 
     using Data = std::variant<std::monostate,
@@ -209,7 +222,8 @@ struct Event
                               LineOfSightData,
                               BuildingPlacementData,
                               UnitFormationData,
-                              CorpseData>;
+                              CorpseData,
+                              ProjectileData>;
 
     const Type type = Type::NONE;
     const Data data = std::monostate{};

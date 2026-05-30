@@ -2,7 +2,6 @@
 #define GAME_COMPONENTMODELMAPPER_H
 #include "Property.h"
 #include "components/CompArmor.h"
-#include "components/CompAttack.h"
 #include "components/CompBuilder.h"
 #include "components/CompBuilding.h"
 #include "components/CompEntityInfo.h"
@@ -10,6 +9,9 @@
 #include "components/CompGraphics.h"
 #include "components/CompHealth.h"
 #include "components/CompHousing.h"
+#include "components/CompMeleeAttack.h"
+#include "components/CompProjectile.h"
+#include "components/CompRangeAttack.h"
 #include "components/CompRendering.h"
 #include "components/CompResource.h"
 #include "components/CompResourceGatherer.h"
@@ -37,6 +39,9 @@ extern std::unordered_set<core::UnitType> getGarrisonableUnitTypes(const std::an
 extern core::Ref<core::Command> getUnitDefaultCommand(const std::any&);
 extern std::vector<int> getAttackOrArmorPerClass(const std::any&);
 extern std::vector<float> getMultiplierPerClass(const std::any&);
+extern core::ProjectileDamageMode getProjectileDamageMode(const std::any&);
+extern core::ProjectileProperties getProjectile(const std::any&);
+extern std::vector<core::ProjectileProperties> getProjectilesList(const std::any&);
 
 namespace game
 {
@@ -134,7 +139,7 @@ class ComponentModelMapper
     using ComponentType = std::variant<core::CompAction,
                                        core::CompAnimation,
                                        core::CompArmor,
-                                       core::CompAttack,
+                                       core::CompMeleeAttack,
                                        core::CompBuilder,
                                        core::CompBuilding,
                                        core::CompEntityInfo,
@@ -151,7 +156,9 @@ class ComponentModelMapper
                                        core::CompUnitFactory,
                                        core::CompUIElement,
                                        core::CompUnit,
-                                       core::CompVision>;
+                                       core::CompVision,
+                                       core::CompProjectile,
+                                       core::CompRangeAttack>;
 
     // clang-format off
     static constexpr auto mappings()
@@ -191,10 +198,18 @@ class ComponentModelMapper
             ModelPropertyMapping<&core::CompArmor::armorPerClassMap>                ("Armor", "armor"),
             ModelPropertyMapping<&core::CompArmor::damageResistance>                ("Armor", "damage_resistance"),
             ModelPropertyMapping<&core::CompArmor::baseArmor>                       ("Armor", "base_armor"),
-            ModelPropertyMapping<&core::CompAttack::attackRate>                     ("Attack", "attack_rate"),
-            ModelPropertyMapping<&core::CompAttack::attackPerClass>                 ("Attack", "attack", getAttackOrArmorPerClass),
-            ModelPropertyMapping<&core::CompAttack::attackMultiplierPerClass>       ("Attack", "attack_multiplier", getMultiplierPerClass),
+            ModelPropertyMapping<&core::CompMeleeAttack::attackRate>                ("Attack", "attack_rate"),
+            ModelPropertyMapping<&core::CompMeleeAttack::attackPerClass>            ("Attack", "attack", getAttackOrArmorPerClass),
+            ModelPropertyMapping<&core::CompMeleeAttack::attackMultiplierPerClass>  ("Attack", "attack_multiplier", getMultiplierPerClass),
             ModelPropertyMapping<&core::CompHealth::maxHealth>                      ("Health", "health"),
+            ModelPropertyMapping<&core::CompRangeAttack::primaryProjectile>         ("RangeAttack", "primary_projectile", getProjectile),
+            ModelPropertyMapping<&core::CompRangeAttack::secondaryProjectiles>      ("RangeAttack", "secondary_projectiles", getProjectilesList),
+            ModelPropertyMapping<&core::CompRangeAttack::damageMode>                ("RangeAttack", "damage_mode", getProjectileDamageMode),
+            ModelPropertyMapping<&core::CompRangeAttack::projectileEntityType>      ("RangeAttack", "projectile_entity_type", getEntityType),
+            ModelPropertyMapping<&core::CompRangeAttack::attackRange>               ("RangeAttack", "attack_range"),
+            ModelPropertyMapping<&core::CompRangeAttack::projectileSpeed>           ("RangeAttack", "projectile_speed"),
+            ModelPropertyMapping<&core::CompRangeAttack::projectileReleaseFrame>    ("RangeAttack", "projectile_release_frame"),
+            ModelPropertyMapping<&core::CompRangeAttack::projectileReleaseHeight>   ("RangeAttack", "projectile_release_height"),
             ModelMapping<core::CompTransform>                                       ("NaturalResource"),
             ModelMapping<core::CompTransform>                                       ("Building"),
             ModelMapping<core::CompTransform>                                       ("TileSet"),
@@ -205,6 +220,7 @@ class ComponentModelMapper
             ModelMapping<core::CompPlayer>                                          ("Unit"),
             ModelMapping<core::CompPlayer>                                          ("Building"),
             ModelMapping<core::CompTransform>                                       ("UIElement"),
+            ModelMapping<core::CompProjectile>                                      ("Projectile"),
             ModelMapping<core::CompGraphics>                                        ("Model")
         };
     }

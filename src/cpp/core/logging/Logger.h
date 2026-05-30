@@ -1,11 +1,7 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-#include "DiagnosticContextFormatter.h"
-#include "ThreadAliasFormatter.h"
 #include "logging/DiagnosticContext.h"
-#include "spdlog/sinks/basic_file_sink.h"
-#include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
 
 #include <string>
@@ -26,31 +22,7 @@
 
 namespace core
 {
-static void initLogger(const std::string& filename)
-{
-    std::string pattern = "[%H:%M:%S.%e][%l][%y]:%x %v";
-    auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_st>();
-    consoleSink->set_level(spdlog::level::trace);
-    auto consoleCustomFormatter = spdlog::details::make_unique<spdlog::pattern_formatter>();
-    consoleCustomFormatter->add_flag<DiagnosticContextFormatter>('x')
-        .add_flag<ThreadAliasFormatter>('y')
-        .set_pattern(std::string("%^") + pattern + "%$");
-    consoleSink->set_formatter(std::move(consoleCustomFormatter));
-
-    auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_st>(filename, true);
-    fileSink->set_level(spdlog::level::trace);
-    auto fileCustomFormatter = spdlog::details::make_unique<spdlog::pattern_formatter>();
-    fileCustomFormatter->add_flag<DiagnosticContextFormatter>('x')
-        .add_flag<ThreadAliasFormatter>('y')
-        .set_pattern(pattern);
-    fileSink->set_formatter(std::move(fileCustomFormatter));
-
-    auto logger = new spdlog::logger("multi_sink", {consoleSink, fileSink});
-    auto loggerSharePtr = std::shared_ptr<spdlog::logger>(logger);
-
-    spdlog::set_default_logger(loggerSharePtr);
-    spdlog::set_level(spdlog::level::debug);
-}
+void initLogger(const std::string& filename);
 
 } // namespace core
 

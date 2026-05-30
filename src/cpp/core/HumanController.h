@@ -13,10 +13,10 @@ class StateManager;
 class Player;
 class Coordinates;
 
-class PlayerController : public EventHandler
+class HumanController : public EventHandler
 {
   public:
-    PlayerController();
+    HumanController();
 
     void setPlayer(Ref<Player> player);
     Ref<Player> getPlayer() const;

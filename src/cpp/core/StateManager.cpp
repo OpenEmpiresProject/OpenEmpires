@@ -79,6 +79,39 @@ void StateManager::clearAll()
     m_registry.clear();
 }
 
+std::list<uint32_t> StateManager::getUnitsAround(const Feet& pos,
+                                                 std::optional<uint32_t> excludeEntity1,
+                                                 std::optional<uint32_t> excludeEntity2) const
+{
+    std::list<uint32_t> neighbors;
+
+    Tile center = pos.toTile();
+    Tile start = center - 1;
+    Tile end = center + 1;
+    uint32_t exclude1 = excludeEntity1.value_or(entt::null);
+    uint32_t exclude2 = excludeEntity2.value_or(entt::null);
+
+    for (int x = start.x; x <= end.x; ++x)
+    {
+        for (int y = start.y; y <= end.y; ++y)
+        {
+            Tile t{x, y};
+            if (!m_gameMap.isValidPos(t))
+                continue;
+
+            const auto& entities = m_gameMap.getEntities(MapLayerType::UNITS, t);
+            for (auto e : entities)
+            {
+                if (e == entt::null or e == exclude1 or e == exclude2)
+                    continue;
+
+                neighbors.push_back(e);
+            }
+        }
+    }
+    return neighbors;
+}
+
 StateManager::TileMapQueryResult StateManager::whatIsAt(const Vec2& screenPos)
 {
     auto clickedCellPos = m_coordinates->screenUnitsToTiles(screenPos);

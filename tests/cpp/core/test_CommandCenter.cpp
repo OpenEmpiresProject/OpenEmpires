@@ -15,7 +15,7 @@
 
 #include "ServiceRegistry.h"
 #include "Settings.h"
-#include "components/CompAttack.h"
+#include "components/CompMeleeAttack.h"
 
 namespace core
 {
@@ -133,7 +133,7 @@ TEST_F(CommandCenterTest, CreatesSubCommands)
     stateMan->addComponent(entity, CompPlayer());
     stateMan->addComponent(entity, CompTransform());
     stateMan->addComponent(entity, CompVision());
-    stateMan->addComponent(entity, CompAttack());
+    stateMan->addComponent(entity, CompMeleeAttack());
 
     Event tickEvent{Event::Type::TICK, TickData{0}};
     commandCenter.onTick(tickEvent);
@@ -182,7 +182,7 @@ TEST_F(CommandCenterTest, CreatesSubCommands_WithMainCommandComplete)
     stateMan->addComponent(entity, CompPlayer());
     stateMan->addComponent(entity, CompTransform());
     stateMan->addComponent(entity, CompVision());
-    stateMan->addComponent(entity, CompAttack());
+    stateMan->addComponent(entity, CompMeleeAttack());
 
     Event tickEvent{Event::Type::TICK, TickData{0}};
     commandCenter.onTick(tickEvent);

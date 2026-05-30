@@ -17,6 +17,7 @@ all_entity_names: List[str] = [
     "construction_site_gate",
     "barracks",
     "militia",
+    "archer",
     "palisade",
     "stone_wall",
     "stone_gate",
@@ -27,6 +28,7 @@ all_entity_names: List[str] = [
     "cursor",
     "generic_widget",
     "fire",
+    "arrow"
 ]
 
 
@@ -75,7 +77,7 @@ all_units: List[Unit] = [
                 AnimationVariant(name="anim_decay_corpse", frame_count=5, speed=0.1, drs_file="graphics.drs", slp_id=1389, repeatable=False, variation_filter={GraphicVariantType.ACTION:"decay_corpse"}, layer=GraphicLayer.ENTITIES),
         ])
     ),
-    MilitaryUnit(
+    MeleeUnit(
         name="militia",
         display_name="Milita",
         unit_type = UnitType.INFANTRY,
@@ -102,6 +104,46 @@ all_units: List[Unit] = [
                 AnimationVariant(name="anim_die", frame_count=10, speed=10, drs_file="graphics.drs", slp_id=990, repeatable=False, variation_filter={GraphicVariantType.ACTION:"die"}, layer=GraphicLayer.ENTITIES),
         ])
     ),
+    RangeUnit(
+        name="archer",
+        display_name="Archer",
+        unit_type = UnitType.ARCHER,
+        line_of_sight=256*5,
+        moving_speed=256,
+        housing_need=1,
+        health=100,
+        damage_resistance=0.1,
+        primary_projectile=ProjectileProperties(
+            attack={ArmorClass.MELEE: 10, ArmorClass.PIERCE: 5},
+            attack_multiplier={ArmorClass.MELEE: 1.5, ArmorClass.PIERCE: 0.5},
+            accuracy=1,
+            reload_time=0.5),
+        secondary_projectiles=[ProjectileProperties(
+            attack={ArmorClass.MELEE: 5, ArmorClass.PIERCE: 2},
+            attack_multiplier={ArmorClass.MELEE: 1.5, ArmorClass.PIERCE: 0.5},
+            accuracy=0.8,
+            reload_time=1)],
+        projectile_entity_type="arrow",
+        damage_mode=ProjectileDamageMode.ON_HIT,
+        projectile_speed=256*6,
+        projectile_release_frame=8,
+        projectile_release_height=20,
+        attack_range=256*10,
+        armor={ArmorClass.MELEE: 20, ArmorClass.PIERCE: 25},
+        graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
+            variants=[
+                GraphicVariant(
+                    graphic=SingleGraphic(drs_file="interfac.drs", slp_id=50730, frame_index=17),
+                    variation_filter={GraphicVariantType.ICON:"true"})]),
+        animations=Animation(
+            variants=[
+                AnimationVariant(name="anim_idle", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=708, variation_filter={GraphicVariantType.ACTION:"idle"}, layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_move", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=713, variation_filter={GraphicVariantType.ACTION:"move"}, layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_attack", frame_count=15, speed=15, drs_file="graphics.drs", slp_id=702, variation_filter={GraphicVariantType.ACTION:"attack"}, layer=GraphicLayer.ENTITIES),
+                AnimationVariant(name="anim_die", frame_count=15, speed=10, drs_file="graphics.drs", slp_id=705, repeatable=False, variation_filter={GraphicVariantType.ACTION:"die"}, layer=GraphicLayer.ENTITIES),
+        ])
+    )
 ]
 
 all_natural_resources: List[NaturalResource] = [
@@ -636,6 +678,30 @@ all_ui_elements: List[UIElement] = [
                         variation_filter={GraphicVariantType.THEME:"default"})]),)
 ]
 
+def create_variants(drs_file, slp_id, frame_count):
+    variants = []
+    variation_index = 0
+
+    # 36 to 1
+    for i in range(frame_count - 1, 0, -1):
+        var = GraphicVariant(
+            graphic=SingleGraphic(drs_file=drs_file, slp_id=slp_id, frame_index=i, flip=True),
+            variation_filter={GraphicVariantType.THEME:"default", GraphicVariantType.VARIATION:str(variation_index)})
+        variants.append(var)
+        variation_index += 1
+
+    # 0 to 35
+    for i in range(frame_count - 2):
+        var = GraphicVariant(
+            graphic=SingleGraphic(drs_file=drs_file, slp_id=slp_id, frame_index=i),
+            variation_filter={GraphicVariantType.THEME:"default", GraphicVariantType.VARIATION:str(variation_index)})
+        variants.append(var)
+        variation_index += 1
+
+    
+    return variants
+
+
 all_misc = [
     BuildingFire(
         name="fire",
@@ -650,7 +716,14 @@ all_misc = [
                 AnimationVariant(name="anim_fire_huge", frame_count=20, speed=20, drs_file="graphics.drs", slp_id=431, 
                           variation_filter={GraphicVariantType.STATE:"huge", GraphicVariantType.VARIATION:"0", GraphicVariantType.ACTION:"fire"}, layer=GraphicLayer.ENTITY_DECORATOR),
             ])
-        )]
+        ),
+    Projectile(
+        name="arrow",
+        graphics=Graphic(
+            layer=GraphicLayer.ENTITIES,
+            variants=create_variants("graphics.drs", 50, 37))
+        ),
+    ]
 
 lists = [all_units, all_natural_resources, all_buildings, all_tilesets, all_ui_elements, all_misc]
 all_models = [x for lst in lists for x in lst]

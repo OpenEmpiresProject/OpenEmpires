@@ -35,7 +35,8 @@ namespace game
 {
 enum class SLPLoadMode
 {
-    VARIATIONS,
+    AUTO_VARIATIONS,
+    EXPLICIT_VARIATIONS,
     DIRECTIONAL_ANIMATIONS,
     ANIMATION,
     TILESET,
@@ -61,7 +62,7 @@ struct DRSData : public core::GraphicsLoadupDataProvider::Data
     core::Vec2 anchor;
     core::Rect<int> boundingRect;
     bool flip = false;
-    SLPLoadMode slpLoadMode = SLPLoadMode::VARIATIONS;
+    SLPLoadMode slpLoadMode = SLPLoadMode::AUTO_VARIATIONS;
 };
 
 template <typename T> void maybeOnCreate(entt::basic_registry<uint32_t>& reg, uint32_t e);
@@ -78,6 +79,8 @@ class EntityModelLoaderV2 : public core::EntityFactory,
 
     // TODO - evaluate to use EventHandler::init instead
     void init();
+
+    static std::list<std::string> g_sysPaths;
 
   private:
     void initPython();
@@ -231,6 +234,7 @@ class EntityModelLoaderV2 : public core::EntityFactory,
     core::Ref<DRSInterface> m_drsInterface;
 
     std::unordered_map<core::GraphicsID, DRSData> m_DRSDataByGraphicsId;
+
 };
 
 template <typename T> void maybeOnCreate(entt::basic_registry<uint32_t>& reg, uint32_t e)
