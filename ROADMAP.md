@@ -68,7 +68,6 @@ We use milestone versions for planning. Early versions are experimental. Feature
 - [x] Death animations and corpse handling
 - [x] Projectiles
 - [x] Combat units - archer
-- [ ] Property bonus system
 
 ---
 
@@ -114,7 +113,8 @@ We use milestone versions for planning. Early versions are experimental. Feature
 ## v0.8 – Civilization and unit upgrades
 > Goal: Enriching with all game entities.
 
-### Focus:
+### Features:
+- [ ] Property bonus system
 - [ ] Civilizations
 - [ ] Full set of buildings and units
 - [ ] Unit upgrades and tech tree
