@@ -153,8 +153,9 @@ core::Feet CmdMoveInFormation::avoidCollision(int deltaTimeMs, const Feet& goalP
         AvoidnaceQuality::HIGH, target.value());
 }
 
-bool CmdMoveInFormation::isPositionCloseEnough(const Feet& pos) const
+bool CmdMoveInFormation::isPositionCloseEnough(const Feet& pos, bool arriving) const
 {
+    // TODO: Don't we need to consider the arriving factor?
     return ProximityChecker::isInProximity(m_components->transform.position, pos,
                                            GOAL_RADIUS_OVERRIDE);
 }

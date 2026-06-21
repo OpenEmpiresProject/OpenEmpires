@@ -20,7 +20,7 @@ class CmdMoveInFormation : public CmdMove
     bool move(int deltaTimeMs, const Feet& target);
     Feet getTargetPos() const;
     Feet avoidCollision(int deltaTimeMs, const Feet& goalPos) override;
-    bool isPositionCloseEnough(const Feet& pos) const override;
+    bool isPositionCloseEnough(const Feet& pos, bool arriving) const override;
 
     const int SLOT_REACHABLE_THRESHOLD_SQUARED =
         Constants::FEET_PER_TILE * Constants::FEET_PER_TILE;

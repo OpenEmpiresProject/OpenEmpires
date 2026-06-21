@@ -316,7 +316,7 @@ core::Feet PathService::getBestAvoidanceDirectionVector(const Feet& currentPos,
             bestDirection = candidateDir;
         }
     }
-    spam("{}, preferred dir {}, best dir {}", entity, preferredDir.toString(),
+    spam("{} preferred dir {}, best dir {}", entity, preferredDir.toString(),
          bestDirection.toString());
 
     return bestDirection.normalized();
@@ -592,5 +592,10 @@ core::Feet PathService::findClosestVacantPosAroundLand(uint32_t forUnit,
     }
 
     Feet directionToLandTile = closestLandTile.centerInFeet() - closestTile.centerInFeet();
-    return closestTile.centerInFeet() + (directionToLandTile * 0.45f);
+    auto closestPos = closestTile.centerInFeet() + (directionToLandTile * 0.45f);
+
+    spam("Found closest vacant pos {} near building tile {}", closestPos.toString(),
+         closestLandTile.centerInFeet().toString());
+
+    return closestPos;
 }

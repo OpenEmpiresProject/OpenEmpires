@@ -914,6 +914,9 @@ DRSData getDRSData(const SingleGraphic& graphicData,
 
 DRSData getDRSData(const AnimationVariant& animation, core::Ref<DRSInterface> drsInterface)
 {
+    std::filesystem::path cwd = std::filesystem::current_path();
+    spdlog::info("Working directory: {}", cwd.string());
+
     const std::string resolvedFileName = std::string("assets/") + animation.drsFile;
 
     auto drsFile = drsInterface->loadDRSFile(resolvedFileName);

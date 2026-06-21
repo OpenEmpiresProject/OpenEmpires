@@ -152,7 +152,19 @@ void core::CmdGatherResource::moveCloser(std::list<Command*>& subCommands)
                   m_targetPosition.toString());
     auto moveCmd = ObjectPool<CmdMove>::acquire();
     moveCmd->collisionRadius = m_components->transform.collisionRadius;
-    moveCmd->target.emplace(target);
+
+    const auto& resourceTransform = m_stateMan->getComponent<CompTransform>(target);
+
+    LandArea area;
+    area.tiles.push_back(resourceTransform.position.toTile());
+    auto targetPos = m_pathService->findClosestVacantPosAroundLand(
+        m_entityID, m_components->transform.position, area);
+
+    Target targetData(targetPos, Target::Type::RESOURCE);
+    targetData.arrivalEvaluator = [this]() { return this->isCloseEnough(); };
+
+    moveCmd->target.emplace(targetData);
+
     moveCmd->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
     subCommands.push_back(moveCmd);
 }

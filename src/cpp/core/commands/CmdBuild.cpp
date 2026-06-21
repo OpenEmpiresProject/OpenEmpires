@@ -180,8 +180,9 @@ void CmdBuild::moveCloser(std::list<Command*>& subCommands)
 
     const auto& targetPosition = targetTransform.position;
 
-    spdlog::debug("Target {} at {} (tile {}) is not close enough to build from {}, moving...", target,
-                  targetPosition.toString(), targetPosition.toTile().toString(), m_components->transform.position.toString());
+    spdlog::debug("Target {} at {} (tile {}) is not close enough to build from {}, moving...",
+                  target, targetPosition.toString(), targetPosition.toTile().toString(),
+                  m_components->transform.position.toString());
     auto moveCmd = ObjectPool<CmdMove>::acquire();
     moveCmd->collisionRadius = m_components->transform.collisionRadius;
 
@@ -189,7 +190,7 @@ void CmdBuild::moveCloser(std::list<Command*>& subCommands)
         m_entityID, m_components->transform.position, targetBuilding.landArea);
 
     Target targetData(targetPos, Target::Type::BUILDING);
-    targetData.arrivalEvaluator = [this](const Feet&) { return this->isCloseEnough(); };
+    targetData.arrivalEvaluator = [this]() { return this->isCloseEnough(); };
 
     moveCmd->target.emplace(targetData);
     moveCmd->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);

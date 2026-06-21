@@ -1,5 +1,6 @@
 #include "CompBuilding.h"
 
+#include "logging/Logger.h"
 #include "utils/Maths.h"
 
 using namespace core;
@@ -229,7 +230,12 @@ bool CompBuilding::isOverlapping(const Feet& point, float radius) const
 
         Rect<float> rect(left, top, Constants::FEET_PER_TILE, Constants::FEET_PER_TILE);
 
-        if (maths::isOverlapping(point, radius, rect))
+        auto overlapped = maths::isOverlapping(point, radius, rect);
+
+        spam("Overlap check. Point {} with Radius {} does {} overlap with rect {}",
+             point.toString(), radius, overlapped ? "" : "not", rect.toString());
+
+        if (overlapped)
             return true;
     }
     return false;

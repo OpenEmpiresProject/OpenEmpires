@@ -234,7 +234,6 @@ class EntityModelLoaderV2 : public core::EntityFactory,
     core::Ref<DRSInterface> m_drsInterface;
 
     std::unordered_map<core::GraphicsID, DRSData> m_DRSDataByGraphicsId;
-
 };
 
 template <typename T> void maybeOnCreate(entt::basic_registry<uint32_t>& reg, uint32_t e)

@@ -54,19 +54,7 @@ void CmdMove::onQueue()
         {
             auto targetEntity = target->entity.value();
 
-            if (m_stateMan->hasComponent<CompResource>(targetEntity))
-            {
-                auto [resource, transform] =
-                    m_stateMan->getComponents<CompResource, CompTransform>(targetEntity);
-
-                LandArea area;
-                area.tiles.push_back(transform.position.toTile());
-                auto targetPos = m_pathService->findClosestVacantPosAroundLand(
-                    m_entityID, m_components->transform.position, area);
-
-                target.emplace(targetPos, Target::Type::RESOURCE, targetEntity);
-            }
-            else if (m_stateMan->hasComponent<CompUnit>(targetEntity))
+            if (m_stateMan->hasComponent<CompUnit>(targetEntity))
             {
                 auto& targetTransform = m_stateMan->getComponent<CompTransform>(targetEntity);
                 auto targetPos = targetTransform.position;
@@ -82,7 +70,7 @@ void CmdMove::onQueue()
 
     if (not target->isValid())
     {
-        spdlog::warn("Target position could not be derrived for unit {} to move", m_entityID);
+        spdlog::warn("Target is set but not valid for unit {} to move", m_entityID);
         return;
     }
 
@@ -193,14 +181,29 @@ void CmdMove::animate(int deltaTimeMs, int currentTick)
  */
 bool CmdMove::move(int deltaTimeMs)
 {
+    /*
+     *   Use the externally provided (by the parent command) arrival evaluator
+     *   to see whether the unit is close enough according caller's requirements.
+     */
+    if (hasArrived())
+    {
+        return true;
+    }
+
     if (!m_path.isEmpty()) [[likely]]
     {
         const auto& nextWaypoint = m_path.nextWaypoint();
 
-        if (isPositionCloseEnough(nextWaypoint))
+        // If this is the last point of the path, unit is arriving at the target
+        auto arriving = m_path.getWaypoints().size() == 1;
+
+        if (isPositionCloseEnough(nextWaypoint, arriving))
         {
-            spam("Unit {} reached next hop {}", m_entityID, nextWaypoint.toString());
+            auto waypointCopy = nextWaypoint;
             m_path.removeNextWaypoint();
+
+            spam("Unit {} reached next hop {}. Remaining hops count {}", m_entityID,
+                 waypointCopy.toString(), m_path.getWaypoints().size());
         }
         else
         {
@@ -261,6 +264,10 @@ Feet CmdMove::avoidCollision(int deltaTimeMs, const Feet& goalPos)
     auto speed = m_components->transform.speed;
     float lookaheadDuration = 1.0f;
 
+    spam("{} Preferred moving direction {} from {} to goal {}", m_entityID,
+         preferredDir.normalized().toString(), m_components->transform.position.toString(),
+         goalPos.toString());
+
     auto quality = AvoidnaceQuality::MEDIUM;
 
     if (target->type == Target::Type::UNIT)
@@ -284,15 +291,26 @@ core::Command* CmdMove::clone()
     return ObjectPool<CmdMove>::acquire(*this);
 }
 
-bool CmdMove::isPositionCloseEnough(const Feet& pos) const
+bool CmdMove::isPositionCloseEnough(const Feet& pos, bool arriving) const
+{
+    auto distanceSq = m_components->transform.position.distanceSquared(pos);
+
+    // When arriving at the target, reduce the collision radius to reach the
+    // target more precisely.
+    auto arrivingFactor = arriving ? 0.5f : 1.0f;
+
+    return distanceSq < (collisionRadius * collisionRadius * arrivingFactor);
+}
+
+bool CmdMove::hasArrived()
 {
     if (target->arrivalEvaluator.has_value())
     {
-        return target->arrivalEvaluator.value()(pos);
+        return target->arrivalEvaluator.value()();
     }
     // For movement to be precise, we use reduced collision radius
 
-    auto distanceSq = m_components->transform.position.distanceSquared(pos);
+    auto distanceSq = m_components->transform.position.distanceSquared(target->pos);
 
     return distanceSq < (collisionRadius * collisionRadius);
 }

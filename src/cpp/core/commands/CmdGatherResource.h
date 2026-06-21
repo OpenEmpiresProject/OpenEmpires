@@ -26,6 +26,8 @@
 
 namespace core
 {
+class PathService;
+
 class CmdGatherResource : public Command
 {
   public:
@@ -75,6 +77,7 @@ class CmdGatherResource : public Command
     float m_collectedResourceAmount = 0;
     LazyServiceRef<Coordinates> m_coordinateSystem;
     LazyServiceRef<Settings> m_settings;
+    LazyServiceRef<PathService> m_pathService;
     uint8_t m_targetResourceType = 0;
     CompResourceGatherer* m_gatherer = nullptr;
 

@@ -36,12 +36,18 @@ set(OUTPUT_BIN_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}") # Use the existing bin d
 file(MAKE_DIRECTORY "${OUTPUT_BIN_DIR}/assets")
 
 
-# Copy the entire assets directory to the bin directory
+# Copy the entire assets directory to the bin directory and bin\<build config; eg: debug 
+# or release>
+# Depending on various ways that the game can run (eg: console, IDE, IDE test explorer, 
+# console test), working directory can be different. Therefore, assets should be copied
+# to both build\bin and build\bin\debug or build\bin\release.
+#
 add_custom_command(
     TARGET openEmpires
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E echo "Copying assets..."
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${ASSET_DIR}" "${OUTPUT_BIN_DIR}/assets"
-    COMMENT "Copying assets to the binary directory"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${ASSET_DIR}" "${OUTPUT_BIN_DIR}/$<CONFIG>/assets"
+    COMMENT "Copied assets to the binary directory"
     VERBATIM
 )

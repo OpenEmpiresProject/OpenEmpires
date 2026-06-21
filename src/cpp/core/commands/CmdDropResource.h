@@ -24,6 +24,8 @@
 
 namespace core
 {
+class PathService;
+
 class CmdDropResource : public Command
 {
   public:
@@ -32,6 +34,7 @@ class CmdDropResource : public Command
   private:
     uint32_t m_dropOffEntity = entt::null;
     CompResourceGatherer* m_gatherer = nullptr;
+    LazyServiceRef<PathService> m_pathService;
 
   private:
     std::string toString() const override
@@ -114,15 +117,24 @@ class CmdDropResource : public Command
     {
         if (m_dropOffEntity != entt::null)
         {
-            const auto& dropOff = m_stateMan->getComponent<CompTransform>(m_dropOffEntity);
+            const auto [dropOffTransform, dropOffBuilding] =
+                m_stateMan->getComponents<CompTransform, CompBuilding>(m_dropOffEntity);
 
             spdlog::debug("Target {} at {} is not close enough to drop-off, moving...",
-                          m_dropOffEntity, dropOff.position.toString());
+                          m_dropOffEntity, dropOffTransform.position.toString());
             auto moveCmd = ObjectPool<CmdMove>::acquire();
             moveCmd->collisionRadius = m_components->transform.collisionRadius;
-            moveCmd->target.emplace(m_dropOffEntity);
+
+            auto targetPos = m_pathService->findClosestVacantPosAroundLand(
+                m_entityID, m_components->transform.position, dropOffBuilding.landArea);
+
+            Target targetData(targetPos, Target::Type::BUILDING);
+            targetData.arrivalEvaluator = [this]() { return this->isDropOffCloseEnough(); };
+
+            moveCmd->target.emplace(targetData);
             moveCmd->actionOverride = m_gatherer->getCarryingAction(resourceType);
             moveCmd->setPriority(getPriority() + CHILD_PRIORITY_OFFSET);
+
             subCommands.push_back(moveCmd);
         }
     }

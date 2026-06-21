@@ -38,7 +38,8 @@ class CmdMove : public Command
     void animate(int deltaTimeMs, int currentTick);
     bool move(int deltaTimeMs);
     virtual Feet avoidCollision(int deltaTimeMs, const Feet& goalPos);
-    virtual bool isPositionCloseEnough(const Feet& pos) const;
+    virtual bool isPositionCloseEnough(const Feet& pos, bool arriving) const;
+    bool hasArrived();
 
     Path m_path;
     LazyServiceRef<Coordinates> m_coordinates;
