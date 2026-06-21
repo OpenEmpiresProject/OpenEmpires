@@ -66,8 +66,8 @@ We use milestone versions for planning. Early versions are experimental. Feature
 - [x] Attack-move
 - [x] Basic formation movement
 - [x] Death animations and corpse handling
-- [ ] Projectiles
-- [ ] Combat units - archer
+- [x] Projectiles
+- [x] Combat units - archer
 - [ ] Property bonus system
 
 ---
