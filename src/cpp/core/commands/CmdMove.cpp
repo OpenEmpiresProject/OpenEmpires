@@ -2,6 +2,7 @@
 
 #include "Coordinates.h"
 #include "EventPublisher.h"
+#include "Gizmos.h"
 #include "PathFinderBase.h"
 #include "Player.h"
 #include "ProximityChecker.h"
@@ -83,37 +84,13 @@ void CmdMove::onQueue()
                      m_components->transform.position.toString(), target->pos.toString(),
                      m_entityID);
     }
-#ifndef NDEBUG
-    // for (auto& pos : m_path.getWaypoints())
-    //{
-    //     auto tileEntity = m_stateMan->gameMap().getEntity(MapLayerType::GROUND,
-    //     pos.toTile()); auto& graphics = m_stateMan->getComponent<CompGraphics>(tileEntity);
+#ifdef DEBUG
+    std::list<Feet> pathCopy;
+    pathCopy.push_back(m_components->transform.position);
+    auto& originalPathPoints = m_path.getWaypoints();
+    pathCopy.insert(pathCopy.end(), originalPathPoints.begin(), originalPathPoints.end());
 
-    //    if (not graphics.debugOverlays.empty())
-    //    {
-    //        //graphics.debugOverlays.clear();
-    //        DebugOverlay filledCircle;
-    //        filledCircle.type = DebugOverlay::Type::CIRCLE;
-    //        filledCircle.color = Color::GREEN;
-    //        filledCircle.absolutePosition = pos;
-    //        graphics.debugOverlays.push_back(filledCircle);
-    //        StateManager::markDirty(tileEntity);
-    //    }
-    //}
-
-    // auto tileEntity = m_stateMan->gameMap().getEntity(MapLayerType::GROUND,
-    // targetPos.toTile()); auto& graphics = m_stateMan->getComponent<CompGraphics>(tileEntity);
-
-    // if (not graphics.debugOverlays.empty())
-    //{
-    //     //graphics.debugOverlays.clear();
-    //     DebugOverlay filledCircle;
-    //     filledCircle.type = DebugOverlay::Type::FILLED_CIRCLE;
-    //     filledCircle.color = Color::RED;
-    //     filledCircle.absolutePosition = targetPos;
-    //     graphics.debugOverlays.push_back(filledCircle);
-    //     StateManager::markDirty(tileEntity);
-    // }
+    Gizmos::drawPath(m_entityID, "path", pathCopy, Color::GREEN);
 #endif
 }
 
@@ -304,6 +281,13 @@ bool CmdMove::isPositionCloseEnough(const Feet& pos, bool arriving) const
 
 bool CmdMove::hasArrived()
 {
+    /*
+     *   TODO: This isn't ideal, target can be empty only in CMDMoveInFormation path.
+     *   Need to upgrade it to use target and arrival evaluator.
+     */
+    if (not target.has_value())
+        return false;
+
     if (target->arrivalEvaluator.has_value())
     {
         return target->arrivalEvaluator.value()();
@@ -355,20 +339,8 @@ bool CmdMove::stayIdleIfSeemsStuck(int deltaTimeMs, const Feet& forwardDir)
 
 void CmdMove::updateDebugOverlays(const Feet& forwardDirection)
 {
-
-#ifndef NDEBUG
-    auto& debugOverlays = m_stateMan->getComponent<CompGraphics>(m_entityID).debugOverlays;
-
-    if (not debugOverlays.empty())
-    {
-        debugOverlays[0].arrowEnd = m_coordinates->feetToScreenUnits(
-            (m_components->transform.position + (forwardDirection * 200)));
-
-        auto tileFeetDiagonal = std::sqrt(2 * Constants::FEET_PER_TILE * Constants::FEET_PER_TILE);
-        auto circleFeetRadius = m_components->transform.collisionRadius;
-        debugOverlays[1].circlePixelRadius =
-            circleFeetRadius * Constants::TILE_PIXEL_WIDTH / tileFeetDiagonal;
-    }
-
+#ifdef DEBUG
+    Gizmos::drawArrow(m_entityID, "forward", forwardDirection,
+                      m_components->transform.collisionRadius, Color::YELLOW);
 #endif
 }

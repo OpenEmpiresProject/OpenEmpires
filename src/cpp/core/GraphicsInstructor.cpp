@@ -51,6 +51,12 @@ void GraphicsInstructor::onTickStart()
     auto& frameData = m_synchronizer.getSenderFrameData();
     frameData.fogOfWar = *(player->getFogOfWar().get());
     frameData.frameNumber = m_frameCount;
+#ifdef DEBUG
+    frameData.showGizmos = m_debugHelper->isShowingGizmos();
+    frameData.showFrameStats = m_debugHelper->isShowingFrameStats();
+    frameData.hideFogOfWar = m_debugHelper->isHidingFogOfWar();
+    frameData.gizmoFilter = m_debugHelper->getGizmoFilterStr();
+#endif
     m_coordinates->setViewportPositionInPixels(frameData.viewportPositionInPixels);
 
     if (!m_initialized)
@@ -149,9 +155,14 @@ void GraphicsInstructor::updateGraphicComponents()
 
             if (m_stateManager->hasComponent<CompUnit>(entity))
             {
-                for (auto& overlay : gc.debugOverlays)
+                auto showWhenSelect = m_debugHelper->isShowGizmosOnlyWhenSelected();
+                for (auto& gizmo : gc.gizmos)
                 {
-                    overlay.enabled = select.isSelected;
+                    auto& data = gizmo.second.getBaseGizmo();
+                    if (showWhenSelect)
+                        data.enabled = select.isSelected;
+                    else
+                        data.enabled = true;
                 }
             }
         }

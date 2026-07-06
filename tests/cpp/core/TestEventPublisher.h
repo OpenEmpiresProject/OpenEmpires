@@ -11,7 +11,8 @@ namespace core::test
 
 // Simple test publisher to capture published events for assertions.
 // Call install() after creating the shared_ptr to set the thread-local publisher.
-class TestEventPublisher : public core::EventPublisher
+class TestEventPublisher : public core::EventPublisher,
+                           public std::enable_shared_from_this<TestEventPublisher>
 {
   public:
     TestEventPublisher() = default;
@@ -21,7 +22,7 @@ class TestEventPublisher : public core::EventPublisher
     // would throw.
     void install()
     {
-        registerPublisher();
+        registerPublisher(shared_from_this());
     }
 
     void publish(const core::Event& event) override

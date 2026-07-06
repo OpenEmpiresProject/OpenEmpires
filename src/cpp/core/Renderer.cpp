@@ -143,18 +143,31 @@ FontAtlas createFontAtlas(SDL_Renderer* renderer, TTF_Font* font, int padding = 
 void renderCirlceInIsometric(SDL_Renderer* renderer,
                              Sint16 cx,
                              Sint16 cy,
-                             Sint16 r,
+                             Sint16 ry,
                              Uint8 red,
                              Uint8 green,
                              Uint8 blue,
                              Uint8 alpha)
 {
-    // Isometric ellipse radius
-    Sint16 rx = r * 2; // Horizontal radius (diameter of the circle)
-    Sint16 ry = r;     // Vertical radius (half of the original)
+    Sint16 rx = ry * 2; // Horizontal radius
 
     // Render the isometric ellipse
     ellipseRGBA(renderer, cx, cy, rx, ry, red, green, blue, alpha);
+}
+
+void renderCirlceInIsometricFilled(SDL_Renderer* renderer,
+                                   Sint16 cx,
+                                   Sint16 cy,
+                                   Sint16 ry,
+                                   Uint8 red,
+                                   Uint8 green,
+                                   Uint8 blue,
+                                   Uint8 alpha)
+{
+    Sint16 rx = ry * 2; // Horizontal radius
+
+    // Render the isometric ellipse
+    filledEllipseRGBA(renderer, cx, cy, rx, ry, red, green, blue, alpha);
 }
 
 void renderText(const FontAtlas& fontAtlas,
@@ -247,8 +260,8 @@ class RendererImpl
     void renderTexture(SDL_FRect& dstRect, CompRendering* rc);
     void renderText(const Vec2& screenPos, const std::string& text, const Color& color);
     void renderGraphicAddons(const Vec2& screenPos, CompRendering* rc);
+    void renderGizmos(const Vec2& screenPos, CompRendering* rc);
     void renderGraphicAddonsAfterParent(const Vec2& screenPos, CompRendering* rc);
-    void renderDebugOverlays(const SDL_FRect& dstRect, CompRendering* rc);
     void renderBackground();
     void renderSelectionBox();
     void addDebugText(const std::string& text);
@@ -302,13 +315,18 @@ class RendererImpl
 
     FontAtlas m_fontAtlas;
 
-    bool m_showFogOfWar = true;
-
     volatile bool m_isReady = false;
 
     GraphicsID m_currentCursor;
 
     entt::basic_registry<uint32_t> m_registry;
+
+#ifdef DEBUG
+    bool m_showGizmos = false;
+    bool m_showFrameStats = false;
+    bool m_hideFogOfWar = false;
+    std::string m_gizmoFilter;
+#endif
 };
 
 void RendererImpl::renderImGui()
@@ -489,8 +507,7 @@ void RendererImpl::renderingLoop()
 
         auto waitStart = SDL_GetTicks();
 
-        if (!EventLoop::isPaused())
-            m_synchronizer.waitForSender();
+        m_synchronizer.waitForSender();
         m_waitTime.addSample(SDL_GetTicks() - waitStart);
 
         int delay = (1000 / m_settings->getTargetFPS()) - (SDL_GetTicks() - start);
@@ -602,14 +619,6 @@ bool RendererImpl::handleEvents()
             {
                 m_showDebugInfo = !m_showDebugInfo;
             }
-            else if (event.key.scancode == SDL_SCANCODE_0)
-            {
-                m_showFogOfWar = !m_showFogOfWar;
-            }
-            else if (event.key.scancode == SDL_SCANCODE_F10)
-            {
-                EventLoop::setPaused(!EventLoop::isPaused());
-            }
         }
         else if (event.type == SDL_EVENT_MOUSE_MOTION)
         {
@@ -639,12 +648,19 @@ bool RendererImpl::handleEvents()
  */
 void RendererImpl::updateRenderingComponents()
 {
-    // spdlog::debug("Handling graphic instructions...");
-    auto& frameData = m_synchronizer.getReceiverFrameData().graphicUpdates;
+    auto& frameData = m_synchronizer.getReceiverFrameData();
+#ifdef DEBUG
+    m_showGizmos = frameData.showGizmos;
+    m_showFrameStats = frameData.showFrameStats;
+    m_hideFogOfWar = frameData.hideFogOfWar;
+    m_gizmoFilter = frameData.gizmoFilter;
+#endif
+
+    auto& graphicInstructions = frameData.graphicUpdates;
     std::list<GraphicsID> idsNeedToLoad;
     std::list<CompGraphics*> lazyLoadedInstructions;
 
-    for (const auto& instruction : frameData)
+    for (const auto& instruction : graphicInstructions)
     {
         uint32_t entity = instruction->entityID;
         if (not m_registry.all_of<CompRendering>(instruction->entityID))
@@ -723,18 +739,21 @@ void RendererImpl::updateRenderingComponents()
             ObjectPool<CompGraphics>::release(instruction);
         }
     }
-    frameData.clear();
+    graphicInstructions.clear();
 }
 
 void RendererImpl::renderDebugInfo(FPSCounter& counter)
 {
-    addDebugText("Average FPS        : " + std::to_string(counter.getAverageFPS()));
-    addDebugText("Avg Sleep/frame    : " + std::to_string(counter.getAverageSleepMs()));
-    addDebugText("Avg frame time     : " + std::to_string(m_frameTime.average()));
-    addDebugText("Avg wait time      : " + std::to_string(m_waitTime.average()));
-    addDebugText("Textures Drew      : " + std::to_string(m_texturesDrew));
+    if (m_showFrameStats)
+    {
+        addDebugText("Average FPS        : " + std::to_string(counter.getAverageFPS()));
+        addDebugText("Avg Sleep/frame    : " + std::to_string(counter.getAverageSleepMs()));
+        addDebugText("Avg frame time     : " + std::to_string(m_frameTime.average()));
+        addDebugText("Avg wait time      : " + std::to_string(m_waitTime.average()));
+        addDebugText("Textures Drew      : " + std::to_string(m_texturesDrew));
+    }
 
-    if (m_showDebugInfo)
+    if (m_showGizmos)
     {
         addDebugText("Viewport           : " +
                      m_coordinates.getViewportPositionInPixels().toString());
@@ -759,7 +778,7 @@ void RendererImpl::renderDebugInfo(FPSCounter& counter)
     clearDebugTexts();
 
     // Show a small cross at center of the screen.
-    if (m_showDebugInfo)
+    if (m_showGizmos)
     {
         auto windowSize = m_settings->getWindowDimensions();
         Vec2 center(windowSize.width / 2, windowSize.height / 2);
@@ -818,9 +837,11 @@ void RendererImpl::renderGameEntities()
                 anchorAdjustedScreenPos += rc->selfRelativePixelPosition;
             }
 
-            if (m_showFogOfWar && fogOfWar.isExplored(rc->positionInFeet.toTile()) == false)
+            if (not m_hideFogOfWar && fogOfWar.isExplored(rc->positionInFeet.toTile()) == false)
                 continue;
         }
+
+        rc->anchorAdjustedScreenPos = anchorAdjustedScreenPos;
 
         SDL_FRect dstRect = {anchorAdjustedScreenPos.x, anchorAdjustedScreenPos.y, rc->srcRect.w,
                              rc->srcRect.h};
@@ -828,7 +849,7 @@ void RendererImpl::renderGameEntities()
         renderGraphicAddons(anchorAdjustedScreenPos, rc);
         renderTexture(dstRect, rc);
         renderGraphicAddonsAfterParent(anchorAdjustedScreenPos, rc);
-        renderDebugOverlays(dstRect, rc);
+        renderGizmos(anchorAdjustedScreenPos, rc);
     }
 }
 
@@ -865,6 +886,12 @@ concept HasOnRender =
              Alignment alignment,
              const Margin& margin) { data.onRender(context, rc, alignment, margin); };
 
+template <typename T>
+concept HasOnGizmoRender =
+    requires(T& data, const RenderingContext& context, const CompRendering& rc) {
+        data.onRender(context, rc);
+    };
+
 void RendererImpl::renderGraphicAddons(const Vec2& screenPos, CompRendering* rc)
 {
     RenderingContext context{
@@ -885,6 +912,52 @@ void RendererImpl::renderGraphicAddons(const Vec2& screenPos, CompRendering* rc)
                 }
             },
             addon.data);
+    }
+}
+
+void RendererImpl::renderGizmos(const Vec2& screenPos, CompRendering* rc)
+{
+    if (m_showGizmos)
+    {
+        auto& gizmoFilter = m_gizmoFilter;
+
+        RenderingContext context{
+            .renderer = m_renderer, .coordinates = m_coordinates, .fontAtlas = m_fontAtlas};
+
+        for (auto& gizmo : rc->gizmos)
+        {
+            std::visit(
+                [&](auto& data)
+                {
+                    using T = std::decay_t<decltype(data)>;
+                    if constexpr (not std::is_same_v<T, std::monostate>)
+                    {
+                        if constexpr (HasOnGizmoRender<T>)
+                        {
+                            /*
+                             *   If the filter is empty or grouping name doesn't appear in the
+                             * filter, render the gizmo. i.e. not requested to opt-out.
+                             */
+                            if (gizmoFilter.empty())
+                            {
+                                data.onRender(context, *rc);
+                            }
+                            else
+                            {
+                                auto groupName =
+                                    data.name.substr(0, Constants::GIZMO_GROUPING_LENGTH);
+                                auto nameToSearch = std::string("_") + groupName + std::string("_");
+                                auto pos = gizmoFilter.find(nameToSearch);
+                                if (pos == std::string::npos)
+                                {
+                                    data.onRender(context, *rc);
+                                }
+                            }
+                        }
+                    }
+                },
+                gizmo.second.data);
+        }
     }
 }
 
@@ -938,134 +1011,6 @@ void drawFilledQuad(SDL_Renderer* renderer,
 
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     SDL_RenderGeometry(renderer, nullptr, verts, 4, indices, 6);
-}
-
-void RendererImpl::renderDebugOverlays(const SDL_FRect& dstRect, CompRendering* rc)
-{
-    if (m_showDebugInfo)
-    {
-        for (auto& overlay : rc->debugOverlays)
-        {
-            if (not overlay.enabled)
-                continue;
-
-            auto pos = convertAlignmentToPosition(overlay.anchor, dstRect);
-
-            switch (overlay.type)
-            {
-            case DebugOverlay::Type::CIRCLE:
-            {
-                if (overlay.absolutePosition.isNull() == false)
-                {
-                    auto screenPos = m_coordinates.feetToScreenUnits(overlay.absolutePosition);
-                    ellipseRGBA(m_renderer, screenPos.x, screenPos.y, overlay.circlePixelRadius,
-                                overlay.circlePixelRadius / 2, overlay.color.r, overlay.color.g,
-                                overlay.color.b, overlay.color.a);
-                }
-                else
-                {
-                    ellipseRGBA(m_renderer, pos.x, pos.y, overlay.circlePixelRadius,
-                                overlay.circlePixelRadius / 2, overlay.color.r, overlay.color.g,
-                                overlay.color.b, overlay.color.a);
-                }
-            }
-
-            break;
-            case DebugOverlay::Type::FILLED_CIRCLE:
-            {
-                if (overlay.absolutePosition.isNull() == false)
-                {
-                    auto screenPos = m_coordinates.feetToScreenUnits(overlay.absolutePosition);
-                    filledEllipseRGBA(m_renderer, screenPos.x, screenPos.y,
-                                      overlay.circlePixelRadius, overlay.circlePixelRadius / 2,
-                                      overlay.color.r, overlay.color.g, overlay.color.b,
-                                      overlay.color.a);
-                }
-                else
-                {
-                    filledEllipseRGBA(m_renderer, pos.x, pos.y, overlay.circlePixelRadius,
-                                      overlay.circlePixelRadius / 2, overlay.color.r,
-                                      overlay.color.g, overlay.color.b, overlay.color.a);
-                }
-
-                break;
-            }
-
-            case DebugOverlay::Type::FILLED_RHOMBUS:
-            {
-                static Vec2 cornersInScreenUnits[4];
-                cornersInScreenUnits[0] =
-                    m_coordinates.feetToScreenUnits(overlay.rhombusCorners[0]);
-                cornersInScreenUnits[1] =
-                    m_coordinates.feetToScreenUnits(overlay.rhombusCorners[1]);
-                cornersInScreenUnits[2] =
-                    m_coordinates.feetToScreenUnits(overlay.rhombusCorners[2]);
-                cornersInScreenUnits[3] =
-                    m_coordinates.feetToScreenUnits(overlay.rhombusCorners[3]);
-
-                drawFilledQuad(m_renderer, cornersInScreenUnits[0], cornersInScreenUnits[1],
-                               cornersInScreenUnits[2], cornersInScreenUnits[3], overlay.color);
-                break;
-            }
-
-            case DebugOverlay::Type::RHOMBUS:
-            {
-                auto end1 = convertAlignmentToPosition(overlay.customPos1, dstRect);
-                auto end2 = convertAlignmentToPosition(overlay.customPos2, dstRect);
-
-                // Lifting the lines by a single pixel to avoid the next tile overriding
-                // these
-                lineRGBA(m_renderer, pos.x, pos.y - 1, end1.x, end1.y - 1, 180, 180, 180, 255);
-                lineRGBA(m_renderer, pos.x, pos.y - 1, end2.x, end2.y - 1, 180, 180, 180, 255);
-            }
-            break;
-            case DebugOverlay::Type::ARROW:
-            {
-                // TODO: Use null
-                if (overlay.arrowEnd.x == 0 && overlay.arrowEnd.y == 0)
-                    break;
-
-                auto end = overlay.arrowEnd;
-
-                // Arrow shaft
-                lineRGBA(m_renderer, pos.x, pos.y, end.x, end.y, overlay.color.r, overlay.color.g,
-                         overlay.color.b, 255);
-
-                // Arrowhead (two lines angled from the end point)
-                float dx = pos.x - end.x;
-                float dy = pos.y - end.y;
-                float length = std::sqrt(dx * dx + dy * dy);
-
-                if (length > 0.001f)
-                {
-                    float ux = dx / length;
-                    float uy = dy / length;
-
-                    // Rotate by ±30 degrees to get the arrowhead wings
-                    float angle = M_PI / 6.0f; // 30 degrees in radians
-                    float sinA = std::sin(angle);
-                    float cosA = std::cos(angle);
-
-                    // Left wing
-                    float lx = cosA * ux - sinA * uy;
-                    float ly = sinA * ux + cosA * uy;
-
-                    // Right wing
-                    float rx = cosA * ux + sinA * uy;
-                    float ry = -sinA * ux + cosA * uy;
-
-                    const float headSize = 10.0f; // arrowhead length
-
-                    lineRGBA(m_renderer, end.x, end.y, end.x + lx * headSize, end.y + ly * headSize,
-                             overlay.color.r, overlay.color.g, overlay.color.b, 255);
-                    lineRGBA(m_renderer, end.x, end.y, end.x + rx * headSize, end.y + ry * headSize,
-                             overlay.color.r, overlay.color.g, overlay.color.b, 255);
-                }
-            }
-            break;
-            }
-        }
-    }
 }
 
 void RendererImpl::renderBackground()

@@ -51,6 +51,7 @@ void DensityGrid::incrementDensity(const Feet& pos)
 int DensityGrid::getDensity(const Feet& pos)
 {
     auto densityGridPos = pos / (Constants::FEET_PER_TILE / Constants::DENSITY_GRID_RESOLUTION);
+    // TODO: This crashes at the edge of the map
     return m_map.at(static_cast<size_t>(densityGridPos.x), static_cast<size_t>(densityGridPos.y));
 }
 

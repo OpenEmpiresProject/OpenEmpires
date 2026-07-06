@@ -95,7 +95,6 @@ struct GraphicAddon
     Alignment alignment = Alignment::CENTER;
     Margin margin;
 
-    // TODO - why only copy returning version?
     template <typename T> const T& getData() const
     {
         return std::get<T>(data);

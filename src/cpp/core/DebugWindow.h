@@ -1,5 +1,6 @@
 #ifndef CORE_DEBUGWINDOW_H
 #define CORE_DEBUGWINDOW_H
+#include "DebugHelper.h"
 #include "EventHandler.h"
 #include "StateManager.h"
 
@@ -21,9 +22,10 @@ class DebugWindow : public EventHandler
     void showDebugWindow();
 
     LazyServiceRef<StateManager> m_stateManager;
+    LazyServiceRef<DebugHelper> m_debugHelper;
     EntitySelectionData m_currentEntitySelection;
 
-    uint32_t m_selectedEntity = -1;
+    uint32_t m_selectedEntity = std::numeric_limits<uint32_t>::max();
 };
 } // namespace core
 

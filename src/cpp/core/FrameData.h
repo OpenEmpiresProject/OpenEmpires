@@ -22,6 +22,13 @@ struct FrameData
     GraphicsID cursor;             // Simulator to Renderer
     ImDrawDataSnapshot imGuiData;  // Simulator to Renderer
     Vec2 viewportPositionInPixels; // Renderer to simulator
+
+#ifdef DEBUG
+    bool showGizmos = false;
+    bool showFrameStats = false;
+    bool hideFogOfWar = false;
+    std::string gizmoFilter; // Concatenated gizmo names surrounded by _ from both sides
+#endif
 };
 } // namespace core
 

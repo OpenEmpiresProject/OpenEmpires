@@ -509,16 +509,6 @@ void EntityModelLoaderV2::postProcessing()
                 auto info = compHolder->tryGetComponent<CompEntityInfo>();
                 typeRegistry->registerUnitType(info->entityType);
                 typeRegistry->registerUnitTypeHousingNeed(info->entityType, unit->housingNeed);
-
-#ifndef NDEBUG
-                auto graphics = compHolder->tryGetComponent<CompGraphics>();
-                graphics->debugOverlays.push_back({DebugOverlay::Type::ARROW, core::Color::GREEN,
-                                                   Alignment::BOTTOM_CENTER, Alignment::CENTER});
-                graphics->debugOverlays.push_back({DebugOverlay::Type::CIRCLE, core::Color::YELLOW,
-                                                   Alignment::BOTTOM_CENTER, Alignment::CENTER});
-                graphics->debugOverlays.push_back({DebugOverlay::Type::CIRCLE, core::Color::YELLOW,
-                                                   Alignment::BOTTOM_CENTER, Alignment::CENTER});
-#endif
             }
 
             if (auto armor = std::get_if<CompArmor>(&componentVar))

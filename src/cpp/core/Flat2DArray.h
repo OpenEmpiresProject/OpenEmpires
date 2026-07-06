@@ -79,13 +79,20 @@ template <typename T> class Flat2DArray
     {
         return m_width;
     }
+
     size_t height() const
     {
         return m_height;
     }
+
     size_t size() const
     {
         return m_data.size();
+    }
+
+    bool isEmpty() const
+    {
+        return (m_width * m_height) == 0;
     }
 
     Size dimensions() const
@@ -97,6 +104,7 @@ template <typename T> class Flat2DArray
     {
         return m_data.data();
     }
+
     const T* data() const
     {
         return m_data.data();

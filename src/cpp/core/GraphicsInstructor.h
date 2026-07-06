@@ -2,6 +2,7 @@
 #define GRAPHICS_INSTRUCTOR_H
 
 #include "Coordinates.h"
+#include "DebugHelper.h"
 #include "EventHandler.h"
 #include "FrameData.h"
 #include "HumanController.h"
@@ -32,6 +33,7 @@ class GraphicsInstructor : public EventHandler
     void updateGraphicComponents();
 
   private:
+    LazyServiceRef<DebugHelper> m_debugHelper;
     LazyServiceRef<Coordinates> m_coordinates;
     LazyServiceRef<HumanController> m_playerController;
     LazyServiceRef<StateManager> m_stateManager;

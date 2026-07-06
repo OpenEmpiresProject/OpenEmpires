@@ -3,6 +3,7 @@
 #include "Coordinates.h"
 #include "EntityFactory.h"
 #include "Event.h"
+#include "Gizmos.h"
 #include "PlayerFactory.h"
 #include "commands/CmdDie.h"
 #include "components/CompEntityInfo.h"
@@ -182,10 +183,13 @@ void UnitManager::handleFormations(int deltaTimeMs)
 
         std::list<FormationSlot> invalidSlots;
 
+        int slotIndex = 0;
+
         for (auto& slot : formation->getSlots())
         {
+            auto slotEntity = slot.getEntityId();
             auto [unitGraphics, unitComp] =
-                m_stateMan->getComponents<CompGraphics, CompUnit>(slot.getEntityId());
+                m_stateMan->getComponents<CompGraphics, CompUnit>(slotEntity);
 
             // If somehow the unit's formation slot was invalidated (from unit's perspective)
             // it is UnitManager's responsibility untrack it.
@@ -193,14 +197,15 @@ void UnitManager::handleFormations(int deltaTimeMs)
                 unitComp.formationSlot.getFormation() != formation)
             {
                 invalidSlots.push_back(slot);
-                unitGraphics.debugOverlays[2].enabled = false;
+#ifdef DEBUG
+                Gizmos::clearDrawing(slotEntity, "formation");
+#endif
                 break;
             }
-            unitGraphics.debugOverlays[2].enabled = true;
-            unitGraphics.debugOverlays[2].color = Color::BLUE;
-            unitGraphics.debugOverlays[2].circlePixelRadius = 20;
-            unitGraphics.debugOverlays[2].absolutePosition =
-                formation->getAnchor() + slot.offsetFromAnchor;
+#ifdef DEBUG
+            Gizmos::drawCircle(slotEntity, "formation",
+                               formation->getAnchor() + slot.offsetFromAnchor, 20, Color::CYAN);
+#endif
         }
 
         for (auto& slot : invalidSlots)

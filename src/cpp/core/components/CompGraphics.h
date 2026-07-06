@@ -4,6 +4,7 @@
 #include "Color.h"
 #include "CompBuilding.h"
 #include "Feet.h"
+#include "GizmoData.h"
 #include "GraphicAddon.h"
 #include "GraphicsRegistry.h" // For GraphicsID
 #include "utils/Size.h"
@@ -65,7 +66,10 @@ class CompGraphics : public GraphicsID
     Vec2 relativePixelPosition = Vec2::zero;
     Vec2 selfRelativePixelPosition = Vec2::zero;
 
-    std::vector<DebugOverlay> debugOverlays;
+#ifdef DEBUG
+    std::unordered_map<std::string, GizmoData> gizmos;
+#endif
+
     std::vector<GraphicAddon> addons;
     Color shading;
     bool isDestroyed = false;
@@ -76,7 +80,6 @@ class CompGraphics : public GraphicsID
     CompGraphics()
     {
         addons.reserve(2);
-        debugOverlays.reserve(2);
     }
 
     bool isBig() const

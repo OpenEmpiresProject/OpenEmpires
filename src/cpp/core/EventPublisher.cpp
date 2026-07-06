@@ -14,8 +14,8 @@ void publishEvent(const Event::Type& type, const Event::Data& data)
     EventPublisher::s_instance->publish(Event{type, data});
 }
 
-void EventPublisher::registerPublisher()
+void EventPublisher::registerPublisher(Ref<EventPublisher> publisher)
 {
-    s_instance = shared_from_this();
+    s_instance = publisher;
 }
 } // namespace core

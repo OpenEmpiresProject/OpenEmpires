@@ -3,6 +3,7 @@
 
 #include "Event.h"
 #include "EventPublisher.h"
+#include "InputProcessor.h"
 #include "SubSystem.h"
 
 #include <list>
@@ -13,12 +14,15 @@
 namespace core
 {
 class EventHandler;
-class EventLoop : public SubSystem, public EventPublisher
+class EventLoop : public SubSystem,
+                  public EventPublisher,
+                  public std::enable_shared_from_this<EventLoop>
 {
   public:
     EventLoop(std::stop_token* stopToken);
 
     void registerListener(std::shared_ptr<EventHandler> listener);
+    void registerListener(std::shared_ptr<EventHandler> listener, bool immuneToPause);
     inline int getListenersCount() const
     {
         return m_listeners.size();
@@ -29,14 +33,24 @@ class EventLoop : public SubSystem, public EventPublisher
         return m_isReady;
     }
 
-    static bool isPaused()
+    bool isPaused() const
     {
         return s_isPaused;
     }
 
-    static void setPaused(bool isPaused)
+    bool isTemporarilyUnpaused() const
+    {
+        return s_isPaused and m_framesRemainingToPlay > 0;
+    }
+
+    void setPaused(bool isPaused)
     {
         s_isPaused = isPaused;
+    }
+
+    void setFramesRemainingToPlay(int count)
+    {
+        m_framesRemainingToPlay = count;
     }
 
   private:
@@ -52,16 +66,15 @@ class EventLoop : public SubSystem, public EventPublisher
     void handleGameEvents();
 
   private:
-    std::list<std::shared_ptr<EventHandler>> m_listeners;
+    std::list<Ref<EventHandler>> m_listeners;
+    std::list<Ref<EventHandler>> m_immunedListeners;
     std::thread m_eventLoopThread;
     std::queue<Event> m_eventQueue;
 
-    bool* m_previousKeyboardState = nullptr;
-    uint32_t m_previousMouseState = 0;
-    int m_previouseMouseX = 0;
-    int m_previouseMouseY = 0;
+    InputProcessor m_inputProcessor;
 
-    static bool s_isPaused;
+    bool s_isPaused = false;
+    int m_framesRemainingToPlay = 0;
     bool m_isReady = false;
 
     int m_currentTick = 0;

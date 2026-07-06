@@ -1,5 +1,6 @@
 #include "ProjectileManager.h"
 
+#include "Gizmos.h"
 #include "components/CompArmor.h"
 #include "components/CompEntityInfo.h"
 #include "components/CompGraphics.h"
@@ -37,15 +38,9 @@ bool ProjectileManager::onTick(const Event& e)
         auto traveledDistanceSq =
             transformComp.position.distanceSquared(projectileComp.originPosition);
 
-        if (graphics.debugOverlays.empty())
-        {
-            DebugOverlay anchor;
-            anchor.type = DebugOverlay::Type::FILLED_CIRCLE;
-            anchor.color = Color::PURPLE;
-            anchor.circlePixelRadius = 10;
-            graphics.debugOverlays.push_back(anchor);
-        }
-        graphics.debugOverlays[0].absolutePosition = transformComp.position;
+        Gizmos::drawCircle(projectile, "projectile", transformComp.position, 30, Color::PURPLE,
+                           true);
+
         StateManager::markDirty(projectile);
 
         auto distanceToTarget =

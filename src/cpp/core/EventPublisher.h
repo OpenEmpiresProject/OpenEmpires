@@ -9,13 +9,13 @@ namespace core
 void publishEvent(const Event& event);
 void publishEvent(const Event::Type& type, const Event::Data& data);
 
-class EventPublisher : public std::enable_shared_from_this<EventPublisher>
+class EventPublisher
 {
   public:
     virtual void publish(const Event& event) = 0;
 
   protected:
-    void registerPublisher();
+    void registerPublisher(Ref<EventPublisher> publisher);
 
   private:
     friend void publishEvent(const Event& event);

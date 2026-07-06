@@ -1,9 +1,11 @@
 #include "DemoWorldCreator.h"
 
+#include "Color.h"
 #include "Coordinates.h"
 #include "EntityFactory.h"
 #include "EntityTypeRegistry.h"
 #include "GameTypes.h"
+#include "Gizmos.h"
 #include "HumanController.h"
 #include "PlayerFactory.h"
 #include "Renderer.h"
@@ -43,7 +45,6 @@
 namespace fs = std::filesystem;
 using namespace game;
 using namespace core;
-using namespace drs;
 using namespace std;
 
 DemoWorldCreator::DemoWorldCreator(const Params& params) : WorldCreator(params)
@@ -162,6 +163,10 @@ void DemoWorldCreator::createVillager(Ref<core::Player> player, const Tile& tile
 
     auto newTile = transform.position.toTile();
     stateMan->gameMap().addEntity(MapLayerType::UNITS, newTile, villager);
+
+    // Draw collision radius circle relative to the unit position. Since it is relative,
+    // no need to update this ever again (unless of course collision radius change).
+    Gizmos::drawCircle(villager, "collision", transform.collisionRadius, core::Color::BLUE);
 
     player->getFogOfWar()->markAsExplored(transform.position, vision.lineOfSight);
 }
@@ -359,48 +364,13 @@ void DemoWorldCreator::createTile(uint32_t x, uint32_t y, EntityTypes entityType
 
     m_stateMan->gameMap().addEntity(MapLayerType::GROUND, Tile(x, y), entity);
 
-#ifndef NDEBUG
-
-    // Add density-grid overlays: divide tile into DENSITY_GRID_RESOLUTION^2 cells
-    // and add a small filled rhombus for each cell. The renderer will interpret
-    // these rhombus corners relative to the entity; here we provide feet offsets
-    // centered on the tile.
-    //
-    // One tile = Constants::FEET_PER_TILE feet. Sub-cell size in feet:
-    constexpr int RES = Constants::DENSITY_GRID_RESOLUTION;
-    const int subCellFeetSize = Constants::FEET_PER_TILE / RES;
-
-    for (int iy = 0; iy < RES; ++iy)
-    {
-        for (int ix = 0; ix < RES; ++ix)
-        {
-            // center of this sub-cell relative to tile center
-            int cx = transform.position.x + ix * subCellFeetSize;
-            int cy = transform.position.y + iy * subCellFeetSize;
-
-            DebugOverlay cellOverlay;
-            cellOverlay.type = DebugOverlay::Type::FILLED_RHOMBUS;
-            cellOverlay.color = core::Color::RED;
-            cellOverlay.anchor = Alignment::CENTER;
-
-            // rhombus corners in feet relative to the entity/tile center:
-            // top, right, bottom, left
-            cellOverlay.rhombusCorners[0] = Feet(cx, cy);                   // top
-            cellOverlay.rhombusCorners[1] = Feet(cx + subCellFeetSize, cy); // right
-            cellOverlay.rhombusCorners[2] =
-                Feet(cx + subCellFeetSize, cy + subCellFeetSize);           // left
-            cellOverlay.rhombusCorners[3] = Feet(cx, cy + subCellFeetSize); // bottom
-
-            cellOverlay.enabled = false;
-            graphics.debugOverlays.push_back(cellOverlay);
-        }
-    }
-
-    DebugOverlay overlay{DebugOverlay::Type::RHOMBUS, core::Color::GREY, Alignment::BOTTOM_CENTER};
-    overlay.customPos1 = Alignment::CENTER_LEFT;
-    overlay.customPos2 = Alignment::CENTER_RIGHT;
-    graphics.debugOverlays.push_back(overlay);
-
+#ifdef DEBUG
+    std::array<Feet, 4> corners;
+    corners[0] = transform.position;
+    corners[1] = transform.position + Feet(Constants::FEET_PER_TILE, 0);
+    corners[2] = transform.position + Feet(Constants::FEET_PER_TILE, Constants::FEET_PER_TILE);
+    corners[3] = transform.position + Feet(0, Constants::FEET_PER_TILE);
+    Gizmos::drawQuad(entity, "grid", corners, Color::DARK_GREY.withAlpha40());
 #endif
 }
 

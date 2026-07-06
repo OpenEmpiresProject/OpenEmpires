@@ -1,6 +1,7 @@
 #include "HumanController.h"
 
 #include "EntityFactory.h"
+#include "Gizmos.h"
 #include "Player.h"
 #include "PlayerFactory.h"
 #include "ServiceRegistry.h"
@@ -403,32 +404,22 @@ BuildingPlacementData HumanController::createBuildingPlacement(
         // TODO: Where to display?
     }
 
-#ifndef NDEBUG
-    auto& graphics = m_stateMan->getComponent<CompGraphics>(entity);
-    graphics.debugOverlays.clear();
+#ifdef DEBUG
+    int tileIndex = 0;
+    std::array<Feet, 4> corners;
 
     for (auto& tile : building.landArea.tiles)
     {
-        DebugOverlay filled;
-        filled.type = DebugOverlay::Type::FILLED_RHOMBUS;
-        filled.color = Color::RED;
-        filled.color.a = 100;
         const auto centerInFeet = tile.centerInFeet();
         const int half = Constants::FEET_PER_TILE / 2;
-        filled.rhombusCorners[0] = centerInFeet + Feet(-half, half);
-        filled.rhombusCorners[1] = centerInFeet + Feet(-half, -half);
-        filled.rhombusCorners[2] = centerInFeet + Feet(half, -half);
-        filled.rhombusCorners[3] = centerInFeet + Feet(half, half);
-        graphics.debugOverlays.push_back(filled);
+        corners[0] = centerInFeet + Feet(-half, half);
+        corners[1] = centerInFeet + Feet(-half, -half);
+        corners[2] = centerInFeet + Feet(half, -half);
+        corners[3] = centerInFeet + Feet(half, half);
+
+        Gizmos::drawQuad(entity, fmt::format("placement{}", tileIndex), corners,
+                         Color::ORANGE.withAlpa50(), true);
     }
-
-    DebugOverlay anchor;
-    anchor.type = DebugOverlay::Type::FILLED_CIRCLE;
-    anchor.color = Color::BLACK;
-    anchor.circlePixelRadius = 10;
-    anchor.absolutePosition = transform.position;
-    graphics.debugOverlays.push_back(anchor);
-
 #endif
 
     BuildingPlacementData data;
@@ -507,32 +498,22 @@ void HumanController::validateAndSnapBuildingToTile(BuildingPlacementData& place
     placement.pos = transform.position;
     StateManager::markDirty(placement.entity);
 
-#ifndef NDEBUG
-    auto& graphics = m_stateMan->getComponent<CompGraphics>(placement.entity);
-    graphics.debugOverlays.clear();
+#ifdef DEBUG
+    int tileIndex = 0;
+    static std::array<Feet, 4> corners;
 
     for (auto& tile : building.landArea.tiles)
     {
-        DebugOverlay filled;
-        filled.type = DebugOverlay::Type::FILLED_RHOMBUS;
-        filled.color = Color::RED;
-        filled.color.a = 100;
         const auto centerInFeet = tile.centerInFeet();
         const int half = Constants::FEET_PER_TILE / 2;
-        filled.rhombusCorners[0] = centerInFeet + Feet(-half, half);
-        filled.rhombusCorners[1] = centerInFeet + Feet(-half, -half);
-        filled.rhombusCorners[2] = centerInFeet + Feet(half, -half);
-        filled.rhombusCorners[3] = centerInFeet + Feet(half, half);
-        graphics.debugOverlays.push_back(filled);
+        corners[0] = centerInFeet + Feet(-half, half);
+        corners[1] = centerInFeet + Feet(-half, -half);
+        corners[2] = centerInFeet + Feet(half, -half);
+        corners[3] = centerInFeet + Feet(half, half);
+
+        Gizmos::drawQuad(placement.entity, fmt::format("placement{}", tileIndex), corners,
+                         Color::ORANGE.withAlpa50(), true);
     }
-
-    DebugOverlay anchor;
-    anchor.type = DebugOverlay::Type::FILLED_CIRCLE;
-    anchor.color = Color::BLACK;
-    anchor.circlePixelRadius = 10;
-    anchor.absolutePosition = transform.position;
-    graphics.debugOverlays.push_back(anchor);
-
 #endif
 }
 

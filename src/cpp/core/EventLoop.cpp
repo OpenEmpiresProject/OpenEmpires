@@ -11,15 +11,8 @@
 using namespace core;
 using namespace std::chrono;
 
-bool EventLoop::s_isPaused = false;
-
 EventLoop::EventLoop(std::stop_token* stopToken) : SubSystem(stopToken)
 {
-    m_previousKeyboardState = new bool[SDL_SCANCODE_COUNT];
-    for (int i = 0; i < SDL_SCANCODE_COUNT; ++i)
-    {
-        m_previousKeyboardState[i] = false;
-    }
 }
 
 void EventLoop::init()
@@ -31,27 +24,31 @@ void EventLoop::run()
 {
     spdlog::info("Starting event loop...");
 
-    registerPublisher();
+    registerPublisher(shared_from_this());
+    auto thisRef = shared_from_this();
 
     for (auto& listener : m_listeners)
     {
         listener->onInit(*this);
+        listener->onInit(thisRef);
     }
 
     auto lastTick = steady_clock::now();
 
     while (m_stopToken->stop_requested() == false)
     {
-        if (!isPaused())
+        handleInputEvents();
+        handleTickEvent(lastTick);
+
+        if (not isPaused() or isTemporarilyUnpaused())
         {
-            handleInputEvents();
-            handleTickEvent(lastTick);
+            m_framesRemainingToPlay--;
             handleGameEvents();
         }
         else
         {
-            // If the simulation is paused, we can slow down.
-            std::this_thread::sleep_for(milliseconds(100));
+            // If the simulation is paused, go with fixed 60FPS
+            std::this_thread::sleep_for(milliseconds(16));
         }
 
         // Sleep for a short duration to avoid busy-waiting
@@ -71,6 +68,23 @@ void EventLoop::shutdown()
     }
 }
 
+void EventLoop::handleInputEvents()
+{
+    auto isRunning = not isPaused() or isTemporarilyUnpaused();
+    auto& listners = isRunning ? m_listeners : m_immunedListeners;
+
+    m_inputProcessor.processInputs(
+        [this, &listners](const Event& e)
+        {
+            for (auto& listener : listners)
+            {
+                bool consumed = listener->dispatchEvent(e);
+                if (consumed)
+                    break;
+            }
+        });
+}
+
 void EventLoop::handleTickEvent(std::chrono::steady_clock::time_point& lastTime)
 {
     const auto tickRate = milliseconds(1000 / Constants::FIXED_FPS);
@@ -80,6 +94,9 @@ void EventLoop::handleTickEvent(std::chrono::steady_clock::time_point& lastTime)
     auto now = steady_clock::now();
     if (now - lastTime >= tickRate)
     {
+        auto isRunning = not isPaused() or isTemporarilyUnpaused();
+        auto& listners = isRunning ? m_listeners : m_immunedListeners;
+
         auto duration = now - lastTime;
         if (duration > maxDelay)
             duration = tickRate;
@@ -91,7 +108,7 @@ void EventLoop::handleTickEvent(std::chrono::steady_clock::time_point& lastTime)
         Event tickEvent(Event::Type::TICK, data);
 
         // Notify listeners about the event
-        for (auto& listener : m_listeners)
+        for (auto& listener : listners)
         {
             bool consumed = listener->dispatchEvent(tickEvent);
             if (consumed)
@@ -101,106 +118,6 @@ void EventLoop::handleTickEvent(std::chrono::steady_clock::time_point& lastTime)
     }
 }
 
-void EventLoop::handleInputEvents()
-{
-    int numEvents = 0;
-    const bool* currentKeyboardState = SDL_GetKeyboardState(&numEvents);
-    for (int i = 0; i < numEvents; ++i)
-    {
-        if (currentKeyboardState[i] && !m_previousKeyboardState[i])
-        {
-            KeyboardData data{i};
-            Event keyDownEvent(Event::Type::KEY_DOWN, data);
-            for (auto& listener : m_listeners)
-            {
-                bool consumed = listener->dispatchEvent(keyDownEvent);
-                if (consumed)
-                    break;
-            }
-        }
-        if (!currentKeyboardState[i] && m_previousKeyboardState[i])
-        {
-            KeyboardData data{i};
-            Event keyDownEvent(Event::Type::KEY_UP, data);
-            for (auto& listener : m_listeners)
-            {
-                bool consumed = listener->dispatchEvent(keyDownEvent);
-                if (consumed)
-                    break;
-            }
-        }
-        m_previousKeyboardState[i] = currentKeyboardState[i];
-    }
-
-    float mouseX = 0;
-    float mouseY = 0;
-    SDL_MouseButtonFlags currentMouseState = SDL_GetMouseState(&mouseX, &mouseY);
-
-    if (m_previouseMouseX != mouseX || m_previouseMouseY != mouseY)
-    {
-        MouseMoveData data{Vec2(mouseX, mouseY)};
-        Event mouseMoveEvent(Event::Type::MOUSE_MOVE, data);
-        for (auto& listener : m_listeners)
-        {
-            bool consumed = listener->dispatchEvent(mouseMoveEvent);
-            if (consumed)
-                break;
-        }
-        m_previouseMouseX = mouseX;
-        m_previouseMouseY = mouseY;
-    }
-
-    if (currentMouseState != m_previousMouseState)
-    {
-        if ((currentMouseState & SDL_BUTTON_LMASK) && !(m_previousMouseState & SDL_BUTTON_LMASK))
-        {
-            MouseClickData data{MouseClickData::Button::LEFT, Vec2(mouseX, mouseY)};
-            Event mouseClickEvent(Event::Type::MOUSE_BTN_DOWN, data);
-            for (auto& listener : m_listeners)
-            {
-                bool consumed = listener->dispatchEvent(mouseClickEvent);
-                if (consumed)
-                    break;
-            }
-        }
-
-        if (!(currentMouseState & SDL_BUTTON_LMASK) && (m_previousMouseState & SDL_BUTTON_LMASK))
-        {
-            MouseClickData data{MouseClickData::Button::LEFT, Vec2(mouseX, mouseY)};
-            Event mouseClickEvent(Event::Type::MOUSE_BTN_UP, data);
-            for (auto& listener : m_listeners)
-            {
-                bool consumed = listener->dispatchEvent(mouseClickEvent);
-                if (consumed)
-                    break;
-            }
-        }
-
-        if ((currentMouseState & SDL_BUTTON_RMASK) && !(m_previousMouseState & SDL_BUTTON_RMASK))
-        {
-            MouseClickData data{MouseClickData::Button::RIGHT, Vec2(mouseX, mouseY)};
-            Event mouseClickEvent(Event::Type::MOUSE_BTN_DOWN, data);
-            for (auto& listener : m_listeners)
-            {
-                bool consumed = listener->dispatchEvent(mouseClickEvent);
-                if (consumed)
-                    break;
-            }
-        }
-        if (!(currentMouseState & SDL_BUTTON_RMASK) && (m_previousMouseState & SDL_BUTTON_RMASK))
-        {
-            MouseClickData data{MouseClickData::Button::RIGHT, Vec2(mouseX, mouseY)};
-            Event mouseClickEvent(Event::Type::MOUSE_BTN_UP, data);
-            for (auto& listener : m_listeners)
-            {
-                bool consumed = listener->dispatchEvent(mouseClickEvent);
-                if (consumed)
-                    break;
-            }
-        }
-        m_previousMouseState = currentMouseState;
-    }
-}
 
 void EventLoop::handleGameEvents()
 {
@@ -224,5 +141,14 @@ void EventLoop::publish(const Event& event)
 
 void EventLoop::registerListener(std::shared_ptr<EventHandler> listener)
 {
+    m_listeners.push_back(std::move(listener));
+}
+
+void EventLoop::registerListener(std::shared_ptr<EventHandler> listener, bool immuneToPause)
+{
+    if (immuneToPause)
+    {
+        m_immunedListeners.push_back(listener);
+    }
     m_listeners.push_back(std::move(listener));
 }

@@ -15,6 +15,10 @@
 
 #define DEVELOPMENT
 
+#ifndef NDEBUG
+#define DEBUG
+#endif
+
 namespace core
 {
 template <typename T> using Ref = std::shared_ptr<T>;

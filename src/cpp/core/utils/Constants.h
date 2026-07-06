@@ -42,6 +42,9 @@ class Constants
 
     // There will be DENSITY_GRID_RESOLUTION*DENSITY_GRID_RESOLUTION density grid cells per tile.
     static const int DENSITY_GRID_RESOLUTION = 4;
+
+    // All similar Gizmo names lengthier than this will be grouped under same.
+    static const int GIZMO_GROUPING_LENGTH = 10;
 };
 } // namespace core
 

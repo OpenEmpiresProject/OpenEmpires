@@ -1,5 +1,6 @@
-#include "DebugWindow.h"
+﻿#include "DebugWindow.h"
 
+#include "Gizmos.h"
 #include "ImGuiHelper.h"
 #include "components/CompTransform.h"
 #include "components/CompUnit.h"
@@ -96,49 +97,108 @@ void DebugWindow::showDebugWindow()
     ImGui::SetNextWindowSize(ImVec2(windowWidth, 500));
     ImGui::Begin("Debug Window");
 
-    ImGui::Text("Selected Entities %d", m_currentEntitySelection.selection.selectedEntities.size());
-    ImGui::Separator();
-
-    ImGui::BeginChild("Entity Selection", ImVec2(windowWidth, 200));
-    auto singleEntity = m_currentEntitySelection.selection.selectedEntities.size() == 1;
-    int selectedEntityTemp = -1;
-
-    for (auto e : m_currentEntitySelection.selection.selectedEntities)
+    if (ImGui::CollapsingHeader("Debug Controls", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        bool isSelected = (m_selectedEntity == e) or singleEntity;
+        auto paused = m_debugHelper->isGamePaused();
+        if (ImGui::Button(paused ? "Play" : "Pause"))
+            m_debugHelper->pauseGame(!paused);
 
-        std::string label = fmt::format("{}", e);
-
-        if (ImGui::Selectable(label.c_str(), isSelected) or isSelected)
+        ImGui::BeginDisabled(not m_debugHelper->isGamePaused());
         {
-            m_selectedEntity = e;
-            selectedEntityTemp = e;
+            ImGui::SameLine();
+            if (ImGui::Button("Frame x1"))
+                m_debugHelper->forwardFrames(1);
+
+            ImGui::SameLine();
+            if (ImGui::Button("Frame x10"))
+                m_debugHelper->forwardFrames(10);
+
+            ImGui::SameLine();
+            if (ImGui::Button("Frame x60"))
+                m_debugHelper->forwardFrames(60);
+        }
+        ImGui::EndDisabled();
+
+        auto showGizmo = m_debugHelper->isShowingGizmos();
+        if (ImGui::Checkbox("Show Gizmos", &showGizmo))
+            m_debugHelper->showGizmos(showGizmo);
+
+        ImGui::BeginDisabled(not showGizmo);
+        {
+            auto showGizmoOnlyWhenSelected = m_debugHelper->isShowGizmosOnlyWhenSelected();
+            if (ImGui::Checkbox("Show Gizmos Only When Selected", &showGizmoOnlyWhenSelected))
+                m_debugHelper->showGizmosOnlyWhenSelected(showGizmoOnlyWhenSelected);
+        }
+        ImGui::EndDisabled();
+
+        auto showFrameStats = m_debugHelper->isShowingFrameStats();
+        if (ImGui::Checkbox("Show Frame Stats", &showFrameStats))
+            m_debugHelper->showFrameStats(showFrameStats);
+
+        auto showFogOfWar = not m_debugHelper->isHidingFogOfWar();
+        if (ImGui::Checkbox("Enable FogOfWar", &showFogOfWar))
+            m_debugHelper->hideFogOfWar(not showFogOfWar);
+
+        if (ImGui::CollapsingHeader("Hide Gizmos By Type", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            for (auto& name : Gizmos::getGizmoGroupedNames())
+            {
+                bool hideGizmoType = m_debugHelper->isGizmoTypeHidden(name);
+                if (ImGui::Checkbox(name.c_str(), &hideGizmoType))
+                {
+                    m_debugHelper->hideGizmoType(name, hideGizmoType);
+                }
+            }
         }
     }
 
-    ImGui::EndChild();
-
-    ImGui::Text("Properties");
-
-    ImGui::Separator();
-    if (selectedEntityTemp != -1 and ImGui::BeginTable("Properties", 2))
+    if (ImGui::CollapsingHeader("Entity Selections", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        auto& transform = m_stateManager->getComponent<CompTransform>(selectedEntityTemp);
+        ImGui::Text("Selected Entities %d",
+                    m_currentEntitySelection.selection.selectedEntities.size());
+        ImGui::Separator();
 
-        ImGui::TableSetupColumn("Key", ImGuiTableColumnFlags_WidthFixed, 100.0f);
-        ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+        ImGui::BeginChild("Entity Selection", ImVec2(windowWidth, 200));
+        auto singleEntity = m_currentEntitySelection.selection.selectedEntities.size() == 1;
+        int selectedEntityTemp = -1;
 
-        tableKVFmt("Position", "%s", transform.position.toString().c_str());
-        tableKVFmt("Tile", "%s", transform.position.toTile().toString().c_str());
-        tableKVFmt("Max Speed", "%d", transform.speed.value());
-
-        if (auto unit = m_stateManager->tryGetComponent<CompUnit>(selectedEntityTemp))
+        for (auto e : m_currentEntitySelection.selection.selectedEntities)
         {
-            tableKVFmt("Command", "%s", unit->commandQueue.top()->toString().c_str());
-            tableKVFmt("In Formation", "%s", unit->formationSlot.isValid() ? "true" : "false");
+            bool isSelected = (m_selectedEntity == e) or singleEntity;
+
+            std::string label = fmt::format("{}", e);
+
+            if (ImGui::Selectable(label.c_str(), isSelected) or isSelected)
+            {
+                m_selectedEntity = e;
+                selectedEntityTemp = e;
+            }
         }
 
-        ImGui::EndTable();
+        ImGui::EndChild();
+
+        ImGui::Text("Properties");
+
+        ImGui::Separator();
+        if (selectedEntityTemp != -1 and ImGui::BeginTable("Properties", 2))
+        {
+            auto& transform = m_stateManager->getComponent<CompTransform>(selectedEntityTemp);
+
+            ImGui::TableSetupColumn("Key", ImGuiTableColumnFlags_WidthFixed, 100.0f);
+            ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+            tableKVFmt("Position", "%s", transform.position.toString().c_str());
+            tableKVFmt("Tile", "%s", transform.position.toTile().toString().c_str());
+            tableKVFmt("Max Speed", "%d", transform.speed.value());
+
+            if (auto unit = m_stateManager->tryGetComponent<CompUnit>(selectedEntityTemp))
+            {
+                tableKVFmt("Command", "%s", unit->commandQueue.top()->toString().c_str());
+                tableKVFmt("In Formation", "%s", unit->formationSlot.isValid() ? "true" : "false");
+            }
+
+            ImGui::EndTable();
+        }
     }
 
     ImGui::End();

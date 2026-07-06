@@ -15,6 +15,7 @@ class EventHandler
 {
   public:
     virtual void onInit(EventLoop& eventLoop) {};
+    virtual void onInit(Ref<EventLoop> eventLoop) {};
     virtual void onExit() {};
 
     // Return true if the event is considered consumed and don't want to

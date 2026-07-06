@@ -30,6 +30,31 @@ struct Color
         return !(*this == other);
     }
 
+    Color withAlpha20() const
+    {
+        return {r, g, b, 255 * 0.2};
+    }
+
+    Color withAlpha40() const
+    {
+        return {r, g, b, 255 * 0.4};
+    }
+
+    Color withAlpa50() const
+    {
+        return {r, g, b, 128};
+    }
+
+    Color withAlpha60() const
+    {
+        return {r, g, b, 255 * 0.6};
+    }
+
+    Color withAlpha80() const
+    {
+        return {r, g, b, 255 * 0.8};
+    }
+
     static const Color RED;
     static const Color GREEN;
     static const Color BLUE;
@@ -39,6 +64,20 @@ struct Color
     static const Color WHITE;
     static const Color BLACK;
     static const Color GREY;
+    static const Color CYAN;
+    static const Color MAGENTA;
+    static const Color ORANGE;
+    static const Color PINK;
+    static const Color BROWN;
+    static const Color LIME;
+    static const Color OLIVE;
+    static const Color TEAL;
+    static const Color NAVY;
+    static const Color MAROON;
+    static const Color VIOLET;
+    static const Color SILVER;
+    static const Color DARK_GREY;
+    static const Color LIGHT_GREY;
 };
 } // namespace core
 

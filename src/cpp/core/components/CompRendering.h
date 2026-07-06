@@ -19,6 +19,7 @@ class CompRendering : public CompGraphics
     SDL_FlipMode flip = SDL_FLIP_NONE;
     SDL_FRect srcRect; // Source rectangle for the texture
     int additionalZOffset = 0;
+    Vec2 anchorAdjustedScreenPos = Vec2::zero;
 
     void updateTextureDetails(const GraphicsRegistry& graphicsRegistry)
     {
