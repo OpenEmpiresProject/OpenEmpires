@@ -6,6 +6,7 @@
 #include "components/CompUnit.h"
 #include "logging/Logger.h"
 
+#ifdef DEBUG
 using namespace core;
 
 DebugWindow::DebugWindow()
@@ -209,3 +210,5 @@ bool DebugWindow::onUnitSelection(const Event& e)
     m_currentEntitySelection = e.getData<EntitySelectionData>();
     return false;
 }
+
+#endif

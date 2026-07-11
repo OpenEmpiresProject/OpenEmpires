@@ -20,10 +20,11 @@ struct FrameData
     // Therefore, it is totally acceptable to copy FogOfWar.
     FogOfWar fogOfWar;             // Simulator to Renderer
     GraphicsID cursor;             // Simulator to Renderer
-    ImDrawDataSnapshot imGuiData;  // Simulator to Renderer
     Vec2 viewportPositionInPixels; // Renderer to simulator
 
 #ifdef DEBUG
+    ImDrawDataSnapshot imGuiData; // Simulator to Renderer
+
     bool showGizmos = false;
     bool showFrameStats = false;
     bool hideFogOfWar = false;

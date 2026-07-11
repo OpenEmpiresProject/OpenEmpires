@@ -32,12 +32,12 @@ struct Color
 
     Color withAlpha20() const
     {
-        return {r, g, b, 255 * 0.2};
+        return {r, g, b, (uint8_t) (255 * 0.2)};
     }
 
     Color withAlpha40() const
     {
-        return {r, g, b, 255 * 0.4};
+        return {r, g, b, (uint8_t) (255 * 0.4)};
     }
 
     Color withAlpa50() const
@@ -47,12 +47,12 @@ struct Color
 
     Color withAlpha60() const
     {
-        return {r, g, b, 255 * 0.6};
+        return {r, g, b, (uint8_t) (255 * 0.6)};
     }
 
     Color withAlpha80() const
     {
-        return {r, g, b, 255 * 0.8};
+        return {r, g, b, (uint8_t) (255 * 0.8)};
     }
 
     static const Color RED;

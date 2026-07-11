@@ -4,6 +4,8 @@
 #include "EventHandler.h"
 #include "StateManager.h"
 
+#ifdef DEBUG
+
 namespace core
 {
 class DebugWindow : public EventHandler
@@ -28,5 +30,7 @@ class DebugWindow : public EventHandler
     uint32_t m_selectedEntity = std::numeric_limits<uint32_t>::max();
 };
 } // namespace core
+
+#endif
 
 #endif // CORE_DEBUGWINDOW_H

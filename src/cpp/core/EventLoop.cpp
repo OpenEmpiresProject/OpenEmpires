@@ -118,7 +118,6 @@ void EventLoop::handleTickEvent(std::chrono::steady_clock::time_point& lastTime)
     }
 }
 
-
 void EventLoop::handleGameEvents()
 {
     while (!m_eventQueue.empty())

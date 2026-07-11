@@ -170,11 +170,14 @@ class Game
         auto logController = std::make_shared<core::LogLevelController>();
         auto visionSystem = std::make_shared<core::VisionSystem>();
         auto specialBuildingManager = std::make_shared<game::SpecialBuildingManager>();
+
+#ifdef DEBUG
         auto debugHelper = std::make_shared<core::DebugHelper>();
         auto debugWindow = std::make_shared<core::DebugWindow>();
-        auto projectileMan = std::make_shared<core::ProjectileManager>();
-
         core::ServiceRegistry::getInstance().registerService(debugHelper);
+#endif
+
+        auto projectileMan = std::make_shared<core::ProjectileManager>();
 
         if (params.eventHandler)
             eventLoop->registerListener(params.eventHandler);
@@ -182,7 +185,9 @@ class Game
         core::ServiceRegistry::getInstance().registerService(params.worldCreator);
 
         // Order matters for DebugWindow.
+#ifdef DEBUG
         eventLoop->registerListener(std::move(debugWindow), true);
+#endif
         eventLoop->registerListener(std::move(graphicInstructor), true);
         eventLoop->registerListener(std::move(cc));
         eventLoop->registerListener(std::move(uiManager));
@@ -196,7 +201,9 @@ class Game
         eventLoop->registerListener(std::move(visionSystem));
         eventLoop->registerListener(std::move(specialBuildingManager));
         eventLoop->registerListener(params.worldCreator);
+#ifdef DEBUG
         eventLoop->registerListener(std::move(debugHelper), true);
+#endif
         eventLoop->registerListener(std::move(projectileMan));
 
         core::SubSystemRegistry::getInstance().registerSubSystem("Renderer", std::move(renderer));

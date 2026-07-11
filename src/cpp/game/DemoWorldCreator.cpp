@@ -164,9 +164,11 @@ void DemoWorldCreator::createVillager(Ref<core::Player> player, const Tile& tile
     auto newTile = transform.position.toTile();
     stateMan->gameMap().addEntity(MapLayerType::UNITS, newTile, villager);
 
+#ifdef DEBUG
     // Draw collision radius circle relative to the unit position. Since it is relative,
     // no need to update this ever again (unless of course collision radius change).
     Gizmos::drawCircle(villager, "collision", transform.collisionRadius, core::Color::BLUE);
+#endif
 
     player->getFogOfWar()->markAsExplored(transform.position, vision.lineOfSight);
 }

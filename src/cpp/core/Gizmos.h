@@ -11,7 +11,7 @@
 
 namespace core
 {
-
+#ifdef DEBUG
 class Gizmos
 {
   public:
@@ -152,6 +152,7 @@ class Gizmos
 
     template <typename T> static T& getOrCreateGizmo(uint32_t entity, const std::string& name);
 };
+#endif
 
 } // namespace core
 

@@ -69,10 +69,12 @@ void GraphicsInstructor::onTickStart()
         m_initialized = true;
     }
 
+#ifdef DEBUG
     if (m_stateManager->isRendererReady() and ImGui::GetDrawData())
     {
         frameData.imGuiData.SnapUsingSwap(ImGui::GetDrawData(), ImGui::GetTime());
     }
+#endif
 }
 
 void GraphicsInstructor::onTickEnd()
@@ -155,6 +157,7 @@ void GraphicsInstructor::updateGraphicComponents()
 
             if (m_stateManager->hasComponent<CompUnit>(entity))
             {
+#ifdef DEBUG
                 auto showWhenSelect = m_debugHelper->isShowGizmosOnlyWhenSelected();
                 for (auto& gizmo : gc.gizmos)
                 {
@@ -164,6 +167,7 @@ void GraphicsInstructor::updateGraphicComponents()
                     else
                         data.enabled = true;
                 }
+#endif
             }
         }
 

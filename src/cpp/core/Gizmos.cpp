@@ -6,6 +6,8 @@
 
 #include <stdexcept>
 
+#ifdef DEBUG
+
 using namespace core;
 
 std::set<std::string> Gizmos::s_gizmoNames;
@@ -192,3 +194,5 @@ std::set<std::string> Gizmos::getGizmoGroupedNames()
     }
     return groupedNames;
 }
+
+#endif

@@ -331,6 +331,7 @@ class RendererImpl
 
 void RendererImpl::renderImGui()
 {
+#ifdef DEBUG
     auto& frame = m_synchronizer.getReceiverFrameData();
 
     if (frame.imGuiData.DrawData.Valid)
@@ -338,6 +339,7 @@ void RendererImpl::renderImGui()
         auto drawDataPtr = &frame.imGuiData.DrawData;
         ImGui_ImplSDLRenderer3_RenderDrawData(drawDataPtr, m_renderer);
     }
+#endif
 }
 
 } // namespace core
@@ -439,6 +441,7 @@ void RendererImpl::initSDL()
     m_sdlInitCV.notify_all();
     spdlog::info("SDL initialized successfully");
 
+#ifdef DEBUG
     // ImGui setups
 
     IMGUI_CHECKVERSION();
@@ -454,6 +457,7 @@ void RendererImpl::initSDL()
 
     ImGui_ImplSDL3_InitForSDLRenderer(m_window, m_renderer);
     ImGui_ImplSDLRenderer3_Init(m_renderer);
+#endif
 
     g_renderingRunning.store(true, std::memory_order_release);
 }
@@ -744,6 +748,10 @@ void RendererImpl::updateRenderingComponents()
 
 void RendererImpl::renderDebugInfo(FPSCounter& counter)
 {
+    SDL_RenderDebugText(m_renderer, 10, m_settings->getWindowDimensions().height - 20,
+                        OPENEMPIRES_VERSION_STRING);
+
+#ifdef DEBUG
     if (m_showFrameStats)
     {
         addDebugText("Average FPS        : " + std::to_string(counter.getAverageFPS()));
@@ -772,9 +780,6 @@ void RendererImpl::renderDebugInfo(FPSCounter& counter)
         y += 20;
     }
 
-    SDL_RenderDebugText(m_renderer, 10, m_settings->getWindowDimensions().height - 20,
-                        OPENEMPIRES_VERSION_STRING);
-
     clearDebugTexts();
 
     // Show a small cross at center of the screen.
@@ -790,6 +795,7 @@ void RendererImpl::renderDebugInfo(FPSCounter& counter)
         lineRGBA(m_renderer, vertLineStart.x, vertLineStart.y, vertLineStart.x,
                  vertLineStart.y + 10, 255, 255, 255, 255);
     }
+#endif
 }
 
 void RendererImpl::renderGameEntities()
@@ -837,7 +843,11 @@ void RendererImpl::renderGameEntities()
                 anchorAdjustedScreenPos += rc->selfRelativePixelPosition;
             }
 
-            if (not m_hideFogOfWar && fogOfWar.isExplored(rc->positionInFeet.toTile()) == false)
+            if (
+#ifdef DEBUG
+                not m_hideFogOfWar &&
+#endif
+                fogOfWar.isExplored(rc->positionInFeet.toTile()) == false)
                 continue;
         }
 
@@ -917,6 +927,7 @@ void RendererImpl::renderGraphicAddons(const Vec2& screenPos, CompRendering* rc)
 
 void RendererImpl::renderGizmos(const Vec2& screenPos, CompRendering* rc)
 {
+#ifdef DEBUG
     if (m_showGizmos)
     {
         auto& gizmoFilter = m_gizmoFilter;
@@ -959,6 +970,7 @@ void RendererImpl::renderGizmos(const Vec2& screenPos, CompRendering* rc)
                 gizmo.second.data);
         }
     }
+#endif
 }
 
 void RendererImpl::renderGraphicAddonsAfterParent(const Vec2& screenPos, CompRendering* rc)

@@ -38,8 +38,10 @@ bool ProjectileManager::onTick(const Event& e)
         auto traveledDistanceSq =
             transformComp.position.distanceSquared(projectileComp.originPosition);
 
+#ifdef DEBUG
         Gizmos::drawCircle(projectile, "projectile", transformComp.position, 30, Color::PURPLE,
                            true);
+#endif
 
         StateManager::markDirty(projectile);
 
