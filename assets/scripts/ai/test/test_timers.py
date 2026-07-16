@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock
 
-from ai.timers import *
+from ai.core.rule.timers import *
 
 
 class CustomActionTests(unittest.TestCase):

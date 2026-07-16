@@ -1,11 +1,9 @@
 import dataclasses
-from enum import Enum, auto
 import unittest
 from unittest.mock import Mock
 
-from ai.rule_engine import *
-from ai.timers import *
-from ai.utility_actions import *
+from ai.core.rule.timers import *
+from ai.core.rule.utility_actions import *
 
 
 Food = Fact("food")

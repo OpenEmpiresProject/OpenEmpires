@@ -328,7 +328,12 @@ class RuleEngine:
             if not rule.disabled:
                 rule.execute(self.context)
 
-    def _register_tag(self, tag: str, rule: "Rule"):
+    def execute_rules(self, rules: List[Rule]):
+        for rule in rules:
+            if not rule.disabled:
+                rule.execute(self.context)
+
+    def _register_tag(self, tag: str, rule: Rule):
         if tag not in self.rules_by_tag:
             self.rules_by_tag[tag] = set()
 
