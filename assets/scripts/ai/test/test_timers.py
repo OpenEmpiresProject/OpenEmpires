@@ -2,6 +2,11 @@ import unittest
 from unittest.mock import Mock
 
 from ai.core.rule.timers import *
+from ai.core.rule.rule_engine import *
+from ai.core.rule.common import *
+from ai.core.rule.fact import *
+from ai.core.rule.memory import *
+from ai.core.rule.operations import *
 
 
 class CustomActionTests(unittest.TestCase):

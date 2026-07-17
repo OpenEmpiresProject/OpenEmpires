@@ -4,11 +4,16 @@ from unittest.mock import Mock
 
 from ai.core.rule.timers import *
 from ai.core.rule.utility_actions import *
+from ai.core.rule.operations import *
 
 
 Food = Fact("food")
 Wood = Fact("wood")
 Stone = Fact("stone")
+
+
+class Target:
+    pass
 
 
 class AssignIdleVillagerTo(Action):
@@ -30,29 +35,32 @@ class RuleEngineTests(unittest.TestCase):
             fact.name = "stone"
 
     def test_fact_evaluation_construction(self):
-        fact_eval = FactEvaluationOperation("something", FactEvaluationType.LT, 123)
-        self.assertEqual(fact_eval.fact_name, "something")
-        self.assertEqual(fact_eval.value_to_compare, 123)
+        fact = Fact("something")
+        fact_eval = FactEvaluationOperation(fact, FactEvaluationType.LT, 123)
+        self.assertEqual(fact_eval.fact.name, "something")
+        self.assertEqual(fact_eval.value_to_compare.value, 123)
         self.assertEqual(fact_eval.evaluation_type, FactEvaluationType.LT)
 
     def test_fact_evaluation_fact_not_found(self):
         game_state = GameState()
         context = Context(game_state)
 
-        fact_eval = FactEvaluationOperation("something", FactEvaluationType.LT, 123)
+        fact = Fact("something")
+        fact_eval = FactEvaluationOperation(fact, FactEvaluationType.LT, 123)
         self.assertFalse(fact_eval.is_true(context))
 
     def test_fact_evaluation_happy_path(self):
         game_state = GameState()
-        game_state.something = 100
+        game_state.set_value("something", 100)
         context = Context(game_state)
 
-        fact_eval = FactEvaluationOperation("something", FactEvaluationType.LT, 123)
+        fact = Fact("something")
+        fact_eval = FactEvaluationOperation(fact, FactEvaluationType.LT, 123)
         self.assertTrue(fact_eval.is_true(context))
 
     def test_and_operation_single_fact_pass(self):
         game_state = GameState()
-        game_state.food = 100
+        game_state.set_value("food", 100)
         context = Context(game_state)
 
         op = AndOperation(Food < 101)
@@ -60,8 +68,8 @@ class RuleEngineTests(unittest.TestCase):
 
     def test_and_operation_multiple_facts_pass(self):
         game_state = GameState()
-        game_state.food = 100
-        game_state.wood = 200
+        game_state.set_value("food", 100)
+        game_state.set_value("wood", 200)
         context = Context(game_state)
 
         op = AndOperation(Food < 101, Wood < 201)
@@ -69,8 +77,8 @@ class RuleEngineTests(unittest.TestCase):
 
     def test_and_operation_multiple_facts_fail(self):
         game_state = GameState()
-        game_state.food = 100
-        game_state.wood = 200
+        game_state.set_value("food", 100)
+        game_state.set_value("wood", 200)
         context = Context(game_state)
 
         op = AndOperation(Food < 101, Wood < 199)
@@ -78,7 +86,7 @@ class RuleEngineTests(unittest.TestCase):
 
     def test_or_operation_single_fact_pass(self):
         game_state = GameState()
-        game_state.food = 100
+        game_state.set_value("food", 100)
         context = Context(game_state)
 
         op = OrOperation(Food < 101)
@@ -86,8 +94,8 @@ class RuleEngineTests(unittest.TestCase):
 
     def test_or_operation_multiple_facts_pass(self):
         game_state = GameState()
-        game_state.food = 100
-        game_state.wood = 200
+        game_state.set_value("food", 100)
+        game_state.set_value("wood", 200)
         context = Context(game_state)
 
         op = OrOperation(Food < 99, Wood < 201)
@@ -95,8 +103,8 @@ class RuleEngineTests(unittest.TestCase):
 
     def test_or_operation_multiple_facts_fail(self):
         game_state = GameState()
-        game_state.food = 100
-        game_state.wood = 200
+        game_state.set_value("food", 100)
+        game_state.set_value("wood", 200)
         context = Context(game_state)
 
         op = OrOperation(Food < 99, Wood < 199)
@@ -104,7 +112,7 @@ class RuleEngineTests(unittest.TestCase):
 
     def test_not_operation_pass(self):
         game_state = GameState()
-        game_state.food = 100
+        game_state.set_value("food", 100)
         context = Context(game_state)
 
         op = NotOperation(Food < 99)
@@ -112,7 +120,7 @@ class RuleEngineTests(unittest.TestCase):
 
     def test_not_operation_fail(self):
         game_state = GameState()
-        game_state.food = 100
+        game_state.set_value("food", 100)
         context = Context(game_state)
 
         op = NotOperation(Food < 101)
@@ -120,9 +128,9 @@ class RuleEngineTests(unittest.TestCase):
 
     def test_multiple_nested_operations_pass(self):
         game_state = GameState()
-        game_state.food = 100
-        game_state.wood = 200
-        game_state.stone = 300
+        game_state.set_value("food", 100)
+        game_state.set_value("dood", 200)
+        game_state.set_value("stone", 300)
         context = Context(game_state)
 
         op = AndOperation(Food < 101, OrOperation(Wood < 201, Stone > 299))
@@ -130,9 +138,9 @@ class RuleEngineTests(unittest.TestCase):
 
     def test_multiple_nested_operations_fail(self):
         game_state = GameState()
-        game_state.food = 100
-        game_state.wood = 200
-        game_state.stone = 300
+        game_state.set_value("food", 100)
+        game_state.set_value("dood", 200)
+        game_state.set_value("stone", 300)
         context = Context(game_state)
 
         op = AndOperation(Food < 99, OrOperation(Wood < 201, Stone > 299))
@@ -154,7 +162,7 @@ class RuleEngineTests(unittest.TestCase):
 
     def test_rule_happy_path(self):
         game_state = GameState()
-        game_state.food = 100
+        game_state.set_value("food", 100)
         context = Context(game_state)
 
         bush = Target()
@@ -175,7 +183,7 @@ class RuleEngineTests(unittest.TestCase):
 
     def test_disable_self(self):
         game_state = GameState()
-        game_state.food = 100
+        game_state.set_value("food", 100)
         context = Context(game_state)
 
         # Facts are true, should be disabled after first run
@@ -221,9 +229,12 @@ class RuleEngineTests(unittest.TestCase):
             )
         )
 
-        self.assertEqual(context.get_memory(goals_defend), None)
+        memory_value = context.memory_storage.get(goals_defend.name)
+        self.assertEqual(memory_value, None)
         rule.execute(context)
-        self.assertEqual(context.get_memory(goals_defend), 1)
+
+        memory_value = context.memory_storage.get(goals_defend.name)
+        self.assertEqual(memory_value, 1)
 
     def test_memory_read(self):
         game_state = GameState()
@@ -252,7 +263,8 @@ class RuleEngineTests(unittest.TestCase):
         )
 
         rule1.execute(context)
-        self.assertEqual(context.get_memory(goals_defend), 1)
+        memory_value = context.memory_storage.get(goals_defend.name, None)
+        self.assertEqual(memory_value, 1)
 
         rule2.execute(context)
         do_nothing_mock.take_action.assert_called_once()
@@ -350,7 +362,7 @@ class RuleEngineTests(unittest.TestCase):
         age = Fact("age")
 
         game_state = GameState()
-        game_state.age = Ages.DARK
+        game_state.set_value("age", Ages.DARK)
         context = Context(game_state)
 
         op = AndOperation(age == Ages.DARK)
@@ -369,7 +381,7 @@ class RuleEngineTests(unittest.TestCase):
             AndOperation(age == "abc")
 
         game_state = GameState()
-        game_state.age = Ages.DARK
+        game_state.set_value("age", Ages.DARK)
         context = Context(game_state)
 
         op = AndOperation(age == Ages.DARK)
@@ -389,11 +401,238 @@ class RuleEngineTests(unittest.TestCase):
 
         game_state = GameState()
         context = Context(game_state)
-        setattr(context.memory_storage, "goal.target_age", Ages.DARK)
+        context.memory_storage["goal.target_age"] = Ages.DARK
 
         op = AndOperation(goal_age == Ages.DARK)
         self.assertTrue(op.is_true(context))
 
+    def test_fact_evaluation_bool(self):
+        defensive = Fact("defensive", bool)
+
+        game_state = GameState()
+        game_state.set_value("defensive", True)
+        context = Context(game_state)
+
+        fact_eval = FactEvaluationOperation(defensive, FactEvaluationType.BOOL, True)
+        self.assertTrue(fact_eval.is_true(context))
+
+        game_state.set_value("defensive", False)
+        self.assertFalse(fact_eval.is_true(context))
+
+
+    def test_fact_as_bool_operator(self):
+        defensive = Fact("defensive", bool)
+
+        game_state = GameState()
+        game_state.set_value("defensive", True)
+        context = Context(game_state)
+
+        op = AndOperation(defensive.as_bool())
+        self.assertTrue(op.is_true(context))
+
+        # Fact as a bool cast style
+        op = AndOperation(defensive)
+        self.assertTrue(op.is_true(context))
+
+        op = OrOperation(defensive)
+        self.assertTrue(op.is_true(context))
+
+        op = NotOperation(defensive)
+        self.assertFalse(op.is_true(context))
+
+    def test_none_bool_fact_error(self):
+        idle_villagers = Fact("idle_villagers")
+
+        game_state = GameState()
+        game_state.idle_villagers = 1
+        context = Context(game_state)
+
+        with self.assertRaises(TypeError):
+            AndOperation(idle_villagers.as_bool())
+
+        with self.assertRaises(TypeError):
+            AndOperation(idle_villagers)
+
+        with self.assertRaises(TypeError):
+            OrOperation(idle_villagers)
+
+        with self.assertRaises(TypeError):
+            NotOperation(idle_villagers)
+
+
+    def test_memory_evaluation_bool(self):
+        game_state = GameState()
+        context = Context(game_state)
+        context.memory_storage["defensive"] = True
+
+        defensive = Memory("defensive", bool)
+        memory_eval = FactEvaluationOperation(defensive, FactEvaluationType.BOOL, True)
+        self.assertTrue(memory_eval.is_true(context))
+
+        context.memory_storage["defensive"] = False
+        self.assertFalse(memory_eval.is_true(context))
+
+
+    def test_memory_as_bool_operator(self):
+        defensive = Memory("defensive", bool)
+
+        game_state = GameState()
+        context = Context(game_state)
+        context.memory_storage["defensive"] = True
+
+        op = AndOperation(defensive.as_bool())
+        self.assertTrue(op.is_true(context))
+
+        # Fact as a bool cast style
+        op = AndOperation(defensive)
+        self.assertTrue(op.is_true(context))
+
+        op = OrOperation(defensive)
+        self.assertTrue(op.is_true(context))
+
+        op = NotOperation(defensive)
+        self.assertFalse(op.is_true(context))
+
+    def test_none_bool_memory_error(self):
+        idle_villagers = Memory("idle_villagers")
+
+        game_state = GameState()
+        context = Context(game_state)
+        context.memory_storage["idle_villagers"] = True
+
+        with self.assertRaises(TypeError):
+            AndOperation(idle_villagers.as_bool())
+
+        with self.assertRaises(TypeError):
+            AndOperation(idle_villagers)
+
+        with self.assertRaises(TypeError):
+            OrOperation(idle_villagers)
+
+        with self.assertRaises(TypeError):
+            NotOperation(idle_villagers)
+
+    def test_fact_as_both_operands(self):
+        archers = Fact("archers")
+        militia = Fact("militia")
+
+        game_state = GameState()
+        game_state.set_value("archers", 100)
+        game_state.set_value("militia", 200)
+        context = Context(game_state)
+
+        op = AndOperation(archers < militia)
+        self.assertTrue(op.is_true(context))
+
+        op = AndOperation(archers <= militia)
+        self.assertTrue(op.is_true(context))
+
+        op = AndOperation(archers != militia)
+        self.assertTrue(op.is_true(context))
+
+        op = AndOperation(archers > militia)
+        self.assertFalse(op.is_true(context))
+
+        op = AndOperation(archers == militia)
+        self.assertFalse(op.is_true(context))
+
+        op = AndOperation(archers >= militia)
+        self.assertFalse(op.is_true(context))
+
+
+    def test_fact_incompatible_types(self):
+        archers = Fact("archers")
+        militia = Fact("militia")
+
+        game_state = GameState()
+        game_state.set_value("archers", 100)
+        game_state.set_value("militia", 100.0)
+        context = Context(game_state)
+
+        op = AndOperation(archers < militia)
+
+        with self.assertRaises(TypeError):
+            op.is_true(context)
+
+    def test_memory_as_both_operands(self):
+        archers = Memory("archers")
+        militia = Memory("militia")
+
+        game_state = GameState()
+        context = Context(game_state)
+        context.memory_storage["archers"] = 100
+        context.memory_storage["militia"] = 200
+
+        op = AndOperation(archers < militia)
+        self.assertTrue(op.is_true(context))
+
+        op = AndOperation(archers <= militia)
+        self.assertTrue(op.is_true(context))
+
+        op = AndOperation(archers != militia)
+        self.assertTrue(op.is_true(context))
+
+        op = AndOperation(archers > militia)
+        self.assertFalse(op.is_true(context))
+
+        op = AndOperation(archers == militia)
+        self.assertFalse(op.is_true(context))
+
+        op = AndOperation(archers >= militia)
+        self.assertFalse(op.is_true(context))
+
+    def test_fact_and_memory_as_operands(self):
+        archers = Fact("archers")
+        militia = Memory("militia")
+
+        game_state = GameState()
+        game_state.set_value("archers", 100)
+        context = Context(game_state)
+        context.memory_storage["militia"] = 200
+
+        # True
+
+        op = AndOperation(archers < militia)
+        self.assertTrue(op.is_true(context))
+
+        op = AndOperation(archers <= militia)
+        self.assertTrue(op.is_true(context))
+
+        op = AndOperation(archers != militia)
+        self.assertTrue(op.is_true(context))
+
+        # False
+
+        op = AndOperation(archers > militia)
+        self.assertFalse(op.is_true(context))
+
+        op = AndOperation(archers == militia)
+        self.assertFalse(op.is_true(context))
+
+        op = AndOperation(archers >= militia)
+        self.assertFalse(op.is_true(context))
+
+        # True; Switch sides
+
+        op = AndOperation(militia > archers)
+        self.assertTrue(op.is_true(context))
+
+        op = AndOperation(militia >= archers)
+        self.assertTrue(op.is_true(context))
+
+        op = AndOperation(militia != archers)
+        self.assertTrue(op.is_true(context))
+
+        # False; Switch sides
+
+        op = AndOperation(militia < archers)
+        self.assertFalse(op.is_true(context))
+
+        op = AndOperation(militia == archers)
+        self.assertFalse(op.is_true(context))
+
+        op = AndOperation(militia <= archers)
+        self.assertFalse(op.is_true(context))
 
 if __name__ == '__main__':
     unittest.main()

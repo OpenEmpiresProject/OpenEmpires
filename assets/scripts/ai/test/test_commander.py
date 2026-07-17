@@ -1,7 +1,10 @@
 import unittest
 from unittest.mock import Mock
 
-from ai.core.rule.rule_engine import always_true, Rule, When, Then, Context, Memory
+from ai.core.rule.rule_engine import *
+from ai.core.rule.memory import *
+from ai.core.rule.fact import *
+from ai.core.rule.operations import *
 from ai.core.rule.utility_actions import do_nothing
 from ai.core.strategy.commander import Commander
 from ai.core.strategy.strategic_advisor_base import StrategicAdvisorBase
@@ -51,7 +54,7 @@ class CommandTests(unittest.TestCase):
 
         class TestAdvisor(StrategicAdvisorBase):
             def evaluate(self, context: Context) -> None:
-                setattr(context.memory_storage, "goals.defensive", 1)
+                context.memory_storage["goals.defensive"] = 1
 
         strategy = Mock()
         strategy.get_advisors.return_value = [TestAdvisor()]
