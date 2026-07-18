@@ -52,6 +52,8 @@ class NotOperation(OperationBase):
 class AlwaysFalseOperation(OperationBase):
     @override
     def is_true(self, context: Context) -> bool:
+        context.errors.append(
+            Error("always_false", None, None, None, None))
         return False
 
 

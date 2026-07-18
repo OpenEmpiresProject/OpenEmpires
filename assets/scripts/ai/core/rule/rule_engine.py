@@ -77,8 +77,8 @@ from ai.core.rule.operations import When
 
 
 class Then:
-    def __init__(self, action: Action):
-        self.action = action
+    def __init__(self, *actions):
+        self.actions = list(actions)
 
 
 class Tags:
@@ -87,11 +87,12 @@ class Tags:
 
 
 class Rule:
-    def __init__(self, when: When, then: Then, tags: Tags = None):
+    def __init__(self, when: When, then: Then, tags: Tags | None = None, Name: str | None = None):
         self.when = when
         self.then = then
         self.disabled = False
         self.tags: List[str] = tags.tags if tags else ["default"]
+        self.name = Name
 
     def disable(self):
         self.disabled = True
@@ -100,7 +101,19 @@ class Rule:
         context.rule = self
 
         if not self.disabled and self.when.is_true(context):
-            self.then.action.take_action(context)
+            for action in self.then.actions:
+                action.take_action(context)
+            if context.verbose:
+                print(f"[RuleEngine] Rule {self.name} executed")
+        else:
+            if context.verbose:
+                if self.disabled:
+                    print(f"[RuleEngine] Rule {self.name} is disabled")
+                else:
+                    print(f"[RuleEngine] Rule {self.name} failed. Failed conditions;")
+                    for error in context.errors:
+                        print(f"[RuleEngine]        {error.get_message()}")
+
 
 
 class RuleEngine:
@@ -109,6 +122,9 @@ class RuleEngine:
         self.game_state = game_state
         self.context = Context(self.game_state)
         self.rules_by_tag = {}
+
+    def set_verbose(self, enable: bool):
+        self.context.verbose = enable
 
     def add_rule(self, rule: Rule):
         for tag in rule.tags:
@@ -128,11 +144,13 @@ class RuleEngine:
 
         for rule in rules:
             if not rule.disabled:
+                self.context.errors = []
                 rule.execute(self.context)
 
     def execute_rules(self, rules: List[Rule]):
         for rule in rules:
             if not rule.disabled:
+                self.context.errors = []
                 rule.execute(self.context)
 
     def _register_tag(self, tag: str, rule: Rule):

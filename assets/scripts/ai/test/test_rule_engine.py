@@ -634,5 +634,30 @@ class RuleEngineTests(unittest.TestCase):
         op = AndOperation(militia <= archers)
         self.assertFalse(op.is_true(context))
 
+    def test_multiple_actions(self):
+        game_state = GameState()
+        game_state.set_value("food", 100)
+        context = Context(game_state)
+
+        bush = Target()
+        bush.attended = False
+        mock_action = Mock()
+
+        rule = Rule(
+            When(
+                Food < 101
+            ),
+            Then(
+                AssignIdleVillagerTo(bush),
+                mock_action
+            )
+        )
+
+        self.assertFalse(bush.attended)
+        rule.execute(context)
+        self.assertTrue(bush.attended)
+
+        mock_action.take_action.assert_called_once()
+
 if __name__ == '__main__':
     unittest.main()

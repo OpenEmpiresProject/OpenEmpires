@@ -1,3 +1,4 @@
+import sys
 from dataclasses import dataclass
 from typing import Any, Optional, override
 
@@ -22,34 +23,42 @@ class FactEvaluationOperation(OperationBase):
 
     @override
     def is_true(self, context: Context) -> bool:
+        right_value = self.value_to_compare.get_value(context)
         left_value = self.fact.get_value(context)
         if left_value is None:
-            print(f"{self.fact.name} not found in the storage")
+            print(f"[RuleEngine] {self.fact.name} not found in the storage", file=sys.stderr)
+            context.errors.append(
+                Error(self.fact.name, self.value_to_compare.name, self.evaluation_type, "not found", right_value))
             return False
 
-        right_value = self.value_to_compare.get_value(context)
 
         if type(left_value) != type(right_value):
             raise TypeError(f"Incompatible left and right operand data types left:{left_value}, right:{right_value}")
 
+        result = False
+
         match self.evaluation_type:
             case FactEvaluationType.GT:
-                return left_value > right_value
+                result = left_value > right_value
             case FactEvaluationType.LT:
-                return left_value < right_value
+                result = left_value < right_value
             case FactEvaluationType.GE:
-                return left_value >= right_value
+                result = left_value >= right_value
             case FactEvaluationType.LE:
-                return left_value <= right_value
+                result = left_value <= right_value
             case FactEvaluationType.NE:
-                return left_value != right_value
+                result = left_value != right_value
             case FactEvaluationType.EQ:
-                return left_value == right_value
+                result = left_value == right_value
             case FactEvaluationType.BOOL:
-                return left_value == True
+                result = left_value == True
             case _:
                 raise TypeError(f"Unknown operation {self.evaluation_type}")
 
+        if not result:
+            context.errors.append(
+                Error(self.fact.name, self.value_to_compare.name, self.evaluation_type, left_value, right_value))
+        return result
 
 @dataclass(frozen=True)
 class Fact(Operand):
