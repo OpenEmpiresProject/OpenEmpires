@@ -103,3 +103,8 @@ def here():
     filename = os.path.basename(frame.f_code.co_filename)
 
     return f"{filename}:{frame.f_lineno}"
+
+
+class Group:
+    def __init__(self, name: str):
+        self.name = name

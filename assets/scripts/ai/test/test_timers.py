@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import Mock
 
+from ai.core.rule.rule import Then
 from ai.core.rule.timers import *
 from ai.core.rule.rule_engine import *
 from ai.core.rule.common import *

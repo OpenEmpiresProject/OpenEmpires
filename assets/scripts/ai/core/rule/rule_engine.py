@@ -74,46 +74,7 @@ from dataclasses import dataclass
 from typing import List, override, Any, cast, Optional
 from ai.core.rule.common import *
 from ai.core.rule.operations import When
-
-
-class Then:
-    def __init__(self, *actions):
-        self.actions = list(actions)
-
-
-class Tags:
-    def __init__(self, *tags: str):
-        self.tags = tags
-
-
-class Rule:
-    def __init__(self, when: When, then: Then, tags: Tags | None = None, Name: str | None = None):
-        self.when = when
-        self.then = then
-        self.disabled = False
-        self.tags: List[str] = tags.tags if tags else ["default"]
-        self.name = Name
-
-    def disable(self):
-        self.disabled = True
-
-    def execute(self, context: Context):
-        context.rule = self
-
-        if not self.disabled and self.when.is_true(context):
-            for action in self.then.actions:
-                action.take_action(context)
-            if context.verbose:
-                print(f"[RuleEngine] Rule {self.name} executed")
-        else:
-            if context.verbose:
-                if self.disabled:
-                    print(f"[RuleEngine] Rule {self.name} is disabled")
-                else:
-                    print(f"[RuleEngine] Rule {self.name} failed. Failed conditions;")
-                    for error in context.errors:
-                        print(f"[RuleEngine]        {error.get_message()}")
-
+from ai.core.rule.rule import Rule
 
 
 class RuleEngine:

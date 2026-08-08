@@ -1,5 +1,6 @@
 from enum import Enum
 
+from ai.core.rule.common import Group
 from ai.core.rule.fact import Fact
 from ai.core.rule.memory import Memory
 

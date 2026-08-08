@@ -2,6 +2,7 @@ import dataclasses
 import unittest
 from unittest.mock import Mock
 
+from ai.core.rule.rule import Then, Tags, TriggerMode, EdgeTriggeredRule
 from ai.core.rule.timers import *
 from ai.core.rule.utility_actions import *
 from ai.core.rule.operations import *
@@ -658,6 +659,139 @@ class RuleEngineTests(unittest.TestCase):
         self.assertTrue(bush.attended)
 
         mock_action.take_action.assert_called_once()
+
+    def test_fact_group(self):
+        resources = Group("resources")
+        resources.food = Fact("food")
+        resources.wood = Fact("wood")
+
+        game_state = GameState()
+        game_state.set_value("food", 100)
+        game_state.set_value("wood", 100)
+        context = Context(game_state)
+
+        mock_action = Mock()
+
+        rule = Rule(
+            When(
+                resources.food < 101,
+                resources.wood == 100
+            ),
+            Then(
+                mock_action
+            )
+        )
+
+        rule.execute(context)
+        mock_action.take_action.assert_called_once()
+
+    def test_rule_level_triggering(self):
+        food = Fact("food")
+
+        game_state = GameState()
+        game_state.set_value("food", 100)
+        context = Context(game_state)
+
+        mock_action = Mock()
+        # mock_action.take_action = Mock()
+
+        rule = Rule(
+            When(
+                food > 100
+            ),
+            Then(
+                mock_action
+            ),
+            Trigger=TriggerMode.LEVEL_TRIGGER
+        )
+
+        # Test starting condition; should not execute action
+        rule.execute(context)
+        mock_action.take_action.assert_not_called()
+
+        # Condition satisfied ; should execute action
+        game_state.set_value("food", 101)
+        rule.execute(context)
+        mock_action.take_action.assert_called_once()
+
+        # Condition stay same; should execute action again
+        mock_action.take_action.reset_mock()
+        rule.execute(context)
+        mock_action.take_action.assert_called_once()
+
+        # Condition fails to satisfied and again satisfied
+        mock_action.take_action.reset_mock()
+        game_state.set_value("food", 100)
+        rule.execute(context)
+        game_state.set_value("food", 101)
+        rule.execute(context)
+        mock_action.take_action.assert_called_once()
+
+    def test_rule_level_trigger_being_default(self):
+        rule = Rule(
+            When(
+                always_true
+            ),
+            Then(
+                do_nothing
+            )
+        )
+        self.assertEqual(rule.trigger, TriggerMode.LEVEL_TRIGGER)
+
+    def test_rule_edge_triggering(self):
+        food = Fact("food")
+
+        game_state = GameState()
+        game_state.set_value("food", 100)
+        context = Context(game_state)
+
+        mock_action = Mock()
+        # mock_action.take_action = Mock()
+
+        rule = Rule(
+            When(
+                food > 100
+            ),
+            Then(
+                mock_action
+            ),
+            Trigger=TriggerMode.EDGE_TRIGGER
+        )
+
+        # Test starting condition; should not execute action
+        rule.execute(context)
+        mock_action.take_action.assert_not_called()
+
+        # Test raising edge ; should execute action
+        game_state.set_value("food", 101)
+        rule.execute(context)
+        mock_action.take_action.assert_called_once()
+
+        # Test level triggering doesn't occur; should not execute action
+        mock_action.take_action.reset_mock()
+        rule.execute(context)
+        mock_action.take_action.assert_not_called()
+
+        # Test falling edge ; should not execute action
+        game_state.set_value("food", 100)
+        rule.execute(context)
+        mock_action.take_action.assert_not_called()
+
+        # Test multiple raising edges; should execute action
+        game_state.set_value("food", 101)
+        rule.execute(context)
+        mock_action.take_action.assert_called_once()
+
+    def test_rule_edge_triggered(self):
+        rule = EdgeTriggeredRule(
+            When(
+                always_true
+            ),
+            Then(
+                do_nothing
+            )
+        )
+        self.assertEqual(rule.trigger, TriggerMode.EDGE_TRIGGER)
 
 if __name__ == '__main__':
     unittest.main()
