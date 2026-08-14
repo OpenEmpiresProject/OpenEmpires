@@ -2,7 +2,7 @@ import dataclasses
 import unittest
 from unittest.mock import Mock
 
-from ai.core.rule.rule import Then, Tags, TriggerMode, EdgeTriggeredRule
+from ai.core.rule.rule import Then, Tags, TriggerMode, EdgeTriggeredRule, Name
 from ai.core.rule.timers import *
 from ai.core.rule.utility_actions import *
 from ai.core.rule.operations import *
@@ -269,6 +269,18 @@ class RuleEngineTests(unittest.TestCase):
 
         rule2.execute(context)
         do_nothing_mock.take_action.assert_called_once()
+
+    def test_rule_name(self):
+        rule = Rule(
+            When(
+                always_true
+            ),
+            Then(
+                do_nothing
+            ),
+            Name("TEST_RULE")
+        )
+        self.assertEqual(rule.name, "TEST_RULE")
 
     def test_rule_tags(self):
         rule = Rule(
@@ -702,7 +714,7 @@ class RuleEngineTests(unittest.TestCase):
             Then(
                 mock_action
             ),
-            Trigger=TriggerMode.LEVEL_TRIGGER
+            TriggerMode.LEVEL_TRIGGER
         )
 
         # Test starting condition; should not execute action
@@ -755,7 +767,7 @@ class RuleEngineTests(unittest.TestCase):
             Then(
                 mock_action
             ),
-            Trigger=TriggerMode.EDGE_TRIGGER
+            TriggerMode.EDGE_TRIGGER
         )
 
         # Test starting condition; should not execute action

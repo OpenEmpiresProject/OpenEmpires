@@ -1,5 +1,5 @@
-from enum import Enum
-from typing import List
+from enum import Enum, IntEnum
+from typing import List, cast
 
 from ai.core.rule.common import Context
 from ai.core.rule.operations import When
@@ -12,7 +12,12 @@ class Then:
 
 class Tags:
     def __init__(self, *tags: str):
-        self.tags = tags
+        self.tags: List[str] = tags
+
+
+class Name:
+    def __init__(self, name: str):
+        self.name = name
 
 
 class TriggerMode(Enum):
@@ -21,14 +26,23 @@ class TriggerMode(Enum):
 
 
 class Rule:
-    def __init__(self, when: When, then: Then, tags: Tags | None = None, Name: str | None = None, Trigger: TriggerMode = TriggerMode.LEVEL_TRIGGER):
+
+    def __init__(self, when: When, then: Then, *options):
         self.when = when
         self.then = then
+        self.tags: List[str] = ["default"]
+        self.name = None
+        self.trigger = TriggerMode.LEVEL_TRIGGER
         self.disabled = False
-        self.tags: List[str] = tags.tags if tags else ["default"]
-        self.name = Name
-        self.trigger = Trigger
         self.was_true = False
+
+        for option in options:
+            if isinstance(option, Tags):
+                self.tags = cast(Tags, option).tags
+            elif isinstance(option, Name):
+                self.name = cast(Name, option).name
+            elif isinstance(option, TriggerMode):
+                self.trigger = cast(TriggerMode, option)
 
     def disable(self):
         self.disabled = True
@@ -70,5 +84,5 @@ class Rule:
 
 
 class EdgeTriggeredRule(Rule):
-    def __init__(self, when: When, then: Then, tags: Tags | None = None, Name: str | None = None):
-        super().__init__(when, then, tags, Name, Trigger=TriggerMode.EDGE_TRIGGER)
+    def __init__(self, when: When, then: Then, *options):
+        super().__init__(when, then, TriggerMode.EDGE_TRIGGER, *options)
